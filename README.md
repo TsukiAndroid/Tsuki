@@ -14,9 +14,9 @@
 
 ## 🌙 Our Story
 
-Tsuki started from the most relatable problem imaginable: someone just wanted to read manga on an old Android 7 phone.
+Tsuki started as a personal mission — just wanting to read manga on an old Android 7 device that kept breaking every app we tried.
 
-What followed was a journey through SSL handshake errors, dead parser repos, and a graveyard of apps:
+What followed was a long road through SSL handshake errors, dead parser repos, and a graveyard of apps that kept getting taken down one by one:
 
 - **Kotatsu** — got taken down
 - **Yukimi** — got taken down
@@ -24,7 +24,7 @@ What followed was a journey through SSL handshake errors, dead parser repos, and
 - **Yumemi** — build errors everywhere
 - **Futon** — finally worked ✅
 
-Along the way, a total coding newbie teamed up with **Claude** (an AI made by Anthropic) to fix, fork, rename, and ship something that would actually survive. The human handled the vision and the debugging conversations. Claude wrote the code. Together they fought through GitHub Actions failures, dead JitPack dependencies, Gradle configuration cache errors, and somehow made it all work.
+No professional dev experience. No Android Studio knowledge. Just stubbornness, curiosity, and teaming up with an AI named **Claude** (made by Anthropic) to fix, fork, and ship something that would actually survive. Claude wrote the code. We figured out the rest together.
 
 This is **Tsuki (月)** — the app that refused to die.
 
@@ -33,9 +33,9 @@ This is **Tsuki (月)** — the app that refused to die.
 ## ✨ Features
 
 - 📚 **1200+ manga sources** built-in via kotatsu-parsers-redo
-- 🌐 **Add custom sources** — paste any URL to read from any website via WebView
+- 🌐 **Add custom sources** — paste any URL to browse any site via WebView
 - 🎨 **Material You UI** — dynamic color theming on Android 12+
-- 🖼️ **Adjustable cover background transparency** — control the blur/alpha on manga detail pages
+- 🖼️ **Adjustable cover background transparency** in Appearance settings
 - 📖 Standard and Webtoon-optimized reader
 - ⬇️ Download manga for offline reading
 - 📌 Favorites, history, bookmarks
@@ -48,7 +48,7 @@ This is **Tsuki (月)** — the app that refused to die.
 ## 📱 Requirements
 
 - Android 6.0 (API 23) or higher
-- Works on Android 7 (tested on an old Huawei — the whole reason this app exists 😄)
+- Works on Android 7 (tested on a real device — the whole reason this app exists 😄)
 
 ---
 
@@ -64,14 +64,13 @@ No PC, no Android Studio needed.
 
 ## 📄 Credits
 
-- **The human** — the one who just wanted to read Solo Leveling on a 7-year-old phone
-- **Claude (Anthropic)** — the AI that wrote all the code
 - **[Futon](https://github.com/AppFuton/Futon)** — the base we forked from
 - **[Kotatsu](https://github.com/KotatsuApp/Kotatsu)** — the original upstream project
 - **[kotatsu-parsers-redo](https://github.com/Kotatsu-Redo/kotatsu-parsers-redo)** — the parser library keeping this alive
+- **Claude (Anthropic)** — the AI that wrote all the code
 
 ---
 
 <div align="center">
-Built with 🌙 and a lot of Stack Overflow
+Built with 🌙 and a lot of stubbornness
 </div>
