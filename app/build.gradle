@@ -30,9 +30,9 @@ android {
                 applicationId 'io.github.landwarderer.futon'
                 minSdk = 23
                 targetSdk = 36
-                versionCode project.hasProperty('versionCode') ? project.property('versionCode').toInteger() : 90700
-        versionName project.hasProperty('versionName') ? project.property('versionName') : '9.7'
-        generatedDensities = []
+                versionCode project.hasProperty('versionCode') ? project.property('versionCode').toInteger() : 1
+                versionName project.hasProperty('versionName') ? project.property('versionName') : 'Alpha-1.1'
+                generatedDensities = []
                 testInstrumentationRunner 'io.github.landwarderer.futon.HiltTestRunner'
                 ksp {
                         arg('room.generateKotlin', 'true')
