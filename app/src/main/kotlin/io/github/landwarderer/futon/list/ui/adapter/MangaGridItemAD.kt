@@ -1,6 +1,7 @@
 package io.github.landwarderer.futon.list.ui.adapter
 
 import androidx.core.view.isVisible
+import androidx.preference.PreferenceManager
 import com.hannesdorfmann.adapterdelegates4.dsl.adapterDelegateViewBinding
 import io.github.landwarderer.futon.R
 import io.github.landwarderer.futon.core.ui.list.AdapterDelegateClickListenerAdapter
@@ -14,27 +15,30 @@ import io.github.landwarderer.futon.list.ui.model.MangaListModel
 import io.github.landwarderer.futon.list.ui.size.ItemSizeResolver
 
 fun mangaGridItemAD(
-	sizeResolver: ItemSizeResolver,
-	clickListener: OnListItemClickListener<MangaListModel>,
+        sizeResolver: ItemSizeResolver,
+        clickListener: OnListItemClickListener<MangaListModel>,
 ) = adapterDelegateViewBinding<MangaGridModel, ListModel, ItemMangaGridBinding>(
-	{ inflater, parent -> ItemMangaGridBinding.inflate(inflater, parent, false) },
+        { inflater, parent -> ItemMangaGridBinding.inflate(inflater, parent, false) },
 ) {
 
-	AdapterDelegateClickListenerAdapter(this, clickListener).attach(itemView)
-	sizeResolver.attachToView(itemView, binding.textViewTitle, binding.progressView)
+        AdapterDelegateClickListenerAdapter(this, clickListener).attach(itemView)
+        sizeResolver.attachToView(itemView, binding.textViewTitle, binding.progressView)
 
-	bind { payloads ->
-		itemView.setTooltipCompat(item.getSummary(context))
-		binding.textViewTitle.text = item.title
-		binding.progressView.setProgress(item.progress, PAYLOAD_PROGRESS_CHANGED in payloads)
-		with(binding.iconsView) {
-			clearIcons()
-			if (item.isSaved) addIcon(R.drawable.ic_storage)
-			if (item.isFavorite) addIcon(R.drawable.ic_heart_outline)
-			isVisible = iconsCount > 0
-		}
-		binding.imageViewCover.setImageAsync(item.coverUrl, item.manga)
-		binding.badge.number = item.counter
-		binding.badge.isVisible = item.counter > 0
-	}
+        bind { payloads ->
+                itemView.setTooltipCompat(item.getSummary(context))
+                binding.textViewTitle.text = item.title
+                binding.progressView.setProgress(item.progress, PAYLOAD_PROGRESS_CHANGED in payloads)
+                with(binding.iconsView) {
+                        clearIcons()
+                        if (item.isSaved) addIcon(R.drawable.ic_storage)
+                        if (item.isFavorite) addIcon(R.drawable.ic_heart_outline)
+                        isVisible = iconsCount > 0
+                }
+                val coverAlpha = PreferenceManager.getDefaultSharedPreferences(context)
+                        .getInt("cover_alpha", 100) / 100.0f
+                binding.imageViewCover.alpha = coverAlpha
+                binding.imageViewCover.setImageAsync(item.coverUrl, item.manga)
+                binding.badge.number = item.counter
+                binding.badge.isVisible = item.counter > 0
+        }
 }
