@@ -1,0 +1,11 @@
+Major 9.6 milestone: UI, downloads, and CI improvements.
+
+Highlights:
+- Major milestone release with rebrand-adjacent UI improvements and Downloads integration.
+
+Fixes:
+- Introduced Downloads UI and multiple usability improvements across the reader and settings.
+- Significant CI and build workflow enhancements to stabilize releases.
+
+Notes:
+- This is a broad release with many small changes across features and translations.

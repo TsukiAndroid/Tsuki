@@ -1,0 +1,4 @@
+<resources>
+	<string name="app_name" translatable="false">Futon Nightly</string>
+	<string name="may_affect_performance">May affect performance</string>
+</resources>

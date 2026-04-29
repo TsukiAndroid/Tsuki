@@ -1,0 +1,5 @@
+Build file updates and minor release fixes.
+
+- Updated build.gradle and related build tooling to address issues discovered during release generation and packaging.
+- Fixed permission and signing-related issues affecting IzzyOnDroid / F‑Droid packaging flows.
+- General maintenance: small tweaks to CI invocations and artifact metadata to stabilize releases.

@@ -1,0 +1,10 @@
+Added Downloads viewer and UX improvements.
+
+Highlights:
+- New Downloads button and viewer to manage downloaded manga.
+
+Fixes:
+- Various UI and behavior fixes; parser maintenance and translation updates.
+
+Notes:
+- The Downloads viewer introduces new UI flows; verify offline reading and backup behavior after upgrade.

@@ -1,0 +1,11 @@
+Downloads UX and wording updates.
+
+Highlights:
+- Clarified downloads disclaimer and improved wording shown to users.
+
+Fixes:
+- Added/clarified downloads disclaimer and related wording shown to users.
+- Small UX improvements around downloads and offline content handling.
+
+Notes:
+- Helpful for store compliance and clears up user expectations about downloaded content.

@@ -1,0 +1,11 @@
+Hotfix: build/syntax correction.
+
+Highlights:
+- Emergency hotfix to restore build pipeline functionality.
+
+Fixes:
+- Emergency fix to resolve a build-syntax error that blocked releases.
+
+Notes:
+- This patch was a small, urgent change to unblock releases and CI.
+- Restores normal build pipeline behavior.

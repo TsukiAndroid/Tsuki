@@ -1,0 +1,2 @@
+json_key_file "" # Path to the json secret file - Follow https://github.com/fastlane/supply#setup to get one
+package_name "io.github.landwarderer.futon" # e.g. com.krausefx.app
