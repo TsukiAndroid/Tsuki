@@ -14,9 +14,9 @@
 
 ## 🌙 Our Story
 
-Tsuki started from the most relatable problem imaginable: a 17-year-old from Khulna, Bangladesh named Aanan just wanted to read manga on his old **Huawei P9 Lite running Android 7**.
+Tsuki started from the most relatable problem imaginable: someone just wanted to read manga on an old Android 7 phone.
 
-What followed was a journey through SSL handshake errors, dead parser repos, and a graveyard of manga apps:
+What followed was a journey through SSL handshake errors, dead parser repos, and a graveyard of apps:
 
 - **Kotatsu** — got taken down
 - **Yukimi** — got taken down
@@ -24,7 +24,7 @@ What followed was a journey through SSL handshake errors, dead parser repos, and
 - **Yumemi** — build errors everywhere
 - **Futon** — finally worked ✅
 
-Along the way, Aanan teamed up with **Claude** (an AI made by Anthropic) to fix, fork, rename, and ship something that would actually survive. Aanan is a total newbie to coding — studying Physics, Math, Chemistry, and Biology for his college exams in Bangladesh. Claude wrote the code. Together they debugged GitHub Actions workflows, chased down dead JitPack dependencies, dealt with Gradle configuration cache errors, and somehow made it all work.
+Along the way, a total coding newbie teamed up with **Claude** (an AI made by Anthropic) to fix, fork, rename, and ship something that would actually survive. The human handled the vision and the debugging conversations. Claude wrote the code. Together they fought through GitHub Actions failures, dead JitPack dependencies, Gradle configuration cache errors, and somehow made it all work.
 
 This is **Tsuki (月)** — the app that refused to die.
 
@@ -48,7 +48,7 @@ This is **Tsuki (月)** — the app that refused to die.
 ## 📱 Requirements
 
 - Android 6.0 (API 23) or higher
-- Works on Android 7 (tested on Huawei P9 Lite — the whole reason this app exists 😄)
+- Works on Android 7 (tested on an old Huawei — the whole reason this app exists 😄)
 
 ---
 
@@ -64,7 +64,7 @@ No PC, no Android Studio needed.
 
 ## 📄 Credits
 
-- **Aanan** — the guy who just wanted to read Solo Leveling on a 7-year-old phone
+- **The human** — the one who just wanted to read Solo Leveling on a 7-year-old phone
 - **Claude (Anthropic)** — the AI that wrote all the code
 - **[Futon](https://github.com/AppFuton/Futon)** — the base we forked from
 - **[Kotatsu](https://github.com/KotatsuApp/Kotatsu)** — the original upstream project

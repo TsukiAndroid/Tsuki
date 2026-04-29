@@ -874,7 +874,7 @@
     <string name="collapse_long_description">Collapse long description</string>
     <string name="cover_background_transparency">Cover background transparency (%)</string>
     <string name="our_story_title">Our Story 🌙</string>
-    <string name="our_story_summary">Tsuki was born from a simple problem: a 17-year-old from Khulna, Bangladesh named Aanan just wanted to read manga on his old Huawei P9 Lite running Android 7. What started as debugging SSL handshake errors, chasing down dead parser repos, and watching app after app get taken down — Kotatsu, Yukimi, Usagi — turned into a collaboration with an AI (Claude, made by Anthropic) to build something that would just work. Aanan is a total newbie to coding. Claude did the code. Together they forked, fixed, renamed, and shipped. This is Tsuki — the app that refused to die. 月.</string>
+    <string name="our_story_summary">Tsuki was born from a simple problem: someone just wanted to read manga on his old Huawei P9 Lite running Android 7. What started as debugging SSL handshake errors, chasing down dead parser repos, and watching app after app get taken down — Kotatsu, Yukimi, Usagi — turned into a collaboration with an AI (Claude, made by Anthropic) to build something that would just work. Aanan is a total newbie to coding. Claude did the code. Together they forked, fixed, renamed, and shipped. This is Tsuki — the app that refused to die. 月.</string>
     <string name="creating_backup">Creating backup</string>
     <string name="share_backup">Share backup</string>
     <string name="reader_multitask">Open reader in a separate task</string>
