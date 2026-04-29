@@ -1,6 +1,6 @@
-Futon is a free and open source manga reader for Android.
+Tsuki is a free and open source manga reader for Android.
 
-Note: Futon is an unofficial fork of Kotatsu
+Note: Tsuki is an unofficial fork of Yukimi which later used Futon's code for building.
 
 **Main Features:**
 
