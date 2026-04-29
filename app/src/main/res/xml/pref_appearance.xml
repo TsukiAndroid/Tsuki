@@ -35,6 +35,14 @@
             app:useSimpleSummaryProvider="true" />
 
         <io.github.landwarderer.futon.settings.utils.SliderPreference
+            android:key="cover_alpha"
+            android:stepSize="5"
+            android:title="@string/cover_transparency"
+            android:valueFrom="10"
+            android:valueTo="100"
+            app:defaultValue="100" />
+
+        <io.github.landwarderer.futon.settings.utils.SliderPreference
             android:key="grid_size"
             android:stepSize="5"
             android:title="@string/grid_size"
@@ -69,15 +77,6 @@
             android:defaultValue="true"
             android:key="description_collapse"
             android:title="@string/collapse_long_description" />
-
-        <io.github.landwarderer.futon.settings.utils.SliderPreference
-            android:key="cover_background_alpha"
-            android:stepSize="5"
-            android:title="@string/cover_background_transparency"
-            android:valueFrom="0"
-            android:valueTo="100"
-            app:defaultValue="40"
-            app:useSimpleSummaryProvider="true" />
 
         <SwitchPreferenceCompat
             android:defaultValue="true"

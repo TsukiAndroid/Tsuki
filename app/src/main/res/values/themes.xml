@@ -1,159 +1,170 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
 
-	<!-- Base application theme. -->
-	<style name="Base.Theme.Futon" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Base application theme. -->
+        <style name="Base.Theme.Futon" parent="Theme.Material3.DayNight.NoActionBar">
 
-		<!-- Theme Colors -->
-		<item name="colorPrimary">@color/futon_primary</item>
-		<item name="colorPrimaryContainer">@color/futon_primaryContainer</item>
-		<item name="colorOnPrimary">@color/futon_onPrimary</item>
-		<item name="colorOnPrimaryContainer">@color/futon_onPrimaryContainer</item>
-		<item name="colorPrimaryInverse">@color/futon_inversePrimary</item>
-		<item name="colorSecondary">@color/futon_secondary</item>
-		<item name="colorSecondaryContainer">@color/futon_secondaryContainer</item>
-		<item name="colorOnSecondary">@color/futon_onSecondary</item>
-		<item name="colorOnSecondaryContainer">@color/futon_onSecondaryContainer</item>
-		<item name="colorTertiary">@color/futon_tertiary</item>
-		<item name="colorTertiaryContainer">@color/futon_tertiaryContainer</item>
-		<item name="colorOnTertiary">@color/futon_onTertiary</item>
-		<item name="colorOnTertiaryContainer">@color/futon_onTertiaryContainer</item>
-		<item name="colorSurface">@color/futon_surface</item>
-		<item name="colorSurfaceDim">@color/futon_surfaceDim</item>
-		<item name="colorSurfaceBright">@color/futon_surfaceBright</item>
-		<item name="colorSurfaceContainerLowest">@color/futon_surfaceContainerLowest</item>
-		<item name="colorSurfaceContainerLow">@color/futon_surfaceContainerLow</item>
-		<item name="colorSurfaceContainer">@color/futon_surfaceContainer</item>
-		<item name="colorSurfaceContainerHigh">@color/futon_surfaceContainerHigh</item>
-		<item name="colorSurfaceContainerHighest">@color/futon_surfaceContainerHighest</item>
-		<item name="colorSurfaceVariant">@color/futon_surfaceVariant</item>
-		<item name="colorOnSurface">@color/futon_onSurface</item>
-		<item name="colorOnSurfaceVariant">@color/futon_onSurfaceVariant</item>
-		<item name="colorSurfaceInverse">@color/futon_inverseSurface</item>
-		<item name="colorOnSurfaceInverse">@color/futon_inverseOnSurface</item>
-		<item name="colorOnBackground">@color/futon_onSurface</item>
-		<item name="colorError">@color/error</item>
-		<item name="colorErrorContainer">@color/errorContainer</item>
-		<item name="colorOnError">@color/onError</item>
-		<item name="colorOnErrorContainer">@color/onErrorContainer</item>
-		<item name="colorOutline">@color/futon_outline</item>
-		<item name="colorOutlineVariant">@color/futon_outline</item>
+                <!-- Theme Colors -->
+                <item name="colorPrimary">@color/futon_primary</item>
+                <item name="colorPrimaryContainer">@color/futon_primaryContainer</item>
+                <item name="colorOnPrimary">@color/futon_onPrimary</item>
+                <item name="colorOnPrimaryContainer">@color/futon_onPrimaryContainer</item>
+                <item name="colorPrimaryInverse">@color/futon_inversePrimary</item>
+                <item name="colorSecondary">@color/futon_secondary</item>
+                <item name="colorSecondaryContainer">@color/futon_secondaryContainer</item>
+                <item name="colorOnSecondary">@color/futon_onSecondary</item>
+                <item name="colorOnSecondaryContainer">@color/futon_onSecondaryContainer</item>
+                <item name="colorTertiary">@color/futon_tertiary</item>
+                <item name="colorTertiaryContainer">@color/futon_tertiaryContainer</item>
+                <item name="colorOnTertiary">@color/futon_onTertiary</item>
+                <item name="colorOnTertiaryContainer">@color/futon_onTertiaryContainer</item>
+                <item name="colorSurface">@color/futon_surface</item>
+                <item name="colorSurfaceDim">@color/futon_surfaceDim</item>
+                <item name="colorSurfaceBright">@color/futon_surfaceBright</item>
+                <item name="colorSurfaceContainerLowest">@color/futon_surfaceContainerLowest</item>
+                <item name="colorSurfaceContainerLow">@color/futon_surfaceContainerLow</item>
+                <item name="colorSurfaceContainer">@color/futon_surfaceContainer</item>
+                <item name="colorSurfaceContainerHigh">@color/futon_surfaceContainerHigh</item>
+                <item name="colorSurfaceContainerHighest">@color/futon_surfaceContainerHighest</item>
+                <item name="colorSurfaceVariant">@color/futon_surfaceVariant</item>
+                <item name="colorOnSurface">@color/futon_onSurface</item>
+                <item name="colorOnSurfaceVariant">@color/futon_onSurfaceVariant</item>
+                <item name="colorSurfaceInverse">@color/futon_inverseSurface</item>
+                <item name="colorOnSurfaceInverse">@color/futon_inverseOnSurface</item>
+                <item name="colorOnBackground">@color/futon_onSurface</item>
+                <item name="colorError">@color/error</item>
+                <item name="colorErrorContainer">@color/errorContainer</item>
+                <item name="colorOnError">@color/onError</item>
+                <item name="colorOnErrorContainer">@color/onErrorContainer</item>
+                <item name="colorOutline">@color/futon_outline</item>
+                <item name="colorOutlineVariant">@color/futon_outline</item>
 
-		<!-- Drawables (icons) -->
-		<item name="actionModeCloseDrawable">@drawable/abc_ic_clear_material</item>
-		<item name="actionModeWebSearchDrawable">@drawable/abc_ic_search_api_material</item>
-		<item name="expandCollapseIndicator">@drawable/m3_split_button_chevron_avd</item>
+                <!-- Drawables (icons) -->
+                <item name="actionModeCloseDrawable">@drawable/abc_ic_clear_material</item>
+                <item name="actionModeWebSearchDrawable">@drawable/abc_ic_search_api_material</item>
+                <item name="expandCollapseIndicator">@drawable/m3_split_button_chevron_avd</item>
 
-		<!-- Base attributes -->
-		<item name="android:windowLightStatusBar">@bool/light_status_bar</item>
-		<item name="android:statusBarColor">@android:color/transparent</item>
-		<item name="android:navigationBarColor">@color/dim</item>
-		<item name="android:navigationBarDividerColor" tools:targetApi="o_mr1">@null</item>
-		<item name="android:enforceNavigationBarContrast" tools:targetApi="Q">false</item>
-		<item name="android:enforceStatusBarContrast" tools:targetApi="Q">false</item>
-		<item name="windowActionModeOverlay">true</item>
+                <!-- Base attributes -->
+                <item name="android:windowLightStatusBar">@bool/light_status_bar</item>
+                <item name="android:statusBarColor">@android:color/transparent</item>
+                <item name="android:navigationBarColor">@color/dim</item>
+                <item name="android:navigationBarDividerColor" tools:targetApi="o_mr1">@null</item>
+                <item name="android:enforceNavigationBarContrast" tools:targetApi="Q">false</item>
+                <item name="android:enforceStatusBarContrast" tools:targetApi="Q">false</item>
+                <item name="windowActionModeOverlay">true</item>
 
-		<!-- System components styles -->
-		<item name="android:alertDialogTheme">@style/ThemeOverlay.Futon.AlertDialog</item>
-		<item name="alertDialogTheme">@style/ThemeOverlay.Futon.AlertDialog</item>
-		<item name="bottomSheetDialogTheme">@style/ThemeOverlay.Futon.BottomSheetDialog</item>
-		<item name="sideSheetDialogTheme">@style/ThemeOverlay.Futon.SideSheetDialog</item>
-		<item name="recyclerViewStyle">@style/Widget.Futon.RecyclerView</item>
-		<item name="android:dropDownSpinnerStyle">@style/Widget.Futon.Spinner.DropDown</item>
-		<item name="switchPreferenceCompatStyle">@style/Preference.SwitchPreferenceCompat.M3</item>
-		<item name="circularProgressIndicatorStyle">@style/Widget.Futon.CircularProgressIndicator</item>
-		<item name="linearProgressIndicatorStyle">@style/Widget.Futon.LinearProgressIndicator</item>
-		<item name="bottomSheetDragHandleStyle">@style/Widget.Futon.BottomSheet.DragHandle</item>
-		<item name="preferenceTheme">@style/PreferenceThemeOverlay.Futon</item>
-		<!-- Fix crash in A15 -->
-		<item name="actionButtonStyle">@style/Widget.AppCompat.ActionButton</item>
+                <!-- System components styles -->
+                <item name="android:alertDialogTheme">@style/ThemeOverlay.Futon.AlertDialog</item>
+                <item name="alertDialogTheme">@style/ThemeOverlay.Futon.AlertDialog</item>
+                <item name="bottomSheetDialogTheme">@style/ThemeOverlay.Futon.BottomSheetDialog</item>
+                <item name="sideSheetDialogTheme">@style/ThemeOverlay.Futon.SideSheetDialog</item>
+                <item name="recyclerViewStyle">@style/Widget.Futon.RecyclerView</item>
+                <item name="android:dropDownSpinnerStyle">@style/Widget.Futon.Spinner.DropDown</item>
+                <item name="switchPreferenceCompatStyle">@style/Preference.SwitchPreferenceCompat.M3</item>
+                <item name="circularProgressIndicatorStyle">@style/Widget.Futon.CircularProgressIndicator</item>
+                <item name="linearProgressIndicatorStyle">@style/Widget.Futon.LinearProgressIndicator</item>
+                <item name="bottomSheetDragHandleStyle">@style/Widget.Futon.BottomSheet.DragHandle</item>
+                <item name="preferenceTheme">@style/PreferenceThemeOverlay.Futon</item>
+                <!-- Fix crash in A15 -->
+                <item name="actionButtonStyle">@style/Widget.AppCompat.ActionButton</item>
 
-		<!-- Custom views -->
-		<item name="fastScrollerStyle">@style/Widget.Futon.FastScroller</item>
-		<item name="listItemTextViewStyle">@style/Widget.Futon.ListItemTextView</item>
-		<item name="dotIndicatorStyle">@style/Widget.Futon.DotIndicator</item>
-		<item name="badgeViewStyle">@style/Widget.Futon.BadgeView</item>
-		<item name="coverImageViewStyle">@style/Widget.Futon.ImageView.Cover</item>
-	</style>
+                <!-- Custom views -->
+                <item name="fastScrollerStyle">@style/Widget.Futon.FastScroller</item>
+                <item name="listItemTextViewStyle">@style/Widget.Futon.ListItemTextView</item>
+                <item name="dotIndicatorStyle">@style/Widget.Futon.DotIndicator</item>
+                <item name="badgeViewStyle">@style/Widget.Futon.BadgeView</item>
+                <item name="coverImageViewStyle">@style/Widget.Futon.ImageView.Cover</item>
 
-	<!--== Default Theme ==-->
-	<style name="Theme.Futon" parent="Base.Theme.Futon" />
+                <!-- Smooth activity transitions -->
+                <item name="android:windowAnimationStyle">@style/TsukiWindowAnimation</item>
+        </style>
 
-	<!-- Base ThemeOverlay -->
-	<style name="ThemeOverlay.Futon" parent="ThemeOverlay.Material3.Light" />
+        <!-- Smooth slide activity animations -->
+        <style name="TsukiWindowAnimation" parent="@android:style/Animation.Activity">
+                <item name="android:activityOpenEnterAnimation">@anim/activity_enter</item>
+                <item name="android:activityOpenExitAnimation">@anim/activity_exit</item>
+                <item name="android:activityCloseEnterAnimation">@anim/activity_pop_enter</item>
+                <item name="android:activityCloseExitAnimation">@anim/activity_pop_exit</item>
+        </style>
 
-	<!-- Monet theme only support S+ -->
-	<style name="ThemeOverlay.Futon.Monet" parent="ThemeOverlay.Material3.DynamicColors.Light" />
+        <!--== Default Theme ==-->
+        <style name="Theme.Futon" parent="Base.Theme.Futon" />
 
-	<!-- Expressive Monet theme -->
-	<style name="ThemeOverlay.Futon.Expressive" parent="ThemeOverlay.Material3Expressive.DynamicColors.DayNight">
-		<item name="alertDialogTheme">@style/ThemeOverlay.Material3Expressive.Dialog.Alert</item>
-		<item name="materialAlertDialogTheme">@style/ThemeOverlay.Material3Expressive.MaterialAlertDialog</item>
+        <!-- Base ThemeOverlay -->
+        <style name="ThemeOverlay.Futon" parent="ThemeOverlay.Material3.Light" />
 
-		<item name="appBarLayoutStyle">@style/Widget.Material3Expressive.AppBarLayout</item>
-		<item name="collapsingToolbarLayoutStyle">@style/Widget.Material3Expressive.CollapsingToolbar</item>
-		<item name="collapsingToolbarLayoutMediumStyle">@style/Widget.Material3Expressive.CollapsingToolbar.Medium
-		</item>
-		<item name="collapsingToolbarLayoutLargeStyle">@style/Widget.Material3Expressive.CollapsingToolbar.Large</item>
+        <!-- Monet theme only support S+ -->
+        <style name="ThemeOverlay.Futon.Monet" parent="ThemeOverlay.Material3.DynamicColors.Light" />
 
-		<item name="materialSearchBarStyle">@style/Widget.Material3Expressive.SearchBar</item>
+        <!-- Expressive Monet theme -->
+        <style name="ThemeOverlay.Futon.Expressive" parent="ThemeOverlay.Material3Expressive.DynamicColors.DayNight">
+                <item name="alertDialogTheme">@style/ThemeOverlay.Material3Expressive.Dialog.Alert</item>
+                <item name="materialAlertDialogTheme">@style/ThemeOverlay.Material3Expressive.MaterialAlertDialog</item>
 
-		<item name="floatingActionButtonStyle">@style/Widget.Material3Expressive.FloatingActionButton</item>
-		<item name="floatingActionButtonMediumStyle">@style/Widget.Material3Expressive.FloatingActionButton.Medium
-		</item>
-		<item name="floatingActionButtonLargeStyle">@style/Widget.Material3Expressive.FloatingActionButton.Large</item>
+                <item name="appBarLayoutStyle">@style/Widget.Material3Expressive.AppBarLayout</item>
+                <item name="collapsingToolbarLayoutStyle">@style/Widget.Material3Expressive.CollapsingToolbar</item>
+                <item name="collapsingToolbarLayoutMediumStyle">@style/Widget.Material3Expressive.CollapsingToolbar.Medium
+                </item>
+                <item name="collapsingToolbarLayoutLargeStyle">@style/Widget.Material3Expressive.CollapsingToolbar.Large</item>
 
-		<item name="extendedFloatingActionButtonSmallStyle">
-			@style/Widget.Material3Expressive.ExtendedFloatingActionButton.Small
-		</item>
-		<item name="extendedFloatingActionButtonMediumStyle">
-			@style/Widget.Material3Expressive.ExtendedFloatingActionButton.Medium
-		</item>
-		<item name="extendedFloatingActionButtonLargeStyle">
-			@style/Widget.Material3Expressive.ExtendedFloatingActionButton.Large
-		</item>
+                <item name="materialSearchBarStyle">@style/Widget.Material3Expressive.SearchBar</item>
 
-		<item name="materialButtonStyle">@style/Widget.Material3Expressive.Button</item>
-		<item name="materialButtonTonalStyle">@style/Widget.Material3Expressive.Button.TonalButton</item>
-		<item name="materialButtonOutlinedStyle">@style/Widget.Material3Expressive.Button.OutlinedButton</item>
-		<item name="materialButtonElevatedStyle">@style/Widget.Material3Expressive.Button.ElevatedButton</item>
-		<item name="borderlessButtonStyle">@style/Widget.Material3Expressive.Button.TextButton</item>
-		<item name="buttonBarButtonStyle">@style/Widget.Material3Expressive.Button.TextButton.Dialog</item>
-		<item name="snackbarButtonStyle">@style/Widget.Material3Expressive.Button.TextButton.Snackbar</item>
-		<item name="materialIconButtonStyle">@style/Widget.Material3Expressive.Button.IconButton.Standard</item>
-		<item name="materialIconButtonOutlinedStyle">@style/Widget.Material3Expressive.Button.IconButton.Outlined</item>
-		<item name="materialIconButtonFilledStyle">@style/Widget.Material3Expressive.Button.IconButton.Filled</item>
-		<item name="materialIconButtonFilledTonalStyle">@style/Widget.Material3Expressive.Button.IconButton.Tonal</item>
+                <item name="floatingActionButtonStyle">@style/Widget.Material3Expressive.FloatingActionButton</item>
+                <item name="floatingActionButtonMediumStyle">@style/Widget.Material3Expressive.FloatingActionButton.Medium
+                </item>
+                <item name="floatingActionButtonLargeStyle">@style/Widget.Material3Expressive.FloatingActionButton.Large</item>
 
-		<item name="materialButtonGroupStyle">@style/Widget.Material3Expressive.MaterialButtonGroup</item>
-		<item name="materialButtonToggleGroupStyle">@style/Widget.Material3Expressive.MaterialButtonToggleGroup</item>
+                <item name="extendedFloatingActionButtonSmallStyle">
+                        @style/Widget.Material3Expressive.ExtendedFloatingActionButton.Small
+                </item>
+                <item name="extendedFloatingActionButtonMediumStyle">
+                        @style/Widget.Material3Expressive.ExtendedFloatingActionButton.Medium
+                </item>
+                <item name="extendedFloatingActionButtonLargeStyle">
+                        @style/Widget.Material3Expressive.ExtendedFloatingActionButton.Large
+                </item>
 
-		<item name="bottomNavigationStyle">@style/Widget.Material3Expressive.BottomNavigationView</item>
-		<item name="navigationRailStyle">@style/Widget.Material3Expressive.NavigationRailView</item>
+                <item name="materialButtonStyle">@style/Widget.Material3Expressive.Button</item>
+                <item name="materialButtonTonalStyle">@style/Widget.Material3Expressive.Button.TonalButton</item>
+                <item name="materialButtonOutlinedStyle">@style/Widget.Material3Expressive.Button.OutlinedButton</item>
+                <item name="materialButtonElevatedStyle">@style/Widget.Material3Expressive.Button.ElevatedButton</item>
+                <item name="borderlessButtonStyle">@style/Widget.Material3Expressive.Button.TextButton</item>
+                <item name="buttonBarButtonStyle">@style/Widget.Material3Expressive.Button.TextButton.Dialog</item>
+                <item name="snackbarButtonStyle">@style/Widget.Material3Expressive.Button.TextButton.Snackbar</item>
+                <item name="materialIconButtonStyle">@style/Widget.Material3Expressive.Button.IconButton.Standard</item>
+                <item name="materialIconButtonOutlinedStyle">@style/Widget.Material3Expressive.Button.IconButton.Outlined</item>
+                <item name="materialIconButtonFilledStyle">@style/Widget.Material3Expressive.Button.IconButton.Filled</item>
+                <item name="materialIconButtonFilledTonalStyle">@style/Widget.Material3Expressive.Button.IconButton.Tonal</item>
 
-		<item name="toolbarStyle">@style/Widget.Material3Expressive.Toolbar</item>
-		<item name="toolbarSurfaceStyle">@style/Widget.Material3Expressive.Toolbar.Surface</item>
+                <item name="materialButtonGroupStyle">@style/Widget.Material3Expressive.MaterialButtonGroup</item>
+                <item name="materialButtonToggleGroupStyle">@style/Widget.Material3Expressive.MaterialButtonToggleGroup</item>
 
-		<item name="linearProgressIndicatorStyle">@style/Widget.Material3Expressive.LinearProgressIndicator</item>
-		<item name="circularProgressIndicatorStyle">@style/Widget.Material3Expressive.CircularProgressIndicator</item>
+                <item name="bottomNavigationStyle">@style/Widget.Material3Expressive.BottomNavigationView</item>
+                <item name="navigationRailStyle">@style/Widget.Material3Expressive.NavigationRailView</item>
 
-		<item name="sliderStyle">@style/Widget.Material3Expressive.Slider.Xsmall</item>
+                <item name="toolbarStyle">@style/Widget.Material3Expressive.Toolbar</item>
+                <item name="toolbarSurfaceStyle">@style/Widget.Material3Expressive.Toolbar.Surface</item>
 
-		<item name="collapsingToolbarLayoutMediumSize">@dimen/m3_comp_app_bar_medium_flexible_container_height</item>
-		<item name="collapsingToolbarLayoutLargeSize">@dimen/m3_comp_app_bar_large_flexible_container_height</item>
+                <item name="linearProgressIndicatorStyle">@style/Widget.Material3Expressive.LinearProgressIndicator</item>
+                <item name="circularProgressIndicatorStyle">@style/Widget.Material3Expressive.CircularProgressIndicator</item>
 
-		<item name="actionBarSize">@dimen/m3_comp_app_bar_small_container_height</item>
+                <item name="sliderStyle">@style/Widget.Material3Expressive.Slider.Xsmall</item>
 
-		<item name="dynamicColorThemeOverlay">@style/ThemeOverlay.Material3Expressive.DynamicColors.DayNight</item>
-	</style>
+                <item name="collapsingToolbarLayoutMediumSize">@dimen/m3_comp_app_bar_medium_flexible_container_height</item>
+                <item name="collapsingToolbarLayoutLargeSize">@dimen/m3_comp_app_bar_large_flexible_container_height</item>
 
-	<!-- Changes only for night -->
-	<style name="ThemeOverlay.Futon.Amoled" parent="" />
+                <item name="actionBarSize">@dimen/m3_comp_app_bar_small_container_height</item>
 
-	<!-- App Widgets -->
+                <item name="dynamicColorThemeOverlay">@style/ThemeOverlay.Material3Expressive.DynamicColors.DayNight</item>
+        </style>
 
-	<style name="Theme.Futon.AppWidgetContainer" parent="@style/Theme.MaterialComponents.Light">
-		<item name="android:colorBackground">@color/futon_background</item>
-		<item name="android:panelColorBackground">@color/futon_primaryContainer</item>
-	</style>
+        <!-- Changes only for night -->
+        <style name="ThemeOverlay.Futon.Amoled" parent="" />
+
+        <!-- App Widgets -->
+
+        <style name="Theme.Futon.AppWidgetContainer" parent="@style/Theme.MaterialComponents.Light">
+                <item name="android:colorBackground">@color/futon_background</item>
+                <item name="android:panelColorBackground">@color/futon_primaryContainer</item>
+        </style>
 </resources>

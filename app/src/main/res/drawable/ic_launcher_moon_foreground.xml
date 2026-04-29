@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Main crescent moon body -->
+    <path
+        android:fillColor="#E8D5FF"
+        android:pathData="M54,18 C54,18 72,22 76,36 C80,50 72,68 58,72 C44,76 30,68 26,54 C22,40 30,24 42,20 C34,30 34,48 44,58 C54,68 68,66 76,56 C84,46 80,30 70,24 C64,20 58,18 54,18 Z" />
+
+    <!-- Moon highlight -->
+    <path
+        android:fillColor="#F5EAFF"
+        android:pathData="M44,22 C44,22 38,30 38,42 C38,50 42,56 44,58 C40,50 40,38 46,28 Z" />
+
+    <!-- Star 1 (top right) -->
+    <path
+        android:fillColor="#FFD700"
+        android:pathData="M80,20 L81.5,25 L87,25 L82.5,28 L84,33 L80,30 L76,33 L77.5,28 L73,25 L78.5,25 Z" />
+
+    <!-- Star 2 (small, right side) -->
+    <path
+        android:fillColor="#FFE566"
+        android:pathData="M86,42 L87,45 L90,45 L87.5,47 L88.5,50 L86,48 L83.5,50 L84.5,47 L82,45 L85,45 Z" />
+
+    <!-- Star 3 (tiny sparkle) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M72,16 L72.8,18.5 L75.5,18.5 L73.3,20 L74.1,22.5 L72,21 L69.9,22.5 L70.7,20 L68.5,18.5 L71.2,18.5 Z" />
+
+    <!-- Cute face: left eye -->
+    <path
+        android:fillColor="#6A4C9C"
+        android:pathData="M49,44 C49,44 47,42 46,44 C45,46 47,48 49,46 C51,44 51,42 49,44 Z" />
+
+    <!-- Cute face: right eye -->
+    <path
+        android:fillColor="#6A4C9C"
+        android:pathData="M58,42 C58,42 56,40 55,42 C54,44 56,46 58,44 C60,42 60,40 58,42 Z" />
+
+    <!-- Cute face: blush left -->
+    <path
+        android:fillColor="#FFAACC"
+        android:fillAlpha="0.6"
+        android:pathData="M43,50 C43,50 41,48 42,50 C43,52 45,52 45,50 C45,48 43,48 43,50 Z" />
+
+    <!-- Cute face: blush right -->
+    <path
+        android:fillColor="#FFAACC"
+        android:fillAlpha="0.6"
+        android:pathData="M62,48 C62,48 60,46 61,48 C62,50 64,50 64,48 C64,46 62,46 62,48 Z" />
+
+    <!-- Cute face: smile -->
+    <path
+        android:fillColor="#6A4C9C"
+        android:strokeColor="#6A4C9C"
+        android:strokeWidth="1.5"
+        android:pathData="M49,54 C51,57 56,57 58,54" />
+
+</vector>

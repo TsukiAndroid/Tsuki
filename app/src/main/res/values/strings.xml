@@ -130,7 +130,7 @@
     <string name="enter_password">Enter password</string>
     <string name="wrong_password">Wrong password</string>
     <string name="protect_application">Protect the app</string>
-    <string name="protect_application_summary">Ask for password when starting Tsuki</string>
+    <string name="protect_application_summary">Ask for password when starting Futon</string>
     <string name="repeat_password">Repeat the password</string>
     <string name="passwords_mismatch">Mismatching passwords</string>
     <string name="about">About</string>
@@ -329,7 +329,7 @@
     <string name="import_completed_hint">You can delete the original file from storage to save space</string>
     <string name="import_will_start_soon">Import will start soon</string>
     <string name="feed">Feed</string>
-    <string name="manga_error_description_pattern">Error details:&lt;br&gt;&lt;tt&gt;%1$s&lt;/tt&gt;&lt;br&gt;&lt;br&gt;1. Try to &lt;a href="%2$s"&gt;open manga in a web browser&lt;/a&gt; to ensure it is available on its source&lt;br&gt;2. Make sure you are using the &lt;a href="futon://about"&gt;latest version of Tsuki&lt;/a&gt;&lt;br&gt;3. If it is available, send an error report to the developers.</string>
+    <string name="manga_error_description_pattern">Error details:&lt;br&gt;&lt;tt&gt;%1$s&lt;/tt&gt;&lt;br&gt;&lt;br&gt;1. Try to &lt;a href="%2$s"&gt;open manga in a web browser&lt;/a&gt; to ensure it is available on its source&lt;br&gt;2. Make sure you are using the &lt;a href="futon://about"&gt;latest version of Futon&lt;/a&gt;&lt;br&gt;3. If it is available, send an error report to the developers.</string>
     <string name="history_shortcuts">Show recent manga shortcuts</string>
     <string name="history_shortcuts_summary">Make recent manga available by long pressing on application icon</string>
     <string name="reader_control_ltr_summary">Do not adjust the page switching direction to the reader mode, e. g. pressing the right key always switches to the next page. This option affects only hardware input devices</string>
@@ -525,15 +525,6 @@
     <string name="no_manga_sources_found">No available manga sources found by your query</string>
     <string name="catalog">Catalog</string>
     <string name="manage_sources">Manage sources</string>
-    <string name="add_custom_source">Add custom source</string>
-    <string name="custom_source">Custom source</string>
-    <string name="custom_sources">Custom sources</string>
-    <string name="source_name_hint">Source name (optional)</string>
-    <string name="source_url_hint">URL (e.g. https://mangakakalot.com)</string>
-    <string name="source_type_hint">Source type</string>
-    <string name="source_description_hint">Description (optional)</string>
-    <string name="add_source">Add source</string>
-    <string name="cancel">Cancel</string>
     <string name="manual">Manual</string>
     <string name="available_d">Available: %1$d</string>
     <string name="disable_nsfw_summary">Disable NSFW sources and hide adult manga from list if possible</string>
@@ -649,7 +640,7 @@
     <string name="show_pages_thumbs">Show pages thumbnails</string>
     <string name="show_pages_thumbs_summary">Enable the \"Pages\" tab on the details screen</string>
     <string name="error_no_data_received">No data was received from server</string>
-    <string name="unsupported_backup_message">Please select a proper Tsuki backup file</string>
+    <string name="unsupported_backup_message">Please select a proper Futon backup file</string>
     <string name="list_ellipsize_pattern" translatable="false">(+%d)</string>
     <!-- Short hours format pattern -->
     <string name="hours_short">%d h</string>
@@ -708,8 +699,8 @@
     <string name="chapters_read">Chapters read</string>
     <string name="chapters_left">Chapters left</string>
     <string name="external_source">External/plugin</string>
-    <string name="plugin_incompatible">Incompatible plugin or internal error. Make sure you are using the latest version of the plugin and Tsuki</string>
-    <string name="plugin_incompatible_with_cause">Plugin error: %s\n Make sure you are using the latest version of the plugin and Tsuki</string>
+    <string name="plugin_incompatible">Incompatible plugin or internal error. Make sure you are using the latest version of the plugin and Futon</string>
+    <string name="plugin_incompatible_with_cause">Plugin error: %s\n Make sure you are using the latest version of the plugin and Futon</string>
     <string name="connection_ok">Connection is OK</string>
     <string name="invalid_proxy_configuration">Invalid proxy configuration</string>
     <string name="show_quick_filters">Show quick filters</string>
@@ -815,7 +806,7 @@
     <string name="send_backups_telegram">Send backups in Telegram</string>
     <string name="test_connection">Test connection</string>
     <string name="telegram_chat_id_summary">Enter the chat ID where backups should be sent</string>
-    <string name="open_telegram_bot_summary">Press to open chat with Tsuki Backup Bot</string>
+    <string name="open_telegram_bot_summary">Press to open chat with Futon Backup Bot</string>
     <string name="clear_database">Clear database</string>
     <string name="clear_database_summary">Delete information about manga that is not used</string>
     <string name="enable_all_sources">Enable all manga sources</string>
@@ -843,10 +834,10 @@
     <string name="search_disabled_sources">Search through disabled sources</string>
     <string name="error_details">Error details</string>
     <string name="error_disclaimer_manga">Try to open manga in a web browser to ensure it is available on its source.</string>
-    <string name="error_disclaimer_app_outdated">It looks like your version of Tsuki is out of date. Please install the latest version to get all available fixes.</string>
+    <string name="error_disclaimer_app_outdated">It looks like your version of Futon is out of date. Please install the latest version to get all available fixes.</string>
     <string name="error_disclaimer_report">You can submit a bug report to the developers. This will help us investigate and fix the issue.</string>
     <string name="link_to_manga_on_s">Link to manga on %s</string>
-    <string name="link_to_manga_in_app">Link to manga in Tsuki</string>
+    <string name="link_to_manga_in_app">Link to manga in Futon</string>
     <string name="clear_browser_data">Clear browser data</string>
     <string name="clear_browser_data_summary">Clear browser data such as cache and cookies. Warning: Authorization in manga sources may become invalid</string>
     <string name="no_write_permission_to_file">Does not have permission to write a file</string>
@@ -872,15 +863,16 @@
     <string name="adblock">Block ads in browser</string>
     <string name="adblock_summary">Block advertisement in the built-in browser (beta)</string>
     <string name="collapse_long_description">Collapse long description</string>
-    <string name="cover_background_transparency">Cover background transparency (%)</string>
-    <string name="our_story_title">Our Story 🌙</string>
-    <string name="our_story_summary">Tsuki started as a personal mission — just wanting to read manga on an old Android 7 device that kept breaking every app we tried. What followed was a long road through SSL handshake errors, dead parser repos, and a graveyard of manga apps that kept getting taken down one by one. Eventually, teaming up with an AI named Claude (made by Anthropic), we started fixing, forking, and building something that would actually survive. No professional dev experience. No Android Studio knowledge. Just stubbornness, curiosity, and a lot of trial and error. This is Tsuki (月) — the app that refused to die.</string>
     <string name="creating_backup">Creating backup</string>
     <string name="share_backup">Share backup</string>
     <string name="reader_multitask">Open reader in a separate task</string>
     <string name="reader_multitask_summary">Allows you to keep multiple readers with different manga open at the same time</string>
     <string name="theme_name_itsuka">Itsuka</string>
     <string name="theme_name_totoro">Totoro</string>
+    <string name="theme_name_nord">Nord</string>
+    <string name="theme_name_midnight">Midnight</string>
+    <string name="theme_name_ocean">Ocean</string>
+    <string name="cover_transparency">Cover transparency</string>
     <string name="book_effect">Yellowish background (blue filter)</string>
     <string name="local_storage_cleanup">Local storage cleanup</string>
     <string name="packup_creation_failed">Failed to create backup</string>
@@ -896,7 +888,7 @@
     <string name="discord_token_hint">Paste your Discord Token here</string>
     <string name="discord_rpc_summary">Show your reading status on Discord</string>
     <string name="obtain">Obtain</string>
-    <string name="discord_rpc_description">Reading manga on Tsuki - a manga reader app</string>
+    <string name="discord_rpc_description">Reading manga on Futon - a manga reader app</string>
     <string name="reading_s">Reading %s</string>
     <string name="read_on_s">Read on %s</string>
     <string name="rpc_skip_nsfw_summary">Do not use RPC for adult content</string>
