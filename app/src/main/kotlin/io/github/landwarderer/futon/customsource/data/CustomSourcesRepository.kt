@@ -23,6 +23,13 @@ class CustomSourcesRepository @Inject constructor(
     private val _sources = MutableStateFlow(loadAll())
     val sources: StateFlow<List<CustomSource>> = _sources.asStateFlow()
 
+    init {
+        // Register this singleton so the MangaSource(name) factory can resolve
+        // CUSTOM_<id> entries without a Hilt entry-point. Hilt creates one
+        // instance, so this assignment is safe.
+        INSTANCE = this
+    }
+
     fun getAll(): List<CustomSource> = _sources.value
 
     fun add(source: CustomSource) {
@@ -83,6 +90,19 @@ class CustomSourcesRepository @Inject constructor(
     companion object {
         private const val PREFS_NAME = "tsuki_custom_sources"
         private const val KEY_SOURCES = "sources"
+
+        @Volatile
+        private var INSTANCE: CustomSourcesRepository? = null
+
+        /**
+         * Lookup hook used by [io.github.landwarderer.futon.core.model.MangaSource]'s
+         * factory function so it can resolve `CUSTOM_<id>` source names back to a
+         * fully-formed [CustomSource]. Returns `null` if the singleton has not
+         * been built yet (very early app startup) or the id is unknown.
+         */
+        fun peekById(id: Long): CustomSource? = INSTANCE?.findById(id)
+
+        fun peekAll(): List<CustomSource> = INSTANCE?.getAll().orEmpty()
 
         fun generateId(): Long = System.currentTimeMillis()
     }

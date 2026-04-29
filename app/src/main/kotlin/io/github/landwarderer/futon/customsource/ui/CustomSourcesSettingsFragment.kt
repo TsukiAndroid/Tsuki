@@ -21,7 +21,9 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import io.github.landwarderer.futon.R
 import io.github.landwarderer.futon.core.nav.AppRouter
+import io.github.landwarderer.futon.customsource.domain.CustomMangaSource
 import io.github.landwarderer.futon.customsource.domain.CustomSource
+import io.github.landwarderer.futon.customsource.domain.CustomSourceType
 
 /**
  * Manage user-added custom sources. Shows the saved list, lets the user open
@@ -87,12 +89,20 @@ class CustomSourcesSettingsFragment : Fragment() {
 
     private fun openInBrowser(source: CustomSource) {
         val ctx = context ?: return
-        val intent = AppRouter.browserIntent(
-            context = ctx,
-            url = source.cleanBaseUrl,
-            source = null,
-            title = source.displayName,
-        )
+        val intent = when (source.type) {
+            CustomSourceType.MANGADEX_COMPATIBLE -> AppRouter.listIntent(
+                context = ctx,
+                source = CustomMangaSource(source),
+                filter = null,
+                sortOrder = null,
+            )
+            CustomSourceType.WEBVIEW -> AppRouter.browserIntent(
+                context = ctx,
+                url = source.cleanBaseUrl,
+                source = null,
+                title = source.displayName,
+            )
+        }
         startActivity(intent)
     }
 

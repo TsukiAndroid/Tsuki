@@ -16,6 +16,8 @@ import io.github.landwarderer.futon.core.model.getTitle
 import io.github.landwarderer.futon.core.model.isBroken
 import io.github.landwarderer.futon.core.model.isNsfw
 import io.github.landwarderer.futon.core.parser.external.ExternalMangaSource
+import io.github.landwarderer.futon.customsource.data.CustomSourcesRepository
+import io.github.landwarderer.futon.customsource.domain.CustomMangaSource
 import io.github.landwarderer.futon.core.prefs.AppSettings
 import io.github.landwarderer.futon.core.prefs.observeAsFlow
 import io.github.landwarderer.futon.core.ui.util.ReversibleHandle
@@ -49,419 +51,425 @@ class MangaSourcesRepository @Inject constructor(
     private val db: MangaDatabase,
     private val settings: AppSettings,
     private val mihonExtensionManager: MihonExtensionManager,
+    private val customSourcesRepository: CustomSourcesRepository,
 ) {
 
-	private val isNewSourcesAssimilated = AtomicBoolean(false)
-	private val dao: MangaSourcesDao
-		get() = db.getSourcesDao()
+        private val isNewSourcesAssimilated = AtomicBoolean(false)
+        private val dao: MangaSourcesDao
+                get() = db.getSourcesDao()
 
-	val allMangaSources: Set<MangaParserSource> = Collections.unmodifiableSet(
-		EnumSet.noneOf<MangaParserSource>(MangaParserSource::class.java).also {
+        val allMangaSources: Set<MangaParserSource> = Collections.unmodifiableSet(
+                EnumSet.noneOf<MangaParserSource>(MangaParserSource::class.java).also {
             MangaParserSource.entries.filterNotTo(it, MangaParserSource::isBroken)
         }
-	)
+        )
 
-	suspend fun getEnabledSources(): List<MangaSource> {
-		assimilateNewSources()
-		val order = settings.sourcesSortOrder
-		return dao.findAll(!settings.isAllSourcesEnabled, order).toSources(settings.isNsfwContentDisabled, order)
-			.let { enabled ->
-				val external = getExternalSources()
-				val list = ArrayList<MangaSourceInfo>(enabled.size + external.size)
-				external.mapTo(list) { MangaSourceInfo(it, isEnabled = true, isPinned = true) }
-				list.addAll(enabled)
-				list
-			}
-	}
+        suspend fun getEnabledSources(): List<MangaSource> {
+                assimilateNewSources()
+                val order = settings.sourcesSortOrder
+                return dao.findAll(!settings.isAllSourcesEnabled, order).toSources(settings.isNsfwContentDisabled, order)
+                        .let { enabled ->
+                                val external = getExternalSources()
+                                val list = ArrayList<MangaSourceInfo>(enabled.size + external.size)
+                                external.mapTo(list) { MangaSourceInfo(it, isEnabled = true, isPinned = true) }
+                                list.addAll(enabled)
+                                list
+                        }
+        }
 
-	suspend fun getPinnedSources(): Set<MangaSource> {
-		assimilateNewSources()
-		val skipNsfw = settings.isNsfwContentDisabled
-		return dao.findAllPinned().mapNotNullToSet {
-			it.source.toMangaSourceOrNull()?.takeUnless { x -> skipNsfw && x.isNsfw() }
-		}
-	}
+        suspend fun getPinnedSources(): Set<MangaSource> {
+                assimilateNewSources()
+                val skipNsfw = settings.isNsfwContentDisabled
+                return dao.findAllPinned().mapNotNullToSet {
+                        it.source.toMangaSourceOrNull()?.takeUnless { x -> skipNsfw && x.isNsfw() }
+                }
+        }
 
-	suspend fun getTopSources(limit: Int): List<MangaSource> {
-		assimilateNewSources()
-		return dao.findLastUsed(limit).toSources(settings.isNsfwContentDisabled, null)
-	}
+        suspend fun getTopSources(limit: Int): List<MangaSource> {
+                assimilateNewSources()
+                return dao.findLastUsed(limit).toSources(settings.isNsfwContentDisabled, null)
+        }
 
-	suspend fun getDisabledSources(): Set<MangaSource> {
-		assimilateNewSources()
-		if (settings.isAllSourcesEnabled) {
-			return emptySet()
-		}
-		val result = EnumSet.copyOf(allMangaSources)
-		val enabled = dao.findAllEnabledNames()
-		for (name in enabled) {
-			val source = name.toMangaSourceOrNull() ?: continue
-			result.remove(source)
-		}
-		return result
-	}
+        suspend fun getDisabledSources(): Set<MangaSource> {
+                assimilateNewSources()
+                if (settings.isAllSourcesEnabled) {
+                        return emptySet()
+                }
+                val result = EnumSet.copyOf(allMangaSources)
+                val enabled = dao.findAllEnabledNames()
+                for (name in enabled) {
+                        val source = name.toMangaSourceOrNull() ?: continue
+                        result.remove(source)
+                }
+                return result
+        }
 
-	suspend fun queryParserSources(
-		isDisabledOnly: Boolean,
-		isNewOnly: Boolean,
-		excludeBroken: Boolean,
-		types: Set<ContentType>,
-		query: String?,
-		locale: String?,
-		sortOrder: SourcesSortOrder?,
-	): List<MangaSource> {
-		assimilateNewSources()
-		val entities = dao.findAll().toMutableList()
-		if (isDisabledOnly && !settings.isAllSourcesEnabled) {
-			entities.removeAll { it.isEnabled }
-		}
-		if (isNewOnly) {
-			entities.retainAll { it.addedIn == BuildConfig.VERSION_CODE }
-		}
-		val sources = entities.toSources(
-			skipNsfwSources = settings.isNsfwContentDisabled,
-			sortOrder = sortOrder,
-		).run {
-			mapTo(ArrayList(size)) { it.mangaSource }
-		}
+        suspend fun queryParserSources(
+                isDisabledOnly: Boolean,
+                isNewOnly: Boolean,
+                excludeBroken: Boolean,
+                types: Set<ContentType>,
+                query: String?,
+                locale: String?,
+                sortOrder: SourcesSortOrder?,
+        ): List<MangaSource> {
+                assimilateNewSources()
+                val entities = dao.findAll().toMutableList()
+                if (isDisabledOnly && !settings.isAllSourcesEnabled) {
+                        entities.removeAll { it.isEnabled }
+                }
+                if (isNewOnly) {
+                        entities.retainAll { it.addedIn == BuildConfig.VERSION_CODE }
+                }
+                val sources = entities.toSources(
+                        skipNsfwSources = settings.isNsfwContentDisabled,
+                        sortOrder = sortOrder,
+                ).run {
+                        mapTo(ArrayList(size)) { it.mangaSource }
+                }
 
-		if (isDisabledOnly) {
-			val external = getExternalSources()
-			// For now, we assume external sources are always "enabled" in the sense of being present,
-			// but if they are not in the database, they are "new" to the app.
-			// Actually, let's just add them if they match the query.
-			sources.addAll(external)
-		}
+                if (isDisabledOnly) {
+                        val external = getExternalSources()
+                        // For now, we assume external sources are always "enabled" in the sense of being present,
+                        // but if they are not in the database, they are "new" to the app.
+                        // Actually, let's just add them if they match the query.
+                        sources.addAll(external)
+                }
 
-		if (locale != null) {
-			sources.retainAll { 
-				when (it) {
-					is MangaParserSource -> it.locale == locale
-					is io.github.landwarderer.futon.mihon.parsers.model.ContentSource -> it.locale == locale
-					else -> true
-				}
-			}
-		}
-		if (excludeBroken) {
-			sources.removeAll { (it as? MangaParserSource)?.isBroken == true }
-		}
-		if (types.isNotEmpty()) {
-			sources.retainAll { 
-				when (it) {
-					is MangaParserSource -> it.contentType in types
-					is io.github.landwarderer.futon.mihon.model.MihonMangaSource -> {
-						val mihonType = it.contentType
-						types.any { kotatsuType ->
-							when (kotatsuType) {
-								org.koitharu.kotatsu.parsers.model.ContentType.MANGA -> mihonType == io.github.landwarderer.futon.mihon.parsers.model.ContentType.MANGA
-								org.koitharu.kotatsu.parsers.model.ContentType.HENTAI -> mihonType == io.github.landwarderer.futon.mihon.parsers.model.ContentType.HENTAI_MANGA
-								org.koitharu.kotatsu.parsers.model.ContentType.COMICS -> mihonType == io.github.landwarderer.futon.mihon.parsers.model.ContentType.COMICS
-								org.koitharu.kotatsu.parsers.model.ContentType.MANHWA -> mihonType == io.github.landwarderer.futon.mihon.parsers.model.ContentType.MANHWA
-								org.koitharu.kotatsu.parsers.model.ContentType.MANHUA -> mihonType == io.github.landwarderer.futon.mihon.parsers.model.ContentType.MANHUA
-								org.koitharu.kotatsu.parsers.model.ContentType.NOVEL -> mihonType == io.github.landwarderer.futon.mihon.parsers.model.ContentType.NOVEL
-								org.koitharu.kotatsu.parsers.model.ContentType.ONE_SHOT -> mihonType == io.github.landwarderer.futon.mihon.parsers.model.ContentType.ONE_SHOT
-								org.koitharu.kotatsu.parsers.model.ContentType.DOUJINSHI -> mihonType == io.github.landwarderer.futon.mihon.parsers.model.ContentType.DOUJINSHI
-								org.koitharu.kotatsu.parsers.model.ContentType.IMAGE_SET -> mihonType == io.github.landwarderer.futon.mihon.parsers.model.ContentType.IMAGE_SET
-								org.koitharu.kotatsu.parsers.model.ContentType.ARTIST_CG -> mihonType == io.github.landwarderer.futon.mihon.parsers.model.ContentType.ARTIST_CG
-								org.koitharu.kotatsu.parsers.model.ContentType.GAME_CG -> mihonType == io.github.landwarderer.futon.mihon.parsers.model.ContentType.GAME_CG
-								else -> false
-							}
-						}
-					}
-					else -> true
-				}
-			}
-		}
-		if (!query.isNullOrEmpty()) {
-			sources.retainAll {
-				it.getTitle(context).contains(query, ignoreCase = true) || it.name.contains(query, ignoreCase = true)
-			}
-		}
-		return sources
-	}
+                if (locale != null) {
+                        sources.retainAll { 
+                                when (it) {
+                                        is MangaParserSource -> it.locale == locale
+                                        is io.github.landwarderer.futon.mihon.parsers.model.ContentSource -> it.locale == locale
+                                        else -> true
+                                }
+                        }
+                }
+                if (excludeBroken) {
+                        sources.removeAll { (it as? MangaParserSource)?.isBroken == true }
+                }
+                if (types.isNotEmpty()) {
+                        sources.retainAll { 
+                                when (it) {
+                                        is MangaParserSource -> it.contentType in types
+                                        is io.github.landwarderer.futon.mihon.model.MihonMangaSource -> {
+                                                val mihonType = it.contentType
+                                                types.any { kotatsuType ->
+                                                        when (kotatsuType) {
+                                                                org.koitharu.kotatsu.parsers.model.ContentType.MANGA -> mihonType == io.github.landwarderer.futon.mihon.parsers.model.ContentType.MANGA
+                                                                org.koitharu.kotatsu.parsers.model.ContentType.HENTAI -> mihonType == io.github.landwarderer.futon.mihon.parsers.model.ContentType.HENTAI_MANGA
+                                                                org.koitharu.kotatsu.parsers.model.ContentType.COMICS -> mihonType == io.github.landwarderer.futon.mihon.parsers.model.ContentType.COMICS
+                                                                org.koitharu.kotatsu.parsers.model.ContentType.MANHWA -> mihonType == io.github.landwarderer.futon.mihon.parsers.model.ContentType.MANHWA
+                                                                org.koitharu.kotatsu.parsers.model.ContentType.MANHUA -> mihonType == io.github.landwarderer.futon.mihon.parsers.model.ContentType.MANHUA
+                                                                org.koitharu.kotatsu.parsers.model.ContentType.NOVEL -> mihonType == io.github.landwarderer.futon.mihon.parsers.model.ContentType.NOVEL
+                                                                org.koitharu.kotatsu.parsers.model.ContentType.ONE_SHOT -> mihonType == io.github.landwarderer.futon.mihon.parsers.model.ContentType.ONE_SHOT
+                                                                org.koitharu.kotatsu.parsers.model.ContentType.DOUJINSHI -> mihonType == io.github.landwarderer.futon.mihon.parsers.model.ContentType.DOUJINSHI
+                                                                org.koitharu.kotatsu.parsers.model.ContentType.IMAGE_SET -> mihonType == io.github.landwarderer.futon.mihon.parsers.model.ContentType.IMAGE_SET
+                                                                org.koitharu.kotatsu.parsers.model.ContentType.ARTIST_CG -> mihonType == io.github.landwarderer.futon.mihon.parsers.model.ContentType.ARTIST_CG
+                                                                org.koitharu.kotatsu.parsers.model.ContentType.GAME_CG -> mihonType == io.github.landwarderer.futon.mihon.parsers.model.ContentType.GAME_CG
+                                                                else -> false
+                                                        }
+                                                }
+                                        }
+                                        else -> true
+                                }
+                        }
+                }
+                if (!query.isNullOrEmpty()) {
+                        sources.retainAll {
+                                it.getTitle(context).contains(query, ignoreCase = true) || it.name.contains(query, ignoreCase = true)
+                        }
+                }
+                return sources
+        }
 
-	fun observeIsEnabled(source: MangaSource): Flow<Boolean> {
-		return dao.observeIsEnabled(source.name).onStart { assimilateNewSources() }
-	}
+        fun observeIsEnabled(source: MangaSource): Flow<Boolean> {
+                return dao.observeIsEnabled(source.name).onStart { assimilateNewSources() }
+        }
 
-	fun observeEnabledSourcesCount(): Flow<Int> {
-		return combine(
-			observeIsNsfwDisabled(),
-			observeAllEnabled().flatMapLatest { isAllSourcesEnabled ->
-				dao.observeAll(!isAllSourcesEnabled, SourcesSortOrder.MANUAL)
-			},
-		) { skipNsfw, sources ->
-			sources.count {
-				it.source.toMangaSourceOrNull()?.let { s -> !skipNsfw || !s.isNsfw() } == true
-			}
-		}.distinctUntilChanged().onStart { assimilateNewSources() }
-	}
+        fun observeEnabledSourcesCount(): Flow<Int> {
+                return combine(
+                        observeIsNsfwDisabled(),
+                        observeAllEnabled().flatMapLatest { isAllSourcesEnabled ->
+                                dao.observeAll(!isAllSourcesEnabled, SourcesSortOrder.MANUAL)
+                        },
+                ) { skipNsfw, sources ->
+                        sources.count {
+                                it.source.toMangaSourceOrNull()?.let { s -> !skipNsfw || !s.isNsfw() } == true
+                        }
+                }.distinctUntilChanged().onStart { assimilateNewSources() }
+        }
 
-	fun observeAvailableSourcesCount(): Flow<Int> {
-		return combine(
-			observeIsNsfwDisabled(),
-			observeAllEnabled().flatMapLatest { isAllSourcesEnabled ->
-				dao.observeAll(!isAllSourcesEnabled, SourcesSortOrder.MANUAL)
-			},
-		) { skipNsfw, enabledSources ->
-			val enabled = enabledSources.mapToSet { it.source }
-			allMangaSources.count { x ->
-				x.name !in enabled && (!skipNsfw || !x.isNsfw())
-			}
-		}.distinctUntilChanged().onStart { assimilateNewSources() }
-	}
+        fun observeAvailableSourcesCount(): Flow<Int> {
+                return combine(
+                        observeIsNsfwDisabled(),
+                        observeAllEnabled().flatMapLatest { isAllSourcesEnabled ->
+                                dao.observeAll(!isAllSourcesEnabled, SourcesSortOrder.MANUAL)
+                        },
+                ) { skipNsfw, enabledSources ->
+                        val enabled = enabledSources.mapToSet { it.source }
+                        allMangaSources.count { x ->
+                                x.name !in enabled && (!skipNsfw || !x.isNsfw())
+                        }
+                }.distinctUntilChanged().onStart { assimilateNewSources() }
+        }
 
-	fun observeEnabledSources(): Flow<List<MangaSourceInfo>> = combine(
-		observeIsNsfwDisabled(),
-		observeAllEnabled(),
-		observeSortOrder(),
-	) { skipNsfw, allEnabled, order ->
-		dao.observeAll(!allEnabled, order).map {
-			it.toSources(skipNsfw, order)
-		}
-	}.flattenLatest()
-		.onStart { assimilateNewSources() }
-		.combine(observeExternalSources()) { enabled, external ->
-			val list = ArrayList<MangaSourceInfo>(enabled.size + external.size)
-			external.mapTo(list) { MangaSourceInfo(it, isEnabled = true, isPinned = true) }
-			list.addAll(enabled)
-			list
-		}
+        fun observeEnabledSources(): Flow<List<MangaSourceInfo>> = combine(
+                observeIsNsfwDisabled(),
+                observeAllEnabled(),
+                observeSortOrder(),
+        ) { skipNsfw, allEnabled, order ->
+                dao.observeAll(!allEnabled, order).map {
+                        it.toSources(skipNsfw, order)
+                }
+        }.flattenLatest()
+                .onStart { assimilateNewSources() }
+                .combine(observeExternalSources()) { enabled, external ->
+                        val list = ArrayList<MangaSourceInfo>(enabled.size + external.size)
+                        external.mapTo(list) { MangaSourceInfo(it, isEnabled = true, isPinned = true) }
+                        list.addAll(enabled)
+                        list
+                }
 
-	fun observeAll(): Flow<List<Pair<MangaSource, Boolean>>> = dao.observeAll().map { entities ->
-		val result = ArrayList<Pair<MangaSource, Boolean>>(entities.size)
-		for (entity in entities) {
-			val source = entity.source.toMangaSourceOrNull() ?: continue
-			if (source in allMangaSources) {
-				result.add(source to entity.isEnabled)
-			}
-		}
-		result
-	}.onStart { assimilateNewSources() }
+        fun observeAll(): Flow<List<Pair<MangaSource, Boolean>>> = dao.observeAll().map { entities ->
+                val result = ArrayList<Pair<MangaSource, Boolean>>(entities.size)
+                for (entity in entities) {
+                        val source = entity.source.toMangaSourceOrNull() ?: continue
+                        if (source in allMangaSources) {
+                                result.add(source to entity.isEnabled)
+                        }
+                }
+                result
+        }.onStart { assimilateNewSources() }
 
-	suspend fun setSourcesEnabled(sources: Collection<MangaSource>, isEnabled: Boolean): ReversibleHandle {
-		setSourcesEnabledImpl(sources, isEnabled)
-		return ReversibleHandle {
-			setSourcesEnabledImpl(sources, !isEnabled)
-		}
-	}
+        suspend fun setSourcesEnabled(sources: Collection<MangaSource>, isEnabled: Boolean): ReversibleHandle {
+                setSourcesEnabledImpl(sources, isEnabled)
+                return ReversibleHandle {
+                        setSourcesEnabledImpl(sources, !isEnabled)
+                }
+        }
 
-	suspend fun setSourcesEnabledExclusive(sources: Set<MangaSource>) {
-		db.withTransaction {
-			assimilateNewSources()
-			for (s in allMangaSources) {
-				dao.setEnabled(s.name, s in sources)
-			}
-		}
-	}
+        suspend fun setSourcesEnabledExclusive(sources: Set<MangaSource>) {
+                db.withTransaction {
+                        assimilateNewSources()
+                        for (s in allMangaSources) {
+                                dao.setEnabled(s.name, s in sources)
+                        }
+                }
+        }
 
-	suspend fun disableAllSources() {
-		db.withTransaction {
-			assimilateNewSources()
-			dao.disableAllSources()
-		}
-	}
+        suspend fun disableAllSources() {
+                db.withTransaction {
+                        assimilateNewSources()
+                        dao.disableAllSources()
+                }
+        }
 
-	suspend fun setPositions(sources: List<MangaSource>) {
-		db.withTransaction {
-			for ((index, item) in sources.withIndex()) {
-				dao.setSortKey(item.name, index)
-			}
-		}
-	}
+        suspend fun setPositions(sources: List<MangaSource>) {
+                db.withTransaction {
+                        for ((index, item) in sources.withIndex()) {
+                                dao.setSortKey(item.name, index)
+                        }
+                }
+        }
 
-	fun observeHasNewSources(): Flow<Boolean> = observeIsNsfwDisabled().map { skipNsfw ->
-		val sources = dao.findAllFromVersion(BuildConfig.VERSION_CODE).toSources(skipNsfw, null)
-		sources.isNotEmpty() && sources.size != allMangaSources.size
-	}.onStart { assimilateNewSources() }
+        fun observeHasNewSources(): Flow<Boolean> = observeIsNsfwDisabled().map { skipNsfw ->
+                val sources = dao.findAllFromVersion(BuildConfig.VERSION_CODE).toSources(skipNsfw, null)
+                sources.isNotEmpty() && sources.size != allMangaSources.size
+        }.onStart { assimilateNewSources() }
 
-	fun observeHasNewSourcesForBadge(): Flow<Boolean> = combine(
-		settings.observeAsFlow(AppSettings.KEY_SOURCES_VERSION) { sourcesVersion },
-		observeIsNsfwDisabled(),
-	) { version, skipNsfw ->
-		if (version < BuildConfig.VERSION_CODE) {
-			val sources = dao.findAllFromVersion(version).toSources(skipNsfw, null)
-			sources.isNotEmpty()
-		} else {
-			false
-		}
-	}.onStart { assimilateNewSources() }
+        fun observeHasNewSourcesForBadge(): Flow<Boolean> = combine(
+                settings.observeAsFlow(AppSettings.KEY_SOURCES_VERSION) { sourcesVersion },
+                observeIsNsfwDisabled(),
+        ) { version, skipNsfw ->
+                if (version < BuildConfig.VERSION_CODE) {
+                        val sources = dao.findAllFromVersion(version).toSources(skipNsfw, null)
+                        sources.isNotEmpty()
+                } else {
+                        false
+                }
+        }.onStart { assimilateNewSources() }
 
-	fun clearNewSourcesBadge() {
-		settings.sourcesVersion = BuildConfig.VERSION_CODE
-	}
+        fun clearNewSourcesBadge() {
+                settings.sourcesVersion = BuildConfig.VERSION_CODE
+        }
 
-	private suspend fun assimilateNewSources(): Boolean {
-		if (isNewSourcesAssimilated.getAndSet(true)) {
-			return false
-		}
-		val new = getNewSources()
-		if (new.isEmpty()) {
-			return false
-		}
-		var maxSortKey = dao.getMaxSortKey()
-		val isAllEnabled = settings.isAllSourcesEnabled
-		val entities = new.map { x ->
-			MangaSourceEntity(
-				source = x.name,
-				isEnabled = isAllEnabled,
-				sortKey = ++maxSortKey,
-				addedIn = BuildConfig.VERSION_CODE,
-				lastUsedAt = 0,
-				isPinned = false,
-				cfState = CloudFlareHelper.PROTECTION_NOT_DETECTED,
-			)
-		}
-		dao.insertIfAbsent(entities)
-		return true
-	}
+        private suspend fun assimilateNewSources(): Boolean {
+                if (isNewSourcesAssimilated.getAndSet(true)) {
+                        return false
+                }
+                val new = getNewSources()
+                if (new.isEmpty()) {
+                        return false
+                }
+                var maxSortKey = dao.getMaxSortKey()
+                val isAllEnabled = settings.isAllSourcesEnabled
+                val entities = new.map { x ->
+                        MangaSourceEntity(
+                                source = x.name,
+                                isEnabled = isAllEnabled,
+                                sortKey = ++maxSortKey,
+                                addedIn = BuildConfig.VERSION_CODE,
+                                lastUsedAt = 0,
+                                isPinned = false,
+                                cfState = CloudFlareHelper.PROTECTION_NOT_DETECTED,
+                        )
+                }
+                dao.insertIfAbsent(entities)
+                return true
+        }
 
-	suspend fun isSetupRequired(): Boolean {
-		return settings.sourcesVersion == 0 && dao.findAllEnabledNames().isEmpty()
-	}
+        suspend fun isSetupRequired(): Boolean {
+                return settings.sourcesVersion == 0 && dao.findAllEnabledNames().isEmpty()
+        }
 
-	suspend fun setIsPinned(sources: Collection<MangaSource>, isPinned: Boolean): ReversibleHandle {
-		setSourcesPinnedImpl(sources, isPinned)
-		return ReversibleHandle {
-			setSourcesEnabledImpl(sources, !isPinned)
-		}
-	}
+        suspend fun setIsPinned(sources: Collection<MangaSource>, isPinned: Boolean): ReversibleHandle {
+                setSourcesPinnedImpl(sources, isPinned)
+                return ReversibleHandle {
+                        setSourcesEnabledImpl(sources, !isPinned)
+                }
+        }
 
-	suspend fun trackUsage(source: MangaSource) {
-		if (!settings.isIncognitoModeEnabled(source.isNsfw())) {
-			dao.setLastUsed(source.name, System.currentTimeMillis())
-		}
-	}
+        suspend fun trackUsage(source: MangaSource) {
+                if (!settings.isIncognitoModeEnabled(source.isNsfw())) {
+                        dao.setLastUsed(source.name, System.currentTimeMillis())
+                }
+        }
 
-	private suspend fun setSourcesEnabledImpl(sources: Collection<MangaSource>, isEnabled: Boolean) {
-		if (sources.size == 1) { // fast path
-			dao.setEnabled(sources.first().name, isEnabled)
-			return
-		}
-		db.withTransaction {
-			for (source in sources) {
-				dao.setEnabled(source.name, isEnabled)
-			}
-		}
-	}
+        private suspend fun setSourcesEnabledImpl(sources: Collection<MangaSource>, isEnabled: Boolean) {
+                if (sources.size == 1) { // fast path
+                        dao.setEnabled(sources.first().name, isEnabled)
+                        return
+                }
+                db.withTransaction {
+                        for (source in sources) {
+                                dao.setEnabled(source.name, isEnabled)
+                        }
+                }
+        }
 
-	private suspend fun getNewSources(): MutableSet<out MangaSource> {
-		val entities = dao.findAll()
-		val result = HashSet<MangaSource>()
+        private suspend fun getNewSources(): MutableSet<out MangaSource> {
+                val entities = dao.findAll()
+                val result = HashSet<MangaSource>()
         result.addAll(MangaParserSource.entries)
         result.addAll(mihonExtensionManager.getMihonMangaSources())
-		for (e in entities) {
-			result.remove(e.source.toMangaSourceOrNull() ?: continue)
-		}
-		return result
-	}
+                for (e in entities) {
+                        result.remove(e.source.toMangaSourceOrNull() ?: continue)
+                }
+                return result
+        }
 
-	private suspend fun setSourcesPinnedImpl(sources: Collection<MangaSource>, isPinned: Boolean) {
-		if (sources.size == 1) { // fast path
-			dao.setPinned(sources.first().name, isPinned)
-			return
-		}
-		db.withTransaction {
-			for (source in sources) {
-				dao.setPinned(source.name, isPinned)
-			}
-		}
-	}
+        private suspend fun setSourcesPinnedImpl(sources: Collection<MangaSource>, isPinned: Boolean) {
+                if (sources.size == 1) { // fast path
+                        dao.setPinned(sources.first().name, isPinned)
+                        return
+                }
+                db.withTransaction {
+                        for (source in sources) {
+                                dao.setPinned(source.name, isPinned)
+                        }
+                }
+        }
 
-	private fun observeExternalSources(): Flow<List<MangaSource>> {
-		val packageChanges = callbackFlow {
-			val receiver = object : BroadcastReceiver() {
-				override fun onReceive(context: Context?, intent: Intent?) {
-					trySendBlocking(intent)
-				}
-			}
-			ContextCompat.registerReceiver(
-				context,
-				receiver,
-				IntentFilter().apply {
-					addAction(Intent.ACTION_PACKAGE_ADDED)
-					addAction(Intent.ACTION_PACKAGE_VERIFIED)
-					addAction(Intent.ACTION_PACKAGE_REPLACED)
-					addAction(Intent.ACTION_PACKAGE_REMOVED)
-					addAction(Intent.ACTION_PACKAGE_FULLY_REMOVED)
-					addDataScheme("package")
-				},
-				ContextCompat.RECEIVER_EXPORTED,
-			)
-			awaitClose { context.unregisterReceiver(receiver) }
-		}.onStart {
-			emit(null)
-		}
-		
-		return combine(
-			packageChanges,
-			mihonExtensionManager.installedExtensions,
-			mihonExtensionManager.failedExtensions,
-		) { _, _, _ ->
-			getExternalSources()
-		}.distinctUntilChanged()
-			.conflate()
-	}
+        private fun observeExternalSources(): Flow<List<MangaSource>> {
+                val packageChanges = callbackFlow {
+                        val receiver = object : BroadcastReceiver() {
+                                override fun onReceive(context: Context?, intent: Intent?) {
+                                        trySendBlocking(intent)
+                                }
+                        }
+                        ContextCompat.registerReceiver(
+                                context,
+                                receiver,
+                                IntentFilter().apply {
+                                        addAction(Intent.ACTION_PACKAGE_ADDED)
+                                        addAction(Intent.ACTION_PACKAGE_VERIFIED)
+                                        addAction(Intent.ACTION_PACKAGE_REPLACED)
+                                        addAction(Intent.ACTION_PACKAGE_REMOVED)
+                                        addAction(Intent.ACTION_PACKAGE_FULLY_REMOVED)
+                                        addDataScheme("package")
+                                },
+                                ContextCompat.RECEIVER_EXPORTED,
+                        )
+                        awaitClose { context.unregisterReceiver(receiver) }
+                }.onStart {
+                        emit(null)
+                }
+                
+                return combine(
+                        packageChanges,
+                        mihonExtensionManager.installedExtensions,
+                        mihonExtensionManager.failedExtensions,
+                ) { _, _, _ ->
+                        getExternalSources()
+                }.distinctUntilChanged()
+                        .conflate()
+        }
 
-	fun getExternalSources(): List<MangaSource> {
-		val external = context.packageManager.queryIntentContentProviders(
-			Intent("app.futon.parser.PROVIDE_MANGA"), 0,
-		).map { resolveInfo ->
-			ExternalMangaSource(
-				packageName = resolveInfo.providerInfo.packageName,
-				authority = resolveInfo.providerInfo.authority,
-			)
-		}
-		val mihon = mihonExtensionManager.getMihonMangaSources()
-		return external + mihon
-	}
+        fun getExternalSources(): List<MangaSource> {
+                val external = context.packageManager.queryIntentContentProviders(
+                        Intent("app.futon.parser.PROVIDE_MANGA"), 0,
+                ).map { resolveInfo ->
+                        ExternalMangaSource(
+                                packageName = resolveInfo.providerInfo.packageName,
+                                authority = resolveInfo.providerInfo.authority,
+                        )
+                }
+                val mihon = mihonExtensionManager.getMihonMangaSources()
+                val custom = getCustomSources()
+                return external + mihon + custom
+        }
 
-	private fun List<MangaSourceEntity>.toSources(
-		skipNsfwSources: Boolean,
-		sortOrder: SourcesSortOrder?,
-	): MutableList<MangaSourceInfo> {
-		val isAllEnabled = settings.isAllSourcesEnabled
-		val result = ArrayList<MangaSourceInfo>(size)
-		for (entity in this) {
-			val source = entity.source.toMangaSourceOrNull() ?: continue
-			if (skipNsfwSources && source.isNsfw()) {
-				continue
-			}
-			if (source.isBroken) {
-				continue
-			}
-			if (source is MangaParserSource || source.name.startsWith("mihon:") || source.name.startsWith("MIHON_")) {
-				result.add(
-					MangaSourceInfo(
-						mangaSource = source,
-						isEnabled = entity.isEnabled || isAllEnabled,
-						isPinned = entity.isPinned,
-					),
-				)
-			}
-		}
-		if (sortOrder == SourcesSortOrder.ALPHABETIC) {
-			result.sortWith(compareBy<MangaSourceInfo> { !it.isPinned }.thenBy { it.getTitle(context) })
-		}
-		return result
-	}
+        /** User-defined sources surfaced as first-class [MangaSource]s. */
+        fun getCustomSources(): List<MangaSource> =
+                customSourcesRepository.getAll().map { CustomMangaSource(it) }
 
-	private fun observeIsNsfwDisabled() = settings.observeAsFlow(AppSettings.KEY_DISABLE_NSFW) {
-		isNsfwContentDisabled
-	}
+        private fun List<MangaSourceEntity>.toSources(
+                skipNsfwSources: Boolean,
+                sortOrder: SourcesSortOrder?,
+        ): MutableList<MangaSourceInfo> {
+                val isAllEnabled = settings.isAllSourcesEnabled
+                val result = ArrayList<MangaSourceInfo>(size)
+                for (entity in this) {
+                        val source = entity.source.toMangaSourceOrNull() ?: continue
+                        if (skipNsfwSources && source.isNsfw()) {
+                                continue
+                        }
+                        if (source.isBroken) {
+                                continue
+                        }
+                        if (source is MangaParserSource || source.name.startsWith("mihon:") || source.name.startsWith("MIHON_")) {
+                                result.add(
+                                        MangaSourceInfo(
+                                                mangaSource = source,
+                                                isEnabled = entity.isEnabled || isAllEnabled,
+                                                isPinned = entity.isPinned,
+                                        ),
+                                )
+                        }
+                }
+                if (sortOrder == SourcesSortOrder.ALPHABETIC) {
+                        result.sortWith(compareBy<MangaSourceInfo> { !it.isPinned }.thenBy { it.getTitle(context) })
+                }
+                return result
+        }
 
-	private fun observeSortOrder() = settings.observeAsFlow(AppSettings.KEY_SOURCES_ORDER) {
-		sourcesSortOrder
-	}
+        private fun observeIsNsfwDisabled() = settings.observeAsFlow(AppSettings.KEY_DISABLE_NSFW) {
+                isNsfwContentDisabled
+        }
 
-	private fun observeAllEnabled() = settings.observeAsFlow(AppSettings.KEY_SOURCES_ENABLED_ALL) {
-		isAllSourcesEnabled
-	}
+        private fun observeSortOrder() = settings.observeAsFlow(AppSettings.KEY_SOURCES_ORDER) {
+                sourcesSortOrder
+        }
 
-	private fun String.toMangaSourceOrNull(): MangaSource? {
-		if (startsWith("mihon:") || startsWith("MIHON_")) {
+        private fun observeAllEnabled() = settings.observeAsFlow(AppSettings.KEY_SOURCES_ENABLED_ALL) {
+                isAllSourcesEnabled
+        }
+
+        private fun String.toMangaSourceOrNull(): MangaSource? {
+                if (startsWith("mihon:") || startsWith("MIHON_")) {
             return mihonExtensionManager.getMihonMangaSourceByName(this) ?: io.github.landwarderer.futon.core.model.MangaSource(this)
         }
-		return MangaParserSource.entries.find { it.name == this }
-	}
+                return MangaParserSource.entries.find { it.name == this }
+        }
 }
