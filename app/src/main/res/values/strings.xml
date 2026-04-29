@@ -935,8 +935,8 @@
     <string name="installed">Installed</string>
     <string name="install">Install</string>
     <string name="uninstall">Uninstall</string>
-    <string name="color_scheme_nord">Nord</string>
-    <string name="color_scheme_midnight">Midnight</string>
-    <string name="color_scheme_ocean">Ocean</string>
+    <string name="theme_name_nord">Nord</string>
+    <string name="theme_name_midnight">Midnight</string>
+    <string name="theme_name_ocean">Ocean</string>
     <string name="cover_transparency">Cover Transparency</string>
 </resources>

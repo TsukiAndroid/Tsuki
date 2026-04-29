@@ -101,6 +101,10 @@ class AppSettings @Inject constructor(@ApplicationContext context: Context) {
         val coverAlpha: Float
                 get() = prefs.getInt(KEY_COVER_ALPHA, 100) / 100.0f
 
+        var coverBackgroundAlpha: Int
+                get() = prefs.getInt(KEY_COVER_BACKGROUND_ALPHA, 40)
+                set(value) = prefs.edit { putInt(KEY_COVER_BACKGROUND_ALPHA, value) }
+
         val isQuickFilterEnabled: Boolean
                 get() = prefs.getBoolean(KEY_QUICK_FILTER, true)
 
@@ -692,6 +696,7 @@ class AppSettings @Inject constructor(@ApplicationContext context: Context) {
                 const val KEY_GRID_SIZE = "grid_size"
                 const val KEY_GRID_SIZE_PAGES = "grid_size_pages"
                 const val KEY_COVER_ALPHA = "cover_alpha"
+                const val KEY_COVER_BACKGROUND_ALPHA = "cover_background_alpha"
                 const val KEY_REMOTE_SOURCES = "remote_sources"
                 const val KEY_LOCAL_STORAGE = "local_storage"
                 const val KEY_READER_DOUBLE_PAGES = "reader_double_pages"
