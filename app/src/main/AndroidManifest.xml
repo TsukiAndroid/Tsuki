@@ -3,9 +3,6 @@
         xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:tools="http://schemas.android.com/tools">
 
-        <!-- Allow building with minSdk 21 even though hilt-work declares minSdk 23 -->
-        <uses-sdk tools:overrideLibrary="androidx.hilt.work" />
-
         <uses-permission android:name="android.permission.INTERNET" />
         <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
         <uses-permission

@@ -28,7 +28,7 @@ android {
 
         defaultConfig {
                 applicationId 'io.github.landwarderer.futon'
-                minSdk = 21
+                minSdk = 23
                 targetSdk = 36
                 versionCode project.hasProperty('versionCode') ? project.property('versionCode').toInteger() : 90700
         versionName project.hasProperty('versionName') ? project.property('versionName') : '9.7'
