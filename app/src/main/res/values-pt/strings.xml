@@ -175,7 +175,7 @@
     <string name="new_version_s">Nova versão: %s</string>
     <string name="rotate_screen">Girar o ecrã</string>
     <string name="protect_application">Proteja a app</string>
-    <string name="protect_application_summary">Peça a senha ao iniciar o Futon</string>
+    <string name="protect_application_summary">Peça a senha ao iniciar o Tsuki</string>
     <string name="zoom_mode_fit_height">Ajustar à altura</string>
     <string name="black_dark_theme">Preto</string>
     <string name="black_dark_theme_summary">Usa menos energia em telas AMOLED</string>
@@ -574,7 +574,7 @@
     <string name="preferred_download_format">Formato de download preferida</string>
     <string name="multiple_cbz_files">Múltiplos ficheiros CBZ</string>
     <string name="chapters_grid_view">visualizar em grade</string>
-    <string name="unsupported_backup_message">Selecione um arquivo de backup do Futon</string>
+    <string name="unsupported_backup_message">Selecione um arquivo de backup do Tsuki</string>
     <string name="reading_stats">Estatísticas de leitura</string>
     <string name="other_manga">Outros mangás</string>
     <string name="statistics">Estatística</string>
@@ -656,7 +656,7 @@
     <string name="hours_minutes_short">%1$d hrs %2$d min</string>
     <string name="ignore_ssl_errors_summary">Você pode desativar a verificação de certificados SSL caso enfrente problemas relacionados ao SSL ao acessar recursos de rede. Isso pode afetar sua segurança. É necessário reiniciar o aplicativo após alterar essa configuração.</string>
     <string name="disable_connectivity_check_summary">Pule a verificação de conectividade caso tenha problemas com ela (por exemplo, entrar no modo offline mesmo estando conectado à rede)</string>
-    <string name="plugin_incompatible">Plugin incompatível ou erro interno. Certifique-se de que está usando a versão mais recente do plugin e do Futon</string>
+    <string name="plugin_incompatible">Plugin incompatível ou erro interno. Certifique-se de que está usando a versão mais recente do plugin e do Tsuki</string>
     <string name="text_empty_holder_secondary_filtered">Não há mangás que correspondam aos filtros selecionados</string>
     <string name="connection_ok">A conexão está OK</string>
     <string name="invalid_proxy_configuration">Configuração de proxy inválida</string>
@@ -731,7 +731,7 @@
     <string name="show_slider">Mostrar slider</string>
     <string name="content_type_manhua">Manhua</string>
     <string name="content_type_manhwa">Manhwa</string>
-    <string name="plugin_incompatible_with_cause">Erro de plug-in: %s\nCertifique-se de estar usando a versão mais recente do plugin e do Futon</string>
+    <string name="plugin_incompatible_with_cause">Erro de plug-in: %s\nCertifique-se de estar usando a versão mais recente do plugin e do Tsuki</string>
     <string name="screen_orientation">Orientação da tela</string>
     <string name="error_connection_reset">Conexão redefinida pelo host remoto</string>
     <string name="incognito">Incógnita</string>
@@ -760,7 +760,7 @@
     <string name="send_backups_telegram">Envie backups no Telegram</string>
     <string name="test_connection">Conexão de teste</string>
     <string name="telegram_chat_id_summary">Insira o ID do chat para onde os backups devem ser enviados</string>
-    <string name="open_telegram_bot_summary">Pressione para abrir o bate-papo com o Futon Backup Bot</string>
+    <string name="open_telegram_bot_summary">Pressione para abrir o bate-papo com o Tsuki Backup Bot</string>
     <string name="delete_old_backups">Exclua backups antigos</string>
     <string name="delete_old_backups_summary">Exclua automaticamente arquivos de backup antigos para economizar espaço de armazenamento</string>
     <string name="translation">Tradução</string>
@@ -786,7 +786,7 @@
     <string name="search_disabled_sources">Pesquisar fontes desabilitadas</string>
     <string name="error_details">Erro de detalhes</string>
     <string name="error_disclaimer_manga">Tenta abrir o mangá num web browser para verificar se está disponível na sua fonte.</string>
-    <string name="link_to_manga_in_app">Link para o mangá no Futon</string>
+    <string name="link_to_manga_in_app">Link para o mangá no Tsuki</string>
     <string name="clear_browser_data">Limpar informações do browser</string>
     <string name="clear_browser_data_summary">Limpar informações do browser como cache e cookies. Aviso: Autorizações em fontes de mangá podem ficar inválidas</string>
     <string name="no_write_permission_to_file">Não há permissão para modificar um ficheiro</string>
@@ -812,7 +812,7 @@
     <string name="disable_captcha_notifications">Desabilitar notificações de captcha</string>
     <string name="disable_captcha_notifications_summary">Vais parar de receber notificações sobre resolver CAPTCHAs desta fonte, mas isto pode levar a estragar operações do fundo (verificar a existência de novos capítulos, obter recomendações, etc)</string>
     <string name="exclude_nsfw_from_suggestions_summary">Mangá adulto não aparecerá nas recomendações. Esta opção pode não funcionar corretamente com algumas fontes</string>
-    <string name="error_disclaimer_app_outdated">Parece que a tua versão do Futon está desatualizada. Por favor instala a versão mais recente para obter os arranjos mais recentes.</string>
+    <string name="error_disclaimer_app_outdated">Parece que a tua versão do Tsuki está desatualizada. Por favor instala a versão mais recente para obter os arranjos mais recentes.</string>
     <string name="pages_slider">Controlo deslizante para mudança de página</string>
     <string name="global_search">Pesquisa Global</string>
     <string name="search_everywhere">Pesquisar em todos</string>
@@ -843,7 +843,7 @@
     <string name="discord_token_hint">Cole seu Token do Discord aqui</string>
     <string name="discord_rpc_summary">Mostrar seu estado de leitura no Discord</string>
     <string name="obtain">Obter</string>
-    <string name="discord_rpc_description">Lendo manga no Futon - um app leitor de manga</string>
+    <string name="discord_rpc_description">Watching Tsuki</string>
     <string name="reading_s">Lendo %s</string>
     <string name="read_on_s">Lendo em %s</string>
     <string name="rpc_skip_nsfw_summary">Não use RPC para conteúdo adulto</string>

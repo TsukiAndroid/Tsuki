@@ -329,7 +329,7 @@
     <string name="import_completed_hint">You can delete the original file from storage to save space</string>
     <string name="import_will_start_soon">Import will start soon</string>
     <string name="feed">Feed</string>
-    <string name="manga_error_description_pattern">Error details:&lt;br&gt;&lt;tt&gt;%1$s&lt;/tt&gt;&lt;br&gt;&lt;br&gt;1. Try to &lt;a href="%2$s"&gt;open manga in a web browser&lt;/a&gt; to ensure it is available on its source&lt;br&gt;2. Make sure you are using the &lt;a href="futon://about"&gt;latest version of Tsuki&lt;/a&gt;&lt;br&gt;3. If it is available, send an error report to the developers.</string>
+    <string name="manga_error_description_pattern">Error details:&lt;br&gt;&lt;tt&gt;%1$s&lt;/tt&gt;&lt;br&gt;&lt;br&gt;1. Try to &lt;a href="%2$s"&gt;open manga in a web browser&lt;/a&gt; to ensure it is available on its source&lt;br&gt;2. Make sure you are using the &lt;a href="tsuki://about"&gt;latest version of Tsuki&lt;/a&gt;&lt;br&gt;3. If it is available, send an error report to the developers.</string>
     <string name="history_shortcuts">Show recent manga shortcuts</string>
     <string name="history_shortcuts_summary">Make recent manga available by long pressing on application icon</string>
     <string name="reader_control_ltr_summary">Do not adjust the page switching direction to the reader mode, e. g. pressing the right key always switches to the next page. This option affects only hardware input devices</string>
@@ -534,6 +534,12 @@
     <string name="source_description_hint">Description (optional)</string>
     <string name="add_source">Add source</string>
     <string name="cancel">Cancel</string>
+    <string name="manage_custom_sources">Manage custom sources</string>
+    <string name="manage_custom_sources_summary">View, open, or remove the sources you\'ve added</string>
+    <string name="no_custom_sources_title">No custom sources yet</string>
+    <string name="no_custom_sources_summary">Tap the button below to add a manga site by URL. Web sources open inside the in-app browser.</string>
+    <string name="remove_source_title">Remove source?</string>
+    <string name="remove_source_message">\"%1$s\" will be removed from your custom sources. You can add it again later.</string>
     <string name="manual">Manual</string>
     <string name="available_d">Available: %1$d</string>
     <string name="disable_nsfw_summary">Disable NSFW sources and hide adult manga from list if possible</string>
@@ -874,7 +880,7 @@
     <string name="collapse_long_description">Collapse long description</string>
     <string name="cover_background_transparency">Cover background transparency (%)</string>
     <string name="our_story_title">Our Story 🌙</string>
-    <string name="our_story_summary">Tsuki started as a personal mission — just wanting to read manga on an old Android 7 device that kept breaking every app we tried. What followed was a long road through SSL handshake errors, dead parser repos, and a graveyard of manga apps that kept getting taken down one by one. Eventually, teaming up with an AI named Claude (made by Anthropic), we started fixing, forking, and building something that would actually survive. No professional dev experience. No Android Studio knowledge. Just stubbornness, curiosity, and a lot of trial and error. This is Tsuki (月) — the app that refused to die.</string>
+    <string name="our_story_summary">Tsuki started as a personal mission — just wanting to read manga on an old Android 7 device that kept breaking every app we tried. What followed was a long road through SSL handshake errors, dead parser repos, and a graveyard of manga apps that kept getting taken down one by one. Eventually, teaming up with an AI named Claude (made by Anthropic), we started fixing, forking, and building something that would actually survive. No professional dev experience. No Android Studio knowledge. Just stubbornness, curiosity, and a lot of trial and error. This is Tsuki (月) — the app that refused to die.\n\nSpecial thanks to Arsveiled for new feature planning, design and coding contributions that brought this fork to life.</string>
     <string name="creating_backup">Creating backup</string>
     <string name="share_backup">Share backup</string>
     <string name="reader_multitask">Open reader in a separate task</string>
@@ -896,7 +902,7 @@
     <string name="discord_token_hint">Paste your Discord Token here</string>
     <string name="discord_rpc_summary">Show your reading status on Discord</string>
     <string name="obtain">Obtain</string>
-    <string name="discord_rpc_description">Reading manga on Tsuki - a manga reader app</string>
+    <string name="discord_rpc_description">Watching Tsuki</string>
     <string name="reading_s">Reading %s</string>
     <string name="read_on_s">Read on %s</string>
     <string name="rpc_skip_nsfw_summary">Do not use RPC for adult content</string>

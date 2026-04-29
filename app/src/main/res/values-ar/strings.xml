@@ -341,7 +341,7 @@
     <string name="reader_slider">إظهار شريط التمرير لتبديل الصفحات</string>
     <string name="server_error">خطأ من جانب الخادم (%1$d). الرجاء المحاولة مرة أخرى لاحقًا</string>
     <string name="chapters_grid_view">عرض الشبكة</string>
-    <string name="manga_error_description_pattern">تفاصيل الخطأ:&lt;br&gt;&lt;tt&gt;%1$s&lt;/tt&gt;&lt;br&gt;&lt;br&gt;1. حاول &lt;a href=\"%2$s\"&gt;فتح المانجا في متصفح ويب&lt;/a&gt; للتأكد من أنها متوفرة على مصدرها&lt;br&gt;2. تأكد من أنك تستخدم &lt;a href=futon://about&gt;أحدث إصدار من Futon&lt;/a&gt;&lt;br&gt;3. إذا كانت متوفرة، أرسل تقرير خطأ إلى المطورين.</string>
+    <string name="manga_error_description_pattern">تفاصيل الخطأ:&lt;br&gt;&lt;tt&gt;%1$s&lt;/tt&gt;&lt;br&gt;&lt;br&gt;1. حاول &lt;a href=\"%2$s\"&gt;فتح المانجا في متصفح ويب&lt;/a&gt; للتأكد من أنها متوفرة على مصدرها&lt;br&gt;2. تأكد من أنك تستخدم &lt;a href=tsuki://about&gt;أحدث إصدار من Tsuki&lt;/a&gt;&lt;br&gt;3. إذا كانت متوفرة، أرسل تقرير خطأ إلى المطورين.</string>
     <string name="history_shortcuts_summary">إتاحة المانجا الحديثة بالضغط المطول على أيقونة التطبيق</string>
     <string name="reader_control_ltr_summary">النقر على الحافة اليمنى أو الضغط على المفتاح الأيمن يؤدي دائمًا إلى الانتقال للصفحة التالية</string>
     <string name="reader_control_ltr">تحكم مريح في القراءة</string>
@@ -617,7 +617,7 @@
     <string name="long_ago_read">قرأت منذ وقت طويل</string>
     <string name="unread">غير مقروءة</string>
     <string name="show_pages_thumbs">إظهار الصور المصغرة للصفحات</string>
-    <string name="unsupported_backup_message">الرجاء تحديد ملف النسخ الاحتياطي السليم لFuton</string>
+    <string name="unsupported_backup_message">الرجاء تحديد ملف النسخ الاحتياطي السليم لTsuki</string>
     <string name="minutes_short">%d ش</string>
     <string name="hours_minutes_short">%1$d س %2$d ش</string>
     <string name="webtoon_gaps">الفجوات في وضع الويبتون</string>
@@ -656,7 +656,7 @@
     <string name="text_empty_holder_secondary_filtered">لا توجد مانجا تطابق التصفيات التي حددتها</string>
     <string name="connection_ok">الاتصال جيد</string>
     <string name="external_source">خارجي/إضافي</string>
-    <string name="plugin_incompatible">مكون إضافي غير متوافق أو خطأ داخلي. تأكد من استخدام أحدث إصدار من المكون الإضافي وFuton</string>
+    <string name="plugin_incompatible">مكون إضافي غير متوافق أو خطأ داخلي. تأكد من استخدام أحدث إصدار من المكون الإضافي وTsuki</string>
     <string name="invalid_server_address_message">عنوان الخادم غير صالح</string>
     <string name="retry">‮حاول مجددا</string>
     <string name="pages_saved">الصفحات المحفوظة</string>
@@ -786,9 +786,9 @@
     <string name="screen_rotation_locked">تم ايقاف دوران الشاشة</string>
     <string name="screen_rotation_unlocked">تم تشغيل دوران الشاشة</string>
     <string name="link_to_manga_on_s">رابط المانغا على %s</string>
-    <string name="link_to_manga_in_app">رابط المانغا في Futon</string>
+    <string name="link_to_manga_in_app">رابط المانغا في Tsuki</string>
     <string name="backup_restored_background">سوف يتم استعادة النسخة الاحتياطية في الخلفية</string>
-    <string name="error_disclaimer_app_outdated">يبدو أن إصدار Futon الخاص بك قديم. يرجى تثبيت أحدث إصدار للحصول على جميع الإصلاحات المتاحة.</string>
+    <string name="error_disclaimer_app_outdated">يبدو أن إصدار Tsuki الخاص بك قديم. يرجى تثبيت أحدث إصدار للحصول على جميع الإصلاحات المتاحة.</string>
     <string name="disable_captcha_notifications">تعطيل اشعارات captcha</string>
     <string name="disable_captcha_notifications_summary">لن تتلقى إشعارات حول حل CAPTCHA لهذا المصدر ولكن هذا قد يؤدي إلى تعطيل العمليات الخلفية (التحقق من وجود فصول جديدة، الحصول على توصيات، وما إلى ذلك...)</string>
     <string name="global_search">البحث العالمي</string>

@@ -119,6 +119,8 @@
                                 <category android:name="android.intent.category.BROWSABLE" />
 
                                 <data android:scheme="futon" android:host="manga" />
+                                <!-- New brand scheme; keep futon:// for backwards compatibility -->
+                                <data android:scheme="tsuki" android:host="manga" />
                         </intent-filter>
                 </activity>
                 <activity

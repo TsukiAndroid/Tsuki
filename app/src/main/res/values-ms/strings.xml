@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
     <string name="enter_password">Masukkan kata laluan</string>
-    <string name="protect_application_summary">Minta kata laluan ketika memulakan Futon</string>
+    <string name="protect_application_summary">Minta kata laluan ketika memulakan Tsuki</string>
     <string name="repeat_password">Ulang kata laluan</string>
     <string name="zoom_mode_fit_center">Muat di tengah</string>
     <string name="create_category">Kategori baharu</string>
@@ -328,7 +328,7 @@
     <string name="importing_manga">Mengimport komik</string>
     <string name="import_will_start_soon">Import akan bermula tidak lama lagi</string>
     <string name="feed">Suapan</string>
-    <string name="manga_error_description_pattern">Butiran ralat:&lt;br&gt;&lt;tt&gt;%1$s&lt;/tt&gt;&lt;br&gt;&lt;br&gt;1. Cuba &lt;a href=%2$s&gt;buka manga dalam pelayar web&lt;/a&gt; untuk memastikan ia tersedia pada sumbernya&lt;br&gt;2. Pastikan anda menggunakan &lt;a href=futon://about&gt;versi terbaharu Futon&lt;/a&gt;&lt;br&gt;3. Jika tersedia, hantar laporan ralat kepada pembangun.</string>
+    <string name="manga_error_description_pattern">Butiran ralat:&lt;br&gt;&lt;tt&gt;%1$s&lt;/tt&gt;&lt;br&gt;&lt;br&gt;1. Cuba &lt;a href=%2$s&gt;buka manga dalam pelayar web&lt;/a&gt; untuk memastikan ia tersedia pada sumbernya&lt;br&gt;2. Pastikan anda menggunakan &lt;a href=tsuki://about&gt;versi terbaharu Tsuki&lt;/a&gt;&lt;br&gt;3. Jika tersedia, hantar laporan ralat kepada pembangun.</string>
     <string name="color_correction">Pembetulan warna</string>
     <string name="brightness">Kecerahan</string>
     <string name="contrast">Berbeza</string>
@@ -618,7 +618,7 @@
     <string name="show_pages_thumbs">Tunjukkan Halaman Thumbnails</string>
     <string name="show_pages_thumbs_summary">Dayakan tab \"Halaman\" pada skrin Butiran</string>
     <string name="error_no_data_received">Tiada data diterima dari pelayan</string>
-    <string name="unsupported_backup_message">Sila pilih fail sandaran Futon yang betul</string>
+    <string name="unsupported_backup_message">Sila pilih fail sandaran Tsuki yang betul</string>
     <string name="hours_short">%d j</string>
     <string name="minutes_short">%d m</string>
     <string name="seconds_short">%d s</string>
@@ -668,8 +668,8 @@
     <string name="chapters_read">Bab Baca</string>
     <string name="chapters_left">Bab kiri</string>
     <string name="external_source">External/plugin</string>
-    <string name="plugin_incompatible">Plugin yang tidak serasi atau ralat dalaman. Pastikan anda menggunakan versi terkini plugin dan Futon</string>
-    <string name="plugin_incompatible_with_cause">Ralat Plugin: %s\n Pastikan anda menggunakan versi terkini plugin dan Futon</string>
+    <string name="plugin_incompatible">Plugin yang tidak serasi atau ralat dalaman. Pastikan anda menggunakan versi terkini plugin dan Tsuki</string>
+    <string name="plugin_incompatible_with_cause">Ralat Plugin: %s\n Pastikan anda menggunakan versi terkini plugin dan Tsuki</string>
     <string name="connection_ok">Sambungan ok</string>
     <string name="invalid_proxy_configuration">Konfigurasi proksi tidak sah</string>
     <string name="show_quick_filters">Tunjukkan penapis cepat</string>
@@ -771,7 +771,7 @@
     <string name="send_backups_telegram">Hantar sandaran di Telegram</string>
     <string name="test_connection">Sambungan ujian</string>
     <string name="telegram_chat_id_summary">Masukkan ID sembang di mana sandaran harus dihantar</string>
-    <string name="open_telegram_bot_summary">Tekan untuk membuka sembang dengan bot sandaran Futon</string>
+    <string name="open_telegram_bot_summary">Tekan untuk membuka sembang dengan bot sandaran Tsuki</string>
     <string name="clear_database">Pangkalan data yang jelas</string>
     <string name="clear_database_summary">Padamkan maklumat mengenai manga yang tidak digunakan</string>
     <string name="enable_all_sources">Dayakan semua sumber manga</string>
@@ -797,10 +797,10 @@
     <string name="search_disabled_sources">Cari melalui sumber kurang upaya</string>
     <string name="error_details">Butiran ralat</string>
     <string name="error_disclaimer_manga">Cuba buka manga dalam pelayar web untuk memastikan ia tersedia di sumbernya.</string>
-    <string name="error_disclaimer_app_outdated">Ia kelihatan seperti versi Futon anda sudah lapuk. Sila pasang versi terkini untuk mendapatkan semua pembetulan yang tersedia.</string>
+    <string name="error_disclaimer_app_outdated">Ia kelihatan seperti versi Tsuki anda sudah lapuk. Sila pasang versi terkini untuk mendapatkan semua pembetulan yang tersedia.</string>
     <string name="error_disclaimer_report">Anda boleh menghantar laporan pepijat kepada pemaju. Ini akan membantu kami menyiasat dan membetulkan isu ini.</string>
     <string name="link_to_manga_on_s">Pautan ke manga %s</string>
-    <string name="link_to_manga_in_app">Futon, pekerja manga</string>
+    <string name="link_to_manga_in_app">Tsuki, pekerja manga</string>
     <string name="clear_browser_data">Data penyemak imbas yang jelas</string>
     <string name="clear_browser_data_summary">Data penyemak imbas yang jelas seperti cache dan kuki. Amaran: Kebenaran dalam sumber manga mungkin tidak sah</string>
     <string name="no_write_permission_to_file">Tidak mempunyai kebenaran untuk menulis fail</string>
@@ -846,7 +846,7 @@
     <string name="discord_token_hint">Tampalkan token Discord anda di sini</string>
     <string name="discord_rpc_summary">Tunjukkan status bacaan anda pada Discord</string>
     <string name="obtain">Memperoleh</string>
-    <string name="discord_rpc_description">Membaca Manga di Futon - Aplikasi Pembaca Manga</string>
+    <string name="discord_rpc_description">Watching Tsuki</string>
     <string name="reading_s">Membaca %s</string>
     <string name="read_on_s">Baca terus %s</string>
     <string name="rpc_skip_nsfw_summary">Jangan gunakan RPC untuk kandungan dewasa</string>

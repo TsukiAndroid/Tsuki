@@ -3,7 +3,7 @@
     <string name="missing_storage_permission">Nema dopuštenja za pristup mangi na vanjskoj pohrani</string>
     <string name="show_pages_thumbs_summary">Omogućite karticu \"Stranice\" na zaslonu s detaljima</string>
     <string name="error_no_data_received">Nikakvi podaci nisu primljeni s poslužitelja</string>
-    <string name="unsupported_backup_message">Odaberite odgovarajuću datoteku sigurnosne kopije Futon</string>
+    <string name="unsupported_backup_message">Odaberite odgovarajuću datoteku sigurnosne kopije Tsuki</string>
     <string name="hours_short">%d h</string>
     <string name="minutes_short">%d m</string>
     <string name="hours_minutes_short">%1$d h %2$d m</string>
@@ -114,7 +114,7 @@
     <string name="enter_password">Upišite lozinku</string>
     <string name="wrong_password">Pogrešna lozinka</string>
     <string name="protect_application">Zaštitite aplikaciju</string>
-    <string name="protect_application_summary">Traži lozinku prilikom pokretanja Futona</string>
+    <string name="protect_application_summary">Traži lozinku prilikom pokretanja Tsukia</string>
     <string name="repeat_password">Ponovite lozinku</string>
     <string name="passwords_mismatch">Nepodudarne lozinke</string>
     <string name="about">O aplikaciji</string>
@@ -239,7 +239,7 @@
     <string name="import_completed_hint">Možete izbrisati izvornu datoteku iz pohrane radi uštede prostora</string>
     <string name="import_will_start_soon">Uvoz će uskoro početi</string>
     <string name="feed">Novosti</string>
-    <string name="manga_error_description_pattern">Detalji pogreške:&lt;br&gt;&lt;tt&gt;%1$s&lt;/tt&gt;&lt;br&gt;&lt;br&gt;1. Pokušajte &lt;a href=%2$s&gt;otvoriti mangu u web-pregledniku&lt;/a&gt; kako biste bili sigurni da je dostupna na izvoru&lt;br&gt;2. Provjerite koristite li &lt;a href=futon://about&gt;najnoviju verziju Futon&lt;/a&gt;&lt;br&gt;3. Ako je dostupno, pošaljite izvješće o pogrešci programerima.</string>
+    <string name="manga_error_description_pattern">Detalji pogreške:&lt;br&gt;&lt;tt&gt;%1$s&lt;/tt&gt;&lt;br&gt;&lt;br&gt;1. Pokušajte &lt;a href=%2$s&gt;otvoriti mangu u web-pregledniku&lt;/a&gt; kako biste bili sigurni da je dostupna na izvoru&lt;br&gt;2. Provjerite koristite li &lt;a href=tsuki://about&gt;najnoviju verziju Tsuki&lt;/a&gt;&lt;br&gt;3. Ako je dostupno, pošaljite izvješće o pogrešci programerima.</string>
     <string name="history_shortcuts">Prikaži nedavne manga prečice</string>
     <string name="history_shortcuts_summary">Učinite nedavnu mangu dostupnom dugim pritiskom na ikonu aplikacije</string>
     <string name="reader_control_ltr_summary">Ne prilagođavaj smjer listanja stranica u modus čitača, npr. pritiskom desne tipke uvijek prelazi na sljedeću stranicu. Ova opcija utječe samo na hardverske uređaje za unos</string>
@@ -652,7 +652,7 @@
     <string name="percent_left">Postotak preostalo</string>
     <string name="chapters_read">Pročitana poglavlja</string>
     <string name="chapters_left">Preostala poglavlja</string>
-    <string name="plugin_incompatible">Nekompatibilni dodatak ili interna pogreška. Provjerite koristite li najnoviju verziju dodatka i Futon</string>
+    <string name="plugin_incompatible">Nekompatibilni dodatak ili interna pogreška. Provjerite koristite li najnoviju verziju dodatka i Tsuki</string>
     <string name="text_empty_holder_secondary_filtered">Nema manga koji odgovaraju odabranim filtrima</string>
     <string name="connection_ok">Veza je u redu</string>
     <string name="invalid_proxy_configuration">Neispravna konfiguracija proksija</string>
@@ -730,7 +730,7 @@
     <string name="content_type_game_cg">Igra (generirano od računala)</string>
     <string name="user_manual">Upute</string>
     <string name="debug">Otklanjanje grešaka</string>
-    <string name="plugin_incompatible_with_cause">Greška dodatka: %s\nProvjerite koristite li najnoviju verziju dodatka i aplikacije Futon</string>
+    <string name="plugin_incompatible_with_cause">Greška dodatka: %s\nProvjerite koristite li najnoviju verziju dodatka i aplikacije Tsuki</string>
     <string name="unstable_feature_summary">Ova je funkcija eksperimentalna. Provjerite imate li sigurnosnu kopiju kako biste izbjegli gubljenje podataka</string>
     <string name="popular_in_week">Popularno ovaj tjedan</string>
     <string name="content_type_artist_cg">Umjetnik (generirano od računala)</string>
@@ -757,7 +757,7 @@
     <string name="test_connection">Provjeri vezu</string>
     <string name="send_backups_telegram">Pošalji sigurnosne kopije u Telegram</string>
     <string name="telegram_chat_id_summary">Upiši ID chata na koji treba slati sigurnosne kopije</string>
-    <string name="open_telegram_bot_summary">Pritisni za otvaranje chata s Futon Backup Bot</string>
+    <string name="open_telegram_bot_summary">Pritisni za otvaranje chata s Tsuki Backup Bot</string>
     <string name="translation">Prijevod</string>
     <string name="rating">Ocjena</string>
     <string name="source">Izvor</string>
@@ -790,8 +790,8 @@
     <string name="search_disabled_sources">Pretraži deaktivirane izvore</string>
     <string name="error_details">Detalji greške</string>
     <string name="error_disclaimer_manga">Pokušaj otvoriti manga u web pregledniku kako bi provjerio/la je li dostupan na izvornom mjestu.</string>
-    <string name="error_disclaimer_app_outdated">Izgleda da je tvoja Futon verzija zastarjela. Instaliraj najnoviju verziju za dobivanje svih dostupnih ispravki.</string>
-    <string name="link_to_manga_in_app">Poveznica na manga u Futon</string>
+    <string name="error_disclaimer_app_outdated">Izgleda da je tvoja Tsuki verzija zastarjela. Instaliraj najnoviju verziju za dobivanje svih dostupnih ispravki.</string>
+    <string name="link_to_manga_in_app">Poveznica na manga u Tsuki</string>
     <string name="link_to_manga_on_s">Poveznica na manga na %s</string>
     <string name="error_disclaimer_report">Pošalji izvještaj o grešci programerima. To će nam pomoći da istražimo i ispravimo problem.</string>
     <string name="clear_browser_data">Izbriši podatke iz preglednika</string>
@@ -845,7 +845,7 @@
     <string name="discord_token_hint">Ovdje umetni svoj Discord token</string>
     <string name="discord_rpc_summary">Prikaži svoje stanje čitanja na Discordu</string>
     <string name="obtain">Nabavi</string>
-    <string name="discord_rpc_description">Čitanje manga na Futon – aplikaciji za čitanje manga</string>
+    <string name="discord_rpc_description">Watching Tsuki</string>
     <string name="reading_s">Čitaš %s</string>
     <string name="read_on_s">Čitaj na %s</string>
     <string name="rpc_skip_nsfw_summary">Ne koristi Rich Presence klijent (RPC) za sadržaj za odrasle</string>

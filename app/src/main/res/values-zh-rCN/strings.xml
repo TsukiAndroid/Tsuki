@@ -148,7 +148,7 @@
     <string name="enter_password">请输入启动密码</string>
     <string name="wrong_password">密码错误</string>
     <string name="protect_application">应用锁</string>
-    <string name="protect_application_summary">在启动Futon时要求输入密码</string>
+    <string name="protect_application_summary">在启动Tsuki时要求输入密码</string>
     <string name="repeat_password">重复密码</string>
     <string name="passwords_mismatch">密码不一致</string>
     <string name="about">关于</string>
@@ -262,7 +262,7 @@
     <string name="exclude_nsfw_from_history_summary">被标记为含有成人内容的漫画将不会记录阅读历史及阅读进度</string>
     <string name="clear_cookies_summary">能帮助解决部分问题，所有网站的授权将会失效</string>
     <string name="show_all">显示全部</string>
-    <string name="manga_error_description_pattern">错误详情：&lt;br&gt;&lt;tt&gt;%1$s&lt;/tt&gt;&lt;br&gt;&lt;br&gt;1.尝试&lt;a href=%2$s&gt;在浏览器中打开漫画&lt;/a&gt;确保漫画在图源中正常显示&lt;br&gt;2.确认正在使用的是&lt;a href=futon://about&gt;最新版本的Futon&lt;/a&gt;&lt;br&gt;3.若已排除以上问题，请向开发人员发送错误报告。</string>
+    <string name="manga_error_description_pattern">错误详情：&lt;br&gt;&lt;tt&gt;%1$s&lt;/tt&gt;&lt;br&gt;&lt;br&gt;1.尝试&lt;a href=%2$s&gt;在浏览器中打开漫画&lt;/a&gt;确保漫画在图源中正常显示&lt;br&gt;2.确认正在使用的是&lt;a href=tsuki://about&gt;最新版本的Tsuki&lt;/a&gt;&lt;br&gt;3.若已排除以上问题，请向开发人员发送错误报告。</string>
     <string name="invalid_domain_message">无效域名</string>
     <string name="percent_string_pattern">%1$s%%</string>
     <string name="canceled">已取消</string>
@@ -610,7 +610,7 @@
     <string name="show_pages_thumbs">显示漫画缩略图</string>
     <string name="show_pages_thumbs_summary">在漫画详情页启用漫画缩略图（页面）栏</string>
     <string name="error_no_data_received">未从服务器接收到任何数据</string>
-    <string name="unsupported_backup_message">请选择正确的 Futon 备份文件</string>
+    <string name="unsupported_backup_message">请选择正确的 Tsuki 备份文件</string>
     <string name="minutes_short">%d 分</string>
     <string name="hours_short">%d 时</string>
     <string name="hours_minutes_short">%1$d 时 %2$d 分</string>
@@ -657,7 +657,7 @@
     <string name="chapters_read">已读章节数</string>
     <string name="chapters_left">剩余章节数</string>
     <string name="external_source">外部插件</string>
-    <string name="plugin_incompatible">插件不兼容或出现了外部错误，请确保你已经将 Futon 以及插件更新至最新版本</string>
+    <string name="plugin_incompatible">插件不兼容或出现了外部错误，请确保你已经将 Tsuki 以及插件更新至最新版本</string>
     <string name="connection_ok">连接正常</string>
     <string name="text_empty_holder_secondary_filtered">无筛选结果</string>
     <string name="invalid_proxy_configuration">无效代理配置</string>
@@ -741,7 +741,7 @@
     <string name="landscape">横屏</string>
     <string name="screen_orientation">屏幕方向</string>
     <string name="portrait">竖屏</string>
-    <string name="plugin_incompatible_with_cause">插件错误： %s\n请确认正在使用的插件及Futon是否为最新版本</string>
+    <string name="plugin_incompatible_with_cause">插件错误： %s\n请确认正在使用的插件及Tsuki是否为最新版本</string>
     <string name="max_backups_count">最大备份数</string>
     <string name="access_denied_403">拒绝访问 (403)</string>
     <string name="error_not_image">无效格式：预期是图片但得到了 %s</string>
@@ -792,7 +792,7 @@
     <string name="error_details">错误详细信息</string>
     <string name="error_disclaimer_manga">尝试在网络浏览器中打开漫画，以确保此漫画在图源中可用</string>
     <string name="error_disclaimer_report">可向开发者提交错误报告，将会帮助我们定位并修复错误</string>
-    <string name="error_disclaimer_app_outdated">您的 Futon 版本过旧，请下载最新版本以修复问题</string>
+    <string name="error_disclaimer_app_outdated">您的 Tsuki 版本过旧，请下载最新版本以修复问题</string>
     <string name="clear_browser_data">清除浏览器数据</string>
     <string name="no_write_permission_to_file">写入文件权限被禁止</string>
     <string name="clear_browser_data_summary">点击后清除浏览器（如缓存、Cookies）数据，警告：图源授权可能变为无效</string>
@@ -803,7 +803,7 @@
     <string name="simple">默认</string>
     <string name="error_non_file_uri">选择的路径无法保存因其无法表示一个文件或存储目录</string>
     <string name="link_to_manga_on_s">在 %s 上连接漫画</string>
-    <string name="link_to_manga_in_app">在 Futon 上连接漫画</string>
+    <string name="link_to_manga_in_app">在 Tsuki 上连接漫画</string>
     <string name="manga_override_hint">这些设置将影响漫画在应用内的显示</string>
     <string name="pick_custom_file">使用自定义封面</string>
     <string name="change_cover">更改封面</string>
@@ -843,7 +843,7 @@
     <string name="discord_token_hint">在这里复制你的 Discord Token</string>
     <string name="discord_rpc_summary">在 Discord 个人信息栏内显示你的阅读状态</string>
     <string name="obtain">获取</string>
-    <string name="discord_rpc_description">正在 Futon - 一个漫画阅读软件上阅读漫画</string>
+    <string name="discord_rpc_description">Watching Tsuki</string>
     <string name="reading_s">正在阅读 %s</string>
     <string name="rpc_skip_nsfw_summary">阅读成人内容时不在 Discord 上显示阅读状态</string>
     <string name="invalid_token">非法Token：%s</string>

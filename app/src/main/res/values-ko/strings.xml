@@ -87,7 +87,7 @@
     <string name="text_local_holder_primary">먼저 아무거나 저장해보세요</string>
     <string name="text_feed_holder">여기서 읽고 있는 만화의 새로운 챕터들을 확인할 수 있습니다</string>
     <string name="protect_application">앱 잠금 활성화</string>
-    <string name="protect_application_summary">Futon를 실행할 때마다 비밀번호 묻기</string>
+    <string name="protect_application_summary">Tsuki를 실행할 때마다 비밀번호 묻기</string>
     <string name="check_for_updates">업데이트 확인하기</string>
     <string name="right_to_left">오른쪽에서 왼쪽</string>
     <string name="zoom_mode_fit_center">가운데 맞춤</string>
@@ -335,5 +335,5 @@
     <string name="contrast">차이</string>
     <string name="reset">초기화</string>
     <string name="text_unsaved_changes_prompt">저장되지 않은 변경 사항을 저장하거나 삭제하시겠습니까\?</string>
-    <string name="manga_error_description_pattern">오류 세부정보:&lt;br&gt;&lt;tt&gt;%1$s&lt;/tt&gt;&lt;br&gt;&lt;br&gt;1. &lt;a href=%2$s&gt;웹 브라우저에서 만화를 열어&lt;/a&gt; 소스에서 사용할 수 있는지 확인하세요&lt;br&gt;2. &lt;a href=futon://about&gt;최신 버전의 Futon&lt;/a&gt;&lt;br&gt;를 사용하고 있는지 확인하세요.3. 사용 가능한 경우 개발자에게 오류 보고서를 보냅니다.</string>
+    <string name="manga_error_description_pattern">오류 세부정보:&lt;br&gt;&lt;tt&gt;%1$s&lt;/tt&gt;&lt;br&gt;&lt;br&gt;1. &lt;a href=%2$s&gt;웹 브라우저에서 만화를 열어&lt;/a&gt; 소스에서 사용할 수 있는지 확인하세요&lt;br&gt;2. &lt;a href=tsuki://about&gt;최신 버전의 Tsuki&lt;/a&gt;&lt;br&gt;를 사용하고 있는지 확인하세요.3. 사용 가능한 경우 개발자에게 오류 보고서를 보냅니다.</string>
 </resources>

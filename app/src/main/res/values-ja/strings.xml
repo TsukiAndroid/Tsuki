@@ -110,14 +110,14 @@
     <string name="feed_will_update_soon">フィードの更新はまもなく開始されます</string>
     <string name="track_sources">アップデートを確認</string>
     <string name="dont_check">チェックしない</string>
-    <string name="protect_application_summary">Futonを起動したときにパスワードを入力する</string>
+    <string name="protect_application_summary">Tsukiを起動したときにパスワードを入力する</string>
     <string name="repeat_password">パスワードを繰り返す</string>
     <string name="passwords_mismatch">パスワードが違います</string>
     <string name="about">この本の詳細</string>
     <string name="app_version">現在のバージョン%s</string>
     <string name="clear_search_history">検索履歴をクリア</string>
     <string name="external_storage">外部ストレージ</string>
-    <string name="app_update_available">新しいバージョンの Futon が利用可能です</string>
+    <string name="app_update_available">新しいバージョンの Tsuki が利用可能です</string>
     <string name="text_empty_holder_primary">ここは空っぽです…</string>
     <string name="favourites_category_empty">空のカテゴリー</string>
     <string name="text_local_holder_secondary">オンラインソースから保存するかファイルをインポートします。</string>
@@ -181,7 +181,7 @@
     <string name="genres">ジャンル</string>
     <string name="scale_mode">スケールモード</string>
     <string name="today">今日</string>
-    <string name="about_app_translation_summary">Futonを翻訳する(Weblateのサイトに移動します)</string>
+    <string name="about_app_translation_summary">Tsukiを翻訳する(Weblateのサイトに移動します)</string>
     <string name="next">次のページ</string>
     <string name="silent">サイレント</string>
     <string name="sign_in">サインイン</string>
@@ -312,7 +312,7 @@
     <string name="reader_info_bar">リーダーで情報バーを表示する</string>
     <string name="comics_archive">コミックアーカイブ</string>
     <string name="feed">フィード</string>
-    <string name="manga_error_description_pattern">エラーの詳細:&lt;br&gt;&lt;tt&gt;%1$s&lt;/tt&gt;&lt;br&gt;&lt;br&gt;1. &lt;a href=%2$s&gt;Webブラウザで漫画を開いてみて&lt;/a&gt;、そのソースで利用可能かどうか確認してください&lt;br&gt;2.&lt;a href=futon://about&gt;最新版のFuton&lt;/a&gt;&lt;br&gt;3.利用可能であれば、開発者にエラーレポートを送ってみてください。</string>
+    <string name="manga_error_description_pattern">エラーの詳細:&lt;br&gt;&lt;tt&gt;%1$s&lt;/tt&gt;&lt;br&gt;&lt;br&gt;1. &lt;a href=%2$s&gt;Webブラウザで漫画を開いてみて&lt;/a&gt;、そのソースで利用可能かどうか確認してください&lt;br&gt;2.&lt;a href=tsuki://about&gt;最新版のTsuki&lt;/a&gt;&lt;br&gt;3.利用可能であれば、開発者にエラーレポートを送ってみてください。</string>
     <string name="reader_control_ltr">人間工学に基づいたリーダーコントロール</string>
     <string name="history_shortcuts">最近のマンガのショートカットを表示</string>
     <string name="history_shortcuts_summary">アプリケーションアイコンを長押しして最近のマンガを利用できるようにする</string>
@@ -466,7 +466,7 @@
     <string name="send_backups_telegram">Telegramにバックアップを送信</string>
     <string name="test_connection">テスト接続</string>
     <string name="telegram_chat_id_summary">バックアップを送信するチャットIDを入力してください</string>
-    <string name="open_telegram_bot_summary">タップしてFutonバックアップボットを開く</string>
+    <string name="open_telegram_bot_summary">タップしてTsukiバックアップボットを開く</string>
     <string name="clear_database">データベース消去</string>
     <string name="clear_database_summary">使われていないマンガの情報を削除する</string>
     <string name="enable_all_sources">すべての漫画ソースを有効にする</string>
@@ -588,14 +588,14 @@
     <string name="delete_read_chapters_summary">ローカルストレージから既読のチャプターを削除して空き容量を増やす</string>
     <string name="delete_read_chapters_prompt">これにより、ローカルストレージから既読としてマークされた全てのチャプターが完全に削除されます。後で再ダウンロードすることは可能ですが、インポートされたチャプターは永久に失われる可能性があります。</string>
     <string name="delete_read_chapters_auto">既読のチャプターを自動的に削除する</string>
-    <string name="runs_on_app_start">Futonの起動時に実行</string>
+    <string name="runs_on_app_start">Tsukiの起動時に実行</string>
     <string name="split_by_translations_summary">異なる翻訳のチャプターを、一つのリストではなく別々に表示する</string>
     <string name="unread">未読</string>
     <string name="unsupported_source">このマンガソースはサポートされていません</string>
     <string name="show_pages_thumbs">サムネイルを表示</string>
     <string name="show_pages_thumbs_summary">詳細画面で「ページ」タブを有効にする</string>
     <string name="error_no_data_received">サーバーからデータを受信できませんでした</string>
-    <string name="unsupported_backup_message">Futonのバックアップファイルを選択してください。</string>
+    <string name="unsupported_backup_message">Tsukiのバックアップファイルを選択してください。</string>
     <string name="hours_short">%d 時</string>
     <string name="minutes_short">%d 分</string>
     <string name="seconds_short">%d 秒</string>
@@ -615,7 +615,7 @@
     <string name="authors">著者</string>
     <string name="blocked_by_server_message">サーバーによってブロックされています。別のネットワーク接続（VPN、プロキシなど）をお試しください。</string>
     <string name="disable">無効化</string>
-    <string name="ignore_ssl_errors_summary">ネットワークリソースへのアクセス時にSSL関連の問題が発生した場合、SSL証明書の検証を無効にできます。これによりセキュリティに影響が生じる可能性があります。この設定変更後はFutonの再起動が必要です。</string>
+    <string name="ignore_ssl_errors_summary">ネットワークリソースへのアクセス時にSSL関連の問題が発生した場合、SSL証明書の検証を無効にできます。これによりセキュリティに影響が生じる可能性があります。この設定変更後はTsukiの再起動が必要です。</string>
     <string name="disable_connectivity_check_summary">接続確認に問題がある場合（例：ネットワークが接続されているにもかかわらずオフラインモードになる場合など）、接続確認をスキップしてください。</string>
     <string name="disable_nsfw_notifications">NSFW通知を無効にする</string>
     <string name="disable_nsfw_notifications_summary">NSFWマンガの更新に関する通知を表示しない</string>
@@ -623,8 +623,8 @@
     <string name="screenshots_block_incognito">シークレットモード時にブロック</string>
     <string name="crop_pages">ページをトリミングする</string>
     <string name="percent_read">既読率</string>
-    <string name="plugin_incompatible">互換性のないプラグインまたは内部エラーが発生しました。プラグインとFutonの最新バージョンを使用していることを確認してください。</string>
-    <string name="plugin_incompatible_with_cause">プラグインエラー: %s\nプラグインとFutonの最新バージョンを使用していることを確認してください</string>
+    <string name="plugin_incompatible">互換性のないプラグインまたは内部エラーが発生しました。プラグインとTsukiの最新バージョンを使用していることを確認してください。</string>
+    <string name="plugin_incompatible_with_cause">プラグインエラー: %s\nプラグインとTsukiの最新バージョンを使用していることを確認してください</string>
     <string name="connection_ok">正常に接続できました</string>
     <string name="invalid_proxy_configuration">無効なプロキシ設定</string>
     <string name="show_quick_filters">クイックフィルターを表示</string>
@@ -708,10 +708,10 @@
     <string name="search_disabled_sources">無効化されたソースを検索する</string>
     <string name="error_details">エラーの詳細</string>
     <string name="error_disclaimer_manga">ウェブブラウザで漫画を開いて、そのソースで利用可能かどうかを確認してください。</string>
-    <string name="error_disclaimer_app_outdated">お使いのFutonのバージョンが古くなっているようです。最新のバージョンをインストールして、利用可能なすべての修正プログラムを入手してください。</string>
+    <string name="error_disclaimer_app_outdated">お使いのTsukiのバージョンが古くなっているようです。最新のバージョンをインストールして、利用可能なすべての修正プログラムを入手してください。</string>
     <string name="error_disclaimer_report">開発者へバグ報告を提出できます。これにより問題の調査と修正に役立ちます。</string>
     <string name="link_to_manga_on_s">%sの漫画へのリンク</string>
-    <string name="link_to_manga_in_app">Futonの中の漫画へのリンク</string>
+    <string name="link_to_manga_in_app">Tsukiの中の漫画へのリンク</string>
     <string name="clear_browser_data">ブラウザのデータを消去する</string>
     <string name="clear_browser_data_summary">キャッシュやクッキーなどのブラウザデータを消去してください。警告：マンガソースでの認証が無効になる可能性があります</string>
     <string name="no_write_permission_to_file">ファイルへの書き込み権限がありません</string>
@@ -757,7 +757,7 @@
     <string name="discord_token_hint">ここにDiscordトークンを貼り付けてください</string>
     <string name="discord_rpc_summary">Discordで読み取りステータスを表示</string>
     <string name="obtain">アクセス</string>
-    <string name="discord_rpc_description">Futonで漫画を読む - 漫画リーダーアプリ</string>
+    <string name="discord_rpc_description">Watching Tsuki</string>
     <string name="reading_s">読書 %s</string>
     <string name="read_on_s">%s で読む</string>
     <string name="rpc_skip_nsfw_summary">成人向けコンテンツに RPC を使用しないでください</string>
