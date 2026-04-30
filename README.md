@@ -12,7 +12,7 @@
 
 ---
 
-## 🌙 Our Story
+## 🌙 Prologue 
 
 Tsuki started as a personal mission — just wanting to read manga on an old Android 7 device that kept breaking every app we tried.
 
@@ -20,11 +20,11 @@ What followed was a long road through SSL handshake errors, dead parser repos, a
 
 - **Kotatsu** — got taken down
 - **Yukimi** — got taken down
-- **Usagi** (Yukimi fork) — kept crashing
-- **Yumemi** — build errors everywhere
+- **Usagi** (Yukimi fork) — kept crashing (It is a problem with my own device since I use an Android 7)
+- **Yumemi** — build errors everywhere while trying to make changes in it's code.
 - **Futon** — finally worked ✅
 
-No professional dev experience. No Android Studio knowledge. Just stubbornness, curiosity, and a lot of trial and error along the way. Eventually teamed up with an AI named **Claude** (made by Anthropic) to help fix, fork, and ship something that would actually survive.
+I don't have any professional dev experience. No Android Studio knowledge. Just stubbornness, curiosity, and a lot of trial and error along the way. I Eventually teamed up with **Claude** to help fix, fork, and ship something that would actually survive.
 
 This is **Tsuki (月)** — the app that refused to die.
 
@@ -32,19 +32,19 @@ This is **Tsuki (月)** — the app that refused to die.
 
 ## 🙏 Credits
 
-- **Arsveiled** — new feature planning, design and coding contributions that brought this fork to life. Huge thanks for the work on custom sources, animations, the new app identity and countless quality‑of‑life improvements.
+- **Arsveiled** — new feature planning, contributions that brought this fork to life. Gotta give myself some credit, no ? 
 - Original **Futon** team — for the base this fork was built on.
 - **Kotatsu** team — Tsuki's grandparent project.
 - **kotatsu-parsers-redo** — manga source parsers.
-- **Anthropic Claude** — pair-programming partner for the ground-up work.
+- **Claude** — pair-programming partner for the ground-up work.
 
 ---
 
 ## ✨ Features
 
 - 📚 **1200+ manga sources** built-in via kotatsu-parsers-redo
-- 🌐 **Add custom sources** — paste any URL to browse any site via WebView
-- 🎨 **Material You UI** — dynamic color theming on Android 12+
+- 🌐 **Add custom sources** — paste any URL to browse any site via WebView also add that source as an inbuilt app source so that we can avoid having problems related to extension on older devices like mine. 
+- 🎨 **Material You UI** — dynamic color theming on Android 12+ (Still in progess, I don't have an Android 12 so i couldn't test it)
 - 🖼️ **Adjustable cover background transparency** in Appearance settings
 - 📖 Standard and Webtoon-optimized reader
 - ⬇️ Download manga for offline reading
