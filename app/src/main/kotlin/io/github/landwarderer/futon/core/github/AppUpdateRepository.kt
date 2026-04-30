@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import org.json.JSONArray
 import org.json.JSONObject
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -29,10 +30,10 @@ class AppUpdateRepository @Inject constructor(
 ) {
 	private val availableUpdate = MutableStateFlow<AppVersion?>(null)
 
-	private val latestReleaseUrl = buildString {
+	private val releasesUrl = buildString {
 		append("https://api.github.com/repos/")
 		append(context.getString(R.string.github_updates_repo))
-		append("/releases/latest")
+		append("/releases?per_page=20")
 	}
 
 	private val changelogUrl = buildString {
@@ -50,32 +51,53 @@ class AppUpdateRepository @Inject constructor(
 		runCatchingCancellable {
 			val request = Request.Builder()
 				.get()
-				.url(latestReleaseUrl)
+				.url(releasesUrl)
 				.build()
 			val response = okHttp.newCall(request).await()
-			val json = JSONObject(response.body?.string() ?: "{}")
+			val releases = JSONArray(response.body?.string() ?: "[]")
+			val allowUnstable = settings.isUnstableUpdatesAllowed
 
 			val currentVersion = VersionId(BuildConfig.VERSION_NAME)
-			val releaseVersion = VersionId(json.getString("tag_name").removePrefix("v"))
+
+			var bestRelease: JSONObject? = null
+			var bestVersion: VersionId? = null
+			for (i in 0 until releases.length()) {
+				val item = releases.getJSONObject(i)
+				if (item.optBoolean("draft", false)) continue
+				if (item.optBoolean("prerelease", false) && !allowUnstable) continue
+				val tagName = item.optString("tag_name").removePrefix("v")
+				if (tagName.isEmpty()) continue
+				val version = runCatching { VersionId(tagName) }.getOrNull() ?: continue
+				if (!allowUnstable && !version.isStable) continue
+				if (bestVersion == null || version > bestVersion) {
+					bestVersion = version
+					bestRelease = item
+				}
+			}
+
+			val release = bestRelease ?: return@runCatchingCancellable null
+			val releaseVersion = bestVersion ?: return@runCatchingCancellable null
 
 			if (releaseVersion <= currentVersion) {
 				return@runCatchingCancellable null
 			}
 
 			val arch = getDeviceArch()
-			val assets = json.getJSONArray("assets")
+			val assets = release.getJSONArray("assets")
 			val assetList = (0 until assets.length()).map { assets.getJSONObject(it) }
-			val matchingAsset = assetList.find { 
-				it.getString("name").contains(arch) 
-			}
+			val matchingAsset = assetList.find {
+				it.getString("name").contains(arch)
+			} ?: assetList.find {
+				it.getString("name").contains("universal")
+			} ?: assetList.firstOrNull()
 
 			AppVersion(
-				id = json.getLong("id"),
-				url = json.getString("html_url"),
-				name = json.getString("name").removePrefix("v"),
+				id = release.getLong("id"),
+				url = release.getString("html_url"),
+				name = release.optString("name").ifEmpty { release.getString("tag_name") }.removePrefix("v"),
 				apkSize = matchingAsset?.getLong("size") ?: 0L,
 				apkUrl = matchingAsset?.getString("browser_download_url") ?: "",
-				description = json.getString("body"),
+				description = release.optString("body", ""),
 			)
 		}.onFailure {
 			it.printStackTraceDebug("AppUpdateRepository::fetchUpdate")
