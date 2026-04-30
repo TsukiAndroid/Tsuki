@@ -69,7 +69,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginHorizontal="@dimen/margin_small"
                     android:layout_marginTop="@dimen/margin_small"
-                    app:chipStyle="@style/Widget.Futon.Chip.Filter" />
+                    app:chipStyle="@style/Widget.Tsuki.Chip.Filter" />
 
             </io.github.landwarderer.futon.filter.ui.FilterFieldLayout>
 
@@ -141,7 +141,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginHorizontal="@dimen/margin_small"
                     android:layout_marginTop="@dimen/margin_small"
-                    app:chipStyle="@style/Widget.Futon.Chip.Filter" />
+                    app:chipStyle="@style/Widget.Tsuki.Chip.Filter" />
 
             </io.github.landwarderer.futon.filter.ui.FilterFieldLayout>
 
@@ -159,7 +159,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginHorizontal="@dimen/margin_small"
                     android:layout_marginTop="@dimen/margin_small"
-                    app:chipStyle="@style/Widget.Futon.Chip.Filter" />
+                    app:chipStyle="@style/Widget.Tsuki.Chip.Filter" />
 
             </io.github.landwarderer.futon.filter.ui.FilterFieldLayout>
 
@@ -177,7 +177,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginHorizontal="@dimen/margin_small"
                     android:layout_marginTop="@dimen/margin_small"
-                    app:chipStyle="@style/Widget.Futon.Chip.Filter" />
+                    app:chipStyle="@style/Widget.Tsuki.Chip.Filter" />
 
             </io.github.landwarderer.futon.filter.ui.FilterFieldLayout>
 
@@ -194,7 +194,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginHorizontal="@dimen/margin_small"
                     android:layout_marginTop="@dimen/margin_small"
-                    app:chipStyle="@style/Widget.Futon.Chip.Filter" />
+                    app:chipStyle="@style/Widget.Tsuki.Chip.Filter" />
 
             </io.github.landwarderer.futon.filter.ui.FilterFieldLayout>
 
@@ -211,7 +211,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginHorizontal="@dimen/margin_small"
                     android:layout_marginTop="@dimen/margin_small"
-                    app:chipStyle="@style/Widget.Futon.Chip.Filter" />
+                    app:chipStyle="@style/Widget.Tsuki.Chip.Filter" />
 
             </io.github.landwarderer.futon.filter.ui.FilterFieldLayout>
 
@@ -228,7 +228,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginHorizontal="@dimen/margin_small"
                     android:layout_marginTop="@dimen/margin_small"
-                    app:chipStyle="@style/Widget.Futon.Chip.Filter" />
+                    app:chipStyle="@style/Widget.Tsuki.Chip.Filter" />
 
             </io.github.landwarderer.futon.filter.ui.FilterFieldLayout>
 
@@ -245,7 +245,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginHorizontal="@dimen/margin_small"
                     android:layout_marginTop="@dimen/margin_small"
-                    app:chipStyle="@style/Widget.Futon.Chip.Filter" />
+                    app:chipStyle="@style/Widget.Tsuki.Chip.Filter" />
 
             </io.github.landwarderer.futon.filter.ui.FilterFieldLayout>
 

@@ -50,7 +50,7 @@
 
 					<com.google.android.material.chip.Chip
 						android:id="@+id/chip_backup"
-						style="@style/Widget.Futon.Chip.Assist"
+						style="@style/Widget.Tsuki.Chip.Assist"
 						android:layout_width="wrap_content"
 						android:layout_height="wrap_content"
 						android:text="@string/restore_backup"
@@ -58,7 +58,7 @@
 
 					<com.google.android.material.chip.Chip
 						android:id="@+id/chip_sync"
-						style="@style/Widget.Futon.Chip.Assist"
+						style="@style/Widget.Tsuki.Chip.Assist"
 						android:layout_width="wrap_content"
 						android:layout_height="wrap_content"
 						android:text="@string/sync_auth"
@@ -66,7 +66,7 @@
 
 					<com.google.android.material.chip.Chip
 						android:id="@+id/chip_directories"
-						style="@style/Widget.Futon.Chip.Assist"
+						style="@style/Widget.Tsuki.Chip.Assist"
 						android:layout_width="wrap_content"
 						android:layout_height="wrap_content"
 						android:text="@string/local_manga_directories"
@@ -139,7 +139,7 @@
 				android:layout_height="wrap_content"
 				android:layout_marginHorizontal="@dimen/margin_normal"
 				android:layout_marginTop="@dimen/margin_normal"
-				app:chipStyle="@style/Widget.Futon.Chip.Filter" />
+				app:chipStyle="@style/Widget.Tsuki.Chip.Filter" />
 
 			<TextView
 				android:id="@+id/textView_type_title"
@@ -157,7 +157,7 @@
 				android:layout_height="wrap_content"
 				android:layout_marginHorizontal="@dimen/margin_normal"
 				android:layout_marginTop="@dimen/margin_normal"
-				app:chipStyle="@style/Widget.Futon.Chip.Filter" />
+				app:chipStyle="@style/Widget.Tsuki.Chip.Filter" />
 
 		</LinearLayout>
 	</androidx.core.widget.NestedScrollView>

@@ -185,7 +185,7 @@ class StatsActivity : BaseActivity<ActivityStatsBinding>(),
 		val checkedIds = viewModel.selectedCategories.value
 		for (category in categories) {
 			val chip = Chip(this)
-			val drawable = ChipDrawable.createFromAttributes(this, null, 0, R.style.Widget_Futon_Chip_Filter)
+			val drawable = ChipDrawable.createFromAttributes(this, null, 0, R.style.Widget_Tsuki_Chip_Filter)
 			chip.setChipDrawable(drawable)
 			chip.text = category.title
 			chip.tag = category

@@ -72,14 +72,14 @@
 					app:layout_constraintStart_toStartOf="parent"
 					app:layout_constraintTop_toTopOf="parent"
 					app:layout_constraintWidth_percent="0.3"
-					app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.Futon.Cover"
+					app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.Tsuki.Cover"
 					app:useExistingDrawable="true"
 					tools:background="@tools:sample/backgrounds/scenic[5]"
 					tools:ignore="ContentDescription,UnusedAttribute" />
 
 				<TextView
 					android:id="@+id/textView_nsfw_16"
-					style="@style/Widget.Futon.TextView.Badge"
+					style="@style/Widget.Tsuki.TextView.Badge"
 					android:layout_width="wrap_content"
 					android:layout_height="wrap_content"
 					android:layout_margin="@dimen/card_indicator_offset"
@@ -92,7 +92,7 @@
 
 				<TextView
 					android:id="@+id/textView_nsfw_18"
-					style="@style/Widget.Futon.TextView.Badge"
+					style="@style/Widget.Tsuki.TextView.Badge"
 					android:layout_width="wrap_content"
 					android:layout_height="wrap_content"
 					android:layout_margin="@dimen/card_indicator_offset"
@@ -136,7 +136,7 @@
 
 				<com.google.android.material.chip.Chip
 					android:id="@+id/chip_favorite"
-					style="@style/Widget.Futon.Chip.Dropdown"
+					style="@style/Widget.Tsuki.Chip.Dropdown"
 					android:layout_width="wrap_content"
 					android:layout_height="wrap_content"
 					android:layout_marginStart="16dp"
@@ -173,7 +173,7 @@
 
 				<Button
 					android:id="@+id/button_description_more"
-					style="@style/Widget.Futon.Button.More"
+					style="@style/Widget.Tsuki.Button.More"
 					android:layout_width="wrap_content"
 					android:layout_height="wrap_content"
 					android:layout_marginEnd="8dp"
@@ -229,7 +229,7 @@
 
 				<Button
 					android:id="@+id/button_scrobbling_more"
-					style="@style/Widget.Futon.Button.More"
+					style="@style/Widget.Tsuki.Button.More"
 					android:layout_width="wrap_content"
 					android:layout_height="wrap_content"
 					android:layout_marginEnd="8dp"
@@ -298,7 +298,7 @@
 
 				<Button
 					android:id="@+id/button_related_more"
-					style="@style/Widget.Futon.Button.More"
+					style="@style/Widget.Tsuki.Button.More"
 					android:layout_width="wrap_content"
 					android:layout_height="wrap_content"
 					android:layout_marginEnd="8dp"

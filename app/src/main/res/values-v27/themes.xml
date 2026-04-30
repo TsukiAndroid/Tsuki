@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-	<style name="Base.V27.Futon" parent="Base.Theme.Futon">
+	<style name="Base.V27.Tsuki" parent="Base.Theme.Tsuki">
 		<item name="android:windowLightNavigationBar">@bool/light_navigation_bar</item>
 		<item name="android:navigationBarColor">@android:color/transparent</item>
 	</style>
 
-	<style name="Theme.Futon" parent="Base.V27.Futon" />
+	<style name="Theme.Tsuki" parent="Base.V27.Tsuki" />
 
 </resources>

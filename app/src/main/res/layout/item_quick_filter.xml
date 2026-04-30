@@ -18,7 +18,7 @@
 		android:clipToPadding="false"
 		android:paddingTop="2dp"
 		android:paddingBottom="6dp"
-		app:chipStyle="@style/Widget.Futon.Chip.Filter"
+		app:chipStyle="@style/Widget.Tsuki.Chip.Filter"
 		app:selectionRequired="false"
 		app:singleLine="true"
 		app:singleSelection="false" />

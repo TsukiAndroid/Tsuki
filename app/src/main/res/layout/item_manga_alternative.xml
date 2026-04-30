@@ -19,7 +19,7 @@
 			app:layout_constraintDimensionRatio="13:18"
 			app:layout_constraintStart_toStartOf="parent"
 			app:layout_constraintTop_toTopOf="parent"
-			app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.Futon.Cover"
+			app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.Tsuki.Cover"
 			tools:src="@tools:sample/backgrounds/scenic" />
 
 		<io.github.landwarderer.futon.core.ui.widgets.IconsView
@@ -76,7 +76,7 @@
 
 		<com.google.android.material.chip.Chip
 			android:id="@+id/chip_source"
-			style="@style/Widget.Futon.Chip.Assist"
+			style="@style/Widget.Tsuki.Chip.Assist"
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
 			android:layout_marginHorizontal="12dp"

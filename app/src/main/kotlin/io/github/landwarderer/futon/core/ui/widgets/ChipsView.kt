@@ -75,7 +75,7 @@ class ChipsView @JvmOverloads constructor(
 
 	init {
 		val ta = context.obtainStyledAttributes(attrs, R.styleable.ChipsView, defStyleAttr, 0)
-		chipStyle = ta.getResourceId(R.styleable.ChipsView_chipStyle, R.style.Widget_Futon_Chip)
+		chipStyle = ta.getResourceId(R.styleable.ChipsView_chipStyle, R.style.Widget_Tsuki_Chip)
 		iconsVisible = ta.getBoolean(R.styleable.ChipsView_chipIconVisible, true)
 		ta.recycle()
 
