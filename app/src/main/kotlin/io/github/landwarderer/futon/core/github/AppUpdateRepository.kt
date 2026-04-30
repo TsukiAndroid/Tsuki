@@ -27,8 +27,8 @@ class AppUpdateRepository @Inject constructor(
 	@BaseHttpClient private val okHttp: OkHttpClient,
 	@ApplicationContext context: Context,
 ) {
-// TODO("Fix update checking.")
 	private val availableUpdate = MutableStateFlow<AppVersion?>(null)
+
 	private val latestReleaseUrl = buildString {
 		append("https://api.github.com/repos/")
 		append(context.getString(R.string.github_updates_repo))
@@ -54,21 +54,27 @@ class AppUpdateRepository @Inject constructor(
 				.build()
 			val response = okHttp.newCall(request).await()
 			val json = JSONObject(response.body?.string() ?: "{}")
-			
+
 			val currentVersion = VersionId(BuildConfig.VERSION_NAME)
 			val releaseVersion = VersionId(json.getString("tag_name").removePrefix("v"))
-			
-			// Only return update if there's a newer version available
+
 			if (releaseVersion <= currentVersion) {
 				return@runCatchingCancellable null
 			}
-			
+
+			val arch = getDeviceArch()
+			val assets = json.getJSONArray("assets")
+			val assetList = (0 until assets.length()).map { assets.getJSONObject(it) }
+			val matchingAsset = assetList.find { 
+				it.getString("name").contains(arch) 
+			}
+
 			AppVersion(
 				id = json.getLong("id"),
 				url = json.getString("html_url"),
 				name = json.getString("name").removePrefix("v"),
-				apkSize = 0L, // No longer downloading, so size not needed
-				apkUrl = "", // No longer downloading
+				apkSize = matchingAsset?.getLong("size") ?: 0L,
+				apkUrl = matchingAsset?.getString("browser_download_url") ?: "",
 				description = json.getString("body"),
 			)
 		}.onFailure {
@@ -90,8 +96,16 @@ class AppUpdateRepository @Inject constructor(
 		}.getOrNull()
 	}
 
-	@Suppress("KotlinConstantConditions")
 	suspend fun isUpdateSupported(): Boolean {
-		return true // Updates are always available now (just checking for newer version)
+		return true
+	}
+
+	private fun getDeviceArch(): String {
+		return when {
+			android.os.Build.SUPPORTED_ABIS.contains("arm64-v8a") -> "arm64-v8a"
+			android.os.Build.SUPPORTED_ABIS.contains("armeabi-v7a") -> "armeabi-v7a"
+			android.os.Build.SUPPORTED_ABIS.contains("x86_64") -> "x86_64"
+			else -> "universal"
+		}
 	}
 }
