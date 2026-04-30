@@ -1,8 +1,8 @@
-## Futon contribution guidelines
+## Tsuki contribution guidelines
 
-+ If you want to **fix bugs** or **implement new features** that **already have an [issue card](https://github.com/AppFuton/Futon/issues):** please assign this issue to you and/or comment about it.
++ If you want to **fix bugs** or **implement new features** that **already have an [issue card](https://github.com/Space4414/Tsuki/issues):** please assign this issue to you and/or comment about it.
 + If you want to **implement a new feature:** open an issue or discussion regarding it to ensure it will be accepted.
-+ **Community chat**: Join our Discord for support and discussion — https://discord.gg/9sqBHXhwzz
++ **Community chat**: No community yet cause I'm working solo but I think I'll add one soon.
 + In case you want to **add a new manga source,** refer to the [parsers repository](https://github.com/Kotatsu-Redo/kotatsu-parsers-redo).
 
 **Refactoring** or some **dev-faces improvements** might also be accepted. However, please stick to the following principles:
