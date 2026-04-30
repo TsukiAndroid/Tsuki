@@ -91,7 +91,8 @@ class AppUpdateActivity : BaseActivity<ActivityAppUpdateBinding>(), View.OnClick
 
 	private fun openGitHub() {
 		val latestVersion = viewModel.nextVersion.value ?: return
-		if (!router.openExternalBrowser(latestVersion.url, getString(R.string.open_in_browser))) {
+		val downloadUrl = latestVersion.apkUrl.ifEmpty { latestVersion.url }
+		if (!router.openExternalBrowser(downloadUrl, getString(R.string.open_in_browser))) {
 			Snackbar.make(viewBinding.scrollView, R.string.operation_not_supported, Snackbar.LENGTH_SHORT).show()
 		}
 	}
