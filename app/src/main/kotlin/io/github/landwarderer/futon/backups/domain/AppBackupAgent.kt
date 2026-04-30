@@ -11,6 +11,7 @@ import com.google.common.io.ByteStreams
 import io.github.landwarderer.futon.backups.data.BackupRepository
 import io.github.landwarderer.futon.core.db.MangaDatabase
 import io.github.landwarderer.futon.core.prefs.AppSettings
+import io.github.landwarderer.futon.customsource.data.CustomSourcesRepository
 import io.github.landwarderer.futon.explore.data.MangaSourcesRepository
 import io.github.landwarderer.futon.filter.data.SavedFiltersRepository
 import io.github.landwarderer.futon.mihon.MihonExtensionManager
@@ -29,99 +30,104 @@ class AppBackupAgent : BackupAgent() {
     @Inject
     lateinit var mihonExtensionManager: Provider<MihonExtensionManager>
 
-	override fun onBackup(
-		oldState: ParcelFileDescriptor?,
-		data: BackupDataOutput?,
-		newState: ParcelFileDescriptor?
-	) = Unit
+    @Inject
+    lateinit var customSourcesRepository: Provider<CustomSourcesRepository>
 
-	override fun onRestore(
-		data: BackupDataInput?,
-		appVersionCode: Int,
-		newState: ParcelFileDescriptor?
-	) = Unit
+        override fun onBackup(
+                oldState: ParcelFileDescriptor?,
+                data: BackupDataOutput?,
+                newState: ParcelFileDescriptor?
+        ) = Unit
 
-	override fun onFullBackup(data: FullBackupDataOutput) {
-		super.onFullBackup(data)
+        override fun onRestore(
+                data: BackupDataInput?,
+                appVersionCode: Int,
+                newState: ParcelFileDescriptor?
+        ) = Unit
 
-		val file = createBackupFile(
-			this,
-			BackupRepository(
-				database = MangaDatabase(context = applicationContext),
-				settings = AppSettings(applicationContext),
-				tapGridSettings = TapGridSettings(applicationContext),
-				mangaSourcesRepository = MangaSourcesRepository(
-					context = applicationContext,
-					db = MangaDatabase(context = applicationContext),
-					settings = AppSettings(applicationContext),
-					mihonExtensionManager = mihonExtensionManager.get(),
-				),
-				savedFiltersRepository = SavedFiltersRepository(
-					context = applicationContext,
-				),
-			),
-		)
-		try {
-			fullBackupFile(file, data)
-		} finally {
-			file.delete()
-		}
-	}
+        override fun onFullBackup(data: FullBackupDataOutput) {
+                super.onFullBackup(data)
 
-	override fun onRestoreFile(
-		data: ParcelFileDescriptor,
-		size: Long,
-		destination: File?,
-		type: Int,
-		mode: Long,
-		mtime: Long
-	) {
-		if (destination?.name?.endsWith(".bk.zip") == true) {
-			restoreBackupFile(
-				data.fileDescriptor,
-				size,
-				BackupRepository(
-					database = MangaDatabase(applicationContext),
-					settings = AppSettings(applicationContext),
-					tapGridSettings = TapGridSettings(applicationContext),
-					mangaSourcesRepository = MangaSourcesRepository(
-						context = applicationContext,
-						db = MangaDatabase(context = applicationContext),
-						settings = AppSettings(applicationContext),
-						mihonExtensionManager = mihonExtensionManager.get(),
-					),
-					savedFiltersRepository = SavedFiltersRepository(
-						context = applicationContext,
-					),
-				),
-			)
-			destination.delete()
-		} else {
-			super.onRestoreFile(data, size, destination, type, mode, mtime)
-		}
-	}
+                val file = createBackupFile(
+                        this,
+                        BackupRepository(
+                                database = MangaDatabase(context = applicationContext),
+                                settings = AppSettings(applicationContext),
+                                tapGridSettings = TapGridSettings(applicationContext),
+                                mangaSourcesRepository = MangaSourcesRepository(
+                                        context = applicationContext,
+                                        db = MangaDatabase(context = applicationContext),
+                                        settings = AppSettings(applicationContext),
+                                        mihonExtensionManager = mihonExtensionManager.get(),
+                    customSourcesRepository = customSourcesRepository.get(),
+                                ),
+                                savedFiltersRepository = SavedFiltersRepository(
+                                        context = applicationContext,
+                                ),
+                        ),
+                )
+                try {
+                        fullBackupFile(file, data)
+                } finally {
+                        file.delete()
+                }
+        }
 
-	@VisibleForTesting
-	fun createBackupFile(context: Context, repository: BackupRepository): File {
-		val file = BackupUtils.createTempFile(context)
-		ZipOutputStream(file.outputStream()).use { output ->
-			runBlocking {
-				repository.createBackup(output, null)
-			}
-		}
-		return file
-	}
+        override fun onRestoreFile(
+                data: ParcelFileDescriptor,
+                size: Long,
+                destination: File?,
+                type: Int,
+                mode: Long,
+                mtime: Long
+        ) {
+                if (destination?.name?.endsWith(".bk.zip") == true) {
+                        restoreBackupFile(
+                                data.fileDescriptor,
+                                size,
+                                BackupRepository(
+                                        database = MangaDatabase(applicationContext),
+                                        settings = AppSettings(applicationContext),
+                                        tapGridSettings = TapGridSettings(applicationContext),
+                                        mangaSourcesRepository = MangaSourcesRepository(
+                                                context = applicationContext,
+                                                db = MangaDatabase(context = applicationContext),
+                                                settings = AppSettings(applicationContext),
+                                                mihonExtensionManager = mihonExtensionManager.get(),
+                    customSourcesRepository = customSourcesRepository.get(),
+                                        ),
+                                        savedFiltersRepository = SavedFiltersRepository(
+                                                context = applicationContext,
+                                        ),
+                                ),
+                        )
+                        destination.delete()
+                } else {
+                        super.onRestoreFile(data, size, destination, type, mode, mtime)
+                }
+        }
 
-	@VisibleForTesting
-	fun restoreBackupFile(fd: FileDescriptor, size: Long, repository: BackupRepository) {
-		ZipInputStream(ByteStreams.limit(FileInputStream(fd), size)).use { input ->
-			val sections = EnumSet.allOf(BackupSection::class.java)
-			// managed externally
-			sections.remove(BackupSection.SETTINGS)
-			sections.remove(BackupSection.SETTINGS_READER_GRID)
-			runBlocking {
-				repository.restoreBackup(input, sections, null)
-			}
-		}
-	}
+        @VisibleForTesting
+        fun createBackupFile(context: Context, repository: BackupRepository): File {
+                val file = BackupUtils.createTempFile(context)
+                ZipOutputStream(file.outputStream()).use { output ->
+                        runBlocking {
+                                repository.createBackup(output, null)
+                        }
+                }
+                return file
+        }
+
+        @VisibleForTesting
+        fun restoreBackupFile(fd: FileDescriptor, size: Long, repository: BackupRepository) {
+                ZipInputStream(ByteStreams.limit(FileInputStream(fd), size)).use { input ->
+                        val sections = EnumSet.allOf(BackupSection::class.java)
+                        // managed externally
+                        sections.remove(BackupSection.SETTINGS)
+                        sections.remove(BackupSection.SETTINGS_READER_GRID)
+                        runBlocking {
+                                repository.restoreBackup(input, sections, null)
+                        }
+                }
+        }
 }
