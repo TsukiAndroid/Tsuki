@@ -1,3 +1,12 @@
+## Alpha-1.64 (Build #67)
+
+_2026-04-30 23:48 UTC_
+
+- Update README.md (a933454)
+- Add files via upload (1976a4d)
+- Delete metadata/en-US/images/icon.png (de8922e)
+
+
 ## Alpha-1.60 (Build #64)
 
 _2026-04-30 17:03 UTC_
