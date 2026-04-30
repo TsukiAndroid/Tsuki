@@ -3,7 +3,12 @@ name: Build Tsuki APK
 on:
   push:
     branches: [ devel, main ]
+    paths-ignore:
+      - 'CHANGELOG.md'
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -15,6 +20,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -41,6 +47,44 @@ jobs:
           echo "VERSION_NAME=Alpha-1.${COMMIT_COUNT}" >> $GITHUB_OUTPUT
           echo "VERSION_CODE=${COMMIT_COUNT}" >> $GITHUB_OUTPUT
 
+      - name: Generate changelog
+        id: changelog
+        run: |
+          set -e
+          PREV_TAG="alpha-latest-prev"
+          if git rev-parse --verify "refs/tags/${PREV_TAG}" >/dev/null 2>&1; then
+            RANGE="${PREV_TAG}..HEAD"
+          else
+            RANGE="-50"
+          fi
+
+          {
+            echo "## ${{ steps.version.outputs.VERSION_NAME }} (Build #${{ github.run_number }})"
+            echo ""
+            echo "_$(date -u +'%Y-%m-%d %H:%M UTC')_"
+            echo ""
+            git log "$RANGE" --pretty=format:'- %s (%h)' --no-merges \
+              | grep -viE '^- (chore|ci|docs)\(?(changelog|ci|build)\)?:|^- Update CHANGELOG' \
+              | head -n 100 || true
+            echo ""
+            echo ""
+          } > NEW_ENTRY.md
+
+          if [ -f CHANGELOG.md ]; then
+            cat NEW_ENTRY.md CHANGELOG.md > CHANGELOG.md.tmp
+            mv CHANGELOG.md.tmp CHANGELOG.md
+          else
+            echo "# Changelog" > CHANGELOG.md
+            echo "" >> CHANGELOG.md
+            cat NEW_ENTRY.md >> CHANGELOG.md
+          fi
+
+          {
+            echo 'BODY<<__EOF__'
+            cat NEW_ENTRY.md
+            echo '__EOF__'
+          } >> $GITHUB_OUTPUT
+
       - name: Build Debug APK
         run: ./gradlew assembleDebug --stacktrace --no-configuration-cache
         env:
@@ -54,6 +98,15 @@ jobs:
           path: app/build/outputs/apk/debug/*.apk
           retention-days: 30
 
+      - name: Snapshot previous alpha-latest tag for next diff
+        run: |
+          git fetch --tags --force
+          if git rev-parse --verify refs/tags/alpha-latest >/dev/null 2>&1; then
+            PREV_SHA=$(git rev-list -n 1 refs/tags/alpha-latest)
+            git tag -f alpha-latest-prev "$PREV_SHA"
+            git push -f origin refs/tags/alpha-latest-prev || true
+          fi
+
       - name: Delete old alpha-latest release
         run: gh release delete "alpha-latest" --yes || true
         env:
@@ -61,6 +114,18 @@ jobs:
 
       - name: Delete old alpha-latest tag
         run: git push origin :refs/tags/alpha-latest || true
+
+      - name: Commit updated CHANGELOG.md
+        run: |
+          if git diff --quiet CHANGELOG.md; then
+            echo "No changelog changes to commit"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add CHANGELOG.md
+          git commit -m "docs(changelog): update for build #${{ github.run_number }} [skip ci]"
+          git push origin HEAD:${{ github.ref_name }}
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
@@ -70,6 +135,9 @@ jobs:
           body: |
             ## 🌙 Tsuki ${{ steps.version.outputs.VERSION_NAME }}
             > Auto-built from latest commit · Build #${{ github.run_number }}
+
+            ### What's new
+            ${{ steps.changelog.outputs.BODY }}
 
             ### 📱 Pick the right APK for your device:
             | APK | Best for |
