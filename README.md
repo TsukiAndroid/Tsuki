@@ -14,7 +14,7 @@
 
 ## 🌙 Prologue 
 
-Tsuki started as a personal mission — just wanting to read manga on an old Android 7 device that kept breaking every app we tried.
+Tsuki started as a personal mission; just wanting to read manga on an old Android 7 device that kept breaking every app we tried.
 
 What followed was a long road through SSL handshake errors, dead parser repos, and a graveyard of apps that kept getting taken down one by one:
 
@@ -67,7 +67,7 @@ Grab the latest APK from the [Releases](https://github.com/Space4414/Tsuki/relea
 
 ## 🛠️ Source Code
 
-This repository: <https://github.com/Space4414/Tsuki/tree/devel/app>
+This repository: <https://github.com/Space4414/Tsuki/tree/devel>
 
 ## 📜 License
 
