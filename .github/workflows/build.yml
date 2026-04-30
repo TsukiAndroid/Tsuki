@@ -13,6 +13,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -32,8 +34,18 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
+      - name: Generate version name
+        id: version
+        run: |
+          COMMIT_COUNT=$(git rev-list --count HEAD)
+          echo "VERSION_NAME=Alpha-1.${COMMIT_COUNT}" >> $GITHUB_OUTPUT
+          echo "VERSION_CODE=${COMMIT_COUNT}" >> $GITHUB_OUTPUT
+
       - name: Build Debug APK
         run: ./gradlew assembleDebug --stacktrace --no-configuration-cache
+        env:
+          VERSION_NAME: ${{ steps.version.outputs.VERSION_NAME }}
+          VERSION_CODE: ${{ steps.version.outputs.VERSION_CODE }}
 
       - name: Upload Debug APK (Actions artifact)
         uses: actions/upload-artifact@v4
@@ -54,9 +66,9 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: alpha-latest
-          name: "Tsuki Alpha-1.1 (Build #${{ github.run_number }})"
+          name: "Tsuki ${{ steps.version.outputs.VERSION_NAME }} (Build #${{ github.run_number }})"
           body: |
-            ## 🌙 Tsuki Alpha-1.1
+            ## 🌙 Tsuki ${{ steps.version.outputs.VERSION_NAME }}
             > Auto-built from latest commit · Build #${{ github.run_number }}
 
             ### 📱 Pick the right APK for your device:
