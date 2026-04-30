@@ -63,6 +63,7 @@ class TrackerSettingsFragment :
 		}
 		dozeHelper.updatePreference()
 		updateCategoriesEnabled()
+		findPreference<Preference>(AppSettings.KEY_TRACKER_DEBUG)?.isVisible = settings.isDeveloperModeEnabled
 	}
 
 	override fun onResume() {

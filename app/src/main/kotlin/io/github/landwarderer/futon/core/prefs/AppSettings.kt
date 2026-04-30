@@ -250,6 +250,10 @@ class AppSettings @Inject constructor(@ApplicationContext context: Context) {
                 get() = prefs.getBoolean(KEY_INCOGNITO_MODE, false)
                 set(value) = prefs.edit { putBoolean(KEY_INCOGNITO_MODE, value) }
 
+        var isDeveloperModeEnabled: Boolean
+                get() = prefs.getBoolean(KEY_DEVELOPER_MODE, false)
+                set(value) = prefs.edit { putBoolean(KEY_DEVELOPER_MODE, value) }
+
         val isReaderMultiTaskEnabled: Boolean
                 get() = prefs.getBoolean(KEY_READER_MULTITASK, false)
 
@@ -746,6 +750,7 @@ class AppSettings @Inject constructor(@ApplicationContext context: Context) {
                 const val KEY_REVERSE_CHAPTERS = "reverse_chapters"
                 const val KEY_GRID_VIEW_CHAPTERS = "grid_view_chapters"
                 const val KEY_INCOGNITO_NSFW = "incognito_nsfw"
+                const val KEY_DEVELOPER_MODE = "developer_mode"
                 const val KEY_PAGES_NUMBERS = "pages_numbers"
                 const val KEY_SCREENSHOTS_POLICY = "screenshots_policy"
                 const val KEY_PAGES_PRELOAD = "pages_preload"

@@ -945,4 +945,7 @@
     <string name="theme_name_midnight">Midnight</string>
     <string name="theme_name_ocean">Ocean</string>
     <string name="cover_transparency">Cover Transparency</string>
+    <string name="developer_mode">Developer mode</string>
+    <string name="developer_mode_summary">Show extra options for development and debugging</string>
+    <string name="developer_mode_enabled">Developer mode enabled</string>
 </resources>

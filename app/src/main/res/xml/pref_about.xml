@@ -57,4 +57,13 @@
 		android:summary="@string/url_telegram_web"
 		android:title="@string/telegram_group" />
 
+
+<PreferenceCategory android:title="@string/developer_mode">
+<SwitchPreferenceCompat
+android:defaultValue="false"
+
+android:key="developer_mode"
+android:summary="@string/developer_mode_summary"
+android:title="@string/developer_mode" />
+</PreferenceCategory>
 </PreferenceScreen>

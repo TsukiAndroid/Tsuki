@@ -66,7 +66,8 @@
 			android:key="tracker_debug"
 			android:persistent="false"
 			android:summary="@string/tracker_debug_info_summary"
-			android:title="@string/tracker_debug_info" />
+			android:title="@string/tracker_debug_info"
+        app:isPreferenceVisible="false" />
 
 		<Preference
 			android:dependency="tracker_enabled"
