@@ -35,9 +35,42 @@ jobs:
       - name: Build Debug APK
         run: ./gradlew assembleDebug --stacktrace --no-configuration-cache
 
-      - name: Upload Debug APK
+      - name: Upload Debug APK (Actions artifact)
         uses: actions/upload-artifact@v4
         with:
           name: Tsuki-debug-${{ github.run_number }}
           path: app/build/outputs/apk/debug/*.apk
           retention-days: 30
+
+      - name: Delete old alpha-latest release
+        run: gh release delete "alpha-latest" --yes || true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Delete old alpha-latest tag
+        run: git push origin :refs/tags/alpha-latest || true
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: alpha-latest
+          name: "Tsuki Alpha-1.1 (Build #${{ github.run_number }})"
+          body: |
+            ## 🌙 Tsuki Alpha-1.1
+            > Auto-built from latest commit · Build #${{ github.run_number }}
+
+            ### 📱 Pick the right APK for your device:
+            | APK | Best for |
+            |-----|----------|
+            | `arm64-v8a` | Most modern phones (2017+) ✅ recommended |
+            | `armeabi-v7a` | Older 32-bit Android phones |
+            | `x86_64` | Emulators / rare Intel phones |
+            | `universal` | Not sure? Just grab this one |
+
+            ---
+            🔗 Source: https://github.com/Space4414/Tsuki
+          files: app/build/outputs/apk/debug/*.apk
+          prerelease: true
+          draft: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
