@@ -121,6 +121,14 @@ class AppSettings @Inject constructor(@ApplicationContext context: Context) {
                 get() = prefs.getBoolean(KEY_HISTORY_BG_ENABLED, true)
                 set(value) = prefs.edit { putBoolean(KEY_HISTORY_BG_ENABLED, value) }
 
+        var isFavouritesBackgroundEnabled: Boolean
+                get() = prefs.getBoolean(KEY_FAVOURITES_BG_ENABLED, false)
+                set(value) = prefs.edit { putBoolean(KEY_FAVOURITES_BG_ENABLED, value) }
+
+        var isFeedBackgroundEnabled: Boolean
+                get() = prefs.getBoolean(KEY_FEED_BG_ENABLED, false)
+                set(value) = prefs.edit { putBoolean(KEY_FEED_BG_ENABLED, value) }
+
         val isQuickFilterEnabled: Boolean
                 get() = prefs.getBoolean(KEY_QUICK_FILTER, true)
 
@@ -835,6 +843,9 @@ class AppSettings @Inject constructor(@ApplicationContext context: Context) {
                 const val HISTORY_BG_ANILIST = "anilist"
                 const val HISTORY_BG_MAL = "mal"
                 const val HISTORY_BG_KITSU = "kitsu"
+                const val HISTORY_BG_SHIKIMORI = "shikimori"
+                const val KEY_FAVOURITES_BG_ENABLED = "favourites_bg_enabled"
+                const val KEY_FEED_BG_ENABLED = "feed_bg_enabled"
                 const val KEY_MAIN_FAB = "main_fab"
                 const val KEY_32BIT_COLOR = "enhanced_colors"
                 const val KEY_SOURCES_ORDER = "sources_sort_order"
