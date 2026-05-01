@@ -1,3 +1,14 @@
+## Alpha-1.67 (Build #68)
+
+_2026-05-01 00:43 UTC_
+
+- Rewrite release.yml: fix env var passing, per-ABI APKs, workflow_dispatch support (cc14739)
+- Fix Discord RPC icon URL, update detection (prerelease->release), and WEBVIEW source browser launch\n\n- Fix app_icon_url path (was 404, now points to images/icon.png)\n- Set prerelease: false so updater detects new builds by default\n- Open in-app browser when tapping a WEBVIEW custom source instead of empty list (7bbeb24)
+- Update README.md (a933454)
+- Add files via upload (1976a4d)
+- Delete metadata/en-US/images/icon.png (de8922e)
+
+
 ## Alpha-1.64 (Build #67)
 
 _2026-04-30 23:48 UTC_
