@@ -44,6 +44,8 @@ import io.github.landwarderer.futon.list.ui.adapter.TypedListSpacingDecoration
 import io.github.landwarderer.futon.list.ui.model.ListHeader
 import org.koitharu.kotatsu.parsers.model.Manga
 import org.koitharu.kotatsu.parsers.model.MangaParserSource
+import io.github.landwarderer.futon.customsource.domain.CustomMangaSource
+import io.github.landwarderer.futon.customsource.domain.CustomSourceType
 
 @AndroidEntryPoint
 class ExploreFragment :
@@ -131,11 +133,16 @@ class ExploreFragment :
 	}
 
 	override fun onItemClick(item: MangaSourceItem, view: View) {
-		if (sourceSelectionController?.onItemClick(item.id) == true) {
-			return
+  		if (sourceSelectionController?.onItemClick(item.id) == true) {
+  			return
 		}
-		router.openList(item.source, null, null)
-	}
+  		val source = item.source
+  		if (source is CustomMangaSource && source.source.type == CustomSourceType.WEBVIEW) {
+  			router.openBrowser(source.source.cleanBaseUrl, source, source.displayTitle)
+  			return
+  		}
+  		router.openList(item.source, null, null)
+  	}
 
 	override fun onItemLongClick(item: MangaSourceItem, view: View): Boolean {
 		return sourceSelectionController?.onItemLongClick(view, item.id) == true

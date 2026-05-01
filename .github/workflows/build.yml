@@ -150,7 +150,7 @@ jobs:
             ---
             🔗 Source: https://github.com/Space4414/Tsuki
           files: app/build/outputs/apk/debug/*.apk
-          prerelease: true
+          prerelease: false
           draft: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
