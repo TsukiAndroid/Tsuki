@@ -1,103 +1,96 @@
 name: Release Build
 
-on:
-  push:
-    tags:
-      - 'v*'
+  on:
+    push:
+      tags:
+        - 'v*'
+    workflow_dispatch:
+      inputs:
+        tag:
+          description: 'Release tag (e.g. v1.60)'
+          required: true
 
-permissions:
-  contents: write
+  permissions:
+    contents: write
 
-jobs:
-  check_version:
-    runs-on: ubuntu-latest
+  jobs:
+    build:
+      name: Build Release APK
+      runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      steps:
+        - name: Checkout code
+          uses: actions/checkout@v4
+          with:
+            fetch-depth: 0
 
-      - name: Get version from tag
-        id: tag
-        run: |
-          TAG=${GITHUB_REF#refs/tags/}
-          VERSION=${TAG#v}
-          echo "Tag version: $VERSION"
-          IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
-          PATCH=${PATCH:-0}
-          VERSION_CODE=$((MAJOR * 10000 + MINOR * 100 + PATCH))
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "version_code=$VERSION_CODE" >> $GITHUB_OUTPUT
+        - name: Set up JDK 17
+          uses: actions/setup-java@v4
+          with:
+            java-version: '17'
+            distribution: 'temurin'
 
-      - name: Read build.gradle defaults
-        run: |
-          FILE=app/build.gradle
-          GRADLE_VER=$(grep -oP "versionName project.hasProperty\('versionName'\) \? project.property\('versionName'\) : '\K[^']+" "$FILE" | head -n1 || true)
-          GRADLE_CODE=$(grep -oP "versionCode project.hasProperty\('versionCode'\) \? project.property\('versionCode'\).toInteger\(\) : \K[0-9]+" "$FILE" | head -n1 || true)
-          echo "build.gradle: $GRADLE_VER ($GRADLE_CODE)"
+        - name: Cache Gradle packages
+          uses: actions/cache@v4
+          with:
+            path: |
+              ~/.gradle/caches
+              ~/.gradle/wrapper
+            key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+            restore-keys: ${{ runner.os }}-gradle-
 
-  build:
-    needs: check_version
-    runs-on: ubuntu-latest
+        - name: Grant execute permission for gradlew
+          run: chmod +x gradlew
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+        - name: Compute version info
+          id: version
+          run: |
+            TAG=${{ github.ref_name }}
+            [ "$TAG" = "" ] && TAG="${{ github.event.inputs.tag }}"
+            VERSION=${TAG#v}
+            COMMIT_COUNT=$(git rev-list --count HEAD)
+            # VERSION_CODE: derive from tag e.g. v1.60 -> 160; fallback to commit count
+            MAJOR=$(echo "$VERSION" | cut -d. -f1)
+            MINOR=$(echo "$VERSION" | cut -d. -f2)
+            CODE=$((MAJOR * 1000 + MINOR))
+            echo "VERSION_NAME=$VERSION" >> $GITHUB_OUTPUT
+            echo "VERSION_CODE=$CODE" >> $GITHUB_OUTPUT
 
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
+        - name: Decode keystore
+          run: echo "${{ secrets.KEYSTORE_FILE }}" | base64 -d > ${{ github.workspace }}/keystore.jks
 
-      - name: Cache Gradle packages
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: ${{ runner.os }}-gradle-
+        - name: Build Release APKs
+          env:
+            VERSION_NAME: ${{ steps.version.outputs.VERSION_NAME }}
+            VERSION_CODE: ${{ steps.version.outputs.VERSION_CODE }}
+            KEYSTORE_FILE: ${{ github.workspace }}/keystore.jks
+            KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+            KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+            KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          run: ./gradlew assembleRelease --stacktrace --no-configuration-cache
 
-      - name: Get version from tag
-        id: version
-        run: |
-          TAG=${GITHUB_REF#refs/tags/}
-          VERSION=${TAG#v}
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
-          PATCH=${PATCH:-0}
-          VERSION_CODE=$((MAJOR * 10000 + MINOR * 100 + PATCH))
-          echo "version_code=$VERSION_CODE" >> $GITHUB_OUTPUT
+        - name: Create GitHub Release
+          uses: softprops/action-gh-release@v2
+          with:
+            tag_name: ${{ github.ref_name }}
+            name: "Tsuki ${{ steps.version.outputs.VERSION_NAME }}"
+            body: |
+              ## Tsuki ${{ steps.version.outputs.VERSION_NAME }}
 
-      - name: Decode keystore
-        run: echo "${{ secrets.KEYSTORE_FILE }}" | base64 -d > keystore.jks
+              ### 📱 Pick the right APK for your device:
+              | APK | Best for |
+              |-----|----------|
+              | `arm64-v8a` | Most modern phones (2017+) ✅ recommended |
+              | `armeabi-v7a` | Older 32-bit Android phones |
+              | `x86_64` | Emulators / rare Intel phones |
+              | `universal` | Not sure? Just grab this one |
+            files: app/build/outputs/apk/release/*.apk
+            prerelease: false
+            draft: false
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
-
-      - name: Build release APK
-        env:
-          KEYSTORE_FILE: ${{ github.workspace }}/keystore.jks
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        run: |
-          ./gradlew assembleRelease \
-            -PversionName=${{ steps.version.outputs.version }} \
-            -PversionCode=${{ steps.version.outputs.version_code }} \
-            --no-build-cache --no-configuration-cache
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ github.ref_name }}
-          name: Tsuki ${{ steps.version.outputs.version }}
-          draft: false
-          prerelease: false
-          files: app/build/outputs/apk/release/app-release.apk
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Clean up keystore
-        if: always()
-        run: rm -f keystore.jks
+        - name: Clean up keystore
+          if: always()
+          run: rm -f ${{ github.workspace }}/keystore.jks
+  
