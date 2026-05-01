@@ -21,6 +21,7 @@
 	<style name="ThemeOverlay.Tsuki.SideSheetDialog" parent="ThemeOverlay.Material3.SideSheetDialog" />
 
 	<style name="Widget.Tsuki.BottomSheet.Modal" parent="Widget.Material3.BottomSheet.Modal">
+        <item name="shapeAppearance">@style/ShapeAppearance.Tsuki.LargeComponent</item>
 		<item name="paddingBottomSystemWindowInsets">false</item>
 	</style>
 
@@ -246,15 +247,15 @@
 	<!-- Shapes -->
 
 	<style name="ShapeAppearanceOverlay.Tsuki.Cover" parent="">
-		<item name="cornerSize">12dp</item>
+<item name="cornerSize">16dp</item>
 	</style>
 
 	<style name="ShapeAppearanceOverlay.Tsuki.Cover.Medium" parent="">
-		<item name="cornerSize">8dp</item>
+<item name="cornerSize">10dp</item>
 	</style>
 
 	<style name="ShapeAppearanceOverlay.Tsuki.Cover.Small" parent="">
-		<item name="cornerSize">4dp</item>
+<item name="cornerSize">8dp</item>
 	</style>
 
 	<style name="ShapeAppearanceOverlay.Tsuki.Circle" parent="">
@@ -329,4 +330,7 @@
 		<item name="drawableSize">@dimen/m3_chip_icon_size</item>
 	</style>
 
+    <style name="ShapeAppearance.Tsuki.LargeComponent" parent="ShapeAppearance.Material3.LargeComponent">
+        <item name="cornerSize">24dp</item>
+    </style>
 </resources>
