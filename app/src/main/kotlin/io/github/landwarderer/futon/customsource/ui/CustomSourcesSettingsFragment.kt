@@ -12,7 +12,6 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
@@ -20,6 +19,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import io.github.landwarderer.futon.R
+import io.github.landwarderer.futon.settings.SettingsActivity
 import io.github.landwarderer.futon.core.nav.AppRouter
 import io.github.landwarderer.futon.customsource.domain.CustomMangaSource
 import io.github.landwarderer.futon.customsource.domain.CustomSource
@@ -47,10 +47,7 @@ class CustomSourcesSettingsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        view.findViewById<MaterialToolbar>(R.id.toolbar)?.apply {
-            title = getString(R.string.custom_sources)
-            setNavigationOnClickListener { parentFragmentManager.popBackStack() }
-        }
+        (activity as? SettingsActivity)?.setSectionTitle(getString(R.string.custom_sources))
 
         recyclerView = view.findViewById<RecyclerView>(R.id.recycler_custom_sources).apply {
             layoutManager = LinearLayoutManager(requireContext())
