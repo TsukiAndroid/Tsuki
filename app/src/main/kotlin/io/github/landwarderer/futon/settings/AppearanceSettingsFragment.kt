@@ -52,6 +52,7 @@ class AppearanceSettingsFragment :
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         addPreferencesFromResource(R.xml.pref_appearance)
+        findPreference<SliderPreference>(AppSettings.KEY_COVER_ALPHA)?.summaryProvider = PercentSummaryProvider()
         findPreference<SliderPreference>(AppSettings.KEY_GRID_SIZE)?.summaryProvider = PercentSummaryProvider()
         findPreference<SliderPreference>(AppSettings.KEY_NAV_BAR_ALPHA)?.summaryProvider = PercentSummaryProvider()
         findPreference<SliderPreference>(AppSettings.KEY_SEARCH_BAR_ALPHA)?.summaryProvider = PercentSummaryProvider()
