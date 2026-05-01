@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   build:
-    name: Build Debug APK
+    name: Build Release APK
     runs-on: ubuntu-latest
 
     steps:
@@ -85,17 +85,25 @@ jobs:
             echo '__EOF__'
           } >> $GITHUB_OUTPUT
 
-      - name: Build Debug APK
-        run: ./gradlew assembleDebug --stacktrace --no-configuration-cache
+      - name: Decode Keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_FILE }}" | base64 -d > keystore.jks
+
+      - name: Build Release APK
+        run: ./gradlew assembleRelease --stacktrace --no-configuration-cache
         env:
           VERSION_NAME: ${{ steps.version.outputs.VERSION_NAME }}
           VERSION_CODE: ${{ steps.version.outputs.VERSION_CODE }}
+          KEYSTORE_FILE: keystore.jks
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
 
-      - name: Upload Debug APK (Actions artifact)
+      - name: Upload Release APK (Actions artifact)
         uses: actions/upload-artifact@v4
         with:
-          name: Tsuki-debug-${{ github.run_number }}
-          path: app/build/outputs/apk/debug/*.apk
+          name: Tsuki-release-${{ github.run_number }}
+          path: app/build/outputs/apk/release/*.apk
           retention-days: 30
 
       - name: Snapshot previous alpha-latest tag for next diff
@@ -149,7 +157,7 @@ jobs:
 
             ---
             🔗 Source: https://github.com/Space4414/Tsuki
-          files: app/build/outputs/apk/debug/*.apk
+          files: app/build/outputs/apk/release/*.apk
           prerelease: false
           draft: false
         env:
