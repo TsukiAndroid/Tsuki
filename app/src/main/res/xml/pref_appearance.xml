@@ -155,13 +155,33 @@
 
     </PreferenceCategory>
 
-    <PreferenceCategory android:title="@string/history">
+    <PreferenceCategory android:title="@string/tab_backgrounds">
+
+        <ListPreference
+            android:defaultValue="manga_cover"
+            android:entries="@array/history_bg_source_entries"
+            android:entryValues="@array/history_bg_source_values"
+            android:key="history_bg_source"
+            android:title="@string/history_bg_source"
+            app:useSimpleSummaryProvider="true" />
 
         <SwitchPreferenceCompat
             android:defaultValue="true"
             android:key="history_bg_enabled"
             android:summary="@string/history_background_summary"
             android:title="@string/history_background" />
+
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
+            android:key="favourites_bg_enabled"
+            android:summary="@string/favourites_background_summary"
+            android:title="@string/favourites_background" />
+
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
+            android:key="feed_bg_enabled"
+            android:summary="@string/feed_background_summary"
+            android:title="@string/feed_background" />
 
     </PreferenceCategory>
 
