@@ -1,3 +1,12 @@
+## Alpha-1.69 (Build #71)
+
+_2026-05-01 00:53 UTC_
+
+- UI overhaul (Dantotsu-style) + fix CI changelog push + auto-keystore in release.yml\n\nUI changes:\n- Deep violet/indigo accent color palette (dark theme now near-black with #0E0E13 bg)\n- Manga grid cards: title overlaid on cover art with gradient, MaterialCardView with 16dp corners\n- Cover corner radius increased to 16dp (large), 10dp (medium), 8dp (small)\n- Bottom sheets: 24dp corner radius\n- Navigation bar: transparent (true edge-to-edge)\n- Activity transitions: snappier fade+slide\n\nCI fix:\n- build.yml: git pull --rebase before changelog push to fix non-fast-forward rejection\n\nRelease workflow:\n- release.yml: auto-generates keystore with keytool if KEYSTORE_FILE secret not set\n- Supports both push-to-tag and workflow_dispatch triggers (ef7cec6)
+- Rewrite release.yml: fix env var passing, per-ABI APKs, workflow_dispatch support (cc14739)
+- Fix Discord RPC icon URL, update detection (prerelease->release), and WEBVIEW source browser launch\n\n- Fix app_icon_url path (was 404, now points to images/icon.png)\n- Set prerelease: false so updater detects new builds by default\n- Open in-app browser when tapping a WEBVIEW custom source instead of empty list (7bbeb24)
+
+
 ## Alpha-1.67 (Build #68)
 
 _2026-05-01 00:43 UTC_
