@@ -2,7 +2,6 @@ package io.github.landwarderer.futon.history.ui
 
 import android.animation.ObjectAnimator
 import android.graphics.Color
-import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuInflater
@@ -13,10 +12,10 @@ import android.widget.ImageView
 import androidx.appcompat.view.ActionMode
 import androidx.fragment.app.viewModels
 import coil3.request.ImageRequest
+import coil3.request.ErrorResult
+import coil3.request.SuccessResult
 import coil3.request.crossfade
-import coil3.request.listener
 import coil3.request.target
-import coil3.target.GenericViewTarget
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.landwarderer.futon.R
 import io.github.landwarderer.futon.core.nav.router
@@ -83,22 +82,18 @@ class HistoryListFragment : MangaListFragment() {
         }
 
         private fun loadBackgroundImage(bgImage: ImageView, dim: android.view.View, url: String) {
-                val target = object : GenericViewTarget<ImageView>() {
-                        override val view = bgImage
-                        override var drawable: Drawable?
-                                get() = bgImage.drawable
-                                set(value) { bgImage.setImageDrawable(value) }
-                }
+                bgImage.alpha = 0f
+                dim.alpha = 0f
                 ImageRequest.Builder(bgImage.context)
                         .data(url)
-                        .crossfade(true)
-                        .target(target)
-                        .listener(
-                                onSuccess = { _, _ ->
+                        .crossfade(false)
+                        .target(bgImage)
+                        .listener(object : ImageRequest.Listener {
+                                override fun onSuccess(request: ImageRequest, result: SuccessResult) {
                                         ObjectAnimator.ofFloat(bgImage, "alpha", 0f, 0.65f).setDuration(800).start()
                                         ObjectAnimator.ofFloat(dim, "alpha", 0f, 1f).setDuration(800).start()
-                                },
-                        )
+                                }
+                        })
                         .build()
                         .enqueueWith(coil)
         }
