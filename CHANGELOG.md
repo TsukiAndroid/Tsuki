@@ -132,3 +132,5 @@ The format is based on "Keep a Changelog" and follows semantic versioning where 
 - All in-app icons normalized to Material 3 vector drawables
 - APK size trimmed via per-ABI splits and tighter resource shrinking
 - Removed unused agent / docs files left over from earlier Claude-AI iterations.
+
+<!-- trigger-clean-build -->
