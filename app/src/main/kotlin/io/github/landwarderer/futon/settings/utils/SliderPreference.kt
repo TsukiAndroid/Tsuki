@@ -59,7 +59,7 @@ class SliderPreference @JvmOverloads constructor(
 	override fun onBindViewHolder(holder: PreferenceViewHolder) {
 		super.onBindViewHolder(holder)
 		val slider = holder.findViewById(R.id.slider) as? Slider ?: return
-		slider.removeOnChangeListener(sliderListener)
+		slider.clearOnChangeListeners()
 		slider.addOnChangeListener(sliderListener)
 		slider.valueFrom = valueFrom.toFloat()
 		slider.valueTo = valueTo.toFloat()
