@@ -400,7 +400,8 @@ class MangaSourcesRepository @Inject constructor(
                         packageChanges,
                         mihonExtensionManager.installedExtensions,
                         mihonExtensionManager.failedExtensions,
-                ) { _, _, _ ->
+                        customSourcesRepository.sources,
+                ) { _, _, _, _ ->
                         getExternalSources()
                 }.distinctUntilChanged()
                         .conflate()

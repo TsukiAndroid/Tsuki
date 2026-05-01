@@ -135,6 +135,34 @@
             android:summary="@string/history_shortcuts_summary"
             android:title="@string/history_shortcuts" />
 
+        <io.github.landwarderer.futon.settings.utils.SliderPreference
+            android:key="nav_bar_alpha"
+            android:stepSize="5"
+            android:summary="@string/nav_bar_opacity_summary"
+            android:title="@string/nav_bar_opacity"
+            android:valueFrom="10"
+            android:valueTo="100"
+            app:defaultValue="100" />
+
+        <io.github.landwarderer.futon.settings.utils.SliderPreference
+            android:key="search_bar_alpha"
+            android:stepSize="5"
+            android:summary="@string/search_bar_opacity_summary"
+            android:title="@string/search_bar_opacity"
+            android:valueFrom="10"
+            android:valueTo="100"
+            app:defaultValue="100" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="@string/history">
+
+        <SwitchPreferenceCompat
+            android:defaultValue="true"
+            android:key="history_bg_enabled"
+            android:summary="@string/history_background_summary"
+            android:title="@string/history_background" />
+
     </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/privacy">

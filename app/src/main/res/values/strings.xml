@@ -948,4 +948,10 @@
     <string name="developer_mode">Developer mode</string>
     <string name="developer_mode_summary">Show extra options for development and debugging</string>
     <string name="developer_mode_enabled">Developer mode enabled</string>
+    <string name="nav_bar_opacity">Bottom navigation opacity</string>
+    <string name="nav_bar_opacity_summary">Adjust the transparency of the bottom navigation bar</string>
+    <string name="search_bar_opacity">Search bar opacity</string>
+    <string name="search_bar_opacity_summary">Adjust the transparency of the search bar</string>
+    <string name="history_background">History background image</string>
+    <string name="history_background_summary">Show the most recently read manga cover as a background in the History tab</string>
 </resources>

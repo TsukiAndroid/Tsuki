@@ -159,6 +159,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 				viewModel.isBottomNavPinned.observe(this@MainActivity, ::setNavbarPinned)
 				searchSuggestionViewModel.isIncognitoModeEnabled.observe(this@MainActivity, this@MainActivity::onIncognitoModeChanged)
 				initSearch()
+				applyUiTransparency()
 			}
 		}
 	}
@@ -167,6 +168,11 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 		super.onRestoreInstanceState(savedInstanceState)
 		adjustSearchUI(viewBinding.searchView.isShowing)
 		navigationDelegate.syncSelectedItem()
+	}
+
+	override fun onResume() {
+		super.onResume()
+		applyUiTransparency()
 	}
 
 	override fun onFragmentChanged(fragment: Fragment, fromUser: Boolean) {
@@ -440,5 +446,12 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 		}
 		addTransitionListener(listener)
 		awaitClose { removeTransitionListener(listener) }
+	}
+
+	private fun applyUiTransparency() {
+		val navAlpha = settings.navBarAlpha / 100f
+		val searchAlpha = settings.searchBarAlpha / 100f
+		viewBinding.bottomNav?.alpha = navAlpha
+		viewBinding.searchBar.alpha = searchAlpha
 	}
 }

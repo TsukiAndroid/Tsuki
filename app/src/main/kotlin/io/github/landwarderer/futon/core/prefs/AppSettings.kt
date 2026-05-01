@@ -105,6 +105,22 @@ class AppSettings @Inject constructor(@ApplicationContext context: Context) {
                 get() = prefs.getInt(KEY_COVER_BACKGROUND_ALPHA, 40)
                 set(value) = prefs.edit { putInt(KEY_COVER_BACKGROUND_ALPHA, value) }
 
+        var navBarAlpha: Int
+                get() = prefs.getInt(KEY_NAV_BAR_ALPHA, 100)
+                set(value) = prefs.edit { putInt(KEY_NAV_BAR_ALPHA, value) }
+
+        var searchBarAlpha: Int
+                get() = prefs.getInt(KEY_SEARCH_BAR_ALPHA, 100)
+                set(value) = prefs.edit { putInt(KEY_SEARCH_BAR_ALPHA, value) }
+
+        var historyBackgroundSource: String
+                get() = prefs.getString(KEY_HISTORY_BG_SOURCE, HISTORY_BG_MANGA_COVER) ?: HISTORY_BG_MANGA_COVER
+                set(value) = prefs.edit { putString(KEY_HISTORY_BG_SOURCE, value) }
+
+        var isHistoryBackgroundEnabled: Boolean
+                get() = prefs.getBoolean(KEY_HISTORY_BG_ENABLED, true)
+                set(value) = prefs.edit { putBoolean(KEY_HISTORY_BG_ENABLED, value) }
+
         val isQuickFilterEnabled: Boolean
                 get() = prefs.getBoolean(KEY_QUICK_FILTER, true)
 
@@ -811,6 +827,14 @@ class AppSettings @Inject constructor(@ApplicationContext context: Context) {
                 const val KEY_NAV_MAIN = "nav_main"
                 const val KEY_NAV_LABELS = "nav_labels"
                 const val KEY_NAV_PINNED = "nav_pinned"
+                const val KEY_NAV_BAR_ALPHA = "nav_bar_alpha"
+                const val KEY_SEARCH_BAR_ALPHA = "search_bar_alpha"
+                const val KEY_HISTORY_BG_SOURCE = "history_bg_source"
+                const val KEY_HISTORY_BG_ENABLED = "history_bg_enabled"
+                const val HISTORY_BG_MANGA_COVER = "manga_cover"
+                const val HISTORY_BG_ANILIST = "anilist"
+                const val HISTORY_BG_MAL = "mal"
+                const val HISTORY_BG_KITSU = "kitsu"
                 const val KEY_MAIN_FAB = "main_fab"
                 const val KEY_32BIT_COLOR = "enhanced_colors"
                 const val KEY_SOURCES_ORDER = "sources_sort_order"
