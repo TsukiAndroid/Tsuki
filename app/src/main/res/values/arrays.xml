@@ -150,4 +150,18 @@
 	<string-array name="values_github_mirrors" translatable="false">
         <item>KEIYOUSHI</item>
 	</string-array>
+<string-array name="history_bg_source_entries">
+    <item>@string/manga_cover</item>
+    <item>@string/anilist</item>
+    <item>@string/mal</item>
+    <item>@string/kitsu</item>
+    <item>@string/shikimori</item>
+</string-array>
+<string-array name="history_bg_source_values" translatable="false">
+    <item>manga_cover</item>
+    <item>anilist</item>
+    <item>mal</item>
+    <item>kitsu</item>
+    <item>shikimori</item>
+</string-array>
 </resources>
