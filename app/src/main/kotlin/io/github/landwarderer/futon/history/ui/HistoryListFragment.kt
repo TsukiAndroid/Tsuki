@@ -94,7 +94,6 @@ class HistoryListFragment : MangaListFragment() {
                                         ObjectAnimator.ofFloat(dim, "alpha", 0f, 1f).setDuration(800).start()
                                 }
                         })
-                        .build()
                         .enqueueWith(coil)
         }
 
