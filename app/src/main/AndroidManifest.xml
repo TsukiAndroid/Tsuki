@@ -277,6 +277,7 @@
                                 <category android:name="android.intent.category.BROWSABLE" />
 
                                 <data android:scheme="futon" />
+                                <data android:scheme="tsuki" />
                                 <data android:host="shikimori-auth" />
                                 <data android:host="anilist-auth" />
                                 <data android:host="mal-auth" />
@@ -299,6 +300,7 @@
                                 <action android:name="android.intent.action.VIEW" />
                                 <category android:name="android.intent.category.DEFAULT" />
                                 <data android:scheme="futon+kitsu" />
+                                <data android:scheme="tsuki+kitsu" />
                         </intent-filter>
                 </activity>
                 <activity
