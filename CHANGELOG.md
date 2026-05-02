@@ -1,3 +1,11 @@
+## Alpha-1.99 (Build #94)
+
+_2026-05-02 18:48 UTC_
+
+- fix: glass UI visibility and API 23 compat for Android 7+\n\n  - glass_panel_fill: #14000000 (8% black, invisible) → #33FFFFFF (20% white,\n    visible frosted panel on any background colour)\n  - glass_panel_gradient_start/end: black-tinted → white-based (#4DFFFFFF/#1AFFFFFF)\n  - night overrides: same fix — white-based so panels show on dark artwork\n  - glass_stroke: #26FFFFFF (15%) → #66FFFFFF (40%) — brighter rim highlight\n  - glass_nav_fill: near-opaque teal-white → #D9000000 (85% dark pill)\n  - chip_teal_fill: darkened to #332DD4BF (20% teal) for legibility\n  - bg_glass_panel.xml: add solid white base layer + top-gloss gradient\n  - bg_bottom_nav_pill.xml: add top shimmer gradient for glass depth\n  - New bg_teal_glow.xml: concentric teal rings to simulate FAB glow halo\n  - activity_main: layout_marginHorizontal → marginStart + marginEnd\n    (marginHorizontal is API 26+, minSdk is 23 — fixes pill nav on Android 7)\n  - activity_main: FAB elevation 10dp for shadow depth + marginHorizontal fix\n  - GlassEffectHelper: add blurImageView() — fast downscale-upscale blur for\n    API 23-30 (API 31+ still uses hardware RenderEffect)\n  - DetailsActivity: call blurImageView via view.post{} after loadCover() (5b92f4d)
+- feat: Structured Glass UI overhaul\n\n  - Add GlassEffectHelper.kt (API 31+ RenderEffect blur)\n  - Add drawable: bg_glass_panel, bg_bottom_nav_pill, bg_chip_teal, bg_scrim_dark\n  - Add glass color tokens: glass_teal #2DD4BF, glass_coral_red #FF6B6B,\n    glass_stroke #26FFFFFF, glass_panel_fill/gradient, glass_nav_fill,\n    chip_teal_fill, glass_scrim; night overrides in values-night/colors.xml\n  - Add Widget.Tsuki.GlassPanel, Chip.TealGlass, Button.ContinueTeal styles\n  - activity_main: floating pill BottomNav (12dp margins, glass pill bg),\n    FAB backgroundTint=glass_teal\n  - activity_details: alpha 0.4→0.5 on blur bg, add 40% black scrim layer\n  - layout_details_table: card_details → GlassPanel, progress tint=glass_teal\n  - item_scrobbling_info: GlassPanel card, teal icon bg/on_glass_teal tint\n  - DetailsActivity: import & call GlassEffectHelper.applyBlurBackground (122ab35)
+
+
 ## Alpha-1.97 (Build #93)
 
 _2026-05-02 17:51 UTC_
