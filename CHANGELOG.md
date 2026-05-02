@@ -1,3 +1,11 @@
+## Alpha-1.95 (Build #92)
+
+_2026-05-02 07:07 UTC_
+
+- fix: cover photo, adaptive bars, and tsuki:// OAuth scheme\n\n  - Add coverImage to ScrobblerUser; AniList fetches bannerImage,\n    Kitsu fetches coverImage; MAL/Shikimori fall back to avatar\n  - ScrobblerStorage updated to 5-line format (backward compatible)\n  - HistoryListViewModel, FavouritesListFragment, FeedFragment\n    use coverImage with avatar fallback for backgrounds\n  - MainActivity: adaptive transparent tint on SearchBar and\n    BottomNav when background image tab is active\n  - Redirect URIs updated futon:// -> tsuki://; tsuki:// scheme\n    handlers added to AndroidManifest alongside futon:// (cd7c97c)
+- fix: replace Futon splash logo with Tsuki crescent moon (Android 12+) (7064e1f)
+
+
 ## Alpha-1.93 (Build #91)
 
 _2026-05-02 05:35 UTC_
