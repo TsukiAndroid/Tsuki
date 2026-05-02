@@ -99,10 +99,10 @@ class FavouritesListFragment : MangaListFragment(), PopupMenu.OnMenuItemClickLis
 
                 val source = settings.historyBackgroundSource
                 val immediateUrl = when (source) {
-                        AppSettings.HISTORY_BG_ANILIST -> aniListStorage.user?.avatar
-                        AppSettings.HISTORY_BG_MAL -> malStorage.user?.avatar
-                        AppSettings.HISTORY_BG_KITSU -> kitsuStorage.user?.avatar
-                        AppSettings.HISTORY_BG_SHIKIMORI -> shikimoriStorage.user?.avatar
+                        AppSettings.HISTORY_BG_ANILIST -> aniListStorage.user?.let { it.coverImage ?: it.avatar }
+                        AppSettings.HISTORY_BG_MAL -> malStorage.user?.let { it.coverImage ?: it.avatar }
+                        AppSettings.HISTORY_BG_KITSU -> kitsuStorage.user?.let { it.coverImage ?: it.avatar }
+                        AppSettings.HISTORY_BG_SHIKIMORI -> shikimoriStorage.user?.let { it.coverImage ?: it.avatar }
                         else -> null
                 }
 
