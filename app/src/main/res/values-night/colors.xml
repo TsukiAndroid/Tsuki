@@ -15,11 +15,11 @@
         <color name="nsfw_18">#BF360C</color>
         <color name="nsfw_16">#FF6F00</color>
 
-        <!-- Structured Glass Aesthetic (night overrides) -->
-        <color name="glass_panel_gradient_start">#661C1C28</color>
-        <color name="glass_panel_gradient_end">#4D0E0E13</color>
-        <color name="glass_panel_fill">#B3161620</color>
-        <color name="glass_nav_fill">#E6161620</color>
+        <!-- Structured Glass Aesthetic (night overrides — still white-based so panels are visible) -->
+        <color name="glass_panel_gradient_start">#40FFFFFF</color>
+        <color name="glass_panel_gradient_end">#15FFFFFF</color>
+        <color name="glass_panel_fill">#28FFFFFF</color>
+        <color name="glass_nav_fill">#E6000000</color>
 
         <!-- Color schemes colors -->
         <color name="background_miku">#191C1C</color>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Simulates a teal glow halo around a button for API 23+ without colored shadows.
+  Use as the background of a wrapper FrameLayout behind the actual button.
+-->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Outer glow ring — large, very translucent -->
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="100dp"/>
+            <solid android:color="#262DD4BF"/>
+        </shape>
+    </item>
+    <!-- Mid glow ring -->
+    <item android:left="4dp" android:top="4dp" android:right="4dp" android:bottom="4dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="100dp"/>
+            <solid android:color="#4D2DD4BF"/>
+        </shape>
+    </item>
+    <!-- Inner core colour (same teal as the button) -->
+    <item android:left="8dp" android:top="8dp" android:right="8dp" android:bottom="8dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="100dp"/>
+            <solid android:color="#2DD4BF"/>
+        </shape>
+    </item>
+</layer-list>

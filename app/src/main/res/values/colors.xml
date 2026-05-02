@@ -40,11 +40,13 @@
         <color name="glass_teal">#2DD4BF</color>
         <color name="glass_coral_red">#FF6B6B</color>
         <color name="on_glass_teal">#002117</color>
-        <color name="glass_stroke">#26FFFFFF</color>
-        <color name="glass_panel_gradient_start">#28F2EFFA</color>
-        <color name="glass_panel_gradient_end">#14FEFBFF</color>
-        <color name="glass_panel_fill">#14000000</color>
-        <color name="glass_nav_fill">#F0F2EFFA</color>
-        <color name="chip_teal_fill">#1A2DD4BF</color>
+        <!-- White-based glass — visible on any background (dark or light artwork) -->
+        <color name="glass_stroke">#66FFFFFF</color>
+        <color name="glass_panel_gradient_start">#4DFFFFFF</color>
+        <color name="glass_panel_gradient_end">#1AFFFFFF</color>
+        <color name="glass_panel_fill">#33FFFFFF</color>
+        <color name="glass_nav_fill">#D9000000</color>
+        <color name="chip_teal_fill">#332DD4BF</color>
         <color name="glass_scrim">#66000000</color>
+        <color name="glass_teal_glow">#4D2DD4BF</color>
 </resources>

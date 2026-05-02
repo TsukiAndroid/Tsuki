@@ -1,11 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Dark translucent pill base -->
     <item>
         <shape android:shape="rectangle">
             <corners android:radius="100dp"/>
             <solid android:color="@color/glass_nav_fill"/>
         </shape>
     </item>
+    <!-- Top shimmer gradient for glass feel -->
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="100dp"/>
+            <gradient
+                android:angle="270"
+                android:startColor="#20FFFFFF"
+                android:endColor="#00FFFFFF"/>
+        </shape>
+    </item>
+    <!-- White rim highlight -->
     <item>
         <shape android:shape="rectangle">
             <corners android:radius="100dp"/>

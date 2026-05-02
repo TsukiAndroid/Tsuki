@@ -535,7 +535,10 @@ class DetailsActivity :
 
         private fun loadCover(imageUrl: String?) {
                 viewBinding.imageViewCover.setImageAsync(imageUrl, viewModel.getMangaOrNull())
-        viewBinding.imageViewBlurBackground?.setImageAsync(imageUrl, viewModel.getMangaOrNull())
+                val bgView = viewBinding.imageViewBlurBackground ?: return
+                bgView.setImageAsync(imageUrl, viewModel.getMangaOrNull())
+                // API 23-30 fallback blur: run after the image draw pass completes
+                bgView.post { GlassEffectHelper.blurImageView(bgView) }
         }
 
         private fun String.withEstimatedTime(time: ReadingTime?): String {

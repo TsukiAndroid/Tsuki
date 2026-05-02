@@ -1,5 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Frosted white base fill — visible on any background -->
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="20dp"/>
+            <solid android:color="@color/glass_panel_fill"/>
+        </shape>
+    </item>
+    <!-- Top-to-bottom gloss gradient for glass depth -->
     <item>
         <shape android:shape="rectangle">
             <corners android:radius="20dp"/>
@@ -9,6 +17,7 @@
                 android:endColor="@color/glass_panel_gradient_end"/>
         </shape>
     </item>
+    <!-- White edge stroke for glass rim highlight -->
     <item>
         <shape android:shape="rectangle">
             <corners android:radius="20dp"/>
