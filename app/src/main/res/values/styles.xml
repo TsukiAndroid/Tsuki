@@ -336,6 +336,16 @@
 
         <!-- Structured Glass -->
 
+        <!-- Floating pill bottom nav — centered items, indicator clipped inside pill -->
+        <style name="Widget.Tsuki.BottomNav" parent="Widget.Material3Expressive.BottomNavigationView">
+                <item name="indicatorHeight">36dp</item>
+                <item name="indicatorColor">@color/chip_teal_fill</item>
+                <item name="itemPaddingTop">6dp</item>
+                <item name="itemPaddingBottom">6dp</item>
+                <item name="itemIconSize">24dp</item>
+                <item name="android:minHeight">64dp</item>
+        </style>
+
         <style name="Widget.Tsuki.GlassPanel" parent="Widget.Material3.CardView.Filled">
                 <item name="cardCornerRadius">20dp</item>
                 <item name="strokeColor">@color/glass_stroke</item>

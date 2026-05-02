@@ -52,8 +52,6 @@ import io.github.landwarderer.futon.core.util.ext.printStackTraceDebug
 import io.github.landwarderer.futon.core.util.ext.start
 import io.github.landwarderer.futon.databinding.ActivityMainBinding
 import io.github.landwarderer.futon.details.service.MangaPrefetchService
-import android.content.res.ColorStateList
-import android.graphics.Color
 import io.github.landwarderer.futon.favourites.ui.container.FavouritesContainerFragment
 import io.github.landwarderer.futon.history.ui.HistoryListFragment
 import io.github.landwarderer.futon.tracker.ui.feed.FeedFragment
@@ -145,6 +143,14 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
                         onFirstStart()
                 }
 
+                viewBinding.bottomNav?.let { nav ->
+                        nav.outlineProvider = object : android.view.ViewOutlineProvider() {
+                                override fun getOutline(view: android.view.View, outline: android.graphics.Outline) {
+                                        outline.setRoundRect(0, 0, view.width, view.height, view.height / 2f)
+                                }
+                        }
+                        nav.clipToOutline = true
+                }
                 viewBinding.bottomNav?.addOnLayoutChangeListener(this)
                 viewBinding.searchView.addTransitionListener(this)
                 viewBinding.searchView.addTransitionListener(exitCallback)
@@ -460,20 +466,6 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
         }
 
         private fun updateBarsForBackground(topFragment: Fragment) {
-                val hasBackground = when (topFragment) {
-                        is HistoryListFragment -> settings.isHistoryBackgroundEnabled
-                        is FavouritesContainerFragment -> settings.isFavouritesBackgroundEnabled
-                        is FeedFragment -> settings.isFeedBackgroundEnabled
-                        else -> false
-                }
-                if (hasBackground) {
-                        val glassTint = ColorStateList.valueOf(Color.argb(180, 0, 0, 0))
-                        viewBinding.searchBar.backgroundTintList = glassTint
-                        viewBinding.bottomNav?.backgroundTintList = glassTint
-                } else {
-                        viewBinding.searchBar.backgroundTintList = null
-                        viewBinding.bottomNav?.backgroundTintList = null
-                }
                 applyUiTransparency()
         }
 }

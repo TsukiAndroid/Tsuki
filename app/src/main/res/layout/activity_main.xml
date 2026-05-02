@@ -40,6 +40,8 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:hint="@string/search_manga"
+                        android:foreground="@drawable/fg_glass_stroke_pill"
+                        app:backgroundTint="@color/glass_nav_fill"
                         app:forceDefaultNavigationOnClickListener="true"
                         app:layout_scrollFlags="scroll|enterAlways|snap" />
 
@@ -91,6 +93,8 @@
                 android:layout_marginEnd="12dp"
                 android:layout_marginBottom="12dp"
                 android:background="@drawable/bg_bottom_nav_pill"
-                android:fitsSystemWindows="false" />
+                android:clipToOutline="true"
+                android:fitsSystemWindows="false"
+                android:paddingTop="6dp" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
