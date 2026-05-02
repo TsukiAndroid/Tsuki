@@ -1,0 +1,11 @@
+EventFlow reliability improvements.
+
+Highlights:
+- Improved EventFlow reliability by using observeEvent to handle lifecycle/event edge cases.
+
+Fixes:
+- Replaced generic event handling with observeEvent for EventFlow to prevent missed or duplicate events.
+
+Notes:
+- Improves UI responsiveness and reduces event duplication in background/foreground transitions.
+- Improves UI and background event consistency.

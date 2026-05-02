@@ -1,0 +1,12 @@
+
+Resource cleanup and translation fixes.
+
+Highlights:
+- Cleaned up resource tags and reduced lint/warning noise in resource strings.
+
+Fixes:
+- Removed noisy resource tags and warnings that appeared during builds.
+- Corrected several translation summary entries to improve localization clarity.
+
+Maintenance:
+- Small dependency and resource tidy-ups to stabilize builds and reduce false-positive warnings.

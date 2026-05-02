@@ -1,0 +1,12 @@
+Rebrand to Futon; packaging and translation updates.
+
+Highlights:
+- Major rebrand: app ID, icons, assets and resources were migrated from Kotatsu to Futon.
+
+Fixes:
+- Rebranded app resources and package names (Kotatsu → Futon); updated icons and assets.
+- Fixed IzzyOnDroid / F-Droid packaging issues; applied release workflow permission fixes.
+- Parser and dependency updates, and a large set of translations from Weblate.
+
+Notes:
+- This release contains significant repo rebranding and packaging changes — validate upgrade flows, backups, and settings after updating.

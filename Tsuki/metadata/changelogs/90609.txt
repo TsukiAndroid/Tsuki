@@ -1,0 +1,12 @@
+
+Parser upgrade and stability improvements.
+
+Highlights:
+- Upgraded futon-parsers to address multiple parsing edge cases across sources.
+
+Fixes:
+- Bumped futon-parsers to a newer revision to address multiple source parsing issues.
+- Small compatibility fixes and stability improvements related to the parser upgrade.
+
+Notes:
+- Parser upgrades can affect source compatibility; test frequently used sources after updating.

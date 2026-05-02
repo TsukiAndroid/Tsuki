@@ -1,0 +1,11 @@
+Stability fixes and minor packaging updates.
+
+Highlights:
+- Maintenance release integrating small bugfixes and package adjustments.
+
+Fixes:
+- Integrated several small bugfix PRs and packaging tweaks.
+
+Notes:
+- No major feature changes; safe to upgrade.
+- No major user-facing features; maintenance-focused release.

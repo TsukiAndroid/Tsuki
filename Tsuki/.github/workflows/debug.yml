@@ -1,0 +1,56 @@
+name: Debug Build (PR)
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+      - devel
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Build debug APK
+        env:
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+        run: ./gradlew assembleDebug --stacktrace --info --no-build-cache --no-configuration-cache
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 7
+
+      - name: Comment PR with artifact link
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const runUrl = `https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}`;
+            const comment = `Debug APK built successfully!\n\nDownload artifact: [debug-apk](${runUrl})\n\n_Artifact will be available for 7 days_`;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });

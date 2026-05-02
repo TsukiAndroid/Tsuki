@@ -1,0 +1,12 @@
+
+Packaging and version alignment.
+
+Highlights:
+- Aligned AndroidManifest versionName and versionCode with build tooling and release scripts.
+
+Fixes:
+- Updated AndroidManifest versionName and versionCode to align with build tooling.
+- Minor packaging fixes to ensure release artifacts are consistent across CI.
+
+Notes:
+- No user-facing functional changes; this release focuses on build/release consistency.

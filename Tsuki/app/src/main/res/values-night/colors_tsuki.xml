@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+  <!--
+    ~ Tsuki Dark Theme – Dantotsu-inspired deep violet accent on near-black surfaces
+  -->
+  <resources>
+  <!-- Primary: vibrant violet/indigo - inspired by Dantotsu's violet_400 -->
+  <color name="tsuki_primary">#B8A9FF</color>
+  <color name="tsuki_primaryContainer">#3700B3</color>
+  <color name="tsuki_onPrimary">#1A005E</color>
+  <color name="tsuki_onPrimaryContainer">#E5DEFF</color>
+  <color name="tsuki_inversePrimary">#5B3FD4</color>
+  <!-- Secondary: soft lavender -->
+  <color name="tsuki_secondary">#C8BEEA</color>
+  <color name="tsuki_secondaryContainer">#3D3460</color>
+  <color name="tsuki_onSecondary">#2A2050</color>
+  <color name="tsuki_onSecondaryContainer">#E4DEFF</color>
+  <!-- Tertiary: rose-pink for NSFW / badges -->
+  <color name="tsuki_tertiary">#F0B8D4</color>
+  <color name="tsuki_tertiaryContainer">#6B2A4C</color>
+  <color name="tsuki_onTertiary">#3E102C</color>
+  <color name="tsuki_onTertiaryContainer">#FFD8E8</color>
+  <!-- Surfaces: near-black with subtle blue tint like Dantotsu -->
+  <color name="tsuki_surface">#0E0E13</color>
+  <color name="tsuki_surfaceDim">#0E0E13</color>
+  <color name="tsuki_surfaceBright">#2A2A35</color>
+  <color name="tsuki_surfaceContainerLowest">#090910</color>
+  <color name="tsuki_surfaceContainerLow">#161620</color>
+  <color name="tsuki_surfaceContainer">#1C1C28</color>
+  <color name="tsuki_surfaceContainerHigh">#252534</color>
+  <color name="tsuki_surfaceContainerHighest">#2E2E3F</color>
+  <color name="tsuki_surfaceVariant">#3A3A50</color>
+  <!-- Text colors -->
+  <color name="tsuki_onSurface">#E8E6F0</color>
+  <color name="tsuki_onSurfaceVariant">#C5C2D4</color>
+  <color name="tsuki_inverseSurface">#E4E1EC</color>
+  <color name="tsuki_inverseOnSurface">#161620</color>
+  <color name="tsuki_background">#0E0E13</color>
+  <color name="tsuki_outline">#8480A0</color>
+  </resources>

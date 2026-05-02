@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt">
+    <aapt:attr name="android:drawable">
+        <vector
+            android:name="splash"
+            android:width="320dp"
+            android:height="320dp"
+            android:viewportWidth="320"
+            android:viewportHeight="320">
+            <group
+                android:name="scaleme"
+                android:pivotX="160"
+                android:pivotY="160"
+                android:scaleX="1"
+                android:scaleY="1">
+
+                <!-- Expanding background circle -->
+                <group android:name="bg">
+                    <path
+                        android:name="circle"
+                        android:pathData="M 160 110 A 50 50 0 1 1 160 210 A 50 50 0 1 1 160 110 Z"
+                        android:fillColor="@color/m3_sys_color_dynamic_light_primary_container"
+                        android:fillAlpha="0"
+                        android:strokeWidth="1" />
+                </group>
+
+                <!-- Crescent moon foreground -->
+                <group
+                    android:name="fg"
+                    android:pivotX="160"
+                    android:pivotY="160"
+                    android:scaleX="0.5"
+                    android:scaleY="0.5">
+                    <!--
+                        Crescent moon: outer circle minus offset inner circle via evenOdd.
+                        Outer: radius 78, center (160, 160)
+                        Inner: radius 66, center (178, 150) — shifted right+up for crescent effect
+                    -->
+                    <path
+                        android:name="moon"
+                        android:fillType="evenOdd"
+                        android:pathData="M 160 82 A 78 78 0 1 1 160 238 A 78 78 0 1 1 160 82 Z M 178 84 A 66 66 0 1 0 178 216 A 66 66 0 1 0 178 84 Z"
+                        android:fillColor="@color/m3_sys_color_dynamic_light_primary"
+                        android:fillAlpha="0"
+                        android:strokeWidth="1" />
+                </group>
+
+            </group>
+        </vector>
+    </aapt:attr>
+
+    <!-- Circle expands and fades in -->
+    <target android:name="circle">
+        <aapt:attr name="android:animation">
+            <set>
+                <objectAnimator
+                    android:propertyName="pathData"
+                    android:startOffset="150"
+                    android:duration="350"
+                    android:valueFrom="M 160 110 A 50 50 0 1 1 160 210 A 50 50 0 1 1 160 110 Z"
+                    android:valueTo="M 160 60 A 100 100 0 1 1 160 260 A 100 100 0 1 1 160 60 Z"
+                    android:valueType="pathType"
+                    android:interpolator="@android:anim/overshoot_interpolator" />
+                <objectAnimator
+                    android:propertyName="fillAlpha"
+                    android:startOffset="150"
+                    android:duration="150"
+                    android:valueFrom="0"
+                    android:valueTo="1"
+                    android:valueType="floatType"
+                    android:interpolator="@android:interpolator/fast_out_slow_in" />
+            </set>
+        </aapt:attr>
+    </target>
+
+    <!-- Moon scales in with overshoot -->
+    <target android:name="fg">
+        <aapt:attr name="android:animation">
+            <set>
+                <objectAnimator
+                    android:propertyName="scaleX"
+                    android:startOffset="150"
+                    android:duration="350"
+                    android:valueFrom="0.5"
+                    android:valueTo="1"
+                    android:valueType="floatType"
+                    android:interpolator="@android:anim/overshoot_interpolator" />
+                <objectAnimator
+                    android:propertyName="scaleY"
+                    android:startOffset="150"
+                    android:duration="350"
+                    android:valueFrom="0.5"
+                    android:valueTo="1"
+                    android:valueType="floatType"
+                    android:interpolator="@android:anim/overshoot_interpolator" />
+            </set>
+        </aapt:attr>
+    </target>
+
+    <!-- Moon fades in -->
+    <target android:name="moon">
+        <aapt:attr name="android:animation">
+            <set>
+                <objectAnimator
+                    android:propertyName="fillAlpha"
+                    android:startOffset="150"
+                    android:duration="300"
+                    android:valueFrom="0"
+                    android:valueTo="1"
+                    android:valueType="floatType"
+                    android:interpolator="@android:interpolator/fast_out_slow_in" />
+            </set>
+        </aapt:attr>
+    </target>
+
+</animated-vector>

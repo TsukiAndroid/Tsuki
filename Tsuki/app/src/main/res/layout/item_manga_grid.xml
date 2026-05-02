@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+  <com.google.android.material.card.MaterialCardView
+      xmlns:android="http://schemas.android.com/apk/res/android"
+      xmlns:app="http://schemas.android.com/apk/res-auto"
+      xmlns:tools="http://schemas.android.com/tools"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_margin="4dp"
+      app:cardCornerRadius="16dp"
+      app:cardElevation="0dp"
+      app:strokeWidth="0dp"
+      app:cardBackgroundColor="?colorSurfaceContainerLow"
+      tools:layout_width="140dp">
+
+      <FrameLayout
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content">
+
+          <io.github.landwarderer.futon.image.ui.CoverImageView
+              android:id="@+id/imageView_cover"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:background="?colorSurfaceContainer"
+              android:orientation="horizontal"
+              app:allowRgb565="true"
+              app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.Tsuki.Cover"
+              tools:ignore="ContentDescription"
+              tools:src="@tools:sample/backgrounds/scenic[5]" />
+
+          <!-- Gradient overlay so title text is readable -->
+          <View
+              android:layout_width="match_parent"
+              android:layout_height="72dp"
+              android:layout_gravity="bottom"
+              android:background="@drawable/gradient_cover_overlay" />
+
+          <io.github.landwarderer.futon.history.ui.util.ReadingProgressView
+              android:id="@+id/progressView"
+              android:layout_width="@dimen/card_indicator_size"
+              android:layout_height="@dimen/card_indicator_size"
+              android:layout_gravity="top|end"
+              android:layout_margin="@dimen/card_indicator_offset" />
+
+          <io.github.landwarderer.futon.core.ui.widgets.IconsView
+              android:id="@+id/iconsView"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:layout_gravity="top|start"
+              android:layout_marginTop="8dp"
+              android:background="@drawable/bg_list_icons"
+              android:orientation="horizontal"
+              android:padding="4dp"
+              app:iconSize="14dp"
+              app:iconSpacing="4dp" />
+
+          <io.github.landwarderer.futon.core.ui.widgets.BadgeView
+              android:id="@+id/badge"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:layout_gravity="top|end"
+              android:layout_margin="@dimen/margin_small"
+              android:visibility="gone"
+              app:maxCharacterCount="@integer/manga_badge_max_character_count"
+              tools:number="8"
+              tools:visibility="visible" />
+
+          <!-- Title overlaid at bottom of cover, Dantotsu style -->
+          <TextView
+              android:id="@+id/textView_title"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:layout_gravity="bottom"
+              android:elegantTextHeight="false"
+              android:ellipsize="end"
+              android:lines="2"
+              android:paddingHorizontal="8dp"
+              android:paddingBottom="8dp"
+              android:paddingTop="4dp"
+              android:textAppearance="?attr/textAppearanceLabelMedium"
+              android:textColor="#FFFFFFFF"
+              android:shadowColor="#BB000000"
+              android:shadowDx="0"
+              android:shadowDy="1"
+              android:shadowRadius="4"
+              tools:text="@tools:sample/lorem" />
+
+      </FrameLayout>
+
+  </com.google.android.material.card.MaterialCardView>

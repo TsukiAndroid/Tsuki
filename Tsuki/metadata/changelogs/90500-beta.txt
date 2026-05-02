@@ -1,0 +1,17 @@
+
+Beta release: image and asset updates.
+
+Highlights:
+- Pre-release update with updated image assets (futon.jpg) and visual polish for the Futon branding.
+- Updated launcher and marketing artwork to reflect the Futon branding for testing.
+
+Fixes:
+- Replaced/updated several image assets to correct resolution and format issues (webp/png adjustments).
+- Adjusted metadata references used by store listings and build pipelines to include the new asset names.
+
+Maintenance:
+- Small translation updates and minor cleanup to resources to match the new branding.
+
+Notes:
+- Beta release; intended for testing and verification before a stable release. Verify screenshots, icons, and store metadata in the release candidate.
+- Not recommended for production users unless testing branding/asset issues.

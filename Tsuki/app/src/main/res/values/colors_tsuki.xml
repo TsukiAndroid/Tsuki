@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+  <!--
+    ~ Tsuki Light Theme – Dantotsu-inspired violet accent
+  -->
+  <resources>
+  <color name="tsuki_primary">#5B3FD4</color>
+  <color name="tsuki_primaryContainer">#E5DEFF</color>
+  <color name="tsuki_onPrimary">#FFFFFF</color>
+  <color name="tsuki_onPrimaryContainer">#1A005E</color>
+  <color name="tsuki_inversePrimary">#B8A9FF</color>
+  <color name="tsuki_secondary">#5E5780</color>
+  <color name="tsuki_secondaryContainer">#E4DEFF</color>
+  <color name="tsuki_onSecondary">#FFFFFF</color>
+  <color name="tsuki_onSecondaryContainer">#1A1040</color>
+  <color name="tsuki_tertiary">#7C4262</color>
+  <color name="tsuki_tertiaryContainer">#FFD8E8</color>
+  <color name="tsuki_onTertiary">#FFFFFF</color>
+  <color name="tsuki_onTertiaryContainer">#2E0020</color>
+  <color name="tsuki_surface">#FEFBFF</color>
+  <color name="tsuki_surfaceDim">#DEDCE6</color>
+  <color name="tsuki_surfaceBright">#FEFBFF</color>
+  <color name="tsuki_surfaceContainerLowest">#FFFFFF</color>
+  <color name="tsuki_surfaceContainerLow">#F8F5FF</color>
+  <color name="tsuki_surfaceContainer">#F2EFFA</color>
+  <color name="tsuki_surfaceContainerHigh">#ECE9F4</color>
+  <color name="tsuki_surfaceContainerHighest">#E6E3EF</color>
+  <color name="tsuki_surfaceVariant">#E5E0F4</color>
+  <color name="tsuki_onSurface">#1C1B22</color>
+  <color name="tsuki_onSurfaceVariant">#48455A</color>
+  <color name="tsuki_inverseSurface">#312F3C</color>
+  <color name="tsuki_inverseOnSurface">#F3F0FB</color>
+  <color name="tsuki_background">#FEFBFF</color>
+  <color name="tsuki_outline">#79757F</color>
+  </resources>

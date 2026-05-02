@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	android:title="@string/about">
+
+	<Preference
+		android:key="app_version"
+		android:persistent="false"
+		android:summary="@string/check_for_updates" />
+
+	<SwitchPreferenceCompat
+		android:defaultValue="false"
+		android:key="updates_unstable"
+		android:summary="@string/allow_unstable_updates_summary"
+		android:title="@string/allow_unstable_updates" />
+
+	<Preference
+		android:fragment="io.github.landwarderer.futon.settings.about.changelog.ChangelogFragment"
+		android:key="changelog"
+		android:persistent="false"
+		android:summary="@string/changelog_summary"
+		android:title="@string/changelog" />
+
+	<PreferenceCategory android:title="@string/our_story_title">
+
+		<Preference
+			android:key="our_story"
+			android:persistent="false"
+			android:summary="@string/our_story_summary"
+			android:title="@string/our_story_title" />
+
+		<Preference
+			android:key="about_github"
+			android:persistent="false"
+			android:summary="@string/url_github"
+			android:title="@string/source_code" />
+
+	</PreferenceCategory>
+
+	<Preference
+		android:key="about_help"
+		android:persistent="false"
+		android:summary="@string/url_user_manual"
+		android:title="@string/user_manual"
+		app:allowDividerAbove="true" />
+
+	<Preference
+		android:key="about_app_translation"
+		android:persistent="false"
+		android:summary="@string/url_weblate"
+		android:title="@string/about_app_translation_summary" />
+
+	<Preference
+		android:key="about_telegram"
+		android:persistent="false"
+		android:summary="@string/url_telegram_web"
+		android:title="@string/telegram_group" />
+
+
+<PreferenceCategory android:title="@string/developer_mode">
+<SwitchPreferenceCompat
+android:defaultValue="false"
+
+android:key="developer_mode"
+android:summary="@string/developer_mode_summary"
+android:title="@string/developer_mode" />
+</PreferenceCategory>
+</PreferenceScreen>
