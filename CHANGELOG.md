@@ -1,3 +1,11 @@
+## Alpha-1.97 (Build #93)
+
+_2026-05-02 17:51 UTC_
+
+- feat: Structured Glass UI overhaul\n\n  - Add GlassEffectHelper.kt (API 31+ RenderEffect blur)\n  - Add drawable: bg_glass_panel, bg_bottom_nav_pill, bg_chip_teal, bg_scrim_dark\n  - Add glass color tokens: glass_teal #2DD4BF, glass_coral_red #FF6B6B,\n    glass_stroke #26FFFFFF, glass_panel_fill/gradient, glass_nav_fill,\n    chip_teal_fill, glass_scrim; night overrides in values-night/colors.xml\n  - Add Widget.Tsuki.GlassPanel, Chip.TealGlass, Button.ContinueTeal styles\n  - activity_main: floating pill BottomNav (12dp margins, glass pill bg),\n    FAB backgroundTint=glass_teal\n  - activity_details: alpha 0.4→0.5 on blur bg, add 40% black scrim layer\n  - layout_details_table: card_details → GlassPanel, progress tint=glass_teal\n  - item_scrobbling_info: GlassPanel card, teal icon bg/on_glass_teal tint\n  - DetailsActivity: import & call GlassEffectHelper.applyBlurBackground (122ab35)
+- fix: cover photo, adaptive bars, and tsuki:// OAuth scheme\n\n  - Add coverImage to ScrobblerUser; AniList fetches bannerImage,\n    Kitsu fetches coverImage; MAL/Shikimori fall back to avatar\n  - ScrobblerStorage updated to 5-line format (backward compatible)\n  - HistoryListViewModel, FavouritesListFragment, FeedFragment\n    use coverImage with avatar fallback for backgrounds\n  - MainActivity: adaptive transparent tint on SearchBar and\n    BottomNav when background image tab is active\n  - Redirect URIs updated futon:// -> tsuki://; tsuki:// scheme\n    handlers added to AndroidManifest alongside futon:// (cd7c97c)
+
+
 ## Alpha-1.95 (Build #92)
 
 _2026-05-02 07:07 UTC_
