@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="100dp"/>
+            <solid android:color="@color/glass_nav_fill"/>
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="100dp"/>
+            <stroke android:width="0.8dp" android:color="@color/glass_stroke"/>
+        </shape>
+    </item>
+</layer-list>
