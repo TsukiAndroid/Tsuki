@@ -338,8 +338,6 @@
 
         <!-- Floating pill bottom nav — centered items, indicator clipped inside pill -->
         <style name="Widget.Tsuki.BottomNav" parent="Widget.Material3Expressive.BottomNavigationView">
-                <item name="indicatorHeight">36dp</item>
-                <item name="indicatorColor">@color/chip_teal_fill</item>
                 <item name="itemPaddingTop">6dp</item>
                 <item name="itemPaddingBottom">6dp</item>
                 <item name="itemIconSize">24dp</item>
