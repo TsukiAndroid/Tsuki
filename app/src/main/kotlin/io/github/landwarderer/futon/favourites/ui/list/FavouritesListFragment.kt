@@ -51,6 +51,7 @@ class FavouritesListFragment : MangaListFragment(), PopupMenu.OnMenuItemClickLis
         lateinit var shikimoriStorage: ScrobblerStorage
 
         private var lastLoadedUrl: String? = null
+        private var coverUrlPool: List<String> = emptyList()
 
         val categoryId
                 get() = viewModel.categoryId
@@ -60,6 +61,15 @@ class FavouritesListFragment : MangaListFragment(), PopupMenu.OnMenuItemClickLis
                 binding.recyclerView.isVP2BugWorkaroundEnabled = true
                 if (settings.isFavouritesBackgroundEnabled) {
                         setupBackgroundImage()
+                }
+        }
+
+        override fun onResume() {
+                super.onResume()
+                if (settings.isFavouritesBackgroundEnabled && coverUrlPool.isNotEmpty()) {
+                        val url = coverUrlPool.random()
+                        lastLoadedUrl = url
+                        (activity as? BackgroundOwner)?.setActivityBackground(url)
                 }
         }
 
@@ -78,11 +88,15 @@ class FavouritesListFragment : MangaListFragment(), PopupMenu.OnMenuItemClickLis
                         (activity as? BackgroundOwner)?.setActivityBackground(immediateUrl)
                 } else {
                         viewModel.content.observe(viewLifecycleOwner) { items ->
-                                val url = items.filterIsInstance<MangaListModel>()
-                                        .firstOrNull()?.coverUrl
-                                if (url != null && url != lastLoadedUrl) {
-                                        lastLoadedUrl = url
-                                        (activity as? BackgroundOwner)?.setActivityBackground(url)
+                                val urls = items.filterIsInstance<MangaListModel>()
+                                        .mapNotNull { it.coverUrl }
+                                if (urls.isNotEmpty()) {
+                                        coverUrlPool = urls
+                                        val url = urls.random()
+                                        if (url != lastLoadedUrl) {
+                                                lastLoadedUrl = url
+                                                (activity as? BackgroundOwner)?.setActivityBackground(url)
+                                        }
                                 }
                         }
                 }
@@ -91,6 +105,7 @@ class FavouritesListFragment : MangaListFragment(), PopupMenu.OnMenuItemClickLis
         override fun onDestroyView() {
                 super.onDestroyView()
                 lastLoadedUrl = null
+                coverUrlPool = emptyList()
         }
 
         override fun onScrolledToEnd() = viewModel.requestMoreItems()

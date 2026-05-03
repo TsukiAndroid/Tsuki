@@ -963,4 +963,6 @@
     <string name="favourites_background_summary">Show a background image on the Favourites tab</string>
     <string name="feed_background">Updates background</string>
     <string name="feed_background_summary">Show a background image on the Updates feed tab</string>
+    <string name="explore_background">Explore background</string>
+    <string name="explore_background_summary">Show a random suggestion cover as background on the Explore tab</string>
 </resources>

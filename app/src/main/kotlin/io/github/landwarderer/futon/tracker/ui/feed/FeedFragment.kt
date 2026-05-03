@@ -33,6 +33,7 @@ import io.github.landwarderer.futon.list.ui.adapter.MangaListListener
 import io.github.landwarderer.futon.list.ui.adapter.TypedListSpacingDecoration
 import io.github.landwarderer.futon.list.ui.model.ListHeader
 import io.github.landwarderer.futon.list.ui.model.MangaListModel
+import io.github.landwarderer.futon.tracker.ui.feed.model.FeedItem
 import io.github.landwarderer.futon.list.ui.size.StaticItemSizeResolver
 import io.github.landwarderer.futon.scrobbling.common.data.ScrobblerStorage
 import io.github.landwarderer.futon.scrobbling.common.domain.model.ScrobblerService
@@ -127,8 +128,8 @@ class FeedFragment :
                         (activity as? BackgroundOwner)?.setActivityBackground(immediateUrl)
                 } else {
                         viewModel.content.observe(viewLifecycleOwner) { items ->
-                                val coverUrl = items.filterIsInstance<MangaListModel>()
-                                        .firstOrNull()?.coverUrl
+                                val coverUrl = items.filterIsInstance<FeedItem>()
+                                        .firstOrNull()?.imageUrl
                                 if (coverUrl != null && coverUrl != lastLoadedUrl) {
                                         lastLoadedUrl = coverUrl
                                         (activity as? BackgroundOwner)?.setActivityBackground(coverUrl)

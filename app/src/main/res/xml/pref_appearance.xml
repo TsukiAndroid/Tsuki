@@ -192,6 +192,12 @@
             android:summary="@string/feed_background_summary"
             android:title="@string/feed_background" />
 
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
+            android:key="explore_bg_enabled"
+            android:summary="@string/explore_background_summary"
+            android:title="@string/explore_background" />
+
     </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/privacy">
