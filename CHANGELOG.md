@@ -1,3 +1,12 @@
+## Alpha-1.122 (Build #107)
+
+_2026-05-03 11:18 UTC_
+
+- fix: AMOLED SearchBar black rectangle — pill drawable instead of backgroundTint (7426d50)
+- fix: revert menuIconEnabled (unsupported attr), fix 3-dot via MainMenuProvider (2942daa)
+- fix: 5 bugs — alpha-only pre-releases, Tsuki α name, book icon notification, no overflow 3-dot in SearchBar, explicit alpha/nightly sourceSets (d5b68f0)
+
+
 ## Alpha-1.120 (Build #106)
 
 _2026-05-03 10:52 UTC_
