@@ -74,3 +74,17 @@ This repository: <https://github.com/Space4414/Tsuki/tree/devel>
 ## 📜 License
 
 GPL-3.0 — see [LICENSE](LICENSE).
+
+---
+
+## ⚠️ Disclaimer
+
+Tsuki is an open source Android application designed to help users organize and read manga from publicly available online sources.
+
+- Tsuki does **not** host, store, or distribute any manga content
+- All content is sourced from third party websites
+- Tsuki is **not** affiliated with any manga publisher or distributor
+- Users are responsible for ensuring their use of the app complies with the laws of their country
+- If you are a content owner and believe your rights are being infringed, please open an issue or contact us directly
+
+This project is a fork of [Yukimi](https://github.com/YumemiProject/Yumemi) and is distributed under the same open source license.
