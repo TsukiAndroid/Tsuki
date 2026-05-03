@@ -18,6 +18,8 @@
         <!-- Structured Glass Aesthetic (night overrides — still white-based so panels are visible) -->
         <!-- 60% dark in night mode for readability against dark art backgrounds -->
         <color name="glass_search_fill">#99000000</color>
+        <!-- AMOLED: window background is pure black, so use a white-based tint to stay visible -->
+        <color name="glass_search_fill_amoled">#33FFFFFF</color>
         <color name="glass_panel_gradient_start">#40FFFFFF</color>
         <color name="glass_panel_gradient_end">#15FFFFFF</color>
         <color name="glass_panel_fill">#28FFFFFF</color>

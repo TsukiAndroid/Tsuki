@@ -77,6 +77,9 @@
 
                 <!-- Smooth activity transitions -->
                 <item name="android:windowAnimationStyle">@style/TsukiWindowAnimation</item>
+
+                <!-- Glass SearchBar: tint via style so AMOLED overlay can override -->
+                <item name="materialSearchBarStyle">@style/Widget.Tsuki.SearchBar.Glass</item>
         </style>
 
         <!-- Smooth slide activity animations -->
@@ -106,7 +109,7 @@
                 <item name="collapsingToolbarLayoutMediumStyle">@style/Widget.Material3Expressive.CollapsingToolbar.Medium</item>
                 <item name="collapsingToolbarLayoutLargeStyle">@style/Widget.Material3Expressive.CollapsingToolbar.Large</item>
 
-                <item name="materialSearchBarStyle">@style/Widget.Material3Expressive.SearchBar</item>
+                <item name="materialSearchBarStyle">@style/Widget.Tsuki.SearchBar.Glass.Expressive</item>
 
                 <item name="floatingActionButtonStyle">@style/Widget.Material3Expressive.FloatingActionButton</item>
                 <item name="floatingActionButtonMediumStyle">@style/Widget.Material3Expressive.FloatingActionButton.Medium</item>
@@ -138,6 +141,7 @@
                 <item name="toolbarSurfaceStyle">@style/Widget.Material3Expressive.Toolbar.Surface</item>
 
                 <item name="linearProgressIndicatorStyle">@style/Widget.Material3Expressive.LinearProgressIndicator</item>
+                <item name="circularProgressIndicatorStyle">@style/Wiget.Material3Expressive.CircularProgressIndicator</item>
                 <item name="circularProgressIndicatorStyle">@style/Widget.Material3Expressive.CircularProgressIndicator</item>
 
                 <item name="sliderStyle">@style/Widget.Material3Expressive.Slider.Xsmall</item>
@@ -148,6 +152,15 @@
                 <item name="actionBarSize">@dimen/m3_comp_app_bar_small_container_height</item>
 
                 <item name="dynamicColorThemeOverlay">@style/ThemeOverlay.Material3Expressive.DynamicColors.DayNight</item>
+        </style>
+
+        <!-- Glass SearchBar styles — tint lives here so the AMOLED overlay can swap it cleanly -->
+        <style name="Widget.Tsuki.SearchBar.Glass" parent="Widget.Material3.SearchBar">
+                <item name="backgroundTint">@color/glass_search_fill</item>
+        </style>
+
+        <style name="Widget.Tsuki.SearchBar.Glass.Expressive" parent="Widget.Material3Expressive.SearchBar">
+                <item name="backgroundTint">@color/glass_search_fill</item>
         </style>
 
         <!-- Changes only for night -->

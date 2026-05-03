@@ -1,19 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-	<style name="ThemeOverlay.Tsuki" parent="ThemeOverlay.Material3.Dark">
-		<item name="android:navigationBarColor">@android:color/transparent</item>
-		<item name="android:windowBackground">?android:colorBackground</item>
-	</style>
+        <style name="ThemeOverlay.Tsuki" parent="ThemeOverlay.Material3.Dark">
+                <item name="android:navigationBarColor">@android:color/transparent</item>
+                <item name="android:windowBackground">?android:colorBackground</item>
+        </style>
 
-	<style name="ThemeOverlay.Tsuki.Amoled" parent="">
-		<item name="colorSurface">@color/background_amoled</item>
-		<item name="android:colorBackground">@color/background_amoled</item>
-		<item name="android:windowBackground">@color/background_amoled</item>
-		<item name="colorBackgroundFloating">@color/background_amoled</item>
-	</style>
+        <style name="ThemeOverlay.Tsuki.Amoled" parent="">
+                <item name="colorSurface">@color/background_amoled</item>
+                <item name="android:colorBackground">@color/background_amoled</item>
+                <item name="android:windowBackground">@color/background_amoled</item>
+                <item name="colorBackgroundFloating">@color/background_amoled</item>
+                <!-- White-tinted glass pill: visible against pure-black AMOLED window background -->
+                <item name="materialSearchBarStyle">@style/Widget.Tsuki.SearchBar.Glass.Amoled</item>
+        </style>
 
-	<!-- Monet theme only support S+ -->
-	<style name="ThemeOverlay.Tsuki.Monet" parent="ThemeOverlay.Material3.DynamicColors.Dark" />
+        <!-- AMOLED SearchBar: white-based tint stays visible on solid black window background.
+             Uses Expressive parent for the correct pill corner radius regardless of which
+             theme variant the user has active. -->
+        <style name="Widget.Tsuki.SearchBar.Glass.Amoled" parent="Widget.Material3Expressive.SearchBar">
+                <item name="backgroundTint">@color/glass_search_fill_amoled</item>
+        </style>
+
+        <!-- Monet theme only support S+ -->
+        <style name="ThemeOverlay.Tsuki.Monet" parent="ThemeOverlay.Material3.DynamicColors.Dark" />
 
 </resources>
