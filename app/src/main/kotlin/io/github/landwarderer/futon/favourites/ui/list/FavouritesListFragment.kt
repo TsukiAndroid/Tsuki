@@ -1,14 +1,10 @@
 package io.github.landwarderer.futon.favourites.ui.list
 
-import android.animation.ObjectAnimator
-import android.graphics.Color
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
-import android.view.ViewGroup
-import android.widget.FrameLayout
 import androidx.appcompat.view.ActionMode
 import androidx.appcompat.widget.PopupMenu
 import androidx.fragment.app.viewModels
@@ -54,7 +50,6 @@ class FavouritesListFragment : MangaListFragment(), PopupMenu.OnMenuItemClickLis
         @ScrobblerType(ScrobblerService.SHIKIMORI)
         lateinit var shikimoriStorage: ScrobblerStorage
 
-        private var dimOverlay: View? = null
         private var lastLoadedUrl: String? = null
 
         val categoryId
@@ -64,23 +59,11 @@ class FavouritesListFragment : MangaListFragment(), PopupMenu.OnMenuItemClickLis
                 super.onViewBindingCreated(binding, savedInstanceState)
                 binding.recyclerView.isVP2BugWorkaroundEnabled = true
                 if (settings.isFavouritesBackgroundEnabled) {
-                        setupBackgroundImage(binding)
+                        setupBackgroundImage()
                 }
         }
 
-        private fun setupBackgroundImage(binding: FragmentListBinding) {
-                val root = binding.root as? FrameLayout ?: return
-
-                val dim = View(root.context).apply {
-                        setBackgroundColor(Color.parseColor("#70000000"))
-                        alpha = 0f
-                }
-                root.addView(dim, 0, FrameLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                ))
-                dimOverlay = dim
-
+        private fun setupBackgroundImage() {
                 val source = settings.historyBackgroundSource
                 val immediateUrl = when (source) {
                         AppSettings.HISTORY_BG_ANILIST -> aniListStorage.user?.let { it.coverImage ?: it.avatar }
@@ -92,29 +75,21 @@ class FavouritesListFragment : MangaListFragment(), PopupMenu.OnMenuItemClickLis
 
                 if (immediateUrl != null) {
                         lastLoadedUrl = immediateUrl
-                        notifyBackground(dim, immediateUrl)
+                        (activity as? BackgroundOwner)?.setActivityBackground(immediateUrl)
                 } else {
                         viewModel.content.observe(viewLifecycleOwner) { items ->
                                 val url = items.filterIsInstance<MangaListModel>()
                                         .firstOrNull()?.coverUrl
                                 if (url != null && url != lastLoadedUrl) {
                                         lastLoadedUrl = url
-                                        notifyBackground(dim, url)
+                                        (activity as? BackgroundOwner)?.setActivityBackground(url)
                                 }
                         }
                 }
         }
 
-        private fun notifyBackground(dim: View, url: String) {
-                (activity as? BackgroundOwner)?.setActivityBackground(url)
-                if (dim.alpha == 0f) {
-                        ObjectAnimator.ofFloat(dim, "alpha", 0f, 1f).setDuration(800).start()
-                }
-        }
-
         override fun onDestroyView() {
                 super.onDestroyView()
-                dimOverlay = null
                 lastLoadedUrl = null
         }
 

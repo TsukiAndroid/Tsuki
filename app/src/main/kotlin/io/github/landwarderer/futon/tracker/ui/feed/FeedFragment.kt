@@ -1,12 +1,9 @@
 package io.github.landwarderer.futon.tracker.ui.feed
 
-import android.animation.ObjectAnimator
-import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.FrameLayout
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -74,7 +71,6 @@ class FeedFragment :
 
         private val viewModel by viewModels<FeedViewModel>()
 
-        private var dimOverlay: View? = null
         private var lastLoadedUrl: String? = null
 
         override val recyclerView: RecyclerView?
@@ -112,23 +108,11 @@ class FeedFragment :
                 viewModel.isRunning.observe(viewLifecycleOwner, this::onIsTrackerRunningChanged)
 
                 if (settings.isFeedBackgroundEnabled) {
-                        setupBackgroundImage(binding)
+                        setupBackgroundImage()
                 }
         }
 
-        private fun setupBackgroundImage(binding: FragmentListBinding) {
-                val root = binding.root as? FrameLayout ?: return
-
-                val dim = View(root.context).apply {
-                        setBackgroundColor(Color.parseColor("#70000000"))
-                        alpha = 0f
-                }
-                root.addView(dim, 0, FrameLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                ))
-                dimOverlay = dim
-
+        private fun setupBackgroundImage() {
                 val source = settings.historyBackgroundSource
                 val immediateUrl = when (source) {
                         AppSettings.HISTORY_BG_ANILIST -> aniListStorage.user?.let { it.coverImage ?: it.avatar }
@@ -140,29 +124,21 @@ class FeedFragment :
 
                 if (immediateUrl != null) {
                         lastLoadedUrl = immediateUrl
-                        notifyBackground(dim, immediateUrl)
+                        (activity as? BackgroundOwner)?.setActivityBackground(immediateUrl)
                 } else {
                         viewModel.content.observe(viewLifecycleOwner) { items ->
                                 val coverUrl = items.filterIsInstance<MangaListModel>()
                                         .firstOrNull()?.coverUrl
                                 if (coverUrl != null && coverUrl != lastLoadedUrl) {
                                         lastLoadedUrl = coverUrl
-                                        notifyBackground(dim, coverUrl)
+                                        (activity as? BackgroundOwner)?.setActivityBackground(coverUrl)
                                 }
                         }
                 }
         }
 
-        private fun notifyBackground(dim: View, url: String) {
-                (activity as? BackgroundOwner)?.setActivityBackground(url)
-                if (dim.alpha == 0f) {
-                        ObjectAnimator.ofFloat(dim, "alpha", 0f, 1f).setDuration(800).start()
-                }
-        }
-
         override fun onDestroyView() {
                 super.onDestroyView()
-                dimOverlay = null
                 lastLoadedUrl = null
         }
 

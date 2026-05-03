@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Dark translucent base matching the nav bar glass feel -->
+    <item>
+        <shape android:shape="rectangle">
+            <corners
+                android:topLeftRadius="24dp"
+                android:topRightRadius="24dp" />
+            <solid android:color="@color/glass_nav_fill" />
+        </shape>
+    </item>
+    <!-- Top shimmer gradient for glass depth -->
+    <item>
+        <shape android:shape="rectangle">
+            <corners
+                android:topLeftRadius="24dp"
+                android:topRightRadius="24dp" />
+            <gradient
+                android:angle="270"
+                android:startColor="#20FFFFFF"
+                android:endColor="#00FFFFFF" />
+        </shape>
+    </item>
+    <!-- White rim highlight along the top edge -->
+    <item>
+        <shape android:shape="rectangle">
+            <corners
+                android:topLeftRadius="24dp"
+                android:topRightRadius="24dp" />
+            <stroke
+                android:width="0.8dp"
+                android:color="@color/glass_stroke" />
+        </shape>
+    </item>
+</layer-list>

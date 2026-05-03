@@ -159,11 +159,12 @@
 
         <io.github.landwarderer.futon.settings.utils.SliderPreference
             android:key="bg_blur_intensity"
+            android:defaultValue="75"
             android:stepSize="5"
             android:title="@string/background_blur"
             android:valueFrom="0"
             android:valueTo="100"
-            app:defaultValue="75" />
+            app:useSimpleSummaryProvider="true" />
 
         <ListPreference
             android:defaultValue="manga_cover"

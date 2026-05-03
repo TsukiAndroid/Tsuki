@@ -1,13 +1,9 @@
 package io.github.landwarderer.futon.history.ui
 
-import android.animation.ObjectAnimator
-import android.graphics.Color
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
-import android.view.ViewGroup
-import android.widget.FrameLayout
 import androidx.appcompat.view.ActionMode
 import androidx.fragment.app.viewModels
 import dagger.hilt.android.AndroidEntryPoint
@@ -30,7 +26,6 @@ class HistoryListFragment : MangaListFragment() {
         override val viewModel by viewModels<HistoryListViewModel>()
         override val isSwipeRefreshEnabled = false
 
-        private var dimOverlay: android.view.View? = null
         private var lastLoadedUrl: String? = null
 
         override fun onViewBindingCreated(binding: FragmentListBinding, savedInstanceState: Bundle?) {
@@ -39,37 +34,21 @@ class HistoryListFragment : MangaListFragment() {
                 addMenuProvider(HistoryListMenuProvider(binding.root.context, router, viewModel))
                 viewModel.isStatsEnabled.observe(viewLifecycleOwner, MenuInvalidator(requireActivity()))
                 if (settings.isHistoryBackgroundEnabled) {
-                        setupBackgroundImage(binding)
+                        setupBackgroundImage()
                 }
         }
 
-        private fun setupBackgroundImage(binding: FragmentListBinding) {
-                val root = binding.root as? FrameLayout ?: return
-
-                val dim = android.view.View(root.context).apply {
-                        setBackgroundColor(Color.parseColor("#70000000"))
-                        alpha = 0f
-                }
-                root.addView(dim, 0, FrameLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                ))
-                dimOverlay = dim
-
+        private fun setupBackgroundImage() {
                 viewModel.backgroundCoverUrl.observe(viewLifecycleOwner) { url ->
                         if (url != null && url != lastLoadedUrl) {
                                 lastLoadedUrl = url
                                 (activity as? BackgroundOwner)?.setActivityBackground(url)
-                                if (dim.alpha == 0f) {
-                                        ObjectAnimator.ofFloat(dim, "alpha", 0f, 1f).setDuration(800).start()
-                                }
                         }
                 }
         }
 
         override fun onDestroyView() {
                 super.onDestroyView()
-                dimOverlay = null
                 lastLoadedUrl = null
         }
 

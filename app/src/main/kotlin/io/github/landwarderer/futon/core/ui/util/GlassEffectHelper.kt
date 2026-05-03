@@ -1,5 +1,6 @@
 package io.github.landwarderer.futon.core.ui.util
 
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.RenderEffect
@@ -30,12 +31,14 @@ object GlassEffectHelper {
     }
 
     /**
-     * API 23-30 fallback: blurs an ImageView's bitmap via a fast downscale-then-upscale.
-     * [intensity] 0–100 (default 75). Higher = more blur. No-op on API 31+ (RenderEffect
-     * handles it there via [applyBlurBackground]).
+     * API 23-30 fallback: smooth Gaussian blur via RenderScript ScriptIntrinsicBlur.
+     * Steps: downscale to 30% → RS blur (radius proportional to intensity, max 25) →
+     * bilinear upscale back to full size. This gives the soft Dantotsu-style look
+     * instead of the blocky pixelated artefacts from extreme downscaling alone.
+     * No-op on API 31+ where RenderEffect handles blurring via [applyBlurBackground].
      */
     fun blurImageView(imageView: ImageView, intensity: Int = 75) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) return // RenderEffect handles it
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) return
         if (intensity <= 0) return
         val drawable = imageView.drawable ?: return
         try {
@@ -49,25 +52,50 @@ object GlassEffectHelper {
                     bmp
                 }
             }
-            imageView.setImageBitmap(fastBlur(srcBitmap, intensity))
+            imageView.setImageBitmap(gaussianBlur(imageView.context, srcBitmap, intensity))
         } catch (_: Exception) {
             // Best-effort; leave unblurred on failure.
         }
     }
 
-    /**
-     * Cheap software blur: downscale to [scale]% then bilinear-upscale back.
-     * [intensity] 0–100: 0 = no blur (scale 1.0), 100 = max blur (scale 0.03).
-     */
-    private fun fastBlur(src: Bitmap, intensity: Int): Bitmap {
-        // Cubic ease-in: at 75% intensity → scale≈0.055 (heavy blur, near original 0.08)
-        val t = 1f - intensity.coerceIn(0, 100) / 100f
-        val scale = (0.04f + 0.96f * t * t * t).coerceAtLeast(0.04f)
+    @Suppress("DEPRECATION")
+    private fun gaussianBlur(context: Context, src: Bitmap, intensity: Int): Bitmap {
+        // Step 1: downscale to 30% — fast and adds to overall blur depth.
+        val scale = 0.3f
         val sw = (src.width * scale).toInt().coerceAtLeast(1)
         val sh = (src.height * scale).toInt().coerceAtLeast(1)
         val small = Bitmap.createScaledBitmap(src, sw, sh, true)
-        val result = Bitmap.createScaledBitmap(small, src.width, src.height, true)
+
+        // Step 2: RenderScript Gaussian blur (API 17+, deprecated but safe through API 30).
+        val blurRadius = (intensity / 100f * 25f).coerceIn(1f, 25f)
+        val blurred = Bitmap.createBitmap(small.width, small.height,
+            small.config ?: Bitmap.Config.ARGB_8888)
+        val rs = android.renderscript.RenderScript.create(context)
+        try {
+            val input = android.renderscript.Allocation.createFromBitmap(
+                rs, small,
+                android.renderscript.Allocation.MipmapControl.MIPMAP_NONE,
+                android.renderscript.Allocation.USAGE_SCRIPT,
+            )
+            val output = android.renderscript.Allocation.createTyped(rs, input.type)
+            val script = android.renderscript.ScriptIntrinsicBlur.create(
+                rs, android.renderscript.Element.U8_4(rs),
+            )
+            script.setRadius(blurRadius)
+            script.setInput(input)
+            script.forEach(output)
+            output.copyTo(blurred)
+            input.destroy()
+            output.destroy()
+            script.destroy()
+        } finally {
+            rs.destroy()
+        }
         small.recycle()
+
+        // Step 3: bilinear upscale back — smooths out any remaining block artefacts.
+        val result = Bitmap.createScaledBitmap(blurred, src.width, src.height, true)
+        blurred.recycle()
         return result
     }
 
