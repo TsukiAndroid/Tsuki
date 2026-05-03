@@ -1,3 +1,11 @@
+## Alpha-1.117 (Build #104)
+
+_2026-05-03 10:18 UTC_
+
+- feat: fix notifications, OAuth, update alerts, alpha build (f96ffb9)
+- fix: Explore tab background not showing (1495611)
+
+
 ## Alpha-1.115 (Build #103)
 
 _2026-05-03 08:30 UTC_
