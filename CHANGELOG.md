@@ -1,3 +1,12 @@
+## Alpha-1.111 (Build #101)
+
+_2026-05-03 06:52 UTC_
+
+- fix: smooth RS blur, remove double-dim, glass chapter sheet, slider % (48dca80)
+- fix: remove stale action_downloads/incognito/settings refs from MainMenuProvider (cf9f6c9)
+- fix: 6 UI bugs — seamless bg, heavy blur on API24, no 3-dot overflow, floating SearchBar, incognito btn, blur slider value (b56bcd9)
+
+
 ## Alpha-1.109 (Build #100)
 
 _2026-05-03 06:05 UTC_
