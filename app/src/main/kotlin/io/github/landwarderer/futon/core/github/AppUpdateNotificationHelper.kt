@@ -44,7 +44,7 @@ class AppUpdateNotificationHelper @Inject constructor(
                 val notification = NotificationCompat.Builder(context, CHANNEL_ID)
                         .setContentTitle(context.getString(R.string.app_update_available))
                         .setContentText(context.getString(R.string.new_version_s, version.name))
-                        .setSmallIcon(R.drawable.ic_stat_name)
+                        .setSmallIcon(R.drawable.ic_stat_book_plus)
                         .setAutoCancel(true)
                         .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                         .setCategory(NotificationCompat.CATEGORY_RECOMMENDATION)

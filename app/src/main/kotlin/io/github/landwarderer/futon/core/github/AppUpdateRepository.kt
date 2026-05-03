@@ -55,7 +55,8 @@ class AppUpdateRepository @Inject constructor(
                                 .build()
                         val response = okHttp.newCall(request).await()
                         val releases = JSONArray(response.body?.string() ?: "[]")
-                        val allowUnstable = settings.isUnstableUpdatesAllowed || BuildConfig.BUILD_TYPE == "alpha"
+                        val isAlphaBuild = BuildConfig.BUILD_TYPE == "alpha"
+                        val allowUnstable = settings.isUnstableUpdatesAllowed
 
                         val currentVersion = VersionId(BuildConfig.VERSION_NAME)
 
@@ -64,11 +65,13 @@ class AppUpdateRepository @Inject constructor(
                         for (i in 0 until releases.length()) {
                                 val item = releases.getJSONObject(i)
                                 if (item.optBoolean("draft", false)) continue
-                                if (item.optBoolean("prerelease", false) && !allowUnstable) continue
+                                val isPreRelease = item.optBoolean("prerelease", false)
+                                // Alpha builds see ONLY pre-releases; stable builds skip pre-releases unless opted in
+                                if (isAlphaBuild && !isPreRelease) continue
+                                if (!isAlphaBuild && isPreRelease && !allowUnstable) continue
                                 val tagName = item.optString("tag_name").removePrefix("v")
                                 if (tagName.isEmpty()) continue
                                 val version = runCatching { VersionId(tagName) }.getOrNull() ?: continue
-                                if (!allowUnstable && !version.isStable) continue
                                 if (bestVersion == null || version > bestVersion) {
                                         bestVersion = version
                                         bestRelease = item

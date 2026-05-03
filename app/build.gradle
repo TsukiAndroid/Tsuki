@@ -124,6 +124,8 @@ android {
         sourceSets {
                 androidTest.assets.srcDirs += files("$projectDir/schemas".toString())
                 main.java.srcDirs += 'src/main/kotlin/'
+                alpha.res.srcDirs += ['src/alpha/res']
+                nightly.res.srcDirs += ['src/nightly/res']
         }
         compileOptions {
                 coreLibraryDesugaringEnabled true
