@@ -1,3 +1,11 @@
+## Alpha-1.106 (Build #98)
+
+_2026-05-03 04:24 UTC_
+
+- feat: Dantotsu-style full-screen bg, blur slider, glass icon buttons, activity-level backdrop (3116d43)
+- feat: Tsuki title, adaptive glass search bar, fix nav pill height (af0bf92)
+
+
 ## Alpha-1.104 (Build #97)
 
 _2026-05-03 00:22 UTC_
