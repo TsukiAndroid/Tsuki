@@ -1,3 +1,12 @@
+## Alpha-1.120 (Build #106)
+
+_2026-05-03 10:52 UTC_
+
+- fix: revert menuIconEnabled (unsupported attr), fix 3-dot via MainMenuProvider (2942daa)
+- fix: 5 bugs — alpha-only pre-releases, Tsuki α name, book icon notification, no overflow 3-dot in SearchBar, explicit alpha/nightly sourceSets (d5b68f0)
+- feat: fix notifications, OAuth, update alerts, alpha build (f96ffb9)
+
+
 ## Alpha-1.117 (Build #104)
 
 _2026-05-03 10:18 UTC_
