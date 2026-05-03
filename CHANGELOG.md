@@ -1,3 +1,12 @@
+## Alpha-1.109 (Build #100)
+
+_2026-05-03 06:05 UTC_
+
+- fix: remove stale action_downloads/incognito/settings refs from MainMenuProvider (cf9f6c9)
+- fix: 6 UI bugs — seamless bg, heavy blur on API24, no 3-dot overflow, floating SearchBar, incognito btn, blur slider value (b56bcd9)
+- feat: Dantotsu-style full-screen bg, blur slider, glass icon buttons, activity-level backdrop (3116d43)
+
+
 ## Alpha-1.106 (Build #98)
 
 _2026-05-03 04:24 UTC_
