@@ -952,6 +952,8 @@
     <string name="nav_bar_opacity_summary">Adjust the transparency of the bottom navigation bar</string>
     <string name="search_bar_opacity">Search bar opacity</string>
     <string name="search_bar_opacity_summary">Adjust the transparency of the search bar</string>
+    <string name="background_blur">Background blur</string>
+    <string name="background_blur_summary">Control how much the background artwork is blurred</string>
     <string name="history_background">History background image</string>
     <string name="history_background_summary">Show the most recently read manga cover as a background in the History tab</string>
     <string name="history_bg_source">Background image source</string>

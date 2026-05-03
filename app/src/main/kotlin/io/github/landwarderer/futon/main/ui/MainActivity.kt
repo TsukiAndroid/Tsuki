@@ -77,10 +77,20 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
+import android.animation.ObjectAnimator
+import android.widget.ImageView
+import coil3.ImageLoader
+import coil3.request.ImageRequest
+import coil3.request.SuccessResult
+import coil3.request.crossfade
+import coil3.request.target
+import io.github.landwarderer.futon.core.ui.util.GlassEffectHelper
+import io.github.landwarderer.futon.core.util.ext.enqueueWith
 import com.google.android.material.R as materialR
 
 @AndroidEntryPoint
 class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNavOwner,
+        BackgroundOwner,
         View.OnClickListener,
         SearchSuggestionItemCallback.SuggestionItemListener,
         MainNavigationDelegate.OnFragmentChangedListener,
@@ -89,6 +99,9 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 
         @Inject
         lateinit var settings: AppSettings
+
+        @Inject
+        lateinit var coil: ImageLoader
 
         private val viewModel by viewModels<MainViewModel>()
         private val searchSuggestionViewModel by viewModels<SearchSuggestionViewModel>()
@@ -102,6 +115,8 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
         // Base marginBottom of the pill nav as declared in XML (12dp).
         // Saved on first insets pass so we can add the system-bar height without accumulating.
         private var pillNavBaseMarginPx = -1
+        // Last URL used for the activity-level background (extends behind AppBar).
+        private var lastBgUrl: String? = null
 
         override val appBar: AppBarLayout
                 get() = viewBinding.appbar
@@ -131,6 +146,9 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
                 }
 
                 addMenuProvider(MainMenuProvider(router, viewModel))
+
+                viewBinding.btnDownloads?.setOnClickListener { router.openDownloads() }
+                viewBinding.btnSettings?.setOnClickListener { router.openSettings() }
 
                 val exitCallback = ExitCallback(this, viewBinding.container)
                 onBackPressedDispatcher.addCallback(exitCallback)
@@ -481,7 +499,71 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
                 viewBinding.searchBar.alpha = searchAlpha
         }
 
+        // --- BackgroundOwner implementation ---
+
+        override fun setActivityBackground(url: String?) {
+                if (url == null) {
+                        clearActivityBackground()
+                        return
+                }
+                if (url == lastBgUrl) return
+                lastBgUrl = url
+                val iv = viewBinding.activityBgImage ?: return
+                val dim = viewBinding.activityBgDim ?: return
+                iv.visibility = View.VISIBLE
+                dim.visibility = View.VISIBLE
+                val blurIntensity = settings.backgroundBlurIntensity
+                // Apply RenderEffect blur once (API 31+) — it persists across image changes.
+                GlassEffectHelper.applyBlurBackground(iv, blurIntensity)
+                ImageRequest.Builder(this)
+                        .data(url)
+                        .crossfade(false)
+                        .target(iv)
+                        .listener(object : ImageRequest.Listener {
+                                override fun onSuccess(request: ImageRequest, result: SuccessResult) {
+                                        // API 23-30 software blur (no-op on API 31+ which uses RenderEffect)
+                                        GlassEffectHelper.blurImageView(iv, blurIntensity)
+                                        ObjectAnimator.ofFloat(iv, "alpha", 0f, 0.85f).setDuration(700).start()
+                                        ObjectAnimator.ofFloat(dim, "alpha", 0f, 1f).setDuration(700).start()
+                                }
+                        })
+                        .build()
+                        .also { coil.enqueue(it) }
+        }
+
+        override fun clearActivityBackground() {
+                lastBgUrl = null
+                val iv = viewBinding.activityBgImage ?: return
+                val dim = viewBinding.activityBgDim ?: return
+                if (iv.alpha == 0f) return
+                ObjectAnimator.ofFloat(iv, "alpha", iv.alpha, 0f).apply {
+                        duration = 400
+                        addListener(object : android.animation.AnimatorListenerAdapter() {
+                                override fun onAnimationEnd(animation: android.animation.Animator) {
+                                        iv.visibility = View.GONE
+                                }
+                        })
+                        start()
+                }
+                ObjectAnimator.ofFloat(dim, "alpha", dim.alpha, 0f).apply {
+                        duration = 400
+                        addListener(object : android.animation.AnimatorListenerAdapter() {
+                                override fun onAnimationEnd(animation: android.animation.Animator) {
+                                        dim.visibility = View.GONE
+                                }
+                        })
+                        start()
+                }
+        }
+
         private fun updateBarsForBackground(topFragment: Fragment) {
                 applyUiTransparency()
+                val hasBackground = when (topFragment) {
+                        is HistoryListFragment -> settings.isHistoryBackgroundEnabled
+                        is FavouritesContainerFragment -> settings.isFavouritesBackgroundEnabled
+                        is FeedFragment -> settings.isFeedBackgroundEnabled
+                        else -> false
+                }
+                if (!hasBackground) clearActivityBackground()
         }
 }

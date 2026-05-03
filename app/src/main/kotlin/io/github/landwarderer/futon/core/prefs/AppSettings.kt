@@ -113,6 +113,10 @@ class AppSettings @Inject constructor(@ApplicationContext context: Context) {
                 get() = prefs.getInt(KEY_SEARCH_BAR_ALPHA, 100)
                 set(value) = prefs.edit { putInt(KEY_SEARCH_BAR_ALPHA, value) }
 
+        var backgroundBlurIntensity: Int
+                get() = prefs.getInt(KEY_BG_BLUR_INTENSITY, 75)
+                set(value) = prefs.edit { putInt(KEY_BG_BLUR_INTENSITY, value) }
+
         var historyBackgroundSource: String
                 get() = prefs.getString(KEY_HISTORY_BG_SOURCE, HISTORY_BG_MANGA_COVER) ?: HISTORY_BG_MANGA_COVER
                 set(value) = prefs.edit { putString(KEY_HISTORY_BG_SOURCE, value) }
@@ -837,6 +841,7 @@ class AppSettings @Inject constructor(@ApplicationContext context: Context) {
                 const val KEY_NAV_PINNED = "nav_pinned"
                 const val KEY_NAV_BAR_ALPHA = "nav_bar_alpha"
                 const val KEY_SEARCH_BAR_ALPHA = "search_bar_alpha"
+                const val KEY_BG_BLUR_INTENSITY = "bg_blur_intensity"
                 const val KEY_HISTORY_BG_SOURCE = "history_bg_source"
                 const val KEY_HISTORY_BG_ENABLED = "history_bg_enabled"
                 const val HISTORY_BG_MANGA_COVER = "manga_cover"

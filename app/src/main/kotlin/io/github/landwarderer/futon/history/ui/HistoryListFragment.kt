@@ -29,6 +29,7 @@ import io.github.landwarderer.futon.core.util.ext.observe
 import io.github.landwarderer.futon.databinding.FragmentListBinding
 import io.github.landwarderer.futon.list.ui.MangaListFragment
 import io.github.landwarderer.futon.list.ui.size.DynamicItemSizeResolver
+import io.github.landwarderer.futon.main.ui.BackgroundOwner
 
 @AndroidEntryPoint
 class HistoryListFragment : MangaListFragment() {
@@ -92,6 +93,8 @@ class HistoryListFragment : MangaListFragment() {
                                 override fun onSuccess(request: ImageRequest, result: SuccessResult) {
                                         ObjectAnimator.ofFloat(bgImage, "alpha", 0f, 0.65f).setDuration(800).start()
                                         ObjectAnimator.ofFloat(dim, "alpha", 0f, 1f).setDuration(800).start()
+                                        // Propagate to Activity so AppBar area also shows the artwork.
+                                        (activity as? BackgroundOwner)?.setActivityBackground(url)
                                 }
                         })
                         .enqueueWith(coil)

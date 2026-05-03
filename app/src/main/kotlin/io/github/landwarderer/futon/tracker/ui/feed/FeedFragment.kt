@@ -25,6 +25,7 @@ import io.github.landwarderer.futon.core.exceptions.resolve.SnackbarErrorObserve
 import io.github.landwarderer.futon.core.nav.router
 import io.github.landwarderer.futon.core.prefs.AppSettings
 import io.github.landwarderer.futon.core.ui.BaseFragment
+import io.github.landwarderer.futon.main.ui.BackgroundOwner
 import io.github.landwarderer.futon.core.ui.list.PaginationScrollListener
 import io.github.landwarderer.futon.core.ui.list.RecyclerScrollKeeper
 import io.github.landwarderer.futon.core.ui.util.MenuInvalidator
@@ -184,6 +185,8 @@ class FeedFragment :
                                 override fun onSuccess(request: ImageRequest, result: SuccessResult) {
                                         ObjectAnimator.ofFloat(bgImage, "alpha", 0f, 0.65f).setDuration(800).start()
                                         ObjectAnimator.ofFloat(dim, "alpha", 0f, 1f).setDuration(800).start()
+                                        // Propagate to Activity so AppBar area also shows the artwork.
+                                        (activity as? BackgroundOwner)?.setActivityBackground(url)
                                 }
                         })
                         .enqueueWith(coil)

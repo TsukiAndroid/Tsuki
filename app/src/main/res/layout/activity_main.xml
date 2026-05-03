@@ -7,6 +7,24 @@
         android:layout_height="match_parent"
         tools:context=".main.ui.MainActivity">
 
+        <!-- Activity-level background: extends full-screen behind AppBar/SearchBar -->
+        <ImageView
+                android:id="@+id/activity_bg_image"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:alpha="0"
+                android:visibility="gone" />
+
+        <!-- Subtle dim over the full-screen background for readability -->
+        <View
+                android:id="@+id/activity_bg_dim"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="#33000000"
+                android:alpha="0"
+                android:visibility="gone" />
+
         <androidx.fragment.app.FragmentContainerView
                 android:id="@id/container"
                 android:layout_width="match_parent"
@@ -53,6 +71,27 @@
                                 android:text="Tsuki"
                                 android:textAppearance="?attr/textAppearanceHeadlineLarge"
                                 android:textColor="?attr/colorOnBackground" />
+
+                        <ImageButton
+                                android:id="@+id/btn_downloads"
+                                android:layout_width="40dp"
+                                android:layout_height="40dp"
+                                android:layout_marginEnd="8dp"
+                                android:background="@drawable/bg_icon_circle_glass"
+                                android:contentDescription="@string/downloads"
+                                android:scaleType="center"
+                                android:src="@drawable/ic_download"
+                                android:tint="@android:color/white" />
+
+                        <ImageButton
+                                android:id="@+id/btn_settings"
+                                android:layout_width="40dp"
+                                android:layout_height="40dp"
+                                android:background="@drawable/bg_icon_circle_glass"
+                                android:contentDescription="@string/settings"
+                                android:scaleType="center"
+                                android:src="@drawable/ic_settings"
+                                android:tint="@android:color/white" />
 
                 </LinearLayout>
 
