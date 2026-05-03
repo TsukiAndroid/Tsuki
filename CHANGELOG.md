@@ -1,3 +1,11 @@
+## Alpha-1.113 (Build #102)
+
+_2026-05-03 08:02 UTC_
+
+- feat: random bg rotation for Favourites, latest cover for Feed, suggestion cover for Explore (32402b0)
+- fix: smooth RS blur, remove double-dim, glass chapter sheet, slider % (48dca80)
+
+
 ## Alpha-1.111 (Build #101)
 
 _2026-05-03 06:52 UTC_
