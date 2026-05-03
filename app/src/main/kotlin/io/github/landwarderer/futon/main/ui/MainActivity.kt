@@ -149,6 +149,9 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 
                 viewBinding.btnDownloads?.setOnClickListener { router.openDownloads() }
                 viewBinding.btnSettings?.setOnClickListener { router.openSettings() }
+                viewBinding.btnIncognito?.setOnClickListener {
+                        viewModel.setIncognitoMode(!searchSuggestionViewModel.isIncognitoModeEnabled.value)
+                }
 
                 val exitCallback = ExitCallback(this, viewBinding.container)
                 onBackPressedDispatcher.addCallback(exitCallback)
@@ -328,6 +331,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
                 }
                 viewBinding.searchView.getEditText().imeOptions = options
                 invalidateOptionsMenu()
+                viewBinding.btnIncognito?.alpha = if (isIncognito) 1f else 0.55f
         }
 
         private fun onLoadingStateChanged(isLoading: Boolean) {

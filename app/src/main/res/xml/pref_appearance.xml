@@ -160,7 +160,6 @@
         <io.github.landwarderer.futon.settings.utils.SliderPreference
             android:key="bg_blur_intensity"
             android:stepSize="5"
-            android:summary="@string/background_blur_summary"
             android:title="@string/background_blur"
             android:valueFrom="0"
             android:valueTo="100"

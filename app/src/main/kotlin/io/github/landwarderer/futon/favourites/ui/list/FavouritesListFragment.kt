@@ -9,21 +9,15 @@ import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
-import android.widget.ImageView
 import androidx.appcompat.view.ActionMode
 import androidx.appcompat.widget.PopupMenu
 import androidx.fragment.app.viewModels
-import coil3.request.ImageRequest
-import coil3.request.SuccessResult
-import coil3.request.crossfade
-import coil3.request.target
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.landwarderer.futon.R
 import io.github.landwarderer.futon.core.nav.AppRouter
 import io.github.landwarderer.futon.core.prefs.AppSettings
 import io.github.landwarderer.futon.core.ui.list.ListSelectionController
-import io.github.landwarderer.futon.core.util.ext.enqueueWith
 import io.github.landwarderer.futon.core.util.ext.observe
 import io.github.landwarderer.futon.core.util.ext.sortedByOrdinal
 import io.github.landwarderer.futon.core.util.ext.withArgs
@@ -60,7 +54,6 @@ class FavouritesListFragment : MangaListFragment(), PopupMenu.OnMenuItemClickLis
         @ScrobblerType(ScrobblerService.SHIKIMORI)
         lateinit var shikimoriStorage: ScrobblerStorage
 
-        private var backgroundImageView: ImageView? = null
         private var dimOverlay: View? = null
         private var lastLoadedUrl: String? = null
 
@@ -78,21 +71,11 @@ class FavouritesListFragment : MangaListFragment(), PopupMenu.OnMenuItemClickLis
         private fun setupBackgroundImage(binding: FragmentListBinding) {
                 val root = binding.root as? FrameLayout ?: return
 
-                val bgImage = ImageView(root.context).apply {
-                        scaleType = ImageView.ScaleType.CENTER_CROP
-                        alpha = 0f
-                }
-                root.addView(bgImage, 0, FrameLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                ))
-                backgroundImageView = bgImage
-
                 val dim = View(root.context).apply {
-                        setBackgroundColor(Color.parseColor("#A0000000"))
+                        setBackgroundColor(Color.parseColor("#70000000"))
                         alpha = 0f
                 }
-                root.addView(dim, 1, FrameLayout.LayoutParams(
+                root.addView(dim, 0, FrameLayout.LayoutParams(
                         ViewGroup.LayoutParams.MATCH_PARENT,
                         ViewGroup.LayoutParams.MATCH_PARENT,
                 ))
@@ -109,40 +92,28 @@ class FavouritesListFragment : MangaListFragment(), PopupMenu.OnMenuItemClickLis
 
                 if (immediateUrl != null) {
                         lastLoadedUrl = immediateUrl
-                        loadBackgroundImage(bgImage, dim, immediateUrl)
+                        notifyBackground(dim, immediateUrl)
                 } else {
                         viewModel.content.observe(viewLifecycleOwner) { items ->
                                 val url = items.filterIsInstance<MangaListModel>()
                                         .firstOrNull()?.coverUrl
                                 if (url != null && url != lastLoadedUrl) {
                                         lastLoadedUrl = url
-                                        loadBackgroundImage(bgImage, dim, url)
+                                        notifyBackground(dim, url)
                                 }
                         }
                 }
         }
 
-        private fun loadBackgroundImage(bgImage: ImageView, dim: View, url: String) {
-                bgImage.alpha = 0f
-                dim.alpha = 0f
-                ImageRequest.Builder(bgImage.context)
-                        .data(url)
-                        .crossfade(false)
-                        .target(bgImage)
-                        .listener(object : ImageRequest.Listener {
-                                override fun onSuccess(request: ImageRequest, result: SuccessResult) {
-                                        ObjectAnimator.ofFloat(bgImage, "alpha", 0f, 0.65f).setDuration(800).start()
-                                        ObjectAnimator.ofFloat(dim, "alpha", 0f, 1f).setDuration(800).start()
-                                        // Propagate to Activity so AppBar area also shows the artwork.
-                                        (activity as? BackgroundOwner)?.setActivityBackground(url)
-                                }
-                        })
-                        .enqueueWith(coil)
+        private fun notifyBackground(dim: View, url: String) {
+                (activity as? BackgroundOwner)?.setActivityBackground(url)
+                if (dim.alpha == 0f) {
+                        ObjectAnimator.ofFloat(dim, "alpha", 0f, 1f).setDuration(800).start()
+                }
         }
 
         override fun onDestroyView() {
                 super.onDestroyView()
-                backgroundImageView = null
                 dimOverlay = null
                 lastLoadedUrl = null
         }

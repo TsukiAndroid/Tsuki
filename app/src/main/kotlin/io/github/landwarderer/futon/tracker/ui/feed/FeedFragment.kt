@@ -7,17 +7,11 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
-import android.widget.ImageView
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-import coil3.ImageLoader
-import coil3.request.ImageRequest
-import coil3.request.SuccessResult
-import coil3.request.crossfade
-import coil3.request.target
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.drop
 import io.github.landwarderer.futon.R
@@ -34,7 +28,6 @@ import io.github.landwarderer.futon.core.ui.util.ReversibleActionObserver
 import io.github.landwarderer.futon.core.ui.widgets.TipView
 import io.github.landwarderer.futon.core.util.ext.addMenuProvider
 import io.github.landwarderer.futon.core.util.ext.consumeAll
-import io.github.landwarderer.futon.core.util.ext.enqueueWith
 import io.github.landwarderer.futon.core.util.ext.observe
 import io.github.landwarderer.futon.core.util.ext.observeEvent
 import io.github.landwarderer.futon.databinding.FragmentListBinding
@@ -61,9 +54,6 @@ class FeedFragment :
         SwipeRefreshLayout.OnRefreshListener {
 
         @Inject
-        lateinit var coil: ImageLoader
-
-        @Inject
         lateinit var settings: AppSettings
 
         @Inject
@@ -84,7 +74,6 @@ class FeedFragment :
 
         private val viewModel by viewModels<FeedViewModel>()
 
-        private var backgroundImageView: ImageView? = null
         private var dimOverlay: View? = null
         private var lastLoadedUrl: String? = null
 
@@ -130,28 +119,18 @@ class FeedFragment :
         private fun setupBackgroundImage(binding: FragmentListBinding) {
                 val root = binding.root as? FrameLayout ?: return
 
-                val bgImage = ImageView(root.context).apply {
-                        scaleType = ImageView.ScaleType.CENTER_CROP
-                        alpha = 0f
-                }
-                root.addView(bgImage, 0, FrameLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                ))
-                backgroundImageView = bgImage
-
                 val dim = View(root.context).apply {
-                        setBackgroundColor(Color.parseColor("#A0000000"))
+                        setBackgroundColor(Color.parseColor("#70000000"))
                         alpha = 0f
                 }
-                root.addView(dim, 1, FrameLayout.LayoutParams(
+                root.addView(dim, 0, FrameLayout.LayoutParams(
                         ViewGroup.LayoutParams.MATCH_PARENT,
                         ViewGroup.LayoutParams.MATCH_PARENT,
                 ))
                 dimOverlay = dim
 
                 val source = settings.historyBackgroundSource
-                val url = when (source) {
+                val immediateUrl = when (source) {
                         AppSettings.HISTORY_BG_ANILIST -> aniListStorage.user?.let { it.coverImage ?: it.avatar }
                         AppSettings.HISTORY_BG_MAL -> malStorage.user?.let { it.coverImage ?: it.avatar }
                         AppSettings.HISTORY_BG_KITSU -> kitsuStorage.user?.let { it.coverImage ?: it.avatar }
@@ -159,42 +138,30 @@ class FeedFragment :
                         else -> null
                 }
 
-                if (url != null) {
-                        lastLoadedUrl = url
-                        loadBackgroundImage(bgImage, dim, url)
+                if (immediateUrl != null) {
+                        lastLoadedUrl = immediateUrl
+                        notifyBackground(dim, immediateUrl)
                 } else {
                         viewModel.content.observe(viewLifecycleOwner) { items ->
                                 val coverUrl = items.filterIsInstance<MangaListModel>()
                                         .firstOrNull()?.coverUrl
                                 if (coverUrl != null && coverUrl != lastLoadedUrl) {
                                         lastLoadedUrl = coverUrl
-                                        loadBackgroundImage(bgImage, dim, coverUrl)
+                                        notifyBackground(dim, coverUrl)
                                 }
                         }
                 }
         }
 
-        private fun loadBackgroundImage(bgImage: ImageView, dim: View, url: String) {
-                bgImage.alpha = 0f
-                dim.alpha = 0f
-                ImageRequest.Builder(bgImage.context)
-                        .data(url)
-                        .crossfade(false)
-                        .target(bgImage)
-                        .listener(object : ImageRequest.Listener {
-                                override fun onSuccess(request: ImageRequest, result: SuccessResult) {
-                                        ObjectAnimator.ofFloat(bgImage, "alpha", 0f, 0.65f).setDuration(800).start()
-                                        ObjectAnimator.ofFloat(dim, "alpha", 0f, 1f).setDuration(800).start()
-                                        // Propagate to Activity so AppBar area also shows the artwork.
-                                        (activity as? BackgroundOwner)?.setActivityBackground(url)
-                                }
-                        })
-                        .enqueueWith(coil)
+        private fun notifyBackground(dim: View, url: String) {
+                (activity as? BackgroundOwner)?.setActivityBackground(url)
+                if (dim.alpha == 0f) {
+                        ObjectAnimator.ofFloat(dim, "alpha", 0f, 1f).setDuration(800).start()
+                }
         }
 
         override fun onDestroyView() {
                 super.onDestroyView()
-                backgroundImageView = null
                 dimOverlay = null
                 lastLoadedUrl = null
         }

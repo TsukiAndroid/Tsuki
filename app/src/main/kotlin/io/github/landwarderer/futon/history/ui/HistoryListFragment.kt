@@ -8,14 +8,8 @@ import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.ViewGroup
 import android.widget.FrameLayout
-import android.widget.ImageView
 import androidx.appcompat.view.ActionMode
 import androidx.fragment.app.viewModels
-import coil3.request.ImageRequest
-import coil3.request.ErrorResult
-import coil3.request.SuccessResult
-import coil3.request.crossfade
-import coil3.request.target
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.landwarderer.futon.R
 import io.github.landwarderer.futon.core.nav.router
@@ -24,7 +18,6 @@ import io.github.landwarderer.futon.core.ui.list.ListSelectionController
 import io.github.landwarderer.futon.core.ui.list.RecyclerScrollKeeper
 import io.github.landwarderer.futon.core.ui.util.MenuInvalidator
 import io.github.landwarderer.futon.core.util.ext.addMenuProvider
-import io.github.landwarderer.futon.core.util.ext.enqueueWith
 import io.github.landwarderer.futon.core.util.ext.observe
 import io.github.landwarderer.futon.databinding.FragmentListBinding
 import io.github.landwarderer.futon.list.ui.MangaListFragment
@@ -37,7 +30,6 @@ class HistoryListFragment : MangaListFragment() {
         override val viewModel by viewModels<HistoryListViewModel>()
         override val isSwipeRefreshEnabled = false
 
-        private var backgroundImageView: ImageView? = null
         private var dimOverlay: android.view.View? = null
         private var lastLoadedUrl: String? = null
 
@@ -54,21 +46,11 @@ class HistoryListFragment : MangaListFragment() {
         private fun setupBackgroundImage(binding: FragmentListBinding) {
                 val root = binding.root as? FrameLayout ?: return
 
-                val bgImage = ImageView(root.context).apply {
-                        scaleType = ImageView.ScaleType.CENTER_CROP
-                        alpha = 0f
-                }
-                root.addView(bgImage, 0, FrameLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                ))
-                backgroundImageView = bgImage
-
                 val dim = android.view.View(root.context).apply {
-                        setBackgroundColor(Color.parseColor("#A0000000"))
+                        setBackgroundColor(Color.parseColor("#70000000"))
                         alpha = 0f
                 }
-                root.addView(dim, 1, FrameLayout.LayoutParams(
+                root.addView(dim, 0, FrameLayout.LayoutParams(
                         ViewGroup.LayoutParams.MATCH_PARENT,
                         ViewGroup.LayoutParams.MATCH_PARENT,
                 ))
@@ -77,32 +59,16 @@ class HistoryListFragment : MangaListFragment() {
                 viewModel.backgroundCoverUrl.observe(viewLifecycleOwner) { url ->
                         if (url != null && url != lastLoadedUrl) {
                                 lastLoadedUrl = url
-                                loadBackgroundImage(bgImage, dim, url)
+                                (activity as? BackgroundOwner)?.setActivityBackground(url)
+                                if (dim.alpha == 0f) {
+                                        ObjectAnimator.ofFloat(dim, "alpha", 0f, 1f).setDuration(800).start()
+                                }
                         }
                 }
         }
 
-        private fun loadBackgroundImage(bgImage: ImageView, dim: android.view.View, url: String) {
-                bgImage.alpha = 0f
-                dim.alpha = 0f
-                ImageRequest.Builder(bgImage.context)
-                        .data(url)
-                        .crossfade(false)
-                        .target(bgImage)
-                        .listener(object : ImageRequest.Listener {
-                                override fun onSuccess(request: ImageRequest, result: SuccessResult) {
-                                        ObjectAnimator.ofFloat(bgImage, "alpha", 0f, 0.65f).setDuration(800).start()
-                                        ObjectAnimator.ofFloat(dim, "alpha", 0f, 1f).setDuration(800).start()
-                                        // Propagate to Activity so AppBar area also shows the artwork.
-                                        (activity as? BackgroundOwner)?.setActivityBackground(url)
-                                }
-                        })
-                        .enqueueWith(coil)
-        }
-
         override fun onDestroyView() {
                 super.onDestroyView()
-                backgroundImageView = null
                 dimOverlay = null
                 lastLoadedUrl = null
         }

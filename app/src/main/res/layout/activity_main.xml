@@ -21,7 +21,7 @@
                 android:id="@+id/activity_bg_dim"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:background="#33000000"
+                android:background="#66000000"
                 android:alpha="0"
                 android:visibility="gone" />
 
@@ -29,6 +29,7 @@
                 android:id="@id/container"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:background="@android:color/transparent"
                 app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior"
                 tools:layout="@layout/fragment_list" />
 
@@ -84,6 +85,18 @@
                                 android:tint="@android:color/white" />
 
                         <ImageButton
+                                android:id="@+id/btn_incognito"
+                                android:layout_width="40dp"
+                                android:layout_height="40dp"
+                                android:layout_marginEnd="8dp"
+                                android:alpha="0.55"
+                                android:background="@drawable/bg_icon_circle_glass"
+                                android:contentDescription="@string/incognito_mode"
+                                android:scaleType="center"
+                                android:src="@drawable/ic_incognito"
+                                android:tint="@android:color/white" />
+
+                        <ImageButton
                                 android:id="@+id/btn_settings"
                                 android:layout_width="40dp"
                                 android:layout_height="40dp"
@@ -99,6 +112,9 @@
                         android:id="@+id/search_bar"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:layout_marginEnd="12dp"
+                        android:layout_marginBottom="6dp"
                         android:hint="@string/search_manga"
                         app:backgroundTint="@color/glass_search_fill"
                         app:forceDefaultNavigationOnClickListener="true"

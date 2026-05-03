@@ -12,24 +12,5 @@
                 android:visible="false"
                 app:showAsAction="ifRoom" />
 
-        <item
-                android:id="@+id/action_downloads"
-                android:icon="@drawable/ic_download"
-                android:orderInCategory="10"
-                android:title="@string/downloads"
-                app:showAsAction="never" />
-
-        <item
-                android:id="@+id/action_incognito"
-                android:checkable="true"
-                android:orderInCategory="90"
-                android:title="@string/incognito_mode"
-                app:showAsAction="never" />
-
-        <item
-                android:id="@+id/action_settings"
-                android:orderInCategory="90"
-                android:title="@string/settings"
-                app:showAsAction="never" />
 
 </menu>

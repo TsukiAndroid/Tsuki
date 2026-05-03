@@ -60,7 +60,9 @@ object GlassEffectHelper {
      * [intensity] 0–100: 0 = no blur (scale 1.0), 100 = max blur (scale 0.03).
      */
     private fun fastBlur(src: Bitmap, intensity: Int): Bitmap {
-        val scale = (1f - intensity.coerceIn(0, 100) / 100f).coerceAtLeast(0.03f)
+        // Cubic ease-in: at 75% intensity → scale≈0.055 (heavy blur, near original 0.08)
+        val t = 1f - intensity.coerceIn(0, 100) / 100f
+        val scale = (0.04f + 0.96f * t * t * t).coerceAtLeast(0.04f)
         val sw = (src.width * scale).toInt().coerceAtLeast(1)
         val sh = (src.height * scale).toInt().coerceAtLeast(1)
         val small = Bitmap.createScaledBitmap(src, sw, sh, true)
