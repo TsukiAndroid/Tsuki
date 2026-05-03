@@ -11,7 +11,7 @@
 <string name="shikimori_clientSecret" translatable="false">euBMt1GGRSDpVIFQVPxZrO7Kh6X4gWyv0dABuj4B-M8</string>
 <string name="anilist_clientId" translatable="false">33558</string>
 <string name="anilist_clientSecret" translatable="false">JQtr3PgbtYa5o2xMnXFqcsdQV1CAdokLxO5OP5JT</string>
-<string name="mal_clientId" translatable="false">66e27ac5d5a1764e944677b42e2c4737</string>
+<string name="mal_clientId" translatable="false">318e4f5ebd7de3c0e68b0e7be09635d2</string>
 <string name="kitsu_clientId" translatable="false">dd031b32d2f56c990b1425efe6c42ad847e7fe3ab46bf1299f05ecd856bdb7dd</string>
 <string name="kitsu_clientSecret" translatable="false">54d7307928f63414defd96399fc31ba847961ceaecef3a5fd93144e960c0e151</string>
 <string name="sync_authority_history" translatable="false">io.github.landwarderer.futon.history</string>
