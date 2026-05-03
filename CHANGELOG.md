@@ -1,3 +1,13 @@
+## Alpha-1.128 (Build #111)
+
+_2026-05-03 17:46 UTC_
+
+- Update constants.xml (277f278)
+- fix: add glass_search_fill_amoled base declaration to values/colors.xml (41176ed)
+- fix: restore glass SearchBar transparency; fix AMOLED black-box (f5ec7c1)
+- fix: restore glass SearchBar; fix AMOLED black-box via theme style (0fcc5b1)
+
+
 ## Alpha-1.126 (Build #110)
 
 _2026-05-03 12:06 UTC_
