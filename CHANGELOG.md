@@ -1,3 +1,12 @@
+## Alpha-1.104 (Build #97)
+
+_2026-05-03 00:22 UTC_
+
+- feat: Tsuki title, adaptive glass search bar, fix nav pill height (af0bf92)
+- fix: remove invalid indicatorHeight/indicatorColor attrs from BottomNav style\n\nMaterial3Expressive NavigationBarView does not expose indicatorHeight or\nindicatorColor as style attributes (they are not declared in the library's\nattrs.xml under those names). Removing them fixes the processReleaseResources\nAAP2 link failure. The pill outline-clip (ViewOutlineProvider) already prevents\nthe active indicator from overflowing the pill boundary. (6ad0b75)
+- fix: glass nav centering, indicator clip, glass search bar, consistent glass\n\n  - SearchBar: permanent glass dark tint (@color/glass_nav_fill) + white stroke\n    foreground (fg_glass_stroke_pill.xml) — matches pill nav on ALL tabs\n  - BottomNav: android:clipToOutline + programmatic pill-shaped ViewOutlineProvider\n    so the Material active indicator is clipped inside the pill boundary (no\n    more indicator bleeding over the pill edge)\n  - BottomNav: android:paddingTop=6dp — pushes items/indicator into the pill's\n    safe zone away from the rounded caps\n  - Widget.Tsuki.BottomNav style: indicatorHeight=36dp, itemPadding 6dp top/bottom,\n    minHeight=64dp, indicatorColor=chip_teal_fill — items stay centered in pill\n  - themes.xml: bottomNavigationStyle → Widget.Tsuki.BottomNav (was Material3Expressive\n    base which had no padding/size constraints for our pill shape)\n  - updateBarsForBackground: removed backgroundTintList overrides that were\n    setting nav/search to solid black (#B4000000) on bg-image tabs (killed\n    the glass shimmer) and to null on other tabs (reverted to surface color);\n    now both bars keep their drawable look at all times — only alpha changes\n  - Remove unused ColorStateList + Color imports (523a0bf)
+
+
 ## Alpha-1.102 (Build #96)
 
 _2026-05-02 23:40 UTC_
