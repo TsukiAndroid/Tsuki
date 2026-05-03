@@ -99,6 +99,9 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
         }
         private lateinit var navigationDelegate: MainNavigationDelegate
         private lateinit var fadingAppbarMediator: FadingAppbarMediator
+        // Base marginBottom of the pill nav as declared in XML (12dp).
+        // Saved on first insets pass so we can add the system-bar height without accumulating.
+        private var pillNavBaseMarginPx = -1
 
         override val appBar: AppBarLayout
                 get() = viewBinding.appbar
@@ -218,11 +221,18 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
                                 searchBarDefaultMargin + barsInsets.start(v)
                         }
                 }
-                viewBinding.bottomNav?.updatePadding(
-                        left = barsInsets.left,
-                        right = barsInsets.right,
-                        bottom = barsInsets.bottom,
-                )
+                // Pill nav floats above the system bar via marginBottom — never add
+                // barsInsets.bottom as padding, which would make the pill balloon to 120dp+.
+                viewBinding.bottomNav?.let { nav ->
+                        if (pillNavBaseMarginPx < 0) {
+                                pillNavBaseMarginPx =
+                                        (nav.layoutParams as? MarginLayoutParams)?.bottomMargin ?: 0
+                        }
+                        nav.updateLayoutParams<MarginLayoutParams> {
+                                bottomMargin = pillNavBaseMarginPx + barsInsets.bottom
+                        }
+                        nav.updatePadding(left = barsInsets.left, right = barsInsets.right)
+                }
                 viewBinding.navRail?.updateLayoutParams<MarginLayoutParams> {
                         marginStart = barsInsets.start(v)
                         topMargin = barsInsets.top
@@ -440,7 +450,13 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 
         private fun updateContainerBottomMargin() {
                 val bottomNavBar = viewBinding.bottomNav ?: return
-                val newMargin = if (bottomNavBar.isPinned && bottomNavBar.isShownOrShowing) bottomNavBar.height else 0
+                // Include the pill's own bottomMargin (12dp base + system-bar inset) so
+                // content is never hidden behind the pill OR the system navigation bar.
+                val navBottomMargin =
+                        (bottomNavBar.layoutParams as? MarginLayoutParams)?.bottomMargin ?: 0
+                val newMargin = if (bottomNavBar.isPinned && bottomNavBar.isShownOrShowing) {
+                        bottomNavBar.height + navBottomMargin
+                } else 0
                 with(viewBinding.container) {
                         val params = layoutParams as MarginLayoutParams
                         if (params.bottomMargin != newMargin) {

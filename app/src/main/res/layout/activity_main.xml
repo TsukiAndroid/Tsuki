@@ -35,13 +35,33 @@
                         android:fitsSystemWindows="true"
                         app:layout_scrollFlags="scroll|enterAlways|snap" />
 
+                <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:paddingStart="24dp"
+                        android:paddingEnd="16dp"
+                        android:paddingTop="6dp"
+                        android:paddingBottom="2dp"
+                        android:gravity="center_vertical"
+                        app:layout_scrollFlags="scroll|enterAlways">
+
+                        <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="Tsuki"
+                                android:textAppearance="?attr/textAppearanceHeadlineLarge"
+                                android:textColor="?attr/colorOnBackground" />
+
+                </LinearLayout>
+
                 <com.google.android.material.search.SearchBar
                         android:id="@+id/search_bar"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:hint="@string/search_manga"
-                        android:foreground="@drawable/fg_glass_stroke_pill"
-                        app:backgroundTint="@color/glass_nav_fill"
+                        app:backgroundTint="@color/glass_search_fill"
                         app:forceDefaultNavigationOnClickListener="true"
                         app:layout_scrollFlags="scroll|enterAlways|snap" />
 
@@ -94,7 +114,6 @@
                 android:layout_marginBottom="12dp"
                 android:background="@drawable/bg_bottom_nav_pill"
                 android:clipToOutline="true"
-                android:fitsSystemWindows="false"
-                android:paddingTop="6dp" />
+                android:fitsSystemWindows="false" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

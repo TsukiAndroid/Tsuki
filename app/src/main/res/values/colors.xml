@@ -37,6 +37,8 @@
         <color name="kotatsu_outline">#73777F</color>
 
         <!-- Structured Glass Aesthetic -->
+        <!-- 50% dark — lets background artwork bleed through (adapts to any bg color) -->
+        <color name="glass_search_fill">#80000000</color>
         <color name="glass_teal">#2DD4BF</color>
         <color name="glass_coral_red">#FF6B6B</color>
         <color name="on_glass_teal">#002117</color>
