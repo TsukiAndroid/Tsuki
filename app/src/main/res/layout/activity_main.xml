@@ -118,7 +118,6 @@
                         android:hint="@string/search_manga"
                         app:backgroundTint="@color/glass_search_fill"
                         app:forceDefaultNavigationOnClickListener="true"
-                        app:menuIconEnabled="false"
                         app:layout_scrollFlags="scroll|enterAlways|snap" />
 
         </com.google.android.material.appbar.AppBarLayout>

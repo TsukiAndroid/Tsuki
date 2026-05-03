@@ -13,12 +13,9 @@ class MainMenuProvider(
 ) : MenuProvider {
 
         override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
-                menuInflater.inflate(R.menu.opt_main, menu)
-        }
-
-        override fun onPrepareMenu(menu: Menu) {
-                val hasAppUpdate = viewModel.appUpdate.value != null
-                menu.findItem(R.id.action_app_update)?.isVisible = hasAppUpdate
+                if (viewModel.appUpdate.value != null) {
+                        menuInflater.inflate(R.menu.opt_main, menu)
+                }
         }
 
         override fun onMenuItemSelected(menuItem: MenuItem): Boolean = when (menuItem.itemId) {
