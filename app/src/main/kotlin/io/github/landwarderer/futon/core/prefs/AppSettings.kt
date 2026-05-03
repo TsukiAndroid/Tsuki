@@ -134,7 +134,7 @@ class AppSettings @Inject constructor(@ApplicationContext context: Context) {
                 set(value) = prefs.edit { putBoolean(KEY_FEED_BG_ENABLED, value) }
 
         var isExploreBackgroundEnabled: Boolean
-                get() = prefs.getBoolean(KEY_EXPLORE_BG_ENABLED, false)
+                get() = prefs.getBoolean(KEY_EXPLORE_BG_ENABLED, true)
                 set(value) = prefs.edit { putBoolean(KEY_EXPLORE_BG_ENABLED, value) }
 
         val isQuickFilterEnabled: Boolean

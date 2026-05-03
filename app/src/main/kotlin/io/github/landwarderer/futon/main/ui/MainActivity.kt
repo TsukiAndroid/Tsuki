@@ -52,6 +52,7 @@ import io.github.landwarderer.futon.core.util.ext.printStackTraceDebug
 import io.github.landwarderer.futon.core.util.ext.start
 import io.github.landwarderer.futon.databinding.ActivityMainBinding
 import io.github.landwarderer.futon.details.service.MangaPrefetchService
+import io.github.landwarderer.futon.explore.ui.ExploreFragment
 import io.github.landwarderer.futon.favourites.ui.container.FavouritesContainerFragment
 import io.github.landwarderer.futon.history.ui.HistoryListFragment
 import io.github.landwarderer.futon.tracker.ui.feed.FeedFragment
@@ -566,6 +567,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
                         is HistoryListFragment -> settings.isHistoryBackgroundEnabled
                         is FavouritesContainerFragment -> settings.isFavouritesBackgroundEnabled
                         is FeedFragment -> settings.isFeedBackgroundEnabled
+                        is ExploreFragment -> settings.isExploreBackgroundEnabled
                         else -> false
                 }
                 if (!hasBackground) clearActivityBackground()

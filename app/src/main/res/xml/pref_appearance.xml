@@ -193,7 +193,7 @@
             android:title="@string/feed_background" />
 
         <SwitchPreferenceCompat
-            android:defaultValue="false"
+            android:defaultValue="true"
             android:key="explore_bg_enabled"
             android:summary="@string/explore_background_summary"
             android:title="@string/explore_background" />
