@@ -85,6 +85,7 @@
     <string name="external_storage">External storage</string>
     <string name="domain">Domain</string>
     <string name="app_update_available">A new version of the app is available</string>
+    <string name="app_updates_channel">App Updates</string>
     <string name="open_in_browser">Open in web browser</string>
     <string name="notifications">Notifications</string>
     <string name="enabled_d_of_d" tools:ignore="PluralsCandidate">%1$d of %2$d on</string>
