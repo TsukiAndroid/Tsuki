@@ -1,3 +1,11 @@
+## Alpha-1.115 (Build #103)
+
+_2026-05-03 08:30 UTC_
+
+- fix: Explore tab background not showing (1495611)
+- feat: random bg rotation for Favourites, latest cover for Feed, suggestion cover for Explore (32402b0)
+
+
 ## Alpha-1.113 (Build #102)
 
 _2026-05-03 08:02 UTC_
