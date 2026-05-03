@@ -141,7 +141,6 @@
                 <item name="toolbarSurfaceStyle">@style/Widget.Material3Expressive.Toolbar.Surface</item>
 
                 <item name="linearProgressIndicatorStyle">@style/Widget.Material3Expressive.LinearProgressIndicator</item>
-                <item name="circularProgressIndicatorStyle">@style/Wiget.Material3Expressive.CircularProgressIndicator</item>
                 <item name="circularProgressIndicatorStyle">@style/Widget.Material3Expressive.CircularProgressIndicator</item>
 
                 <item name="sliderStyle">@style/Widget.Material3Expressive.Slider.Xsmall</item>
