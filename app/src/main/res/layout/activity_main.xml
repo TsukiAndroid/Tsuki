@@ -33,16 +33,22 @@
                 app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior"
                 tools:layout="@layout/fragment_list" />
 
+        <!--
+          Search bar blur view — sits behind the SearchBar at the bottom of the AppBar.
+          Starts invisible; shown only when search bar blur is enabled and intensity > 0.
+        -->
         <io.github.landwarderer.futon.core.ui.widgets.BlurBehindView
-                  android:id="@+id/searchBlurView"
-                  android:layout_width="match_parent"
-                  android:layout_height="60dp"
-                  android:layout_marginStart="12dp"
-                  android:layout_marginEnd="12dp"
-                  app:layout_anchor="@id/appbar"
-                  app:layout_anchorGravity="bottom|center_horizontal" />
+                android:id="@+id/searchBlurView"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:layout_marginStart="12dp"
+                android:layout_marginEnd="12dp"
+                android:background="@android:color/transparent"
+                android:visibility="invisible"
+                app:layout_anchor="@id/appbar"
+                app:layout_anchorGravity="bottom|center_horizontal" />
 
-          <com.google.android.material.appbar.AppBarLayout
+        <com.google.android.material.appbar.AppBarLayout
                 android:id="@+id/appbar"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -167,16 +173,23 @@
                 tools:ignore="InconsistentLayout"
                 tools:visibility="visible" />
 
+        <!--
+          Nav bar blur view — sits at the same position and size as the pill nav.
+          Starts invisible; shown only when nav bar blur is enabled and intensity > 0.
+          Its translationY is kept in sync with bottomNav in MainActivity.
+        -->
         <io.github.landwarderer.futon.core.ui.widgets.BlurBehindView
-                  android:id="@+id/navBlurView"
-                  android:layout_width="match_parent"
-                  android:layout_height="60dp"
-                  android:layout_gravity="bottom"
-                  android:layout_marginStart="12dp"
-                  android:layout_marginEnd="12dp"
-                  android:layout_marginBottom="12dp" />
+                android:id="@+id/navBlurView"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:layout_gravity="bottom"
+                android:layout_marginStart="12dp"
+                android:layout_marginEnd="12dp"
+                android:layout_marginBottom="12dp"
+                android:background="@android:color/transparent"
+                android:visibility="invisible" />
 
-          <io.github.landwarderer.futon.core.ui.widgets.SlidingBottomNavigationView
+        <io.github.landwarderer.futon.core.ui.widgets.SlidingBottomNavigationView
                 android:id="@+id/bottomNav"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
