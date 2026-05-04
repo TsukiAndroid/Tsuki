@@ -51,6 +51,13 @@
         android:title="@string/backup_restore" />
 
     <PreferenceScreen
+        android:fragment="io.github.landwarderer.futon.settings.PerformanceSettingsFragment"
+        android:icon="@drawable/ic_timelapse"
+        android:key="performance"
+        android:title="@string/perf_performance"
+        android:summary="@string/perf_performance_summary" />
+
+    <PreferenceScreen
         android:fragment="io.github.landwarderer.futon.settings.about.AboutSettingsFragment"
         android:icon="@drawable/ic_info_outline"
         android:key="about"
