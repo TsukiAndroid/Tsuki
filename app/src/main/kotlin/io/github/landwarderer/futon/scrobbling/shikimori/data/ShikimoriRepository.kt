@@ -28,7 +28,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 private const val DOMAIN = "shikimori.one"
-private const val REDIRECT_URI = "futon://shikimori-auth"
+private const val REDIRECT_URI = "tsuki://shikimori-auth"
 private const val BASE_URL = "https://$DOMAIN/"
 private const val MANGA_PAGE_SIZE = 10
 
