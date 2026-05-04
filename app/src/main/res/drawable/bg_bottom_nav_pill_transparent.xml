@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+  <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+      <!-- Fully transparent fill — no dark tint, shows content behind -->
+      <item>
+          <shape android:shape="rectangle">
+              <corners android:radius="100dp"/>
+              <solid android:color="#00000000"/>
+          </shape>
+      </item>
+      <!-- Subtle top shimmer for depth -->
+      <item>
+          <shape android:shape="rectangle">
+              <corners android:radius="100dp"/>
+              <gradient
+                  android:angle="270"
+                  android:startColor="#10FFFFFF"
+                  android:endColor="#00FFFFFF"/>
+          </shape>
+      </item>
+      <!-- Very subtle white rim so pill boundary remains visible -->
+      <item>
+          <shape android:shape="rectangle">
+              <corners android:radius="100dp"/>
+              <stroke android:width="0.5dp" android:color="#28FFFFFF"/>
+          </shape>
+      </item>
+  </layer-list>
