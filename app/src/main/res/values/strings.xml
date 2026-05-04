@@ -968,7 +968,11 @@
     <string name="explore_background_summary">Show a random suggestion cover as background on the Explore tab</string>    <string name="transparent_nav_bar">Transparent navigation bar</string>
     <string name="transparent_nav_bar_summary">Remove the dark background from the navigation pill</string>
     <string name="nav_bar_blur">Navigation bar blur</string>
-      <string name="nav_bar_blur_summary">Blur strength for content scrolling behind the navigation bar (0 = off)</string>
+      <string name="nav_bar_blur_enabled">Navigation bar blur</string>
+      <string name="nav_bar_blur_enabled_summary">Enable frosted-glass blur behind the navigation bar</string>
+            <string name="nav_bar_blur_summary">Blur strength for content scrolling behind the navigation bar (0 = off)</string>
       <string name="search_bar_blur">Search bar blur</string>
-      <string name="search_bar_blur_summary">Blur strength for content scrolling behind the search bar (0 = off)</string>
+      <string name="search_bar_blur_enabled">Search bar blur</string>
+      <string name="search_bar_blur_enabled_summary">Enable frosted-glass blur behind the search bar</string>
+            <string name="search_bar_blur_summary">Blur strength for content scrolling behind the search bar (0 = off)</string>
   </resources>
