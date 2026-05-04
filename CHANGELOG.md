@@ -1,3 +1,13 @@
+## Alpha-1.170 (Build #144)
+
+_2026-05-04 10:18 UTC_
+
+- feat: add navBarBlurTintAlpha + searchBarBlurTintAlpha prefs (default 30%) (1ac7f83)
+- feat: add white frosted-glass tint overlay to BlurBehindView (setBlurTint 0-100) (356a16d)
+- fix: use root CoordinatorLayout as blur source so background image is captured (fixes invisible blur) (9f939eb)
+- fix: hide self during source.draw() so blur captures full background without recursion (22322bd)
+
+
 ## Alpha-1.166 (Build #141)
 
 _2026-05-04 10:05 UTC_
