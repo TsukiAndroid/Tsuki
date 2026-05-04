@@ -1,3 +1,11 @@
+## Alpha-1.132 (Build #113)
+
+_2026-05-04 00:00 UTC_
+
+- fix: change AniList OAuth redirect URI from futon:// to tsuki:// (7704959)
+- Update README.md (9e36e24)
+
+
 ## Alpha-1.130 (Build #112)
 
 _2026-05-03 17:58 UTC_
