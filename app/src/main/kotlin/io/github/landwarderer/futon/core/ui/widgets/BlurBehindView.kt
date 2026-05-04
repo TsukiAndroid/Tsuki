@@ -36,6 +36,16 @@ package io.github.landwarderer.futon.core.ui.widgets
       // Tint overlay drawn on top of the blurred snapshot (0 = none, 255 = fully opaque)
       private var blurTintAlpha = 0
       private val tintPaint = Paint().apply { color = 0xFFFFFFFF.toInt() }
+
+      // ── Performance controls (adjustable at runtime) ─────────────────────────
+      /** Fraction of the source view size used for the blur sample (0.10–0.50). */
+      private var captureScale = 0.25f
+      /** Minimum time between blur captures in milliseconds (controls effective fps). */
+      private var minFrameIntervalMs = 33L
+      /** When true, skip re-capture if a quick 8×8 hash of the cropped region is unchanged. */
+      private var skipWhenIdle = false
+      private var lastFrameHash = -1L
+
       private var isCapturing = false
       private var lastUpdateMs = 0L
 
@@ -51,7 +61,7 @@ package io.github.landwarderer.futon.core.ui.widgets
 
       private val preDrawListener = ViewTreeObserver.OnPreDrawListener {
           val now = System.currentTimeMillis()
-          if (blurIntensity > 0 && !isCapturing && now - lastUpdateMs >= 33L) {
+          if (blurIntensity > 0 && !isCapturing && now - lastUpdateMs >= minFrameIntervalMs) {
               lastUpdateMs = now
               post(::captureAndBlur)
           }
@@ -125,6 +135,46 @@ package io.github.landwarderer.futon.core.ui.widgets
           if (currentBitmap != null) invalidate()
       }
 
+      /**
+       * Set how often the blur refreshes.
+       * [fps] 5-30; clamped. Lower = less CPU/GPU use on older devices.
+       */
+      fun setFrameRate(fps: Int) {
+          minFrameIntervalMs = (1000L / fps.coerceIn(5, 60))
+      }
+
+      /**
+       * Set the fraction of source size used when capturing the blur sample.
+       * [qualityPercent] 10-25 maps to 0.10f-0.25f. Lower = smaller bitmap = faster blur.
+       */
+      fun setCaptureQuality(qualityPercent: Int) {
+          val newScale = qualityPercent.coerceIn(10, 25) / 100f
+          if (newScale != captureScale) {
+              captureScale = newScale
+              // Force a fresh capture with the new scale
+              lastFrameHash = -1L
+          }
+      }
+
+      /**
+       * When [enabled], the blur view checks an 8×8 pixel hash of the region behind it
+       * before every render pass.  If the content hasn't changed (e.g. user isn't scrolling)
+       * the expensive RenderScript pass is skipped entirely — zero visual difference.
+       */
+      fun setIdleSkip(enabled: Boolean) {
+          skipWhenIdle = enabled
+          if (!enabled) lastFrameHash = -1L
+      }
+
+      /** Fast 8×8 downsample XOR hash used for idle-skip comparison. */
+      private fun quickHash(bmp: Bitmap): Long {
+          val tiny = Bitmap.createScaledBitmap(bmp, 8, 8, false)
+          var h = 0L
+          for (y in 0 until 8) for (x in 0 until 8) h = h * 31L + tiny.getPixel(x, y)
+          tiny.recycle()
+          return h
+      }
+
       // ── Capture & Blur ────────────────────────────────────────────────────────
 
       private fun captureAndBlur() {
@@ -140,7 +190,7 @@ package io.github.landwarderer.futon.core.ui.widgets
           val wasVisible = visibility == VISIBLE
           if (wasVisible) visibility = INVISIBLE
 
-          val scale = 0.25f
+          val scale = captureScale
           val sw = (source.width * scale).toInt().coerceAtLeast(1)
           val sh = (source.height * scale).toInt().coerceAtLeast(1)
           val srcBmp = Bitmap.createBitmap(sw, sh, Bitmap.Config.ARGB_8888)
@@ -165,6 +215,13 @@ package io.github.landwarderer.futon.core.ui.widgets
           // 3. Crop to the area behind this view
           val cropped = Bitmap.createBitmap(srcBmp, x, y, cw, ch)
           srcBmp.recycle()
+
+          // 3b. Idle-skip: hash a tiny 8×8 downsample of the crop and bail if unchanged
+          if (skipWhenIdle) {
+              val hash = quickHash(cropped)
+              if (hash == lastFrameHash) { cropped.recycle(); isCapturing = false; return }
+              lastFrameHash = hash
+          }
 
           // 4. Blur with RenderScript
           val blurred = blurBitmap(cropped, blurIntensity)
