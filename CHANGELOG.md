@@ -1,3 +1,11 @@
+## Alpha-1.159 (Build #135)
+
+_2026-05-04 09:46 UTC_
+
+- fix: transparent background + invisible-by-default on BlurBehindViews (fixes black shadow) (552b927)
+- fix: move applyBarBlur() inside MainActivity class (was prepended before package declaration causing KSP build failure) (654b307)
+
+
 ## Alpha-1.157 (Build #134)
 
 _2026-05-04 07:59 UTC_
