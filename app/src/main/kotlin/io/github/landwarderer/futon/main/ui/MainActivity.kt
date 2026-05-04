@@ -183,7 +183,16 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
                         }
                         nav.clipToOutline = true
                 }
-                viewBinding.bottomNav?.addOnLayoutChangeListener(this)
+                // Keep navBlurView translation in sync with the sliding nav bar at every frame
+                viewBinding.bottomNav?.viewTreeObserver?.addOnPreDrawListener {
+                        val nav = viewBinding.bottomNav
+                        val blur = viewBinding.navBlurView
+                        if (nav != null && blur != null && blur.translationY != nav.translationY) {
+                                blur.translationY = nav.translationY
+                        }
+                        true
+                }
+                                viewBinding.bottomNav?.addOnLayoutChangeListener(this)
                 viewBinding.searchView.addTransitionListener(this)
                 viewBinding.searchView.addTransitionListener(exitCallback)
 
@@ -534,28 +543,43 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
                 val src = viewBinding.container
                 navBlur.setContentSource(src)
                 searchBlur.setContentSource(src)
-                navBlur.setBlurIntensity(settings.navBarBlurIntensity)
-                searchBlur.setBlurIntensity(settings.searchBarBlurIntensity)
-                // Pill-shape clip for nav blur view
-                navBlur.clipToOutline = true
-                navBlur.outlineProvider = object : android.view.ViewOutlineProvider() {
-                        override fun getOutline(view: android.view.View, outline: android.graphics.Outline) {
-                                if (view.width > 0 && view.height > 0)
-                                        outline.setRoundRect(0, 0, view.width, view.height, view.height / 2f)
+
+                // Respect the per-bar enabled toggle from settings
+                val navIntensity = if (settings.isNavBarBlurEnabled) settings.navBarBlurIntensity else 0
+                val searchIntensity = if (settings.isSearchBarBlurEnabled) settings.searchBarBlurIntensity else 0
+
+                navBlur.setBlurIntensity(navIntensity)
+                searchBlur.setBlurIntensity(searchIntensity)
+
+                // Show/hide the blur overlays — hidden when disabled to prevent black-background artefacts
+                navBlur.visibility = if (navIntensity > 0) View.VISIBLE else View.INVISIBLE
+                searchBlur.visibility = if (searchIntensity > 0) View.VISIBLE else View.INVISIBLE
+
+                if (navIntensity > 0) {
+                        // Pill-shape clip for nav blur view
+                        navBlur.clipToOutline = true
+                        navBlur.outlineProvider = object : android.view.ViewOutlineProvider() {
+                                override fun getOutline(view: android.view.View, outline: android.graphics.Outline) {
+                                        if (view.width > 0 && view.height > 0)
+                                                outline.setRoundRect(0, 0, view.width, view.height, view.height / 2f)
+                                }
+                        }
+                        // Sync nav blur view height to match the actual nav bar
+                        viewBinding.bottomNav?.let { nav ->
+                                if (nav.height > 0) {
+                                        navBlur.updateLayoutParams<MarginLayoutParams> { height = nav.height }
+                                }
                         }
                 }
-                // Rounded-pill clip for search blur view
-                searchBlur.clipToOutline = true
-                searchBlur.outlineProvider = object : android.view.ViewOutlineProvider() {
-                        override fun getOutline(view: android.view.View, outline: android.graphics.Outline) {
-                                if (view.width > 0 && view.height > 0)
-                                        outline.setRoundRect(0, 0, view.width, view.height, view.height / 2f)
-                        }
-                }
-                // Sync nav blur view height and margins to match the actual nav bar
-                viewBinding.bottomNav?.let { nav ->
-                        if (nav.height > 0) {
-                                navBlur.updateLayoutParams<MarginLayoutParams> { height = nav.height }
+
+                if (searchIntensity > 0) {
+                        // Rounded-pill clip for search blur view
+                        searchBlur.clipToOutline = true
+                        searchBlur.outlineProvider = object : android.view.ViewOutlineProvider() {
+                                override fun getOutline(view: android.view.View, outline: android.graphics.Outline) {
+                                        if (view.width > 0 && view.height > 0)
+                                                outline.setRoundRect(0, 0, view.width, view.height, view.height / 2f)
+                                }
                         }
                 }
         }
