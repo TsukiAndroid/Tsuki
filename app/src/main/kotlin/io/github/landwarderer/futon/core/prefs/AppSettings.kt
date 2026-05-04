@@ -125,6 +125,14 @@ class AppSettings @Inject constructor(@ApplicationContext context: Context) {
                 get() = prefs.getInt(KEY_SEARCH_BAR_BLUR, 0)
                 set(value) = prefs.edit { putInt(KEY_SEARCH_BAR_BLUR, value) }
 
+        var isNavBarBlurEnabled: Boolean
+                get() = prefs.getBoolean(KEY_NAV_BAR_BLUR_ENABLED, false)
+                set(value) = prefs.edit { putBoolean(KEY_NAV_BAR_BLUR_ENABLED, value) }
+
+        var isSearchBarBlurEnabled: Boolean
+                get() = prefs.getBoolean(KEY_SEARCH_BAR_BLUR_ENABLED, false)
+                set(value) = prefs.edit { putBoolean(KEY_SEARCH_BAR_BLUR_ENABLED, value) }
+
         var backgroundBlurIntensity: Int
                 get() = prefs.getInt(KEY_BG_BLUR_INTENSITY, 75)
                 set(value) = prefs.edit { putInt(KEY_BG_BLUR_INTENSITY, value) }
@@ -860,6 +868,8 @@ class AppSettings @Inject constructor(@ApplicationContext context: Context) {
                 const val KEY_TRANSPARENT_NAV_BAR = "transparent_nav_bar"
                   const val KEY_NAV_BAR_BLUR = "nav_bar_blur"
                   const val KEY_SEARCH_BAR_BLUR = "search_bar_blur"
+                const val KEY_NAV_BAR_BLUR_ENABLED = "nav_bar_blur_enabled"
+                const val KEY_SEARCH_BAR_BLUR_ENABLED = "search_bar_blur_enabled"
                 const val KEY_BG_BLUR_INTENSITY = "bg_blur_intensity"
                 const val KEY_HISTORY_BG_SOURCE = "history_bg_source"
                 const val KEY_HISTORY_BG_ENABLED = "history_bg_enabled"
