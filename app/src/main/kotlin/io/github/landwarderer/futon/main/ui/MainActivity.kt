@@ -553,6 +553,10 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
                 navBlur.setBlurIntensity(navIntensity)
                 searchBlur.setBlurIntensity(searchIntensity)
 
+                // Apply frosted-glass tint — 0 when bar blur is off so no invisible overlay lingers
+                navBlur.setBlurTint(if (navIntensity > 0) settings.navBarBlurTintAlpha else 0)
+                searchBlur.setBlurTint(if (searchIntensity > 0) settings.searchBarBlurTintAlpha else 0)
+
                 // Show/hide the blur overlays — hidden when disabled to prevent black-background artefacts
                 navBlur.visibility = if (navIntensity > 0) View.VISIBLE else View.INVISIBLE
                 searchBlur.visibility = if (searchIntensity > 0) View.VISIBLE else View.INVISIBLE
