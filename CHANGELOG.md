@@ -1,3 +1,10 @@
+## Alpha-1.157 (Build #134)
+
+_2026-05-04 07:59 UTC_
+
+- fix: move applyBarBlur() inside MainActivity class (was prepended before package declaration causing KSP build failure) (654b307)
+
+
 ## Alpha-1.150 (Build #127)
 
 _2026-05-04 06:59 UTC_
