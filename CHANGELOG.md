@@ -1,3 +1,11 @@
+## Alpha-1.138 (Build #118)
+
+_2026-05-04 03:34 UTC_
+
+- feat: add transparent_nav_bar string resources (a67e941)
+- feat: add Transparent Navigation Bar toggle to Appearance settings (15c4d1b)
+
+
 ## Alpha-1.135 (Build #116)
 
 _2026-05-04 00:36 UTC_
