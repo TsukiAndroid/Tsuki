@@ -56,6 +56,8 @@ class AppearanceSettingsFragment :
         findPreference<SliderPreference>(AppSettings.KEY_GRID_SIZE)?.summaryProvider = PercentSummaryProvider()
         findPreference<SliderPreference>(AppSettings.KEY_NAV_BAR_ALPHA)?.summaryProvider = PercentSummaryProvider()
         findPreference<SliderPreference>(AppSettings.KEY_SEARCH_BAR_ALPHA)?.summaryProvider = PercentSummaryProvider()
+        findPreference<SliderPreference>(AppSettings.KEY_NAV_BAR_BLUR)?.summaryProvider = PercentSummaryProvider()
+        findPreference<SliderPreference>(AppSettings.KEY_SEARCH_BAR_BLUR)?.summaryProvider = PercentSummaryProvider()
         findPreference<ListPreference>(AppSettings.KEY_LIST_MODE)?.run {
             entryValues = ListMode.entries.names()
             setDefaultValueCompat(ListMode.GRID.name)
