@@ -141,6 +141,19 @@ class AppSettings @Inject constructor(@ApplicationContext context: Context) {
                 get() = prefs.getInt(KEY_SEARCH_BAR_BLUR_TINT, 30)
                 set(value) = prefs.edit { putInt(KEY_SEARCH_BAR_BLUR_TINT, value) }
 
+        // ── Performance prefs ──────────────────────────────────────────────────
+        var blurFps: Int
+                get() = prefs.getInt(KEY_BLUR_FPS, 30)
+                set(value) = prefs.edit { putInt(KEY_BLUR_FPS, value) }
+
+        var blurCaptureQuality: Int
+                get() = prefs.getInt(KEY_BLUR_CAPTURE_QUALITY, 25)
+                set(value) = prefs.edit { putInt(KEY_BLUR_CAPTURE_QUALITY, value) }
+
+        var isBlurIdleSkipEnabled: Boolean
+                get() = prefs.getBoolean(KEY_BLUR_SKIP_IDLE, false)
+                set(value) = prefs.edit { putBoolean(KEY_BLUR_SKIP_IDLE, value) }
+
         var backgroundBlurIntensity: Int
                 get() = prefs.getInt(KEY_BG_BLUR_INTENSITY, 75)
                 set(value) = prefs.edit { putInt(KEY_BG_BLUR_INTENSITY, value) }
@@ -880,6 +893,9 @@ class AppSettings @Inject constructor(@ApplicationContext context: Context) {
                 const val KEY_SEARCH_BAR_BLUR_ENABLED = "search_bar_blur_enabled"
                 const val KEY_NAV_BAR_BLUR_TINT = "nav_bar_blur_tint"
                 const val KEY_SEARCH_BAR_BLUR_TINT = "search_bar_blur_tint"
+                const val KEY_BLUR_FPS = "blur_fps"
+                const val KEY_BLUR_CAPTURE_QUALITY = "blur_capture_quality"
+                const val KEY_BLUR_SKIP_IDLE = "blur_skip_idle"
                 const val KEY_BG_BLUR_INTENSITY = "bg_blur_intensity"
                 const val KEY_HISTORY_BG_SOURCE = "history_bg_source"
                 const val KEY_HISTORY_BG_ENABLED = "history_bg_enabled"
