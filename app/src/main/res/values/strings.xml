@@ -966,4 +966,6 @@
     <string name="feed_background_summary">Show a background image on the Updates feed tab</string>
     <string name="explore_background">Explore background</string>
     <string name="explore_background_summary">Show a random suggestion cover as background on the Explore tab</string>
+    <string name="transparent_nav_bar">Transparent navigation bar</string>
+    <string name="transparent_nav_bar_summary">Remove the dark background from the navigation pill</string>
 </resources>
