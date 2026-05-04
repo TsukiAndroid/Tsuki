@@ -977,4 +977,17 @@
       <string name="search_bar_blur_enabled_summary">Enable frosted-glass blur behind the search bar</string>
             <string name="search_bar_blur_summary">Blur strength for content scrolling behind the search bar (0 = off)</string>
       <string name="search_bar_blur_tint">Tint opacity</string>
-  </resources>
+  
+    <!-- ── Performance Settings ─────────────────────────────────────────── -->
+    <string name="perf_performance">Performance</string>
+    <string name="perf_performance_summary">Blur rendering, frame rate, quality</string>
+    <string name="perf_blur_category">Blur rendering</string>
+    <string name="perf_blur_category_summary">Tune these to improve responsiveness on older or low-RAM devices</string>
+    <string name="blur_fps">Blur update rate</string>
+    <string name="blur_fps_summary">How many times per second the frosted-glass effect re-renders behind the bars. Lower values reduce CPU and GPU load with no visible quality loss when not scrolling.</string>
+    <string name="blur_capture_quality">Capture resolution</string>
+    <string name="blur_capture_quality_summary">Fraction of full screen resolution sampled for blur. Lower resolution means faster blurring with a barely noticeable softness increase — the upscale step hides the difference.</string>
+    <string name="blur_skip_idle">Skip blur when idle</string>
+    <string name="blur_skip_idle_summary">Detect when the content behind the bar has not changed and skip re-rendering entirely. Saves significant CPU when reading or browsing without scrolling — zero visual impact.</string>
+
+</resources>
