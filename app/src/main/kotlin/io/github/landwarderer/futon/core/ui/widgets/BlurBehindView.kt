@@ -33,6 +33,9 @@ package io.github.landwarderer.futon.core.ui.widgets
 
       private var currentBitmap: Bitmap? = null
       private val bitmapPaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
+      // Tint overlay drawn on top of the blurred snapshot (0 = none, 255 = fully opaque)
+      private var blurTintAlpha = 0
+      private val tintPaint = Paint().apply { color = 0xFFFFFFFF.toInt() }
       private var isCapturing = false
       private var lastUpdateMs = 0L
 
@@ -82,6 +85,11 @@ package io.github.landwarderer.futon.core.ui.widgets
       override fun onDraw(canvas: Canvas) {
           val bmp = currentBitmap ?: return
           canvas.drawBitmap(bmp, null, RectF(0f, 0f, width.toFloat(), height.toFloat()), bitmapPaint)
+          // Draw the frosted-glass tint overlay on top of the blur
+          if (blurTintAlpha > 0) {
+              tintPaint.alpha = blurTintAlpha
+              canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), tintPaint)
+          }
       }
 
       // ── Public API ────────────────────────────────────────────────────────────
@@ -106,6 +114,15 @@ package io.github.landwarderer.futon.core.ui.widgets
               currentBitmap?.recycle(); currentBitmap = null
               invalidate()
           }
+      }
+
+      /**
+       * 0-100 percentage of a white tint overlay drawn on top of the blur.
+       * 0 = pure blur, 30 = light frosted-glass, 100 = fully opaque white.
+       */
+      fun setBlurTint(tintPercent: Int) {
+          blurTintAlpha = (tintPercent.coerceIn(0, 100) / 100f * 255).toInt()
+          if (currentBitmap != null) invalidate()
       }
 
       // ── Capture & Blur ────────────────────────────────────────────────────────
