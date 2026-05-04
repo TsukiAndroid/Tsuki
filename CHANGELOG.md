@@ -1,3 +1,21 @@
+## Alpha-1.181 (Build #154)
+
+_2026-05-04 10:37 UTC_
+
+- feat(perf): add pref_performance.xml with blur fps/quality/idle-skip settings (f5fc96c)
+- feat(perf): add Performance entry to root settings menu (5a08a12)
+- feat(perf): add Performance settings string resources (2a78ef8)
+- feat(perf): wire blur performance settings (fps, quality, idle-skip) in applyBarBlur (4503ac8)
+- feat(perf): add blurFps, blurCaptureQuality, isBlurIdleSkipEnabled prefs (a4b1e3b)
+- feat(perf): add setFrameRate/setCaptureQuality/setIdleSkip to BlurBehindView (f290ca6)
+- feat: apply blur tint in applyBarBlur() — frosted-glass white overlay with per-bar opacity setting (6638c57)
+- feat: add PercentSummaryProvider for blur tint sliders in AppearanceSettingsFragment (662a8eb)
+- feat: add tint opacity sliders for nav/search blur in Appearance settings (7394f52)
+- feat: add nav_bar_blur_tint + search_bar_blur_tint string resources (dc8e97f)
+- feat: add navBarBlurTintAlpha + searchBarBlurTintAlpha prefs (default 30%) (1ac7f83)
+- feat: add white frosted-glass tint overlay to BlurBehindView (setBlurTint 0-100) (356a16d)
+
+
 ## Alpha-1.170 (Build #144)
 
 _2026-05-04 10:18 UTC_
