@@ -1,3 +1,12 @@
+## Alpha-1.150 (Build #127)
+
+_2026-05-04 06:59 UTC_
+
+- feat: add searchBlurView and navBlurView to activity_main layout (f3d2ce8)
+- feat: add BlurBehindView for real-time frosted-glass blur effect (f6f3238)
+- Update constants.xml (7900d7a)
+
+
 ## Alpha-1.147 (Build #125)
 
 _2026-05-04 06:18 UTC_
