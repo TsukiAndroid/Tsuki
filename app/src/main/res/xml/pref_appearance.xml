@@ -159,19 +159,31 @@
             android:summary="@string/transparent_nav_bar_summary"
             android:title="@string/transparent_nav_bar" />
 
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
+            android:key="nav_bar_blur_enabled"
+            android:title="@string/nav_bar_blur_enabled"
+            android:summary="@string/nav_bar_blur_enabled_summary" />
+
         <io.github.landwarderer.futon.settings.utils.SliderPreference
-            android:defaultValue="0"
+            android:dependency="nav_bar_blur_enabled"
+            android:defaultValue="50"
             android:key="nav_bar_blur"
-            android:summary="@string/nav_bar_blur_summary"
             android:title="@string/nav_bar_blur"
             android:valueFrom="0"
             android:valueTo="100"
             android:stepSize="5" />
 
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
+            android:key="search_bar_blur_enabled"
+            android:title="@string/search_bar_blur_enabled"
+            android:summary="@string/search_bar_blur_enabled_summary" />
+
         <io.github.landwarderer.futon.settings.utils.SliderPreference
-            android:defaultValue="0"
+            android:dependency="search_bar_blur_enabled"
+            android:defaultValue="50"
             android:key="search_bar_blur"
-            android:summary="@string/search_bar_blur_summary"
             android:title="@string/search_bar_blur"
             android:valueFrom="0"
             android:valueTo="100"
