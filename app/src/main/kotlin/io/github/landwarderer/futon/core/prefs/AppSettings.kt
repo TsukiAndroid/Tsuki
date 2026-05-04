@@ -113,6 +113,10 @@ class AppSettings @Inject constructor(@ApplicationContext context: Context) {
                 get() = prefs.getInt(KEY_SEARCH_BAR_ALPHA, 100)
                 set(value) = prefs.edit { putInt(KEY_SEARCH_BAR_ALPHA, value) }
 
+        var isTransparentNavBar: Boolean
+                get() = prefs.getBoolean(KEY_TRANSPARENT_NAV_BAR, false)
+                set(value) = prefs.edit { putBoolean(KEY_TRANSPARENT_NAV_BAR, value) }
+
         var backgroundBlurIntensity: Int
                 get() = prefs.getInt(KEY_BG_BLUR_INTENSITY, 75)
                 set(value) = prefs.edit { putInt(KEY_BG_BLUR_INTENSITY, value) }
@@ -845,6 +849,7 @@ class AppSettings @Inject constructor(@ApplicationContext context: Context) {
                 const val KEY_NAV_PINNED = "nav_pinned"
                 const val KEY_NAV_BAR_ALPHA = "nav_bar_alpha"
                 const val KEY_SEARCH_BAR_ALPHA = "search_bar_alpha"
+                const val KEY_TRANSPARENT_NAV_BAR = "transparent_nav_bar"
                 const val KEY_BG_BLUR_INTENSITY = "bg_blur_intensity"
                 const val KEY_HISTORY_BG_SOURCE = "history_bg_source"
                 const val KEY_HISTORY_BG_ENABLED = "history_bg_enabled"
