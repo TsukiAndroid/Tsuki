@@ -153,6 +153,12 @@
             android:valueTo="100"
             app:defaultValue="100" />
 
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
+            android:key="transparent_nav_bar"
+            android:summary="@string/transparent_nav_bar_summary"
+            android:title="@string/transparent_nav_bar" />
+
     </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/tab_backgrounds">
