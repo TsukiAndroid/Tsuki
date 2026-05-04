@@ -540,7 +540,9 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
         private fun applyBarBlur() {
                 val navBlur = viewBinding.navBlurView ?: return
                 val searchBlur = viewBinding.searchBlurView ?: return
-                val src = viewBinding.container
+                // Use the root view so the blur captures the full-screen background image
+                // (activity_bg_image is a sibling of container, not inside it)
+                val src = viewBinding.root
                 navBlur.setContentSource(src)
                 searchBlur.setContentSource(src)
 
