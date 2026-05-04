@@ -1,3 +1,10 @@
+## Alpha-1.166 (Build #141)
+
+_2026-05-04 10:05 UTC_
+
+- fix: hide self during source.draw() so blur captures full background without recursion (22322bd)
+
+
 ## Alpha-1.159 (Build #135)
 
 _2026-05-04 09:46 UTC_
