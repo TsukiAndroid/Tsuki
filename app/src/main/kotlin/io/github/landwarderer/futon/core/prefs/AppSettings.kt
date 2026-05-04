@@ -850,6 +850,8 @@ class AppSettings @Inject constructor(@ApplicationContext context: Context) {
                 const val KEY_NAV_BAR_ALPHA = "nav_bar_alpha"
                 const val KEY_SEARCH_BAR_ALPHA = "search_bar_alpha"
                 const val KEY_TRANSPARENT_NAV_BAR = "transparent_nav_bar"
+                  const val KEY_NAV_BAR_BLUR = "nav_bar_blur"
+                  const val KEY_SEARCH_BAR_BLUR = "search_bar_blur"
                 const val KEY_BG_BLUR_INTENSITY = "bg_blur_intensity"
                 const val KEY_HISTORY_BG_SOURCE = "history_bg_source"
                 const val KEY_HISTORY_BG_ENABLED = "history_bg_enabled"
