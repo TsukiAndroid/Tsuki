@@ -33,7 +33,16 @@
                 app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior"
                 tools:layout="@layout/fragment_list" />
 
-        <com.google.android.material.appbar.AppBarLayout
+        <io.github.landwarderer.futon.core.ui.widgets.BlurBehindView
+                  android:id="@+id/searchBlurView"
+                  android:layout_width="match_parent"
+                  android:layout_height="60dp"
+                  android:layout_marginStart="12dp"
+                  android:layout_marginEnd="12dp"
+                  app:layout_anchor="@id/appbar"
+                  app:layout_anchorGravity="bottom|center_horizontal" />
+
+          <com.google.android.material.appbar.AppBarLayout
                 android:id="@+id/appbar"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -158,7 +167,16 @@
                 tools:ignore="InconsistentLayout"
                 tools:visibility="visible" />
 
-        <io.github.landwarderer.futon.core.ui.widgets.SlidingBottomNavigationView
+        <io.github.landwarderer.futon.core.ui.widgets.BlurBehindView
+                  android:id="@+id/navBlurView"
+                  android:layout_width="match_parent"
+                  android:layout_height="60dp"
+                  android:layout_gravity="bottom"
+                  android:layout_marginStart="12dp"
+                  android:layout_marginEnd="12dp"
+                  android:layout_marginBottom="12dp" />
+
+          <io.github.landwarderer.futon.core.ui.widgets.SlidingBottomNavigationView
                 android:id="@+id/bottomNav"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
