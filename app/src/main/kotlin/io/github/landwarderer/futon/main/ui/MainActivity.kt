@@ -557,6 +557,17 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
                 navBlur.setBlurTint(if (navIntensity > 0) settings.navBarBlurTintAlpha else 0)
                 searchBlur.setBlurTint(if (searchIntensity > 0) settings.searchBarBlurTintAlpha else 0)
 
+                // Apply performance settings — these are shared across both blur views
+                val blurFps = settings.blurFps
+                val captureQuality = settings.blurCaptureQuality
+                val idleSkip = settings.isBlurIdleSkipEnabled
+                navBlur.setFrameRate(blurFps)
+                navBlur.setCaptureQuality(captureQuality)
+                navBlur.setIdleSkip(idleSkip)
+                searchBlur.setFrameRate(blurFps)
+                searchBlur.setCaptureQuality(captureQuality)
+                searchBlur.setIdleSkip(idleSkip)
+
                 // Show/hide the blur overlays — hidden when disabled to prevent black-background artefacts
                 navBlur.visibility = if (navIntensity > 0) View.VISIBLE else View.INVISIBLE
                 searchBlur.visibility = if (searchIntensity > 0) View.VISIBLE else View.INVISIBLE
