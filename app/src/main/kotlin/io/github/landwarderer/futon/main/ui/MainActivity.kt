@@ -1,4 +1,36 @@
-package io.github.landwarderer.futon.main.ui
+
+
+        private fun applyBarBlur() {
+                val navBlur = viewBinding.navBlurView ?: return
+                val searchBlur = viewBinding.searchBlurView ?: return
+                val src = viewBinding.container
+                navBlur.setContentSource(src)
+                searchBlur.setContentSource(src)
+                navBlur.setBlurIntensity(settings.navBarBlurIntensity)
+                searchBlur.setBlurIntensity(settings.searchBarBlurIntensity)
+                // Pill-shape clip for nav blur view
+                navBlur.clipToOutline = true
+                navBlur.outlineProvider = object : android.view.ViewOutlineProvider() {
+                        override fun getOutline(view: android.view.View, outline: android.graphics.Outline) {
+                                if (view.width > 0 && view.height > 0)
+                                        outline.setRoundRect(0, 0, view.width, view.height, view.height / 2f)
+                        }
+                }
+                // Rounded-pill clip for search blur view
+                searchBlur.clipToOutline = true
+                searchBlur.outlineProvider = object : android.view.ViewOutlineProvider() {
+                        override fun getOutline(view: android.view.View, outline: android.graphics.Outline) {
+                                if (view.width > 0 && view.height > 0)
+                                        outline.setRoundRect(0, 0, view.width, view.height, view.height / 2f)
+                        }
+                }
+                // Sync nav blur view height to match the actual nav bar height
+                viewBinding.bottomNav?.let { nav ->
+                        if (nav.height > 0) {
+                                navBlur.updateLayoutParams<MarginLayoutParams> { height = nav.height }
+                        }
+                }
+        }package io.github.landwarderer.futon.main.ui
 
 import android.Manifest
 import android.content.Intent
@@ -43,6 +75,7 @@ import io.github.landwarderer.futon.core.prefs.NavItem
 import io.github.landwarderer.futon.core.ui.BaseActivity
 import io.github.landwarderer.futon.core.ui.util.FadingAppbarMediator
 import io.github.landwarderer.futon.core.ui.util.MenuInvalidator
+import io.github.landwarderer.futon.core.ui.widgets.BlurBehindView
 import io.github.landwarderer.futon.core.ui.widgets.SlidingBottomNavigationView
 import io.github.landwarderer.futon.core.util.ext.consume
 import io.github.landwarderer.futon.core.util.ext.end
@@ -160,7 +193,13 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
 
                 if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU || !resources.getBoolean(R.bool.is_predictive_back_enabled)) {
                         val legacySearchCallback = SearchViewLegacyBackCallback(viewBinding.searchView)
-                        viewBinding.searchView.addTransitionListener(legacySearchCallback)
+                        viewBinding.appbar.addOnOffsetChangedListener { appBar, verticalOffset ->
+                                  val total = appBar.totalScrollRange
+                                  viewBinding.searchBlurView?.alpha =
+                                          if (total == 0) 1f
+                                          else (1f + verticalOffset.toFloat() / total).coerceIn(0f, 1f)
+                          }
+                          viewBinding.searchView.addTransitionListener(legacySearchCallback)
                         onBackPressedDispatcher.addCallback(legacySearchCallback)
                 }
 
@@ -254,6 +293,9 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
                                 bottomMargin = pillNavBaseMarginPx + barsInsets.bottom
                         }
                         nav.updatePadding(left = barsInsets.left, right = barsInsets.right)
+                        viewBinding.navBlurView?.updateLayoutParams<MarginLayoutParams> {
+                                bottomMargin = pillNavBaseMarginPx + barsInsets.bottom
+                        }
                 }
                 viewBinding.navRail?.updateLayoutParams<MarginLayoutParams> {
                         marginStart = barsInsets.start(v)
@@ -277,6 +319,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
                 oldRight: Int,
                 oldBottom: Int
         ) {
+                viewBinding.navBlurView?.updateLayoutParams<MarginLayoutParams> { height = bottom - top }
                 if (top != oldTop || bottom != oldBottom) {
                         updateContainerBottomMargin()
                 }
@@ -503,6 +546,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
                   viewBinding.bottomNav?.alpha = navAlpha
                   viewBinding.searchBar.alpha = searchAlpha
                   applyNavBarTransparencyStyle()
+                  applyBarBlur()
           }
 
           private fun applyNavBarTransparencyStyle() {
