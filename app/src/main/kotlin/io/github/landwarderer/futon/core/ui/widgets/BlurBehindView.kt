@@ -117,7 +117,12 @@ package io.github.landwarderer.futon.core.ui.widgets
 
           isCapturing = true
 
-          // 1. Downscale source to 25 % for a fast capture + blur pipeline
+          // 1. Downscale source to 25 % for a fast capture + blur pipeline.
+          //    Temporarily hide self so our own stale content doesn't appear in the snapshot
+          //    (this matters when the source is the root CoordinatorLayout, which includes us).
+          val wasVisible = visibility == VISIBLE
+          if (wasVisible) visibility = INVISIBLE
+
           val scale = 0.25f
           val sw = (source.width * scale).toInt().coerceAtLeast(1)
           val sh = (source.height * scale).toInt().coerceAtLeast(1)
@@ -127,6 +132,8 @@ package io.github.landwarderer.futon.core.ui.widgets
               c.scale(scale, scale)
               source.draw(c)
           }.isSuccess
+
+          if (wasVisible) visibility = VISIBLE
           if (!ok) { srcBmp.recycle(); isCapturing = false; return }
 
           // 2. Compute this view's position within the source coordinate space
