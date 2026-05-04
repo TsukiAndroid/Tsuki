@@ -498,11 +498,23 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
         }
 
         private fun applyUiTransparency() {
-                val navAlpha = settings.navBarAlpha / 100f
-                val searchAlpha = settings.searchBarAlpha / 100f
-                viewBinding.bottomNav?.alpha = navAlpha
-                viewBinding.searchBar.alpha = searchAlpha
-        }
+                  val navAlpha = settings.navBarAlpha / 100f
+                  val searchAlpha = settings.searchBarAlpha / 100f
+                  viewBinding.bottomNav?.alpha = navAlpha
+                  viewBinding.searchBar.alpha = searchAlpha
+                  applyNavBarTransparencyStyle()
+          }
+
+          private fun applyNavBarTransparencyStyle() {
+                  val nav = viewBinding.bottomNav ?: return
+                  if (settings.isTransparentNavBar) {
+                          nav.background = ContextCompat.getDrawable(this, R.drawable.bg_bottom_nav_pill_transparent)
+                          nav.itemActiveIndicatorColor = ContextCompat.getColorStateList(this, R.color.bottom_menu_active_indicator_transparent)
+                  } else {
+                          nav.background = ContextCompat.getDrawable(this, R.drawable.bg_bottom_nav_pill)
+                          nav.itemActiveIndicatorColor = ContextCompat.getColorStateList(this, R.color.bottom_menu_active_indicator)
+                  }
+          }
 
         // --- BackgroundOwner implementation ---
 
