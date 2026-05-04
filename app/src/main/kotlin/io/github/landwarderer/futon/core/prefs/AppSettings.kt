@@ -117,6 +117,14 @@ class AppSettings @Inject constructor(@ApplicationContext context: Context) {
                 get() = prefs.getBoolean(KEY_TRANSPARENT_NAV_BAR, false)
                 set(value) = prefs.edit { putBoolean(KEY_TRANSPARENT_NAV_BAR, value) }
 
+      var navBarBlurIntensity: Int
+                get() = prefs.getInt(KEY_NAV_BAR_BLUR, 0)
+                set(value) = prefs.edit { putInt(KEY_NAV_BAR_BLUR, value) }
+
+      var searchBarBlurIntensity: Int
+                get() = prefs.getInt(KEY_SEARCH_BAR_BLUR, 0)
+                set(value) = prefs.edit { putInt(KEY_SEARCH_BAR_BLUR, value) }
+
         var backgroundBlurIntensity: Int
                 get() = prefs.getInt(KEY_BG_BLUR_INTENSITY, 75)
                 set(value) = prefs.edit { putInt(KEY_BG_BLUR_INTENSITY, value) }
