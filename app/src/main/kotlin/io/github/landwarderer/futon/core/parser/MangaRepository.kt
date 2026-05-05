@@ -120,16 +120,40 @@ interface MangaRepository {
 
                         is CustomMangaSource -> {
                                 // If the source was auto-matched to a Kotatsu parser, route it to
-                                // ParserMangaRepository so it gets full inbuilt-source functionality
-                                // (genre filters, chapter lists, page reader, mirrors, etc.).
+                                // ParserMangaRepository for full inbuilt-source quality.
                                 if (source.source.type == CustomSourceType.KOTATSU_PARSER) {
                                         val parserName = source.source.parserSourceName
                                         val parserSource = parserName?.let { n ->
                                                 MangaParserSource.entries.find { it.name == n }
                                         }
                                         if (parserSource != null) {
+                                                // When the user's URL is on a different domain than
+                                                // the template parser's hardcoded default (fingerprint
+                                                // match — e.g. a mirror / totally new site), wrap the
+                                                // loader context so the parser talks to the user's
+                                                // domain instead.
+                                                val templateParser = loaderContext.newParserInstance(parserSource)
+                                                val customHost = runCatching {
+                                                        java.net.URI(source.source.baseUrl)
+                                                                .host?.lowercase()?.removePrefix("www.")
+                                                }.getOrNull()
+                                                val parserHost = templateParser.domain
+                                                        .lowercase().removePrefix("www.")
+
+                                                val finalParser = if (
+                                                        customHost != null && customHost != parserHost
+                                                ) {
+                                                        DomainOverrideLoaderContext(
+                                                                delegate = loaderContext,
+                                                                templateSource = parserSource,
+                                                                customDomain = customHost,
+                                                        ).newParserInstance(parserSource)
+                                                } else {
+                                                        templateParser
+                                                }
+
                                                 return ParserMangaRepository(
-                                                        parser = loaderContext.newParserInstance(parserSource),
+                                                        parser = finalParser,
                                                         cache = contentCache,
                                                         mirrorSwitcher = mirrorSwitcher,
                                                 )
