@@ -93,7 +93,10 @@ package io.github.landwarderer.futon.customsource.ui
 
               val source = CustomSource(
                   id = CustomSourcesRepository.generateId(),
-                  name = name.trim().ifBlank { matchedParser?.title ?: hostFromUrl(normalized) ?: normalized },
+                  // Always use what the user typed; fall back to the site hostname.
+                  // Never inject the parser's internal title — the user's chosen name
+                  // is what appears everywhere in the app.
+                  name = name.trim().ifBlank { hostFromUrl(normalized) ?: normalized },
                   baseUrl = normalized,
                   type = detectedType,
                   parserSourceName = parserSourceName,

@@ -67,6 +67,13 @@ class KotatsuParserMatcher @Inject constructor(
      * Listed most-specific first; first available entry wins.
      */
     private val PREFERRED_TEMPLATES = mapOf(
+        // WordPress Madara theme — the most widely deployed manga CMS on the internet.
+        // Many hundreds of sites use it; a generic Madara parser with ConfigKey.Domain
+        // gives all of them full inbuilt-source quality automatically.
+        "madara"    to listOf(
+            "MADARA_TEMPLATE", "GENERIC_MADARA", "MADARA", "MADARA_CMS",
+            "MANGAKAKALOT_TEMPLATE", "WP_MADARA",
+        ),
         "mangadex"  to listOf("MANGADEX", "MANGADEX_TEST", "MANGADEX_ORG"),
         "guya"      to listOf("GUYA", "GUYA_MOE"),
         "comick"    to listOf("COMICK", "COMICK_FUN", "COMICK_IO", "COMICKFUN"),
@@ -132,12 +139,37 @@ class KotatsuParserMatcher @Inject constructor(
     // ── API fingerprinting ────────────────────────────────────────────────────
 
     private fun probeFingerprint(baseUrl: String): MangaParserSource? {
-        if (probeMangaDex(baseUrl)) return fingerprintTemplates["mangadex"]
-        if (probeGuya(baseUrl))     return fingerprintTemplates["guya"]
-        if (probeComicK(baseUrl))   return fingerprintTemplates["comick"]
-        if (probeZeroScans(baseUrl))return fingerprintTemplates["zeroscans"]
+        // Madara is checked first — it is by far the most widely deployed manga CMS.
+        // Only attempt the other (API-based) probes if Madara doesn't match.
+        if (probeMadara(baseUrl))    return fingerprintTemplates["madara"]
+        if (probeMangaDex(baseUrl))  return fingerprintTemplates["mangadex"]
+        if (probeGuya(baseUrl))      return fingerprintTemplates["guya"]
+        if (probeComicK(baseUrl))    return fingerprintTemplates["comick"]
+        if (probeZeroScans(baseUrl)) return fingerprintTemplates["zeroscans"]
         return null
     }
+
+    /**
+     * WordPress Madara theme:
+     * `GET /wp-json/` → JSON with a `namespaces` array; a Madara site registers
+     * a namespace that contains "madara" (e.g. `"madara/v1"`).
+     * Fallback: if the REST API root redirects or is hidden, check whether the
+     * `wp-admin/admin-ajax.php` endpoint echoes "0" — the universal WordPress
+     * AJAX health marker — combined with a Madara-specific CSS or JS asset path
+     * found on the homepage.
+     */
+    private fun probeMadara(base: String): Boolean = runCatching {
+        val body = httpGet("$base/wp-json/") ?: return@runCatching false
+        // Fast path: Madara registers its own REST namespace
+        if (body.contains("madara", ignoreCase = true) &&
+            body.contains("wp/v2", ignoreCase = true)
+        ) return@runCatching true
+        // Slower path: generic WordPress site — check homepage HTML for Madara theme markers
+        val html = httpGet(base) ?: return@runCatching false
+        html.contains("wp-content/themes/madara", ignoreCase = true) ||
+            html.contains("/wp-content/plugins/madara-", ignoreCase = true) ||
+            html.contains("madara-core", ignoreCase = true)
+    }.getOrElse { false }
 
     /**
      * MangaDex REST API v5:
