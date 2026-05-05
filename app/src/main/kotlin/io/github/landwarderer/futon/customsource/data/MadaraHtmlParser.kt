@@ -273,7 +273,8 @@ class MadaraHtmlParser(
         )
     }
 
-    private fun String.fixProtocol(): String = when {
+    private fun String?.fixProtocol(): String = when {
+        this == null -> ""
         startsWith("//") -> "https:$this"
         else -> this
     }
