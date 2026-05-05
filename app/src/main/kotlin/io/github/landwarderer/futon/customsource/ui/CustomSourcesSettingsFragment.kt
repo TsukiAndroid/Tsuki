@@ -2,10 +2,17 @@ package io.github.landwarderer.futon.customsource.ui
 
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.view.MenuProvider
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -27,7 +34,8 @@ import io.github.landwarderer.futon.customsource.domain.CustomSourceType
 
 /**
  * Manage user-added custom sources. Shows the saved list, lets the user open
- * one in the in-app browser (WebView) and remove entries they no longer want.
+ * one in the in-app browser (WebView) or manga list view, remove entries, and
+ * import/export the full list as a JSON file.
  */
 @AndroidEntryPoint
 class CustomSourcesSettingsFragment : Fragment() {
@@ -37,6 +45,52 @@ class CustomSourcesSettingsFragment : Fragment() {
     private var recyclerView: RecyclerView? = null
     private var emptyView: View? = null
     private var fab: ExtendedFloatingActionButton? = null
+
+    private lateinit var exportLauncher: ActivityResultLauncher<String>
+    private lateinit var importLauncher: ActivityResultLauncher<Array<String>>
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        exportLauncher = registerForActivityResult(
+            ActivityResultContracts.CreateDocument("application/json"),
+        ) { uri ->
+            uri ?: return@registerForActivityResult
+            try {
+                val json = viewModel.exportSourcesJson()
+                requireContext().contentResolver.openOutputStream(uri)
+                    ?.use { it.write(json.toByteArray(Charsets.UTF_8)) }
+                val count = viewModel.sources.value.size
+                Toast.makeText(
+                    requireContext(),
+                    getString(R.string.sources_exported, count),
+                    Toast.LENGTH_SHORT,
+                ).show()
+            } catch (_: Exception) {
+                Toast.makeText(requireContext(), getString(R.string.export_failed), Toast.LENGTH_LONG).show()
+            }
+        }
+
+        importLauncher = registerForActivityResult(
+            ActivityResultContracts.OpenDocument(),
+        ) { uri ->
+            uri ?: return@registerForActivityResult
+            try {
+                val json = requireContext().contentResolver.openInputStream(uri)
+                    ?.use { it.readBytes().toString(Charsets.UTF_8) }
+                    ?: return@registerForActivityResult
+                val count = viewModel.importSourcesJson(json)
+                val msg = if (count > 0) {
+                    getString(R.string.sources_imported, count)
+                } else {
+                    getString(R.string.no_sources_imported)
+                }
+                Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
+            } catch (_: Exception) {
+                Toast.makeText(requireContext(), getString(R.string.import_failed), Toast.LENGTH_LONG).show()
+            }
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -61,6 +115,26 @@ class CustomSourcesSettingsFragment : Fragment() {
                     .show(childFragmentManager, AddCustomSourceSheet.TAG)
             }
         }
+
+        requireActivity().addMenuProvider(object : MenuProvider {
+            override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
+                menuInflater.inflate(R.menu.opt_custom_sources, menu)
+            }
+
+            override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
+                return when (menuItem.itemId) {
+                    R.id.action_export_sources -> {
+                        exportLauncher.launch("tsuki-sources.json")
+                        true
+                    }
+                    R.id.action_import_sources -> {
+                        importLauncher.launch(arrayOf("application/json", "*/*"))
+                        true
+                    }
+                    else -> false
+                }
+            }
+        }, viewLifecycleOwner)
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewModel.sources.collectLatest { sources -> render(sources) }
