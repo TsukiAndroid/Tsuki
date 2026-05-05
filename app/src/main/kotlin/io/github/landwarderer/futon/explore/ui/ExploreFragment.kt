@@ -165,9 +165,9 @@ class ExploreFragment :
                 if (sourceSelectionController?.onItemClick(item.id) == true) {
                         return
                 }
-                val source = item.source
-                if (source is CustomMangaSource && source.source.type == CustomSourceType.WEBVIEW) {
-                        router.openBrowser(source.source.cleanBaseUrl, source, source.displayTitle)
+                val mangaSource = item.source.mangaSource
+                if (mangaSource is CustomMangaSource && mangaSource.source.type == CustomSourceType.WEBVIEW) {
+                        router.openBrowser(mangaSource.source.cleanBaseUrl, mangaSource, mangaSource.displayTitle)
                         return
                 }
                 router.openList(item.source, null, null)
