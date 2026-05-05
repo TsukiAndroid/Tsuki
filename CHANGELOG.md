@@ -1,3 +1,11 @@
+## Alpha-1.187 (Build #158)
+
+_2026-05-05 04:26 UTC_
+
+- remove: search bar blur effect only (keep transparent search bar toggle) (e90e4ff)
+- fix: glassy explore buttons, search bar blur fix, transparent search bar toggle (aa6f428)
+
+
 ## Alpha-1.185 (Build #157)
 
 _2026-05-05 00:11 UTC_
