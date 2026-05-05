@@ -1,3 +1,12 @@
+## Alpha-1.192 (Build #161)
+
+_2026-05-05 05:52 UTC_
+
+- feat(customsource): add saveLastUrl/getLastUrl to CustomSourcesRepository (6802d52)
+- feat(browser): remember last visited URL per WebView custom source (5806e9c)
+- fix(explore): WebView custom sources now open BrowserActivity on tap (c77afa8)
+
+
 ## Alpha-1.189 (Build #159)
 
 _2026-05-05 05:31 UTC_
