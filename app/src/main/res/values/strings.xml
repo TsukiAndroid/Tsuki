@@ -1002,4 +1002,5 @@
       <string name="url_hint_auto_detect">Site URL — type will be detected automatically</string>
       <string name="detecting_label">Detecting…</string>
       <string name="add_source_label">Add source</string>
+    <string name="detected_as_toast">Detected as: %s</string>
 </resources>

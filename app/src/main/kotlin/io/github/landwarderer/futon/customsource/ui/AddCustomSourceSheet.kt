@@ -5,6 +5,7 @@ package io.github.landwarderer.futon.customsource.ui
   import android.view.View
   import android.view.ViewGroup
   import android.widget.ArrayAdapter
+  import android.widget.Toast
   import androidx.core.view.isVisible
   import androidx.fragment.app.viewModels
   import androidx.lifecycle.lifecycleScope
@@ -33,26 +34,25 @@ package io.github.landwarderer.futon.customsource.ui
       override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
           super.onViewCreated(view, savedInstanceState)
 
-          val nameInput   = view.findViewById<TextInputEditText>(R.id.input_source_name)
-          val urlInput    = view.findViewById<TextInputEditText>(R.id.input_source_url)
-          val urlLayout   = view.findViewById<TextInputLayout>(R.id.layout_source_url)
-          val descInput   = view.findViewById<TextInputEditText>(R.id.input_source_description)
+          val nameInput    = view.findViewById<TextInputEditText>(R.id.input_source_name)
+          val urlInput     = view.findViewById<TextInputEditText>(R.id.input_source_url)
+          val urlLayout    = view.findViewById<TextInputLayout>(R.id.layout_source_url)
+          val descInput    = view.findViewById<TextInputEditText>(R.id.input_source_description)
           val typeDropdown = view.findViewById<MaterialAutoCompleteTextView>(R.id.dropdown_source_type)
-          val btnAdd      = view.findViewById<MaterialButton>(R.id.btn_add_source)
-          val btnCancel   = view.findViewById<MaterialButton>(R.id.btn_cancel)
+          val btnAdd       = view.findViewById<MaterialButton>(R.id.btn_add_source)
+          val btnCancel    = view.findViewById<MaterialButton>(R.id.btn_cancel)
 
-          // Build the list: "Auto-detect" first, then every real type
+          // "Auto-detect" is first; then all parser types in enum order
           val autoDetectLabel = getString(R.string.auto_detect_label)
           val typeLabels = listOf(autoDetectLabel) + CustomSourceType.entries.map { it.label }
           val adapter = ArrayAdapter(requireContext(), R.layout.item_dropdown_simple, typeLabels)
           typeDropdown.setAdapter(adapter)
-          // Default to auto-detect so most users never have to think about it
+          // Default: auto-detect — most users will never need to change this
           typeDropdown.setText(autoDetectLabel, false)
           urlLayout.hint = getString(R.string.url_hint_auto_detect)
 
           typeDropdown.setOnItemClickListener { _, _, position, _ ->
               if (position == 0) {
-                  // Auto-detect selected
                   urlLayout.hint = getString(R.string.url_hint_auto_detect)
               } else {
                   val selectedType = CustomSourceType.entries[position - 1]
@@ -68,7 +68,6 @@ package io.github.landwarderer.futon.customsource.ui
               urlLayout.error = null
 
               if (typeLabel == autoDetectLabel) {
-                  // Kick off detection — ViewModel will emit Detecting → SourceAdded/Error
                   viewModel.detectAndAddSource(name, url, desc)
               } else {
                   val type = CustomSourceType.entries.find { it.label == typeLabel }
@@ -84,7 +83,11 @@ package io.github.landwarderer.futon.customsource.ui
                   val detecting = state is CustomSourceViewModel.UiState.Detecting
                   btnAdd.isEnabled    = !detecting
                   btnCancel.isEnabled = !detecting
-                  btnAdd.text = if (detecting) getString(R.string.detecting_label) else getString(R.string.add_source_label)
+                  btnAdd.text = if (detecting) {
+                      getString(R.string.detecting_label)
+                  } else {
+                      getString(R.string.add_source_label)
+                  }
 
                   when (state) {
                       is CustomSourceViewModel.UiState.Error -> {
@@ -92,10 +95,15 @@ package io.github.landwarderer.futon.customsource.ui
                           viewModel.resetState()
                       }
                       is CustomSourceViewModel.UiState.SourceAdded -> {
+                          // Show "Detected as: <type>" toast when auto-detect was used
+                          state.detectedType?.let { detected ->
+                              val msg = getString(R.string.detected_as_toast, detected.label)
+                              Toast.makeText(requireContext(), msg, Toast.LENGTH_LONG).show()
+                          }
                           dismiss()
                           viewModel.resetState()
                       }
-                      else -> { /* Idle or Detecting — nothing extra needed */ }
+                      else -> { /* Idle or Detecting */ }
                   }
               }
           }
@@ -105,22 +113,31 @@ package io.github.landwarderer.futon.customsource.ui
           CustomSourceType.MANGADEX_COMPATIBLE ->
               "API base URL (e.g. https://api.mangadex.org)"
           CustomSourceType.MADARA ->
-              "Site base URL — WordPress Madara (e.g. https://mangakakalot.com)"
+              "Site URL — WordPress Madara (e.g. https://mangakakalot.com)"
           CustomSourceType.MANGATHEMESIA ->
-              "Site base URL — MangaThemesia (e.g. https://reaperscans.com)"
+              "Site URL — MangaThemesia (e.g. https://reaperscans.com)"
           CustomSourceType.MANGASTREAM ->
-              "Site base URL — MangaStream/WPManga (e.g. https://toonily.com)"
+              "Site URL — MangaStream/WPManga (e.g. https://toonily.com)"
           CustomSourceType.GENKAN ->
-              "Site base URL — Genkan CMS (e.g. https://leviatanscans.com)"
+              "Site URL — Genkan CMS (e.g. https://leviatanscans.com)"
           CustomSourceType.FOOLSLIDE2 ->
-              "Site base URL — FoolSlide2 (e.g. https://reader.fallenangels.com)"
+              "Site URL — FoolSlide2 (e.g. https://reader.fallenangels.com)"
           CustomSourceType.MANGANELO ->
-              "Site base URL — Manganelo/MangaKakalot (e.g. https://manganelo.com)"
+              "Site URL — Manganelo / MangaKakalot (e.g. https://manganelo.com)"
           CustomSourceType.ZEROSCANS_API ->
-              "API base URL — Zeroscans JSON API (e.g. https://api.zeroscans.com)"
+              "API URL — Zeroscans JSON API (e.g. https://api.zeroscans.com)"
           CustomSourceType.LHTRANSLATION ->
-              "Site base URL — LHTranslation style (e.g. https://lhscans.com)"
-          CustomSourceType.WEBVIEW ->
+              "Site URL — LHTranslation style (e.g. https://lhscans.com)"
+          CustomSourceType.MANGASEE ->
+              "Site URL — MangaSee / MangaLife (e.g. https://mangasee123.com)"
+          CustomSourceType.GUYA ->
+              "Site URL — Guya reader (e.g. https://guya.moe)"
+          CustomSourceType.MANGAFIRE ->
+              "Site URL — MangaFire style (e.g. https://mangafire.to)"
+          CustomSourceType.MANGAPARK ->
+              "Site URL — MangaPark (e.g. https://mangapark.net)"
+          // WEBVIEW and any future types
+          else ->
               "Website URL — opens in browser (e.g. https://example.com)"
       }
 

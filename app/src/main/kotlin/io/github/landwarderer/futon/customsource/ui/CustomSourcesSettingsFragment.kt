@@ -161,22 +161,16 @@ package io.github.landwarderer.futon.customsource.ui
       private fun openSource(source: CustomSource) {
           val ctx = context ?: return
           val intent = when (source.type) {
+              // Web browser — user navigates manually
               CustomSourceType.WEBVIEW -> AppRouter.browserIntent(
                   context = ctx,
                   url = source.cleanBaseUrl,
                   source = null,
                   title = source.displayName,
               )
-              // All parser-backed types open the in-app manga list view
-              CustomSourceType.MANGADEX_COMPATIBLE,
-              CustomSourceType.MADARA,
-              CustomSourceType.MANGATHEMESIA,
-              CustomSourceType.MANGASTREAM,
-              CustomSourceType.GENKAN,
-              CustomSourceType.FOOLSLIDE2,
-              CustomSourceType.MANGANELO,
-              CustomSourceType.ZEROSCANS_API,
-              CustomSourceType.LHTRANSLATION -> AppRouter.listIntent(
+              // All parser-backed types open the in-app manga list.
+              // else branch means new CustomSourceType values never break build.
+              else -> AppRouter.listIntent(
                   context = ctx,
                   source = CustomMangaSource(source),
                   filter = null,

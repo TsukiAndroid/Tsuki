@@ -80,7 +80,7 @@ package io.github.landwarderer.futon.customsource.ui
                   description = description.trim().takeIf { it.isNotEmpty() },
               )
               repository.add(source)
-              _uiState.value = UiState.SourceAdded(source)
+              _uiState.value = UiState.SourceAdded(source, detectedType)
               fetchAndStoreFavicon(source)
           }
       }
@@ -134,7 +134,7 @@ package io.github.landwarderer.futon.customsource.ui
           object Idle : UiState()
           object Detecting : UiState()
           data class Error(val message: String) : UiState()
-          data class SourceAdded(val source: CustomSource) : UiState()
+          data class SourceAdded(val source: CustomSource, val detectedType: CustomSourceType? = null) : UiState()
       }
 
       companion object {

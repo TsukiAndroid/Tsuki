@@ -6,121 +6,133 @@ package io.github.landwarderer.futon.customsource.data
   import java.util.concurrent.TimeUnit
 
   /**
-   * Sniffs the CMS/theme type of a manga website by fetching its home page
-   * and inspecting the HTML for well-known fingerprints.
+   * Probes a site's homepage and fingerprints the HTML to determine which
+   * CMS / parser should handle it.
    *
-   * Detection is ordered from most-specific to most-generic so that niche CMS
-   * variants are caught before broader WordPress patterns.
+   * Strategy — we look for distinctive markers in this priority order:
+   *  1. MangaSee / MangaLife — vm.Directory or vm.Chapters JS globals
+   *  2. Guya reader — /api/series/ endpoint responds with JSON
+   *  3. MangaFire style — .manga-poster grid + #chapter-images reader
+   *  4. MangaPark — __NEXT_DATA__ JSON blob present
+   *  5. MangaThemesia — ts_reader.run, .bsx container
+   *  6. Madara — wp-manga, madara-cloned, WpMangaReader meta
+   *  7. MangaStream — WPMangaStream, #readerarea, .eph-num
+   *  8. FoolSlide2 — /read/ + /directory/ URL pattern
+   *  9. Manganelo — manganelo / mangakakalot domain/path hints
+   * 10. Zeroscans API — /api/comics JSON endpoint
+   * 11. LHTranslation — row-content-chapter, reading-detail
+   * 12. Genkan — /comics/ path + genkan meta
+   * 13. MangaDex-compatible — /manga or /title REST API responds with JSON { result: "ok" }
+   * 14. Fallback → WEBVIEW
    *
-   * Falls back to [CustomSourceType.WEBVIEW] when the site cannot be identified.
+   * All detectable types (everything except WEBVIEW) work identically well
+   * when the user chooses "Auto-detect" — there is no distinction between
+   * types with or without "(Auto)" in their labels.
    */
   object CmsTypeDetector {
 
-      /**
-       * Fetches [url] and returns the best-matching [CustomSourceType].
-       * This call performs a network request — run it on a background dispatcher.
-       */
-      fun detect(url: String): CustomSourceType {
-          val html = runCatching { fetchHtml(url) }.getOrNull() ?: return CustomSourceType.WEBVIEW
-          return detectFromHtml(url, html)
-      }
+      fun detect(baseUrl: String): CustomSourceType {
+          val clean = baseUrl.trimEnd('/')
+          val html = fetchHtml(clean) ?: return CustomSourceType.WEBVIEW
 
-      fun detectFromHtml(url: String, html: String): CustomSourceType {
-          val lower = html.lowercase()
-          val urlLower = url.lowercase()
-
-          // ── Zeroscans / JSON REST API ─────────────────────────────────────────
-          // These sites serve an API and their root may redirect or return JSON
-          if (urlLower.contains("/api/") ||
-              lower.contains("\"result\":\"ok\"") ||
-              lower.contains("\"comics\":") && lower.contains("\"chapter\":")) {
-              return CustomSourceType.ZEROSCANS_API
+          // ── MangaSee / MangaLife ──────────────────────────────────────────────
+          if (html.contains("vm.Directory") || html.contains("vm.Chapters") || html.contains("vm.CurChapter")) {
+              return CustomSourceType.MANGASEE
           }
 
-          // ── FoolSlide2 ────────────────────────────────────────────────────────
-          if (lower.contains("foolslide") ||
-              lower.contains("/directory/") && lower.contains("class=\"list\"") ||
-              lower.contains("powered by foolslide")) {
-              return CustomSourceType.FOOLSLIDE2
+          // ── Guya reader (JSON API) ────────────────────────────────────────────
+          val guyaJson = fetchText("$clean/api/series/")
+          if (guyaJson != null && guyaJson.trimStart().startsWith("{")) {
+              return CustomSourceType.GUYA
           }
 
-          // ── Genkan ────────────────────────────────────────────────────────────
-          if ((lower.contains("genkan") || lower.contains("leviatan")) &&
-              lower.contains("/comics")) {
-              return CustomSourceType.GENKAN
-          }
-          if (lower.contains("class=\"col-lg-2") && lower.contains("/comics/")) {
-              return CustomSourceType.GENKAN
+          // ── MangaFire style ───────────────────────────────────────────────────
+          if (html.contains("manga-poster") && (html.contains("chapter-images") || html.contains("ep-item"))) {
+              return CustomSourceType.MANGAFIRE
           }
 
-          // ── MangaKakalot / Manganelo ──────────────────────────────────────────
-          if (lower.contains("manganelo") || lower.contains("mangakakalot") ||
-              lower.contains("chapmanganelo") || lower.contains("mkklcdn") ||
-              (lower.contains("manga-list.html") || lower.contains("genre-all")) &&
-              lower.contains("story_item")) {
-              return CustomSourceType.MANGANELO
-          }
-
-          // ── LHTranslation / MangaDNA style ────────────────────────────────────
-          if (lower.contains("row-content-chapter") ||
-              lower.contains("reading-detail") && lower.contains("manga-info-pic") ||
-              lower.contains("panel-story-info-description")) {
-              return CustomSourceType.LHTRANSLATION
+          // ── MangaPark (Next.js __NEXT_DATA__) ────────────────────────────────
+          if (html.contains("__NEXT_DATA__") && (html.contains("mangapark") || html.contains("/browse"))) {
+              return CustomSourceType.MANGAPARK
           }
 
           // ── WordPress MangaThemesia ───────────────────────────────────────────
-          // Identified by ts_reader.run, #chapterlist, or .bsx grid items
-          if (lower.contains("ts_reader.run") ||
-              lower.contains("id=\"chapterlist\"") ||
-              lower.contains("class=\"bsx\"") ||
-              lower.contains("/wp-content/themes/themesia") ||
-              lower.contains("/wp-content/themes/manga") && lower.contains("ts_reader")) {
+          if (html.contains("ts_reader.run") || html.contains(".bsx") || html.contains("mangathemesia")) {
               return CustomSourceType.MANGATHEMESIA
           }
 
-          // ── WordPress MangaStream / WPMangaStream ─────────────────────────────
-          if (lower.contains("id=\"readerarea\"") ||
-              lower.contains("class=\"eph-num\"") ||
-              lower.contains("/wp-content/themes/mangastream") ||
-              lower.contains("/wp-content/themes/komiku")) {
-              return CustomSourceType.MANGASTREAM
-          }
-
           // ── WordPress Madara ──────────────────────────────────────────────────
-          // Broader WP-manga check comes after more specific WP themes
-          if (lower.contains("wp-manga") ||
-              lower.contains("madara") ||
-              lower.contains("class=\"c-image-inner") ||
-              lower.contains("madara_load_more") ||
-              lower.contains("manga-chapters-holder")) {
+          if (html.contains("wp-manga") || html.contains("madara") || html.contains("WpMangaReader")) {
               return CustomSourceType.MADARA
           }
 
+          // ── WordPress MangaStream ─────────────────────────────────────────────
+          if (html.contains("WPMangaStream") || html.contains("#readerarea") || html.contains("class="eph-num"")) {
+              return CustomSourceType.MANGASTREAM
+          }
+
+          // ── FoolSlide2 ────────────────────────────────────────────────────────
+          if (html.contains("foolslide") || (html.contains("/read/") && html.contains("/directory/"))) {
+              return CustomSourceType.FOOLSLIDE2
+          }
+
+          // ── Manganelo / MangaKakalot ──────────────────────────────────────────
+          if (html.contains("manganelo") || html.contains("mangakakalot") ||
+              html.contains("chapmanganelo") || html.contains("class="story_item"")) {
+              return CustomSourceType.MANGANELO
+          }
+
+          // ── Zeroscans / JSON REST API ─────────────────────────────────────────
+          val zeroscansJson = fetchText("$clean/api/comics")
+          if (zeroscansJson != null && (zeroscansJson.contains(""data"") || zeroscansJson.contains(""comics""))) {
+              return CustomSourceType.ZEROSCANS_API
+          }
+
+          // ── LHTranslation / MangaDNA ──────────────────────────────────────────
+          if (html.contains("row-content-chapter") || html.contains("reading-detail") || html.contains("lhtranslation")) {
+              return CustomSourceType.LHTRANSLATION
+          }
+
+          // ── Genkan ────────────────────────────────────────────────────────────
+          if (html.contains("/comics/") && html.contains("genkan")) {
+              return CustomSourceType.GENKAN
+          }
+
           // ── MangaDex-compatible REST API ──────────────────────────────────────
-          // If fetching /manga returns JSON with "result":"ok" it's MangaDex-compatible
-          val apiHtml = runCatching { fetchHtml("${url.trimEnd('/')}/manga?limit=1") }.getOrNull() ?: ""
-          if (apiHtml.contains("\"result\":\"ok\"") || apiHtml.contains("\"data\":")) {
+          val apiJson = fetchText("$clean/manga?limit=1")
+              ?: fetchText("$clean/api/manga?limit=1")
+          if (apiJson != null && apiJson.contains(""result"") && apiJson.contains(""ok"")) {
               return CustomSourceType.MANGADEX_COMPATIBLE
           }
 
           return CustomSourceType.WEBVIEW
       }
 
-      private fun fetchHtml(url: String): String {
-          val req = Request.Builder()
-              .url(url)
-              .header("User-Agent", "Tsuki/1.0 (Android)")
-              .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
-              .get()
-              .build()
-          return httpClient.newCall(req).execute().use { resp ->
-              resp.body?.string() ?: ""
-          }
+      // ── HTTP helpers ──────────────────────────────────────────────────────────
+
+      private fun fetchHtml(url: String): String? = fetchText(url)
+
+      private fun fetchText(url: String): String? {
+          return runCatching {
+              val req = Request.Builder()
+                  .url(url)
+                  .header("User-Agent", "Tsuki/1.0 (Android)")
+                  .get()
+                  .build()
+              httpClient.newCall(req).execute().use { resp ->
+                  if (!resp.isSuccessful) null else resp.body?.string()?.take(MAX_BYTES)
+              }
+          }.getOrNull()
       }
+
+      /** Human-readable display name for a detected type (used in toasts). */
+      fun displayName(type: CustomSourceType): String = type.label
+
+      private const val MAX_BYTES = 65_536 // 64 KB — enough to see all <head> markers
 
       private val httpClient: OkHttpClient by lazy {
           OkHttpClient.Builder()
-              .connectTimeout(12, TimeUnit.SECONDS)
+              .connectTimeout(10, TimeUnit.SECONDS)
               .readTimeout(15, TimeUnit.SECONDS)
               .followRedirects(true)
               .build()

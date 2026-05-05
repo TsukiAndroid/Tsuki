@@ -1,83 +1,84 @@
 package io.github.landwarderer.futon.customsource.domain
 
-import android.os.Parcelable
-import kotlinx.parcelize.Parcelize
+  import android.os.Parcelable
+  import kotlinx.parcelize.Parcelize
 
-/**
- * Represents a user-defined manga source.
- * Supports multiple CMS/theme types — URLs are auto-parsed like built-in sources.
- */
-@Parcelize
-data class CustomSource(
-    val id: Long,
-    val name: String,
-    val baseUrl: String,
-    val type: CustomSourceType,
-    val iconUrl: String? = null,
-    val description: String? = null,
-    val createdAt: Long = System.currentTimeMillis(),
-) : Parcelable {
+  /**
+   * Represents a user-defined manga source.
+   *
+   * Every type except WEBVIEW is fully auto-parsed — manga list, chapters and
+   * pages all work inside the app just like built-in sources.
+   * All types also participate in the CMS auto-detection feature.
+   */
+  @Parcelize
+  data class CustomSource(
+      val id: Long,
+      val name: String,
+      val baseUrl: String,
+      val type: CustomSourceType,
+      val iconUrl: String? = null,
+      val description: String? = null,
+      val createdAt: Long = System.currentTimeMillis(),
+  ) : Parcelable {
+      val displayName: String get() = name.ifBlank { baseUrl }
+      val cleanBaseUrl: String get() = baseUrl.trimEnd('/')
+  }
 
-    val displayName: String
-        get() = name.ifBlank { baseUrl }
+  enum class CustomSourceType(val label: String) {
 
-    val cleanBaseUrl: String
-        get() = baseUrl.trimEnd('/')
-}
+      /** Sites with a MangaDex-compatible REST API (e.g. MangaDex itself) */
+      MANGADEX_COMPATIBLE("MangaDex-compatible API"),
 
-enum class CustomSourceType(val label: String) {
+      /** WordPress Madara theme — MangaKakalot clones, ReadManga, ManhuaScan, etc. */
+      MADARA("WordPress Madara"),
 
-    /** Sites with a MangaDex-compatible REST API */
-    MANGADEX_COMPATIBLE("MangaDex-compatible API"),
+      /** WordPress MangaThemesia — Reaper Scans, Asura Scans, Luminous Scans, Flame Scans, etc. */
+      MANGATHEMESIA("WordPress MangaThemesia"),
 
-    /**
-     * Sites built on the WordPress Madara manga theme — the most common manga CMS.
-     * Powers MangaKakalot clones, ReadManga, ManhuaScan, and hundreds more.
-     */
-    MADARA("WordPress Madara (Auto)"),
+      /** WordPress MangaStream / WPMangaStream — Toonily, Manhwa18, Komikindo, etc. */
+      MANGASTREAM("WordPress MangaStream"),
 
-    /**
-     * Sites built on the WordPress MangaThemesia theme — the most popular *active*
-     * WP manga theme. Powers Reaper Scans, Asura Scans, Luminous Scans, Flame Scans, etc.
-     */
-    MANGATHEMESIA("WordPress MangaThemesia (Auto)"),
+      /** Genkan open-source scanlation CMS — Leviatan Scans, Hatigarm Scans, etc. */
+      GENKAN("Genkan Scanlation CMS"),
 
-    /**
-     * Sites built on the WordPress MangaStream / WPMangaStream theme.
-     * Widely used for manhwa/manhua: Toonily, Manhwa18, Komikindo, etc.
-     */
-    MANGASTREAM("WordPress MangaStream (Auto)"),
+      /** FoolSlide2 open-source scanlation CMS — Fallen Angels Scans, Helvetica Scans, etc. */
+      FOOLSLIDE2("FoolSlide2 Scanlation CMS"),
 
-    /**
-     * Sites built on the Genkan open-source scanlation CMS.
-     * Used by Leviatan Scans, Hatigarm Scans, and other scanlation groups.
-     */
-    GENKAN("Genkan / Scanlator CMS"),
+      /** MangaKakalot / Manganelo / Chapmanganelo style — dozens of popular mirror sites */
+      MANGANELO("MangaKakalot / Manganelo"),
 
-    /**
-     * Sites built on FoolSlide2 — a popular open-source scanlation CMS.
-     * Used by Fallen Angels Scans, Helvetica Scans, and many more.
-     */
-    FOOLSLIDE2("FoolSlide2 Scanlation CMS"),
+      /** Zeroscans / ComicK-compatible JSON REST API */
+      ZEROSCANS_API("Zeroscans / JSON API"),
 
-    /**
-     * Sites using the MangaKakalot / Manganelo / Chapmanganelo layout.
-     * A widely cloned custom PHP CMS powering dozens of mirror sites.
-     */
-    MANGANELO("MangaKakalot / Manganelo Style"),
+      /** MangaDNA / LHTranslation / ReadComicOnline-style PHP CMS */
+      LHTRANSLATION("LHTranslation / MangaDNA"),
 
-    /**
-     * Sites exposing a clean JSON REST API in the Zeroscans / ComicK style.
-     * Includes api.zeroscans.com, api.comick.io-compatible hosts.
-     */
-    ZEROSCANS_API("Zeroscans / JSON API"),
+      /**
+       * MangaSee / MangaLife CMS — stores catalogue and chapters as JavaScript
+       * variables (vm.Directory, vm.Chapters) rather than in the DOM.
+       */
+      MANGASEE("MangaSee / MangaLife"),
 
-    /**
-     * Sites using the MangaDNA / LHTranslation / ReadComicOnline PHP CMS layout.
-     * A widely reused PHP template with a common reading + chapter list structure.
-     */
-    LHTRANSLATION("MangaDNA / LHTranslation Style"),
+      /**
+       * Guya reader — open-source fan-translation platform used by Guya.moe,
+       * Danke fürs Lesen, Mahoushoujo.moe, TritiniaScans, and many more.
+       * Exposes a clean JSON API at /api/series/.
+       */
+      GUYA("Guya / Fan-TL Reader"),
 
-    /** Any website opened inside a WebView — user navigates manually */
-    WEBVIEW("Web Browser"),
-}
+      /**
+       * MangaFire / MangaRead style — fast-growing aggregator sites that use
+       * a card-grid layout with lazy-loaded chapter lists.
+       */
+      MANGAFIRE("MangaFire Style"),
+
+      /**
+       * MangaPark v3/v4 — uses Next.js with all data in a __NEXT_DATA__ JSON
+       * blob, making it more reliable than pure HTML scraping.
+       */
+      MANGAPARK("MangaPark / Next.js"),
+
+      /** Any website opened in a WebView — user navigates manually (no parsing) */
+      WEBVIEW("Web Browser (Manual)"),
+  }
+  
