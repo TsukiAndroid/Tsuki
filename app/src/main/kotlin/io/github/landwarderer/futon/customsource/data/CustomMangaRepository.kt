@@ -23,9 +23,11 @@ import java.util.concurrent.TimeUnit
 /**
  * MangaRepository implementation backed by user-defined [CustomSource]s.
  *
- * Two modes:
+ * Three modes:
  *  - [CustomSourceType.MANGADEX_COMPATIBLE]: real REST calls against the
  *    MangaDex v5 API (or any compatible host) to surface manga inside the app.
+ *  - [CustomSourceType.MADARA]: full HTML scraper for WordPress Madara-based
+ *    sites — shows manga list, chapters and pages exactly like a built-in source.
  *  - [CustomSourceType.WEBVIEW]: returns no list (the source only acts as a
  *    bookmarked entry), letting the user browse it via the in-app browser.
  *
@@ -56,25 +58,38 @@ class CustomMangaRepository(
             isTagsExclusionSupported = false,
         )
 
+    private val madaraParser: MadaraHtmlParser by lazy { MadaraHtmlParser(customSource) }
+
     override suspend fun getList(
         offset: Int,
         order: SortOrder?,
         filter: MangaListFilter?,
     ): List<Manga> {
         val cs = customSource.source
-        if (cs.type == CustomSourceType.WEBVIEW) {
-            // Web sources have no API; return empty list so the user knows to
-            // open the source via the "Open in browser" action in the toolbar.
-            return emptyList()
+        return when (cs.type) {
+            CustomSourceType.WEBVIEW -> emptyList()
+            CustomSourceType.MADARA -> runCatching {
+                madaraParser.getList(offset, order, filter)
+            }.getOrElse { emptyList() }
+            CustomSourceType.MANGADEX_COMPATIBLE -> runCatching {
+                fetchMangaDexList(cs, offset, order, filter)
+            }.getOrElse { emptyList() }
         }
-        return runCatching {
-            fetchMangaDexList(cs, offset, order, filter)
-        }.getOrElse { emptyList() }
     }
 
-    override suspend fun getDetails(manga: Manga): Manga = manga
+    override suspend fun getDetails(manga: Manga): Manga {
+        if (customSource.source.type == CustomSourceType.MADARA) {
+            return runCatching { madaraParser.getDetails(manga) }.getOrElse { manga }
+        }
+        return manga
+    }
 
-    override suspend fun getPages(chapter: MangaChapter): List<MangaPage> = emptyList()
+    override suspend fun getPages(chapter: MangaChapter): List<MangaPage> {
+        if (customSource.source.type == CustomSourceType.MADARA) {
+            return runCatching { madaraParser.getPages(chapter) }.getOrElse { emptyList() }
+        }
+        return emptyList()
+    }
 
     override suspend fun getPageUrl(page: MangaPage): String = page.url
 
