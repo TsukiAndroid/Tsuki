@@ -1,3 +1,11 @@
+## Alpha-1.215 (Build #181)
+
+_2026-05-05 11:35 UTC_
+
+- fix(custom-sources): exhaustive when + add CMS auto-detect feature (d1041a3)
+- feat(custom-sources): add 5 new CMS parsers for custom sources (98bbc16)
+
+
 ## Alpha-1.208 (Build #175)
 
 _2026-05-05 07:36 UTC_
