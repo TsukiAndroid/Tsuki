@@ -87,9 +87,17 @@ class CustomSourcesRepository @Inject constructor(
         put("createdAt", createdAt)
     }
 
+    fun saveLastUrl(sourceId: Long, url: String) {
+        prefs.edit().putString("$KEY_LAST_URL_PREFIX$sourceId", url).apply()
+    }
+
+    fun getLastUrl(sourceId: Long): String? =
+        prefs.getString("$KEY_LAST_URL_PREFIX$sourceId", null)
+
     companion object {
         private const val PREFS_NAME = "tsuki_custom_sources"
         private const val KEY_SOURCES = "sources"
+        private const val KEY_LAST_URL_PREFIX = "last_url_"
 
         @Volatile
         private var INSTANCE: CustomSourcesRepository? = null
