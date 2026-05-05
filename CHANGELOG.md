@@ -1,3 +1,10 @@
+## Alpha-1.185 (Build #157)
+
+_2026-05-05 00:11 UTC_
+
+- fix: glassy explore buttons, search bar blur fix, transparent search bar toggle (aa6f428)
+
+
 ## Alpha-1.183 (Build #156)
 
 _2026-05-04 10:54 UTC_
