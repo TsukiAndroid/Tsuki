@@ -30,116 +30,141 @@ import io.github.landwarderer.futon.list.ui.model.MangaCompactListModel
 import org.koitharu.kotatsu.parsers.model.Manga
 
 fun exploreButtonsAD(
-	clickListener: View.OnClickListener,
+        clickListener: View.OnClickListener,
+        isGlassy: Boolean = false,
 ) = adapterDelegateViewBinding<ExploreButtons, ListModel, ItemExploreButtonsBinding>(
-	{ layoutInflater, parent -> ItemExploreButtonsBinding.inflate(layoutInflater, parent, false) },
+        { layoutInflater, parent -> ItemExploreButtonsBinding.inflate(layoutInflater, parent, false) },
 ) {
 
-	binding.buttonBookmarks.setOnClickListener(clickListener)
-	binding.buttonDownloads.setOnClickListener(clickListener)
-	binding.buttonLocal.setOnClickListener(clickListener)
-	binding.buttonRandom.setOnClickListener(clickListener)
+        binding.buttonBookmarks.setOnClickListener(clickListener)
+        binding.buttonDownloads.setOnClickListener(clickListener)
+        binding.buttonLocal.setOnClickListener(clickListener)
+        binding.buttonRandom.setOnClickListener(clickListener)
 
-	bind {
-		if (item.isRandomLoading) {
-			binding.buttonRandom.setProgressIcon()
-		} else {
-			binding.buttonRandom.setIconResource(R.drawable.ic_dice)
-		}
-		binding.buttonRandom.isClickable = !item.isRandomLoading
-	}
+        if (isGlassy) {
+                applyGlassButtonStyle(binding.buttonLocal)
+                applyGlassButtonStyle(binding.buttonBookmarks)
+                applyGlassButtonStyle(binding.buttonRandom)
+                applyGlassButtonStyle(binding.buttonDownloads)
+        }
+
+        bind {
+                if (item.isRandomLoading) {
+                        binding.buttonRandom.setProgressIcon()
+                } else {
+                        binding.buttonRandom.setIconResource(R.drawable.ic_dice)
+                }
+                binding.buttonRandom.isClickable = !item.isRandomLoading
+        }
+}
+
+private fun applyGlassButtonStyle(button: com.google.android.material.button.MaterialButton) {
+        val ctx = button.context
+        val white = android.graphics.Color.WHITE
+        val glassFill = android.content.res.ColorStateList.valueOf(
+                ctx.getColor(R.color.glass_panel_fill),
+        )
+        val glassStroke = android.content.res.ColorStateList.valueOf(
+                ctx.getColor(R.color.glass_stroke),
+        )
+        val whiteList = android.content.res.ColorStateList.valueOf(white)
+        button.backgroundTintList = glassFill
+        button.iconTint = whiteList
+        button.setTextColor(white)
+        button.strokeColor = glassStroke
+        button.strokeWidth = (ctx.resources.displayMetrics.density).toInt().coerceAtLeast(1)
 }
 
 fun exploreRecommendationItemAD(
-	itemClickListener: OnListItemClickListener<Manga>,
+        itemClickListener: OnListItemClickListener<Manga>,
 ) = adapterDelegateViewBinding<RecommendationsItem, ListModel, ItemRecommendationBinding>(
-	{ layoutInflater, parent -> ItemRecommendationBinding.inflate(layoutInflater, parent, false) },
+        { layoutInflater, parent -> ItemRecommendationBinding.inflate(layoutInflater, parent, false) },
 ) {
 
-	val adapter = BaseListAdapter<MangaCompactListModel>()
-		.addDelegate(ListItemType.MANGA_LIST, recommendationMangaItemAD(itemClickListener))
-	binding.pager.adapter = adapter
-	binding.pager.recyclerView?.isNestedScrollingEnabled = false
-	binding.dots.bindToViewPager(binding.pager)
+        val adapter = BaseListAdapter<MangaCompactListModel>()
+                .addDelegate(ListItemType.MANGA_LIST, recommendationMangaItemAD(itemClickListener))
+        binding.pager.adapter = adapter
+        binding.pager.recyclerView?.isNestedScrollingEnabled = false
+        binding.dots.bindToViewPager(binding.pager)
 
-	bind {
-		adapter.items = item.manga
-	}
+        bind {
+                adapter.items = item.manga
+        }
 }
 
 fun recommendationMangaItemAD(
-	itemClickListener: OnListItemClickListener<Manga>,
+        itemClickListener: OnListItemClickListener<Manga>,
 ) = adapterDelegateViewBinding<MangaCompactListModel, MangaCompactListModel, ItemRecommendationMangaBinding>(
-	{ layoutInflater, parent -> ItemRecommendationMangaBinding.inflate(layoutInflater, parent, false) },
+        { layoutInflater, parent -> ItemRecommendationMangaBinding.inflate(layoutInflater, parent, false) },
 ) {
 
-	binding.root.setOnClickListener { v ->
-		itemClickListener.onItemClick(item.manga, v)
-	}
-	bind {
-		binding.textViewTitle.text = item.manga.title
-		binding.textViewSubtitle.textAndVisible = item.subtitle
-		binding.imageViewCover.setImageAsync(item.manga.coverUrl, item.manga.source)
-	}
+        binding.root.setOnClickListener { v ->
+                itemClickListener.onItemClick(item.manga, v)
+        }
+        bind {
+                binding.textViewTitle.text = item.manga.title
+                binding.textViewSubtitle.textAndVisible = item.subtitle
+                binding.imageViewCover.setImageAsync(item.manga.coverUrl, item.manga.source)
+        }
 }
 
 
 fun exploreSourceListItemAD(
-	listener: OnListItemClickListener<MangaSourceItem>,
+        listener: OnListItemClickListener<MangaSourceItem>,
 ) = adapterDelegateViewBinding<MangaSourceItem, ListModel, ItemExploreSourceListBinding>(
-	{ layoutInflater, parent ->
-		ItemExploreSourceListBinding.inflate(
-			layoutInflater,
-			parent,
-			false,
-		)
-	},
-	on = { item, _, _ -> item is MangaSourceItem && !item.isGrid },
+        { layoutInflater, parent ->
+                ItemExploreSourceListBinding.inflate(
+                        layoutInflater,
+                        parent,
+                        false,
+                )
+        },
+        on = { item, _, _ -> item is MangaSourceItem && !item.isGrid },
 ) {
 
-	AdapterDelegateClickListenerAdapter(this, listener).attach(itemView)
-	val iconPinned = ContextCompat.getDrawable(context, R.drawable.ic_pin_small)
+        AdapterDelegateClickListenerAdapter(this, listener).attach(itemView)
+        val iconPinned = ContextCompat.getDrawable(context, R.drawable.ic_pin_small)
 
-	bind {
-		binding.textViewTitle.text = item.source.getTitle(context)
-		binding.textViewTitle.drawableStart = if (item.source.isPinned) iconPinned else null
-		binding.textViewSubtitle.text = item.source.getSummary(context)
-		binding.imageViewIcon.setImageAsync(item.source)
-	}
+        bind {
+                binding.textViewTitle.text = item.source.getTitle(context)
+                binding.textViewTitle.drawableStart = if (item.source.isPinned) iconPinned else null
+                binding.textViewSubtitle.text = item.source.getSummary(context)
+                binding.imageViewIcon.setImageAsync(item.source)
+        }
 }
 
 fun exploreSourceGridItemAD(
-	listener: OnListItemClickListener<MangaSourceItem>,
+        listener: OnListItemClickListener<MangaSourceItem>,
 ) = adapterDelegateViewBinding<MangaSourceItem, ListModel, ItemExploreSourceGridBinding>(
-	{ layoutInflater, parent ->
-		ItemExploreSourceGridBinding.inflate(
-			layoutInflater,
-			parent,
-			false,
-		)
-	},
-	on = { item, _, _ -> item is MangaSourceItem && item.isGrid },
+        { layoutInflater, parent ->
+                ItemExploreSourceGridBinding.inflate(
+                        layoutInflater,
+                        parent,
+                        false,
+                )
+        },
+        on = { item, _, _ -> item is MangaSourceItem && item.isGrid },
 ) {
 
-	AdapterDelegateClickListenerAdapter(this, listener).attach(itemView)
-	val iconPinned = ContextCompat.getDrawable(context, R.drawable.ic_pin_small)
+        AdapterDelegateClickListenerAdapter(this, listener).attach(itemView)
+        val iconPinned = ContextCompat.getDrawable(context, R.drawable.ic_pin_small)
 
-	bind {
-		val title = item.source.getTitle(context)
-		val summary = item.source.getSummary(context)
-		itemView.setTooltipCompat(
-			buildSpannedString {
-				bold {
-					append(title)
-				}
-				if (summary != null) {
-					appendLine()
-					append(summary)
-				}
-			},
-		)
-		binding.textViewTitle.text = title
-		binding.textViewTitle.drawableStart = if (item.source.isPinned) iconPinned else null
-		binding.imageViewIcon.setImageAsync(item.source)
-	}
+        bind {
+                val title = item.source.getTitle(context)
+                val summary = item.source.getSummary(context)
+                itemView.setTooltipCompat(
+                        buildSpannedString {
+                                bold {
+                                        append(title)
+                                }
+                                if (summary != null) {
+                                        appendLine()
+                                        append(summary)
+                                }
+                        },
+                )
+                binding.textViewTitle.text = title
+                binding.textViewTitle.drawableStart = if (item.source.isPinned) iconPinned else null
+                binding.imageViewIcon.setImageAsync(item.source)
+        }
 }

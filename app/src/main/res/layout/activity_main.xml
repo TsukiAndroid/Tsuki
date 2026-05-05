@@ -34,7 +34,8 @@
                 tools:layout="@layout/fragment_list" />
 
         <!--
-          Search bar blur view — sits behind the SearchBar at the bottom of the AppBar.
+          Search bar blur view — overlays the SearchBar itself so the blur effect
+          appears ON the search bar, not as a shadow below it.
           Starts invisible; shown only when search bar blur is enabled and intensity > 0.
         -->
         <io.github.landwarderer.futon.core.ui.widgets.BlurBehindView
@@ -43,10 +44,11 @@
                 android:layout_height="60dp"
                 android:layout_marginStart="12dp"
                 android:layout_marginEnd="12dp"
+                android:layout_marginBottom="6dp"
                 android:background="@android:color/transparent"
                 android:visibility="invisible"
-                app:layout_anchor="@id/appbar"
-                app:layout_anchorGravity="bottom|center_horizontal" />
+                app:layout_anchor="@id/search_bar"
+                app:layout_anchorGravity="fill" />
 
         <com.google.android.material.appbar.AppBarLayout
                 android:id="@+id/appbar"

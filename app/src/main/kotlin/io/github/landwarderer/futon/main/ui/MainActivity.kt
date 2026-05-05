@@ -523,7 +523,18 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
                   viewBinding.bottomNav?.alpha = navAlpha
                   viewBinding.searchBar.alpha = searchAlpha
                   applyNavBarTransparencyStyle()
+                  applySearchBarTransparencyStyle()
                   applyBarBlur()
+          }
+
+          private fun applySearchBarTransparencyStyle() {
+                  val tintColor = if (settings.isTransparentSearchBar) {
+                          ContextCompat.getColor(this, R.color.glass_panel_fill)
+                  } else {
+                          ContextCompat.getColor(this, R.color.glass_search_fill)
+                  }
+                  viewBinding.searchBar.backgroundTintList =
+                          android.content.res.ColorStateList.valueOf(tintColor)
           }
 
           private fun applyNavBarTransparencyStyle() {

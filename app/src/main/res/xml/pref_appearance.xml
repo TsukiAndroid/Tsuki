@@ -161,6 +161,12 @@
 
         <SwitchPreferenceCompat
             android:defaultValue="false"
+            android:key="transparent_search_bar"
+            android:summary="@string/transparent_search_bar_summary"
+            android:title="@string/transparent_search_bar" />
+
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
             android:key="nav_bar_blur_enabled"
             android:title="@string/nav_bar_blur_enabled"
             android:summary="@string/nav_bar_blur_enabled_summary" />
@@ -251,6 +257,12 @@
             android:key="explore_bg_enabled"
             android:summary="@string/explore_background_summary"
             android:title="@string/explore_background" />
+
+        <SwitchPreferenceCompat
+            android:defaultValue="true"
+            android:key="glassy_explore_buttons"
+            android:summary="@string/glassy_explore_buttons_summary"
+            android:title="@string/glassy_explore_buttons" />
 
     </PreferenceCategory>
 

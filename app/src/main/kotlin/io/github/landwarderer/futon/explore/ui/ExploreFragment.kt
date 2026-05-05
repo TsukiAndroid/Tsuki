@@ -75,9 +75,12 @@ class ExploreFragment :
 
         override fun onViewBindingCreated(binding: FragmentExploreBinding, savedInstanceState: Bundle?) {
                 super.onViewBindingCreated(binding, savedInstanceState)
-                exploreAdapter = ExploreAdapter(this, this) { manga, view ->
-                        router.openDetails(manga)
-                }
+                exploreAdapter = ExploreAdapter(
+                        listener = this,
+                        clickListener = this,
+                        mangaClickListener = OnListItemClickListener { manga, _ -> router.openDetails(manga) },
+                        isGlassyButtons = settings.isGlassyExploreButtons,
+                )
                 sourceSelectionController = ListSelectionController(
                         appCompatDelegate = checkNotNull(findAppCompatDelegate()),
                         decoration = SourceSelectionDecoration(binding.root.context),
