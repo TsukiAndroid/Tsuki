@@ -24,9 +24,6 @@ class CustomSourcesRepository @Inject constructor(
     val sources: StateFlow<List<CustomSource>> = _sources.asStateFlow()
 
     init {
-        // Register this singleton so the MangaSource(name) factory can resolve
-        // CUSTOM_<id> entries without a Hilt entry-point. Hilt creates one
-        // instance, so this assignment is safe.
         INSTANCE = this
     }
 
@@ -94,6 +91,50 @@ class CustomSourcesRepository @Inject constructor(
     fun getLastUrl(sourceId: Long): String? =
         prefs.getString("$KEY_LAST_URL_PREFIX$sourceId", null)
 
+    /**
+     * Serialises all current sources to a pretty-printed JSON string suitable
+     * for writing to a file. The format is a JSON array using the same keys as
+     * the internal SharedPreferences store, so it round-trips cleanly through
+     * [importJson].
+     */
+    fun exportJson(): String {
+        val array = JSONArray(_sources.value.map { it.toJson() })
+        return array.toString(2)
+    }
+
+    /**
+     * Parses a JSON string (previously produced by [exportJson] or compatible
+     * tools) and merges any sources not already present (matched by baseUrl,
+     * case-insensitive). Each imported source receives a fresh id to avoid
+     * collisions with local sources.
+     *
+     * @return the number of sources actually added (duplicates are skipped).
+     */
+    fun importJson(json: String): Int {
+        val array = JSONArray(json)
+        val existing = _sources.value
+        val existingUrls = existing.map { it.baseUrl.lowercase() }.toHashSet()
+        val toAdd = mutableListOf<CustomSource>()
+        val baseId = System.currentTimeMillis()
+        for (i in 0 until array.length()) {
+            try {
+                val cs = array.getJSONObject(i).toCustomSource()
+                if (cs.baseUrl.lowercase() !in existingUrls) {
+                    toAdd.add(cs.copy(id = baseId + i))
+                    existingUrls.add(cs.baseUrl.lowercase())
+                }
+            } catch (_: Exception) {
+                // skip malformed entries
+            }
+        }
+        if (toAdd.isNotEmpty()) {
+            val updated = existing + toAdd
+            saveAll(updated)
+            _sources.value = updated
+        }
+        return toAdd.size
+    }
+
     companion object {
         private const val PREFS_NAME = "tsuki_custom_sources"
         private const val KEY_SOURCES = "sources"
@@ -102,12 +143,6 @@ class CustomSourcesRepository @Inject constructor(
         @Volatile
         private var INSTANCE: CustomSourcesRepository? = null
 
-        /**
-         * Lookup hook used by [io.github.landwarderer.futon.core.model.MangaSource]'s
-         * factory function so it can resolve `CUSTOM_<id>` source names back to a
-         * fully-formed [CustomSource]. Returns `null` if the singleton has not
-         * been built yet (very early app startup) or the id is unknown.
-         */
         fun peekById(id: Long): CustomSource? = INSTANCE?.findById(id)
 
         fun peekAll(): List<CustomSource> = INSTANCE?.getAll().orEmpty()
