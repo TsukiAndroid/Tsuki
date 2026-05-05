@@ -1,3 +1,23 @@
+## Alpha-1.208 (Build #175)
+
+_2026-05-05 07:36 UTC_
+
+- feat(import-export): add exportJson() and importJson() to CustomSourcesRepository (61114d7)
+- fix: guard viewBinding in BrowserActivity.onStop to prevent crash when WebView unavailable (56c85a1)
+- fix: fixProtocol on String? receiver in GenkanHtmlParser (a8258a8)
+- fix: fixProtocol on String? receiver in MadaraHtmlParser (973cf99)
+- feat: open GENKAN sources as list view in CustomSourcesSettingsFragment (c51341c)
+- feat: add GENKAN URL hint in AddCustomSourceSheet (7549988)
+- feat: dispatch GENKAN type to GenkanHtmlParser in CustomMangaRepository (f274b80)
+- feat: add GENKAN enum to CustomSourceType (c5e2c7e)
+- feat: add Genkan scanlation CMS auto-parser (GenkanHtmlParser) (200b829)
+- feat: open MADARA sources as list view in CustomSourcesSettingsFragment (0f87d18)
+- feat: add MADARA URL hint in AddCustomSourceSheet (8b78d46)
+- feat: dispatch MADARA type to MadaraHtmlParser in CustomMangaRepository (f6a9ab4)
+- feat: add MADARA enum to CustomSourceType (f48ec7f)
+- feat: add WordPress Madara auto-parser (MadaraHtmlParser) (9ec6fb3)
+
+
 ## Alpha-1.205 (Build #173)
 
 _2026-05-05 07:12 UTC_
