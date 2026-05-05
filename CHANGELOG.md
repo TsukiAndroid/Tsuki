@@ -1,3 +1,11 @@
+## Alpha-1.189 (Build #159)
+
+_2026-05-05 05:31 UTC_
+
+- fix(explore): WebView custom sources now open BrowserActivity on tap (c77afa8)
+- remove: search bar blur effect only (keep transparent search bar toggle) (e90e4ff)
+
+
 ## Alpha-1.187 (Build #158)
 
 _2026-05-05 04:26 UTC_
