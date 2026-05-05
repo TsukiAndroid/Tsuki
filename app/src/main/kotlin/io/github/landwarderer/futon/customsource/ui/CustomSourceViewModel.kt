@@ -59,10 +59,15 @@ class CustomSourceViewModel @Inject constructor(
         _uiState.value = UiState.Idle
     }
 
+    /** Returns the current sources list as a pretty-printed JSON string. */
+    fun exportSourcesJson(): String = repository.exportJson()
+
     /**
-     * Accept input with or without scheme and add https:// when needed.
-     * Returns the cleaned URL or null if it isn't a recognisable web URL.
+     * Parses [json] and merges new sources into the repository.
+     * @return the number of sources actually added (duplicates by baseUrl are skipped).
      */
+    fun importSourcesJson(json: String): Int = repository.importJson(json)
+
     private fun normalizeUrl(raw: String): String? {
         var trimmed = raw.trim().trimEnd('/')
         if (trimmed.isEmpty()) return null
@@ -78,13 +83,6 @@ class CustomSourceViewModel @Inject constructor(
         URI(url).host?.removePrefix("www.")
     }.getOrNull()
 
-    /**
-     * Best-effort favicon resolver. Uses Google's favicon service because it
-     * abstracts away site-specific quirks (some sites only ship apple-touch
-     * icons or rely on rel=manifest), and falls back to /favicon.ico if the
-     * service is unreachable. Failures are silent — sources still work without
-     * an icon.
-     */
     private suspend fun fetchAndStoreFavicon(source: CustomSource) {
         val host = hostFromUrl(source.baseUrl) ?: return
         val candidate = withContext(Dispatchers.IO) {
