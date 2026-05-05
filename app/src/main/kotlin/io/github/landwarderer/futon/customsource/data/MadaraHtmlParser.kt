@@ -13,6 +13,7 @@ import org.koitharu.kotatsu.parsers.model.MangaChapter
 import org.koitharu.kotatsu.parsers.model.MangaListFilter
 import org.koitharu.kotatsu.parsers.model.MangaPage
 import org.koitharu.kotatsu.parsers.model.MangaState
+import org.koitharu.kotatsu.parsers.model.MangaTag
 import org.koitharu.kotatsu.parsers.model.SortOrder
 import java.util.concurrent.TimeUnit
 
@@ -38,11 +39,34 @@ class MadaraHtmlParser(
 
     fun getList(offset: Int, order: SortOrder?, filter: MangaListFilter?): List<Manga> {
         val query = filter?.query?.trim()
-        return if (!query.isNullOrBlank()) {
-            searchManga(query, offset)
-        } else {
-            latestManga(offset, order)
+        val tag = filter?.tags?.firstOrNull()
+        return when {
+            !query.isNullOrBlank() -> searchManga(query, offset)
+            tag != null -> browseByGenre(tag.key, offset, order)
+            else -> latestManga(offset, order)
         }
+    }
+
+    fun getGenres(): Set<MangaTag> {
+        val doc = runCatching { fetchDocument("$baseUrl/manga/") }.getOrNull() ?: return emptySet()
+        val tags = mutableSetOf<MangaTag>()
+        // Primary: checkbox genre inputs (data-value or value) + their labels
+        doc.select(".checkbox-manga-genre .checkbox, .manga-genres .checkbox, .c-checkbox-list .checkbox").forEach { el ->
+            val input = el.selectFirst("input") ?: return@forEach
+            val key = (input.attr("value").takeIf { it.isNotEmpty() }
+                ?: input.attr("data-value")).trim().ifEmpty { return@forEach }
+            val title = el.selectFirst("label")?.text()?.trim()?.ifEmpty { null } ?: key
+            tags += MangaTag(title = title, key = key, source = customSource)
+        }
+        if (tags.isNotEmpty()) return tags
+        // Fallback: genre hyperlinks in sidebar
+        doc.select("a[href*=manga-genre/], a[href*=/genre/]").forEach { a ->
+            val href = a.attr("href").trimEnd('/')
+            val key = href.substringAfterLast('/').takeIf { it.isNotEmpty() } ?: return@forEach
+            val title = a.text().trim().ifEmpty { return@forEach }
+            tags += MangaTag(title = title, key = key, source = customSource)
+        }
+        return tags
     }
 
     fun getDetails(manga: Manga): Manga {
@@ -136,6 +160,18 @@ class MadaraHtmlParser(
         val encoded = java.net.URLEncoder.encode(query, "UTF-8")
         val page = offset / PAGE_SIZE + 1
         val url = "$baseUrl/?s=$encoded&post_type=wp-manga&paged=$page"
+        return runCatching { parseMangaListPage(fetchDocument(url)) }.getOrElse { emptyList() }
+    }
+
+    private fun browseByGenre(genreKey: String, offset: Int, order: SortOrder?): List<Manga> {
+        val page = offset / PAGE_SIZE + 1
+        val orderParam = when (order) {
+            SortOrder.POPULARITY -> "trending"
+            SortOrder.RATING -> "rating"
+            SortOrder.NEWEST -> "new-manga"
+            else -> "latest"
+        }
+        val url = "$baseUrl/manga/?genre=$genreKey&m_orderby=$orderParam&paged=$page"
         return runCatching { parseMangaListPage(fetchDocument(url)) }.getOrElse { emptyList() }
     }
 

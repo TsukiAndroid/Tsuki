@@ -18,6 +18,12 @@ package io.github.landwarderer.futon.customsource.domain
       val type: CustomSourceType,
       val iconUrl: String? = null,
       val description: String? = null,
+      /**
+       * When [type] == [CustomSourceType.KOTATSU_PARSER], this holds the
+       * [MangaParserSource.name] of the matched built-in parser so the
+       * repository factory can look it up and route to [ParserMangaRepository].
+       */
+      val parserSourceName: String? = null,
       val createdAt: Long = System.currentTimeMillis(),
   ) : Parcelable {
       val displayName: String get() = name.ifBlank { baseUrl }
@@ -80,5 +86,13 @@ package io.github.landwarderer.futon.customsource.domain
 
       /** Any website opened in a WebView — user navigates manually (no parsing) */
       WEBVIEW("Web Browser (Manual)"),
+
+      /**
+       * A site matched to a built-in Kotatsu parser from kotatsu-parsers-redo.
+       * [CustomSource.parserSourceName] stores the [MangaParserSource.name] to
+       * look up. This gives the source full inbuilt-source quality: genre
+       * filters, chapter lists, page reader — everything the Kotatsu parser supports.
+       */
+      KOTATSU_PARSER("Built-in Parser (Auto-matched)"),
   }
   

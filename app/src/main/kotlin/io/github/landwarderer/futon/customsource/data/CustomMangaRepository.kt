@@ -46,13 +46,23 @@ package io.github.landwarderer.futon.customsource.data
 
       override var defaultSortOrder: SortOrder = SortOrder.UPDATED
 
-      override val filterCapabilities: MangaListFilterCapabilities =
-          MangaListFilterCapabilities(
-              isSearchSupported = true,
-              isSearchWithFiltersSupported = false,
-              isMultipleTagsSupported = false,
-              isTagsExclusionSupported = false,
-          )
+      override val filterCapabilities: MangaListFilterCapabilities
+          get() = when (customSource.source.type) {
+              CustomSourceType.MADARA,
+              CustomSourceType.MANGATHEMESIA,
+              CustomSourceType.MANGASTREAM -> MangaListFilterCapabilities(
+                  isSearchSupported = true,
+                  isSearchWithFiltersSupported = true,
+                  isMultipleTagsSupported = false,
+                  isTagsExclusionSupported = false,
+              )
+              else -> MangaListFilterCapabilities(
+                  isSearchSupported = true,
+                  isSearchWithFiltersSupported = false,
+                  isMultipleTagsSupported = false,
+                  isTagsExclusionSupported = false,
+              )
+          }
 
       // ── Parser instances (lazy, one per type) ─────────────────────────────────
 
@@ -133,8 +143,18 @@ package io.github.landwarderer.futon.customsource.data
 
       override suspend fun getPageUrl(page: MangaPage): String = page.url
 
-      override suspend fun getFilterOptions(): MangaListFilterOptions =
-          MangaListFilterOptions()
+      override suspend fun getFilterOptions(): MangaListFilterOptions = when (customSource.source.type) {
+          CustomSourceType.MADARA -> MangaListFilterOptions(
+              tags = runCatching { madaraParser.getGenres() }.getOrElse { emptySet() },
+          )
+          CustomSourceType.MANGATHEMESIA -> MangaListFilterOptions(
+              tags = runCatching { mangaThemesiaParser.getGenres() }.getOrElse { emptySet() },
+          )
+          CustomSourceType.MANGASTREAM -> MangaListFilterOptions(
+              tags = runCatching { mangaStreamParser.getGenres() }.getOrElse { emptySet() },
+          )
+          else -> MangaListFilterOptions()
+      }
 
       override suspend fun getRelated(seed: Manga): List<Manga> = emptyList()
 

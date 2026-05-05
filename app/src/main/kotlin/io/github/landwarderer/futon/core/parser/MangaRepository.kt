@@ -13,6 +13,7 @@ import io.github.landwarderer.futon.core.parser.external.ExternalMangaRepository
 import io.github.landwarderer.futon.core.parser.external.ExternalMangaSource
 import io.github.landwarderer.futon.customsource.data.CustomMangaRepository
 import io.github.landwarderer.futon.customsource.domain.CustomMangaSource
+import io.github.landwarderer.futon.customsource.domain.CustomSourceType
 import io.github.landwarderer.futon.local.data.LocalMangaRepository
 import io.github.landwarderer.futon.mihon.MihonExtensionManager
 import io.github.landwarderer.futon.mihon.MihonMangaRepository
@@ -117,9 +118,25 @@ interface MangaRepository {
                                 cache = contentCache,
                         )
 
-                        is CustomMangaSource -> CustomMangaRepository(
-                                customSource = source,
-                        )
+                        is CustomMangaSource -> {
+                                // If the source was auto-matched to a Kotatsu parser, route it to
+                                // ParserMangaRepository so it gets full inbuilt-source functionality
+                                // (genre filters, chapter lists, page reader, mirrors, etc.).
+                                if (source.source.type == CustomSourceType.KOTATSU_PARSER) {
+                                        val parserName = source.source.parserSourceName
+                                        val parserSource = parserName?.let { n ->
+                                                MangaParserSource.entries.find { it.name == n }
+                                        }
+                                        if (parserSource != null) {
+                                                return ParserMangaRepository(
+                                                        parser = loaderContext.newParserInstance(parserSource),
+                                                        cache = contentCache,
+                                                        mirrorSwitcher = mirrorSwitcher,
+                                                )
+                                        }
+                                }
+                                CustomMangaRepository(customSource = source)
+                        }
 
                         else -> {
                                 if (source.name.startsWith("mihon:") || source.name.startsWith("MIHON_")) {

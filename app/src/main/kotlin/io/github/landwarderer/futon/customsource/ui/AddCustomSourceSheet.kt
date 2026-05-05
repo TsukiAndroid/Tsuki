@@ -42,9 +42,10 @@ package io.github.landwarderer.futon.customsource.ui
           val btnAdd       = view.findViewById<MaterialButton>(R.id.btn_add_source)
           val btnCancel    = view.findViewById<MaterialButton>(R.id.btn_cancel)
 
-          // "Auto-detect" is first; then all parser types in enum order
+          // "Auto-detect" is first; KOTATSU_PARSER is set automatically and excluded from manual selection
           val autoDetectLabel = getString(R.string.auto_detect_label)
-          val typeLabels = listOf(autoDetectLabel) + CustomSourceType.entries.map { it.label }
+          val manualTypes = CustomSourceType.entries.filter { it != CustomSourceType.KOTATSU_PARSER }
+          val typeLabels = listOf(autoDetectLabel) + manualTypes.map { it.label }
           val adapter = ArrayAdapter(requireContext(), R.layout.item_dropdown_simple, typeLabels)
           typeDropdown.setAdapter(adapter)
           // Default: auto-detect — most users will never need to change this
@@ -55,7 +56,7 @@ package io.github.landwarderer.futon.customsource.ui
               if (position == 0) {
                   urlLayout.hint = getString(R.string.url_hint_auto_detect)
               } else {
-                  val selectedType = CustomSourceType.entries[position - 1]
+                  val selectedType = manualTypes[position - 1]
                   urlLayout.hint = hintForType(selectedType)
               }
           }
@@ -70,7 +71,7 @@ package io.github.landwarderer.futon.customsource.ui
               if (typeLabel == autoDetectLabel) {
                   viewModel.detectAndAddSource(name, url, desc)
               } else {
-                  val type = CustomSourceType.entries.find { it.label == typeLabel }
+                  val type = manualTypes.find { it.label == typeLabel }
                       ?: CustomSourceType.WEBVIEW
                   viewModel.addSource(name, url, type, desc)
               }

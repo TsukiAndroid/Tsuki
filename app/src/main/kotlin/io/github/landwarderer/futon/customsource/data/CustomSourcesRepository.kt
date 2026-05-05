@@ -68,9 +68,10 @@ class CustomSourcesRepository @Inject constructor(
         id = getLong("id"),
         name = getString("name"),
         baseUrl = getString("baseUrl"),
-        type = CustomSourceType.valueOf(getString("type")),
+        type = runCatching { CustomSourceType.valueOf(getString("type")) }.getOrElse { CustomSourceType.WEBVIEW },
         iconUrl = optString("iconUrl").takeIf { it.isNotEmpty() },
         description = optString("description").takeIf { it.isNotEmpty() },
+        parserSourceName = optString("parserSourceName").takeIf { it.isNotEmpty() },
         createdAt = optLong("createdAt", System.currentTimeMillis()),
     )
 
@@ -81,6 +82,7 @@ class CustomSourcesRepository @Inject constructor(
         put("type", type.name)
         put("iconUrl", iconUrl ?: "")
         put("description", description ?: "")
+        put("parserSourceName", parserSourceName ?: "")
         put("createdAt", createdAt)
     }
 

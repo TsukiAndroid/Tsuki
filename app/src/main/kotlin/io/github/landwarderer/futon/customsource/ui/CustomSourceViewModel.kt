@@ -10,6 +10,7 @@ package io.github.landwarderer.futon.customsource.ui
   import kotlinx.coroutines.flow.asStateFlow
   import kotlinx.coroutines.launch
   import kotlinx.coroutines.withContext
+  import io.github.landwarderer.futon.core.parser.KotatsuParserMatcher
   import io.github.landwarderer.futon.customsource.data.CmsTypeDetector
   import io.github.landwarderer.futon.customsource.data.CustomSourcesRepository
   import io.github.landwarderer.futon.customsource.domain.CustomSource
@@ -23,6 +24,7 @@ package io.github.landwarderer.futon.customsource.ui
   @HiltViewModel
   class CustomSourceViewModel @Inject constructor(
       private val repository: CustomSourcesRepository,
+      private val kotatsuParserMatcher: KotatsuParserMatcher,
   ) : ViewModel() {
 
       val sources: StateFlow<List<CustomSource>> = repository.sources
@@ -56,7 +58,14 @@ package io.github.landwarderer.futon.customsource.ui
 
       /**
        * Auto-detects the CMS type of [url] and saves a new source with that type.
-       * Emits [UiState.Detecting] while the network probe is in flight.
+       *
+       * Detection order:
+       *  1. Check [KotatsuParserMatcher] — if the domain matches a built-in parser,
+       *     save as [CustomSourceType.KOTATSU_PARSER] so the factory routes it to
+       *     [ParserMangaRepository] giving full inbuilt-source quality.
+       *  2. Fall back to [CmsTypeDetector] HTML fingerprinting.
+       *
+       * Emits [UiState.Detecting] while the probe is in flight.
        */
       fun detectAndAddSource(name: String, url: String, description: String) {
           viewModelScope.launch {
@@ -66,14 +75,28 @@ package io.github.landwarderer.futon.customsource.ui
                   return@launch
               }
               _uiState.value = UiState.Detecting
-              val detectedType = withContext(Dispatchers.IO) {
-                  runCatching { CmsTypeDetector.detect(normalized) }.getOrElse { CustomSourceType.WEBVIEW }
+
+              // Step 1: check if a Kotatsu parser already covers this domain
+              val matchedParser = withContext(Dispatchers.IO) {
+                  runCatching { kotatsuParserMatcher.findForUrl(normalized) }.getOrNull()
               }
+
+              val (detectedType, parserSourceName) = if (matchedParser != null) {
+                  CustomSourceType.KOTATSU_PARSER to matchedParser.name
+              } else {
+                  // Step 2: fall back to HTML fingerprinting
+                  val cms = withContext(Dispatchers.IO) {
+                      runCatching { CmsTypeDetector.detect(normalized) }.getOrElse { CustomSourceType.WEBVIEW }
+                  }
+                  cms to null
+              }
+
               val source = CustomSource(
                   id = CustomSourcesRepository.generateId(),
-                  name = name.trim().ifBlank { hostFromUrl(normalized) ?: normalized },
+                  name = name.trim().ifBlank { matchedParser?.title ?: hostFromUrl(normalized) ?: normalized },
                   baseUrl = normalized,
                   type = detectedType,
+                  parserSourceName = parserSourceName,
                   description = description.trim().takeIf { it.isNotEmpty() },
               )
               repository.add(source)

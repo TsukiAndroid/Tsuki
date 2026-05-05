@@ -13,8 +13,8 @@ package io.github.landwarderer.futon.customsource.data
    *
    * Detection priority:
    *  1. MangaSee / MangaLife  — vm.Directory or vm.Chapters JS globals
-   *  2. Guya reader           — /api/series/ returns JSON
-   *  3. MangaFire style       — manga-poster grid + chapter-images reader
+   *  2. MangaFire style       — MOVED UP: checked before Guya to prevent false-positives
+   *  3. Guya reader           — /api/series/ returns Guya-structured JSON (title+cover+chapters)
    *  4. MangaPark             — __NEXT_DATA__ + /browse path
    *  5. MangaThemesia         — ts_reader.run, .bsx container
    *  6. Madara                — wp-manga, WpMangaReader
@@ -38,15 +38,16 @@ package io.github.landwarderer.futon.customsource.data
               return CustomSourceType.MANGASEE
           }
 
-          // 2. Guya reader — JSON API endpoint
-          val guyaJson = fetchText("$clean/api/series/")
-          if (guyaJson != null && guyaJson.trimStart().startsWith("{")) {
-              return CustomSourceType.GUYA
+          // 2. MangaFire style — checked BEFORE Guya so mangafire.to is not falsely detected
+          // as Guya just because it happens to respond to /api/series/ with JSON.
+          if (isMangaFire(html, clean)) {
+              return CustomSourceType.MANGAFIRE
           }
 
-          // 3. MangaFire style — card grid + chapter image reader
-          if (html.contains("manga-poster") && (html.contains("chapter-images") || html.contains("ep-item"))) {
-              return CustomSourceType.MANGAFIRE
+          // 3. Guya reader — JSON API endpoint with Guya-specific structure.
+          // Requires at least title+cover or title+chapters keys to avoid false-positives.
+          if (isGuyaApi(clean)) {
+              return CustomSourceType.GUYA
           }
 
           // 4. MangaPark — Next.js __NEXT_DATA__ blob
@@ -107,6 +108,36 @@ package io.github.landwarderer.futon.customsource.data
 
       /** Human-readable display name shown in the detection toast. */
       fun displayName(type: CustomSourceType): String = type.label
+
+      // ── MangaFire fingerprint ─────────────────────────────────────────────────
+
+      private fun isMangaFire(html: String, baseUrl: String): Boolean {
+          // Strong self-identification
+          if (html.contains("mangafire", ignoreCase = true)) return true
+          // MangaFire card grid: .manga-poster covers + ep-item chapter rows or manga-list
+          if (html.contains("manga-poster") &&
+              (html.contains("chapter-images") || html.contains("ep-item") || html.contains("manga-list"))
+          ) return true
+          // Some MangaFire-style clones use .manga-poster + a filter/browse button
+          if (html.contains("manga-poster") && html.contains("btn-filter")) return true
+          return false
+      }
+
+      // ── Guya API fingerprint (specific, avoids false-positives) ──────────────
+
+      private fun isGuyaApi(baseUrl: String): Boolean {
+          val json = fetchText("$baseUrl/api/series/") ?: return false
+          val trimmed = json.trimStart()
+          // Must be a JSON object (not array)
+          if (!trimmed.startsWith("{")) return false
+          // Guya API root is a map of slug → series object containing title, cover, chapters
+          // Require at least 2 of 3 Guya-specific keys
+          val hasTitle = json.contains("\"title\"")
+          val hasCover = json.contains("\"cover\"")
+          val hasChapters = json.contains("\"chapters\"")
+          val score = (if (hasTitle) 1 else 0) + (if (hasCover) 1 else 0) + (if (hasChapters) 1 else 0)
+          return score >= 2
+      }
 
       private fun fetchText(url: String): String? = runCatching {
           val req = Request.Builder()

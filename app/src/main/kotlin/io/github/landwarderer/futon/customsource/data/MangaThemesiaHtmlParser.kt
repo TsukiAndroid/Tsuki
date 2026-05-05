@@ -12,6 +12,7 @@ import org.koitharu.kotatsu.parsers.model.MangaChapter
 import org.koitharu.kotatsu.parsers.model.MangaListFilter
 import org.koitharu.kotatsu.parsers.model.MangaPage
 import org.koitharu.kotatsu.parsers.model.MangaState
+import org.koitharu.kotatsu.parsers.model.MangaTag
 import org.koitharu.kotatsu.parsers.model.SortOrder
 import java.util.concurrent.TimeUnit
 
@@ -37,11 +38,33 @@ class MangaThemesiaHtmlParser(
 
     fun getList(offset: Int, order: SortOrder?, filter: MangaListFilter?): List<Manga> {
         val query = filter?.query?.trim()
-        return if (!query.isNullOrBlank()) {
-            searchManga(query, offset)
-        } else {
-            browseList(offset, order)
+        val tag = filter?.tags?.firstOrNull()
+        return when {
+            !query.isNullOrBlank() -> searchManga(query, offset)
+            tag != null -> browseByGenre(tag.key, offset, order)
+            else -> browseList(offset, order)
         }
+    }
+
+    fun getGenres(): Set<MangaTag> {
+        val doc = runCatching { fetchDocument("$baseUrl/manga/") }.getOrNull() ?: return emptySet()
+        val tags = mutableSetOf<MangaTag>()
+        // Primary: genre anchor links in sidebar/filter bar
+        doc.select("a[href*=/genre/], .genre-item a, .wp-genre a, .checkbox-genre a").forEach { a ->
+            val href = a.attr("href").trimEnd('/')
+            val key = href.substringAfterLast('/').takeIf { it.isNotEmpty() } ?: return@forEach
+            val title = a.text().trim().ifEmpty { return@forEach }
+            tags += MangaTag(title = title, key = key, source = customSource)
+        }
+        if (tags.isNotEmpty()) return tags
+        // Fallback: genre query param links
+        doc.select("a[href*=genre=]").forEach { a ->
+            val key = a.attr("href").substringAfter("genre=").substringBefore("&")
+                .ifEmpty { return@forEach }
+            val title = a.text().trim().ifEmpty { return@forEach }
+            tags += MangaTag(title = title, key = key, source = customSource)
+        }
+        return tags
     }
 
     fun getDetails(manga: Manga): Manga {
@@ -124,6 +147,18 @@ class MangaThemesiaHtmlParser(
             else                 -> "update"
         }
         val url = "$baseUrl/manga/?page=$page&order=$orderParam"
+        return runCatching { parseMangaListPage(fetchDocument(url)) }.getOrElse { emptyList() }
+    }
+
+    private fun browseByGenre(genreKey: String, offset: Int, order: SortOrder?): List<Manga> {
+        val page = offset / PAGE_SIZE + 1
+        val orderParam = when (order) {
+            SortOrder.POPULARITY -> "popular"
+            SortOrder.RATING     -> "rating"
+            SortOrder.NEWEST     -> "latest"
+            else                 -> "update"
+        }
+        val url = "$baseUrl/manga/?genre=$genreKey&page=$page&order=$orderParam"
         return runCatching { parseMangaListPage(fetchDocument(url)) }.getOrElse { emptyList() }
     }
 
