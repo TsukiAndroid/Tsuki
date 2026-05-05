@@ -30,6 +30,9 @@ package io.github.landwarderer.futon.customsource.ui
       private val _uiState = MutableStateFlow<UiState>(UiState.Idle)
       val uiState: StateFlow<UiState> = _uiState.asStateFlow()
 
+      /** Look up a saved source by its id (used to pre-fill the edit sheet). */
+      fun findById(id: Long): CustomSource? = repository.findById(id)
+
       /** Add a source with an already-known [type]. */
       fun addSource(name: String, url: String, type: CustomSourceType, description: String) {
           viewModelScope.launch {
@@ -52,11 +55,8 @@ package io.github.landwarderer.futon.customsource.ui
       }
 
       /**
-       * Auto-detects the CMS type of [url] by fetching and inspecting the page,
-       * then saves the source with the detected type.
-       *
-       * Emits [UiState.Detecting] while the network call is in progress so the UI
-       * can show a spinner and disable the Add button.
+       * Auto-detects the CMS type of [url] and saves a new source with that type.
+       * Emits [UiState.Detecting] while the network probe is in flight.
        */
       fun detectAndAddSource(name: String, url: String, description: String) {
           viewModelScope.launch {
@@ -66,12 +66,9 @@ package io.github.landwarderer.futon.customsource.ui
                   return@launch
               }
               _uiState.value = UiState.Detecting
-
               val detectedType = withContext(Dispatchers.IO) {
-                  runCatching { CmsTypeDetector.detect(normalized) }
-                      .getOrElse { CustomSourceType.WEBVIEW }
+                  runCatching { CmsTypeDetector.detect(normalized) }.getOrElse { CustomSourceType.WEBVIEW }
               }
-
               val source = CustomSource(
                   id = CustomSourcesRepository.generateId(),
                   name = name.trim().ifBlank { hostFromUrl(normalized) ?: normalized },
@@ -82,6 +79,62 @@ package io.github.landwarderer.futon.customsource.ui
               repository.add(source)
               _uiState.value = UiState.SourceAdded(source, detectedType)
               fetchAndStoreFavicon(source)
+          }
+      }
+
+      /**
+       * Save edits to an existing source.
+       * Preserves [createdAt] and [iconUrl]; re-fetches the favicon if the URL changed.
+       */
+      fun updateSource(
+          id: Long,
+          name: String,
+          url: String,
+          type: CustomSourceType,
+          description: String,
+      ) {
+          viewModelScope.launch {
+              val existing = repository.findById(id) ?: run {
+                  _uiState.value = UiState.Error("Source not found")
+                  return@launch
+              }
+              val normalized = normalizeUrl(url)
+              if (normalized == null) {
+                  _uiState.value = UiState.Error("Please enter a valid website URL (e.g. example.com)")
+                  return@launch
+              }
+              val updated = existing.copy(
+                  name = name.trim().ifBlank { hostFromUrl(normalized) ?: normalized },
+                  baseUrl = normalized,
+                  type = type,
+                  description = description.trim().takeIf { it.isNotEmpty() },
+              )
+              repository.update(updated)
+              _uiState.value = UiState.SourceUpdated(updated)
+              // Refresh favicon only when the URL changed
+              if (normalized != existing.baseUrl) fetchAndStoreFavicon(updated)
+          }
+      }
+
+      /**
+       * Probes [url] in the background and calls [onDetected] on the main thread
+       * with the result. Emits [UiState.Detecting] while the probe runs.
+       * Used by the edit sheet's "Re-detect" button so the dropdown updates without
+       * saving the source yet.
+       */
+      fun redetectType(sourceId: Long, url: String, onDetected: (CustomSourceType) -> Unit) {
+          viewModelScope.launch {
+              val normalized = normalizeUrl(url)
+              if (normalized == null) {
+                  _uiState.value = UiState.Error("Please enter a valid website URL (e.g. example.com)")
+                  return@launch
+              }
+              _uiState.value = UiState.Detecting
+              val detected = withContext(Dispatchers.IO) {
+                  runCatching { CmsTypeDetector.detect(normalized) }.getOrElse { CustomSourceType.WEBVIEW }
+              }
+              _uiState.value = UiState.Idle
+              onDetected(detected)
           }
       }
 
@@ -135,6 +188,7 @@ package io.github.landwarderer.futon.customsource.ui
           object Detecting : UiState()
           data class Error(val message: String) : UiState()
           data class SourceAdded(val source: CustomSource, val detectedType: CustomSourceType? = null) : UiState()
+          data class SourceUpdated(val source: CustomSource, val detectedType: CustomSourceType? = null) : UiState()
       }
 
       companion object {

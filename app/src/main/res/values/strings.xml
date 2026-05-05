@@ -1003,4 +1003,9 @@
       <string name="detecting_label">Detecting…</string>
       <string name="add_source_label">Add source</string>
     <string name="detected_as_toast">Detected as: %s</string>
+    <string name="edit_custom_source">Edit source</string>
+      <string name="edit_source_desc">Edit source</string>
+      <string name="save_changes_label">Save changes</string>
+      <string name="redetect_type_label">Re-detect type from URL</string>
+      <string name="source_updated">Source updated</string>
 </resources>

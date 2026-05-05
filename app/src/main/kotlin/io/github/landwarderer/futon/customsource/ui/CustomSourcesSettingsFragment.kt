@@ -34,8 +34,8 @@ package io.github.landwarderer.futon.customsource.ui
 
   /**
    * Manage user-added custom sources. Shows the saved list, lets the user open
-   * one in the in-app browser (WebView) or manga list view, remove entries, and
-   * import/export the full list as a JSON file.
+   * one in the in-app browser (WebView) or manga list view, edit, remove entries,
+   * and import/export the full list as a JSON file.
    */
   @AndroidEntryPoint
   class CustomSourcesSettingsFragment : Fragment() {
@@ -154,6 +154,7 @@ package io.github.landwarderer.futon.customsource.ui
           recyclerView?.adapter = CustomSourcesAdapter(
               sources = sources,
               onOpen = ::openSource,
+              onEdit = ::openEditSheet,
               onDelete = ::confirmDelete,
           )
       }
@@ -161,15 +162,12 @@ package io.github.landwarderer.futon.customsource.ui
       private fun openSource(source: CustomSource) {
           val ctx = context ?: return
           val intent = when (source.type) {
-              // Web browser — user navigates manually
               CustomSourceType.WEBVIEW -> AppRouter.browserIntent(
                   context = ctx,
                   url = source.cleanBaseUrl,
                   source = null,
                   title = source.displayName,
               )
-              // All parser-backed types open the in-app manga list.
-              // else branch means new CustomSourceType values never break build.
               else -> AppRouter.listIntent(
                   context = ctx,
                   source = CustomMangaSource(source),
@@ -178,6 +176,11 @@ package io.github.landwarderer.futon.customsource.ui
               )
           }
           startActivity(intent)
+      }
+
+      private fun openEditSheet(source: CustomSource) {
+          EditCustomSourceSheet.newInstance(source.id)
+              .show(childFragmentManager, EditCustomSourceSheet.TAG)
       }
 
       private fun confirmDelete(source: CustomSource) {
@@ -192,6 +195,7 @@ package io.github.landwarderer.futon.customsource.ui
       private class CustomSourcesAdapter(
           private val sources: List<CustomSource>,
           private val onOpen: (CustomSource) -> Unit,
+          private val onEdit: (CustomSource) -> Unit,
           private val onDelete: (CustomSource) -> Unit,
       ) : RecyclerView.Adapter<CustomSourcesAdapter.VH>() {
 
@@ -202,30 +206,33 @@ package io.github.landwarderer.futon.customsource.ui
           }
 
           override fun onBindViewHolder(holder: VH, position: Int) {
-              holder.bind(sources[position], onOpen, onDelete)
+              holder.bind(sources[position], onOpen, onEdit, onDelete)
           }
 
           override fun getItemCount(): Int = sources.size
 
           class VH(view: View) : RecyclerView.ViewHolder(view) {
               private val container: LinearLayout = view.findViewById(R.id.row_root)
-              private val titleView: TextView = view.findViewById(R.id.text_source_title)
-              private val urlView: TextView = view.findViewById(R.id.text_source_url)
-              private val typeView: TextView = view.findViewById(R.id.text_source_type)
-              private val descView: TextView = view.findViewById(R.id.text_source_desc)
+              private val titleView: TextView     = view.findViewById(R.id.text_source_title)
+              private val urlView: TextView       = view.findViewById(R.id.text_source_url)
+              private val typeView: TextView      = view.findViewById(R.id.text_source_type)
+              private val descView: TextView      = view.findViewById(R.id.text_source_desc)
+              private val editBtn: MaterialButton = view.findViewById(R.id.btn_edit_source)
               private val deleteBtn: MaterialButton = view.findViewById(R.id.btn_delete_source)
 
               fun bind(
                   source: CustomSource,
                   onOpen: (CustomSource) -> Unit,
+                  onEdit: (CustomSource) -> Unit,
                   onDelete: (CustomSource) -> Unit,
               ) {
                   titleView.text = source.displayName
-                  urlView.text = source.cleanBaseUrl
-                  typeView.text = source.type.label
-                  descView.text = source.description.orEmpty()
+                  urlView.text   = source.cleanBaseUrl
+                  typeView.text  = source.type.label
+                  descView.text  = source.description.orEmpty()
                   descView.isVisible = !source.description.isNullOrBlank()
                   container.setOnClickListener { onOpen(source) }
+                  editBtn.setOnClickListener   { onEdit(source) }
                   deleteBtn.setOnClickListener { onDelete(source) }
               }
           }
