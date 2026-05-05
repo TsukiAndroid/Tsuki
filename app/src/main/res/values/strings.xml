@@ -990,4 +990,12 @@
     <string name="blur_skip_idle">Skip blur when idle</string>
     <string name="blur_skip_idle_summary">Detect when the content behind the bar has not changed and skip re-rendering entirely. Saves significant CPU when reading or browsing without scrolling — zero visual impact.</string>
 
+
+    <string name="action_export_sources">Export sources</string>
+    <string name="action_import_sources">Import sources</string>
+    <string name="sources_exported">%d sources exported</string>
+    <string name="sources_imported">%d new sources imported</string>
+    <string name="no_sources_imported">All sources already exist — nothing new was imported</string>
+    <string name="export_failed">Export failed</string>
+    <string name="import_failed">Import failed — invalid file format</string>
 </resources>
