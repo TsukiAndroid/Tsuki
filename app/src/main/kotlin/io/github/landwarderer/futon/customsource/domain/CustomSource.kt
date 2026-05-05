@@ -8,6 +8,7 @@ import kotlinx.parcelize.Parcelize
  * Supports:
  *  - MangaDex-compatible REST APIs (type = MANGADEX_COMPATIBLE)
  *  - WordPress Madara theme sites (type = MADARA) — auto-parsed like built-in sources
+ *  - Genkan scanlation CMS sites (type = GENKAN) — auto-parsed like built-in sources
  *  - Generic websites opened in a WebView browser (type = WEBVIEW)
  */
 @Parcelize
@@ -38,6 +39,13 @@ enum class CustomSourceType(val label: String) {
      * like any built-in source, with no manual selector configuration required.
      */
     MADARA("WordPress Madara (Auto)"),
+
+    /**
+     * Sites built on the Genkan open-source scanlation CMS
+     * (https://github.com/OneTwoTree/Genkan), widely used by scanlation groups.
+     * Fully auto-parsed — shows manga list, chapters and pages inside the app.
+     */
+    GENKAN("Genkan / Scanlator CMS"),
 
     /** Any website opened inside a WebView — user navigates manually */
     WEBVIEW("Web Browser"),
