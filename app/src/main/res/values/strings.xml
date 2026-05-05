@@ -998,4 +998,8 @@
     <string name="no_sources_imported">All sources already exist — nothing new was imported</string>
     <string name="export_failed">Export failed</string>
     <string name="import_failed">Import failed — invalid file format</string>
+    <string name="auto_detect_label">Auto-detect (Recommended)</string>
+      <string name="url_hint_auto_detect">Site URL — type will be detected automatically</string>
+      <string name="detecting_label">Detecting…</string>
+      <string name="add_source_label">Add source</string>
 </resources>
