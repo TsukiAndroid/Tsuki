@@ -1,3 +1,14 @@
+## Alpha-1.225 (Build #188)
+
+_2026-05-05 17:24 UTC_
+
+- fix: resolve 7 compile errors + expand fingerprint probes to 17 CMS families (f1efbc0)
+- fix: source name always from user input; add Madara fingerprint probe (1c810e6)
+- feat: API fingerprinting + domain override for truly new Kotatsu-compatible sites (c91b7d4)
+- feat: Kotatsu parser auto-match + genre filters for Madara/Themesia/MangaStream (4722e7c)
+- feat(custom-sources): Edit Source screen (997a0c0)
+
+
 ## Alpha-1.220 (Build #184)
 
 _2026-05-05 12:34 UTC_
