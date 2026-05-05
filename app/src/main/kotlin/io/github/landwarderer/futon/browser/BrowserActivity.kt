@@ -16,76 +16,108 @@ import io.github.landwarderer.futon.core.nav.router
 import io.github.landwarderer.futon.core.parser.ParserMangaRepository
 import io.github.landwarderer.futon.core.util.ext.getDisplayMessage
 import io.github.landwarderer.futon.core.util.ext.printStackTraceDebug
+import io.github.landwarderer.futon.customsource.data.CustomSourcesRepository
+import io.github.landwarderer.futon.customsource.domain.CustomMangaSource
 import org.koitharu.kotatsu.parsers.model.MangaSource
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class BrowserActivity : BaseBrowserActivity() {
 
-	override fun onCreate2(savedInstanceState: Bundle?, source: MangaSource, repository: ParserMangaRepository?) {
-		setDisplayHomeAsUp(isEnabled = true, showUpAsClose = true)
-		viewBinding.webView.webViewClient = BrowserClient(this, adBlock)
-		lifecycleScope.launch {
-			try {
-				proxyProvider.applyWebViewConfig()
-			} catch (e: Exception) {
-				e.printStackTraceDebug("BrowserActivity::onCreate2")
-				Snackbar.make(viewBinding.webView, e.getDisplayMessage(resources), Snackbar.LENGTH_LONG).show()
-			}
-			if (savedInstanceState == null) {
-				val url = intent?.dataString
-				if (url.isNullOrEmpty()) {
-					finishAfterTransition()
-				} else {
-					onTitleChanged(
-						intent?.getStringExtra(AppRouter.KEY_TITLE) ?: getString(R.string.loading_),
-						url,
-					)
-					viewBinding.webView.loadUrl(url)
-				}
-			}
-		}
-	}
+        @Inject
+        lateinit var customSourcesRepository: CustomSourcesRepository
 
-	override fun onCreateOptionsMenu(menu: Menu): Boolean {
-		super.onCreateOptionsMenu(menu)
-		menuInflater.inflate(R.menu.opt_browser, menu)
-		return true
-	}
+        private var customSourceId: Long? = null
 
-	override fun onOptionsItemSelected(item: MenuItem): Boolean = when (item.itemId) {
-		android.R.id.home -> {
-			viewBinding.webView.stopLoading()
-			finishAfterTransition()
-			true
-		}
+        override fun onCreate2(savedInstanceState: Bundle?, source: MangaSource, repository: ParserMangaRepository?) {
+                setDisplayHomeAsUp(isEnabled = true, showUpAsClose = true)
+                viewBinding.webView.webViewClient = BrowserClient(this, adBlock)
 
-		R.id.action_browser -> {
-			if (!router.openExternalBrowser(viewBinding.webView.url.orEmpty(), item.title)) {
-				Snackbar.make(viewBinding.webView, R.string.operation_not_supported, Snackbar.LENGTH_SHORT).show()
-			}
-			true
-		}
+                customSourceId = intent?.getStringExtra(AppRouter.KEY_SOURCE)
+                        ?.let { CustomMangaSource.extractId(it) }
 
-		else -> super.onOptionsItemSelected(item)
-	}
+                lifecycleScope.launch {
+                        try {
+                                proxyProvider.applyWebViewConfig()
+                        } catch (e: Exception) {
+                                e.printStackTraceDebug("BrowserActivity::onCreate2")
+                                Snackbar.make(viewBinding.webView, e.getDisplayMessage(resources), Snackbar.LENGTH_LONG).show()
+                        }
+                        if (savedInstanceState == null) {
+                                val baseUrl = intent?.dataString
+                                if (baseUrl.isNullOrEmpty()) {
+                                        finishAfterTransition()
+                                } else {
+                                        val resumeUrl = customSourceId
+                                                ?.let { customSourcesRepository.getLastUrl(it) }
+                                                ?.takeIf { it.isNotEmpty() }
+                                                ?: baseUrl
+                                        onTitleChanged(
+                                                intent?.getStringExtra(AppRouter.KEY_TITLE) ?: getString(R.string.loading_),
+                                                resumeUrl,
+                                        )
+                                        viewBinding.webView.loadUrl(resumeUrl)
+                                }
+                        }
+                }
+        }
 
-	class Contract : ActivityResultContract<InteractiveActionRequiredException, Unit>() {
-		override fun createIntent(
-			context: Context,
-			input: InteractiveActionRequiredException
-		): Intent = AppRouter.browserIntent(
-			context = context,
-			url = input.url,
-			source = input.source,
-			title = null,
-		)
+        override fun onTitleChanged(title: CharSequence, subtitle: CharSequence?) {
+                super.onTitleChanged(title, subtitle)
+                val url = subtitle?.toString()
+                if (!url.isNullOrEmpty()) {
+                        customSourceId?.let { customSourcesRepository.saveLastUrl(it, url) }
+                }
+        }
 
-		override fun parseResult(resultCode: Int, intent: Intent?): Unit = Unit
-	}
+        override fun onStop() {
+                val currentUrl = viewBinding.webView.url
+                if (!currentUrl.isNullOrEmpty()) {
+                        customSourceId?.let { customSourcesRepository.saveLastUrl(it, currentUrl) }
+                }
+                super.onStop()
+        }
 
-	companion object {
+        override fun onCreateOptionsMenu(menu: Menu): Boolean {
+                super.onCreateOptionsMenu(menu)
+                menuInflater.inflate(R.menu.opt_browser, menu)
+                return true
+        }
 
-		const val TAG = "BrowserActivity"
-	}
+        override fun onOptionsItemSelected(item: MenuItem): Boolean = when (item.itemId) {
+                android.R.id.home -> {
+                        viewBinding.webView.stopLoading()
+                        finishAfterTransition()
+                        true
+                }
+
+                R.id.action_browser -> {
+                        if (!router.openExternalBrowser(viewBinding.webView.url.orEmpty(), item.title)) {
+                                Snackbar.make(viewBinding.webView, R.string.operation_not_supported, Snackbar.LENGTH_SHORT).show()
+                        }
+                        true
+                }
+
+                else -> super.onOptionsItemSelected(item)
+        }
+
+        class Contract : ActivityResultContract<InteractiveActionRequiredException, Unit>() {
+                override fun createIntent(
+                        context: Context,
+                        input: InteractiveActionRequiredException
+                ): Intent = AppRouter.browserIntent(
+                        context = context,
+                        url = input.url,
+                        source = input.source,
+                        title = null,
+                )
+
+                override fun parseResult(resultCode: Int, intent: Intent?): Unit = Unit
+        }
+
+        companion object {
+
+                const val TAG = "BrowserActivity"
+        }
 }
