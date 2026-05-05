@@ -23,18 +23,23 @@ import java.util.concurrent.TimeUnit
 /**
  * MangaRepository implementation backed by user-defined [CustomSource]s.
  *
- * Four modes:
- *  - [CustomSourceType.MANGADEX_COMPATIBLE]: real REST calls against the
- *    MangaDex v5 API (or any compatible host) to surface manga inside the app.
- *  - [CustomSourceType.MADARA]: full HTML scraper for WordPress Madara-based
- *    sites — shows manga list, chapters and pages exactly like a built-in source.
- *  - [CustomSourceType.GENKAN]: full HTML scraper for Genkan scanlation CMS
- *    sites — shows manga list, chapters and pages exactly like a built-in source.
- *  - [CustomSourceType.WEBVIEW]: returns no list (the source only acts as a
- *    bookmarked entry), letting the user browse it via the in-app browser.
+ * Supported parser types:
+ *  - [CustomSourceType.MANGADEX_COMPATIBLE]: REST calls against the MangaDex v5 API
+ *    (or any compatible host) to surface manga inside the app.
+ *  - [CustomSourceType.MADARA]: HTML scraper for WordPress Madara-based sites.
+ *  - [CustomSourceType.MANGATHEMESIA]: HTML scraper for WordPress MangaThemesia sites
+ *    (Reaper Scans, Asura Scans, etc.).
+ *  - [CustomSourceType.MANGASTREAM]: HTML scraper for WPMangaStream sites
+ *    (Toonily, Manhwa18, Komikindo, etc.).
+ *  - [CustomSourceType.GENKAN]: HTML scraper for Genkan scanlation CMS sites.
+ *  - [CustomSourceType.FOOLSLIDE2]: HTML scraper for FoolSlide2 scanlation CMS sites.
+ *  - [CustomSourceType.MANGANELO]: HTML scraper for MangaKakalot/Manganelo-style sites.
+ *  - [CustomSourceType.ZEROSCANS_API]: JSON REST API scraper for Zeroscans-style sites.
+ *  - [CustomSourceType.LHTRANSLATION]: HTML scraper for MangaDNA/LHTranslation-style sites.
+ *  - [CustomSourceType.WEBVIEW]: Returns no list — the user browses via in-app browser.
  *
- * Designed to fail soft: any HTTP / parsing error returns an empty list so
- * the source still renders in the Sources tab without crashing the app.
+ * Designed to fail soft: any HTTP/parsing error returns an empty list so the
+ * source still renders in the Sources tab without crashing the app.
  */
 class CustomMangaRepository(
     private val customSource: CustomMangaSource,
@@ -60,8 +65,18 @@ class CustomMangaRepository(
             isTagsExclusionSupported = false,
         )
 
+    // ── Parser instances (lazy, one per type) ─────────────────────────────────
+
     private val madaraParser: MadaraHtmlParser by lazy { MadaraHtmlParser(customSource) }
+    private val mangaThemesiaParser: MangaThemesiaHtmlParser by lazy { MangaThemesiaHtmlParser(customSource) }
+    private val mangaStreamParser: MangaStreamHtmlParser by lazy { MangaStreamHtmlParser(customSource) }
     private val genkanParser: GenkanHtmlParser by lazy { GenkanHtmlParser(customSource) }
+    private val foolSlide2Parser: FoolSlide2HtmlParser by lazy { FoolSlide2HtmlParser(customSource) }
+    private val manganeloParser: ManganeloHtmlParser by lazy { ManganeloHtmlParser(customSource) }
+    private val zeroscansParser: ZeroscansParser by lazy { ZeroscansParser(customSource) }
+    private val lhTranslationParser: LightNovelPubHtmlParser by lazy { LightNovelPubHtmlParser(customSource) }
+
+    // ── MangaRepository implementation ────────────────────────────────────────
 
     override suspend fun getList(
         offset: Int,
@@ -71,12 +86,39 @@ class CustomMangaRepository(
         val cs = customSource.source
         return when (cs.type) {
             CustomSourceType.WEBVIEW -> emptyList()
+
             CustomSourceType.MADARA -> runCatching {
                 madaraParser.getList(offset, order, filter)
             }.getOrElse { emptyList() }
+
+            CustomSourceType.MANGATHEMESIA -> runCatching {
+                mangaThemesiaParser.getList(offset, order, filter)
+            }.getOrElse { emptyList() }
+
+            CustomSourceType.MANGASTREAM -> runCatching {
+                mangaStreamParser.getList(offset, order, filter)
+            }.getOrElse { emptyList() }
+
             CustomSourceType.GENKAN -> runCatching {
                 genkanParser.getList(offset, order, filter)
             }.getOrElse { emptyList() }
+
+            CustomSourceType.FOOLSLIDE2 -> runCatching {
+                foolSlide2Parser.getList(offset, order, filter)
+            }.getOrElse { emptyList() }
+
+            CustomSourceType.MANGANELO -> runCatching {
+                manganeloParser.getList(offset, order, filter)
+            }.getOrElse { emptyList() }
+
+            CustomSourceType.ZEROSCANS_API -> runCatching {
+                zeroscansParser.getList(offset, order, filter)
+            }.getOrElse { emptyList() }
+
+            CustomSourceType.LHTRANSLATION -> runCatching {
+                lhTranslationParser.getList(offset, order, filter)
+            }.getOrElse { emptyList() }
+
             CustomSourceType.MANGADEX_COMPATIBLE -> runCatching {
                 fetchMangaDexList(cs, offset, order, filter)
             }.getOrElse { emptyList() }
@@ -86,7 +128,13 @@ class CustomMangaRepository(
     override suspend fun getDetails(manga: Manga): Manga {
         return when (customSource.source.type) {
             CustomSourceType.MADARA -> runCatching { madaraParser.getDetails(manga) }.getOrElse { manga }
+            CustomSourceType.MANGATHEMESIA -> runCatching { mangaThemesiaParser.getDetails(manga) }.getOrElse { manga }
+            CustomSourceType.MANGASTREAM -> runCatching { mangaStreamParser.getDetails(manga) }.getOrElse { manga }
             CustomSourceType.GENKAN -> runCatching { genkanParser.getDetails(manga) }.getOrElse { manga }
+            CustomSourceType.FOOLSLIDE2 -> runCatching { foolSlide2Parser.getDetails(manga) }.getOrElse { manga }
+            CustomSourceType.MANGANELO -> runCatching { manganeloParser.getDetails(manga) }.getOrElse { manga }
+            CustomSourceType.ZEROSCANS_API -> runCatching { zeroscansParser.getDetails(manga) }.getOrElse { manga }
+            CustomSourceType.LHTRANSLATION -> runCatching { lhTranslationParser.getDetails(manga) }.getOrElse { manga }
             else -> manga
         }
     }
@@ -94,7 +142,13 @@ class CustomMangaRepository(
     override suspend fun getPages(chapter: MangaChapter): List<MangaPage> {
         return when (customSource.source.type) {
             CustomSourceType.MADARA -> runCatching { madaraParser.getPages(chapter) }.getOrElse { emptyList() }
+            CustomSourceType.MANGATHEMESIA -> runCatching { mangaThemesiaParser.getPages(chapter) }.getOrElse { emptyList() }
+            CustomSourceType.MANGASTREAM -> runCatching { mangaStreamParser.getPages(chapter) }.getOrElse { emptyList() }
             CustomSourceType.GENKAN -> runCatching { genkanParser.getPages(chapter) }.getOrElse { emptyList() }
+            CustomSourceType.FOOLSLIDE2 -> runCatching { foolSlide2Parser.getPages(chapter) }.getOrElse { emptyList() }
+            CustomSourceType.MANGANELO -> runCatching { manganeloParser.getPages(chapter) }.getOrElse { emptyList() }
+            CustomSourceType.ZEROSCANS_API -> runCatching { zeroscansParser.getPages(chapter) }.getOrElse { emptyList() }
+            CustomSourceType.LHTRANSLATION -> runCatching { lhTranslationParser.getPages(chapter) }.getOrElse { emptyList() }
             else -> emptyList()
         }
     }
@@ -106,6 +160,8 @@ class CustomMangaRepository(
 
     override suspend fun getRelated(seed: Manga): List<Manga> = emptyList()
 
+    // ── MangaDex-compatible REST backend ──────────────────────────────────────
+
     private fun fetchMangaDexList(
         cs: CustomSource,
         offset: Int,
@@ -116,10 +172,10 @@ class CustomMangaRepository(
         val limit = PAGE_SIZE
         val orderParam = when (order) {
             SortOrder.POPULARITY -> "order[followedCount]=desc"
-            SortOrder.NEWEST -> "order[createdAt]=desc"
-            SortOrder.RATING -> "order[rating]=desc"
-            SortOrder.RELEVANCE -> "order[relevance]=desc"
-            else -> "order[updatedAt]=desc"
+            SortOrder.NEWEST     -> "order[createdAt]=desc"
+            SortOrder.RATING     -> "order[rating]=desc"
+            SortOrder.RELEVANCE  -> "order[relevance]=desc"
+            else                 -> "order[updatedAt]=desc"
         }
         val query = filter?.query?.takeIf { it.isNotBlank() }?.let {
             "&title=${java.net.URLEncoder.encode(it, "UTF-8")}"
@@ -153,19 +209,18 @@ class CustomMangaRepository(
             val description = pickLocalisedString(descObj)
             val statusStr = attrs.optString("status")
             val state = when (statusStr) {
-                "completed" -> MangaState.FINISHED
-                "hiatus" -> MangaState.PAUSED
-                "cancelled" -> MangaState.ABANDONED
-                else -> MangaState.ONGOING
+                "completed"  -> MangaState.FINISHED
+                "hiatus"     -> MangaState.PAUSED
+                "cancelled"  -> MangaState.ABANDONED
+                else         -> MangaState.ONGOING
             }
             val contentRatingStr = attrs.optString("contentRating")
             val rating = when (contentRatingStr) {
-                "safe" -> ContentRating.SAFE
+                "safe"       -> ContentRating.SAFE
                 "suggestive" -> ContentRating.SUGGESTIVE
-                else -> ContentRating.ADULT
+                else         -> ContentRating.ADULT
             }
 
-            // Extract cover filename from relationships
             val rels = node.optJSONArray("relationships")
             var coverFile: String? = null
             if (rels != null) {
@@ -205,7 +260,6 @@ class CustomMangaRepository(
     private fun pickLocalisedString(obj: JSONObject?): String? {
         if (obj == null) return null
         val keys = obj.keys()
-        // Prefer English then any
         var fallback: String? = null
         while (keys.hasNext()) {
             val k = keys.next()
@@ -221,8 +275,6 @@ class CustomMangaRepository(
         private const val PAGE_SIZE = 30
         private const val USER_AGENT = "Tsuki/1.0 (Android)"
 
-        // Lightweight client; keep separate from the app's main pool so a flaky
-        // custom site can't starve real source requests.
         private val httpClient: OkHttpClient by lazy {
             OkHttpClient.Builder()
                 .connectTimeout(15, TimeUnit.SECONDS)

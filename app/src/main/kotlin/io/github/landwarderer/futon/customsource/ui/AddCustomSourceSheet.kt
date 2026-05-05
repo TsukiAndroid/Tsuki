@@ -47,12 +47,7 @@ class AddCustomSourceSheet : BottomSheetDialogFragment() {
 
         typeDropdown.setOnItemClickListener { _, _, position, _ ->
             val selectedType = CustomSourceType.entries[position]
-            urlLayout.hint = when (selectedType) {
-                CustomSourceType.MANGADEX_COMPATIBLE -> "API base URL (e.g. https://api.mangadex.org)"
-                CustomSourceType.MADARA -> "Site base URL (e.g. https://mangakakalot.com)"
-                CustomSourceType.GENKAN -> "Site base URL (e.g. https://leviatanscans.com)"
-                CustomSourceType.WEBVIEW -> "Website URL (e.g. https://example.com)"
-            }
+            urlLayout.hint = hintForType(selectedType)
         }
 
         btnAdd.setOnClickListener {
@@ -84,6 +79,29 @@ class AddCustomSourceSheet : BottomSheetDialogFragment() {
                 }
             }
         }
+    }
+
+    private fun hintForType(type: CustomSourceType): String = when (type) {
+        CustomSourceType.MANGADEX_COMPATIBLE ->
+            "API base URL (e.g. https://api.mangadex.org)"
+        CustomSourceType.MADARA ->
+            "Site base URL — WordPress Madara theme (e.g. https://mangakakalot.com)"
+        CustomSourceType.MANGATHEMESIA ->
+            "Site base URL — MangaThemesia theme (e.g. https://reaperscans.com)"
+        CustomSourceType.MANGASTREAM ->
+            "Site base URL — MangaStream/WPManga theme (e.g. https://toonily.com)"
+        CustomSourceType.GENKAN ->
+            "Site base URL — Genkan CMS (e.g. https://leviatanscans.com)"
+        CustomSourceType.FOOLSLIDE2 ->
+            "Site base URL — FoolSlide2 CMS (e.g. https://reader.fallenangels.com)"
+        CustomSourceType.MANGANELO ->
+            "Site base URL — MangaKakalot/Manganelo style (e.g. https://manganelo.com)"
+        CustomSourceType.ZEROSCANS_API ->
+            "API base URL — Zeroscans/JSON API (e.g. https://api.zeroscans.com)"
+        CustomSourceType.LHTRANSLATION ->
+            "Site base URL — LHTranslation/MangaDNA style (e.g. https://lhscans.com)"
+        CustomSourceType.WEBVIEW ->
+            "Website URL — opens in browser (e.g. https://example.com)"
     }
 
     companion object {
