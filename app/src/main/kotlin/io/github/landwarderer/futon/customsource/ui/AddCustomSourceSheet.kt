@@ -49,7 +49,8 @@ class AddCustomSourceSheet : BottomSheetDialogFragment() {
             val selectedType = CustomSourceType.entries[position]
             urlLayout.hint = when (selectedType) {
                 CustomSourceType.MANGADEX_COMPATIBLE -> "API base URL (e.g. https://api.mangadex.org)"
-                CustomSourceType.WEBVIEW -> "Website URL (e.g. https://mangakakalot.com)"
+                CustomSourceType.MADARA -> "Site base URL (e.g. https://mangakakalot.com)"
+                CustomSourceType.WEBVIEW -> "Website URL (e.g. https://example.com)"
             }
         }
 
