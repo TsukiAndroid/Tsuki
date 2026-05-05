@@ -1,0 +1,286 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:title="@string/appearance">
+
+    <io.github.landwarderer.futon.settings.utils.ThemeChooserPreference
+        android:key="color_theme"
+        android:title="@string/color_theme" />
+
+    <ListPreference
+        android:defaultValue="-1"
+        android:entries="@array/themes"
+        android:entryValues="@array/values_theme"
+        android:key="theme"
+        android:title="@string/theme"
+        app:useSimpleSummaryProvider="true" />
+
+    <SwitchPreferenceCompat
+        android:defaultValue="false"
+        android:key="amoled_theme"
+        android:summary="@string/black_dark_theme_summary"
+        android:title="@string/black_dark_theme" />
+
+    <io.github.landwarderer.futon.settings.utils.ActivityListPreference
+        android:key="app_locale"
+        android:title="@string/language" />
+
+    <PreferenceCategory android:title="@string/manga_list">
+
+        <ListPreference
+            android:entries="@array/list_modes"
+            android:key="list_mode_2"
+            android:title="@string/list_mode"
+            app:useSimpleSummaryProvider="true" />
+
+        <io.github.landwarderer.futon.settings.utils.SliderPreference
+            android:key="cover_alpha"
+            android:stepSize="5"
+            android:title="@string/cover_transparency"
+            android:valueFrom="10"
+            android:valueTo="100"
+            app:defaultValue="100" />
+
+        <io.github.landwarderer.futon.settings.utils.SliderPreference
+            android:key="grid_size"
+            android:stepSize="5"
+            android:title="@string/grid_size"
+            android:valueFrom="50"
+            android:valueTo="150"
+            app:defaultValue="100" />
+
+        <SwitchPreferenceCompat
+            android:defaultValue="true"
+            android:key="quick_filter"
+            android:summary="@string/show_quick_filters_summary"
+            android:title="@string/show_quick_filters" />
+
+        <ListPreference
+            android:entries="@array/progress_indicators"
+            android:key="progress_indicators"
+            android:title="@string/show_reading_indicators"
+            app:useSimpleSummaryProvider="true" />
+
+        <MultiSelectListPreference
+            android:defaultValue="@array/values_list_badges"
+            android:entries="@array/list_badges"
+            android:entryValues="@array/values_list_badges"
+            android:key="manga_list_badges"
+            android:title="@string/badges_in_lists" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="@string/details">
+
+        <SwitchPreferenceCompat
+            android:defaultValue="true"
+            android:key="description_collapse"
+            android:title="@string/collapse_long_description" />
+
+        <SwitchPreferenceCompat
+            android:defaultValue="true"
+            android:key="pages_tab"
+            android:summary="@string/show_pages_thumbs_summary"
+            android:title="@string/show_pages_thumbs" />
+
+        <ListPreference
+            android:defaultValue="-1"
+            android:dependency="pages_tab"
+            android:entries="@array/details_tabs"
+            android:entryValues="@array/details_tabs_values"
+            android:key="details_tab"
+            android:title="@string/default_tab"
+            app:useSimpleSummaryProvider="true" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="@string/main_screen">
+
+        <MultiSelectListPreference
+            android:key="search_suggest_types"
+            android:title="@string/search_suggestions" />
+
+        <PreferenceScreen
+            android:fragment="io.github.landwarderer.futon.settings.nav.NavConfigFragment"
+            android:key="nav_main"
+            android:title="@string/main_screen_sections" />
+
+        <SwitchPreferenceCompat
+            android:defaultValue="true"
+            android:key="main_fab"
+            android:summary="@string/main_screen_fab_summary"
+            android:title="@string/main_screen_fab" />
+
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
+            android:key="nav_labels"
+            android:title="@string/show_labels_in_navbar" />
+
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
+            android:key="nav_pinned"
+            android:summary="@string/pin_navigation_ui_summary"
+            android:title="@string/pin_navigation_ui" />
+
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
+            android:key="exit_confirm"
+            android:summary="@string/exit_confirmation_summary"
+            android:title="@string/exit_confirmation" />
+
+        <SwitchPreferenceCompat
+            android:defaultValue="true"
+            android:key="dynamic_shortcuts"
+            android:summary="@string/history_shortcuts_summary"
+            android:title="@string/history_shortcuts" />
+
+        <io.github.landwarderer.futon.settings.utils.SliderPreference
+            android:key="nav_bar_alpha"
+            android:stepSize="5"
+            android:summary="@string/nav_bar_opacity_summary"
+            android:title="@string/nav_bar_opacity"
+            android:valueFrom="10"
+            android:valueTo="100"
+            app:defaultValue="100" />
+
+        <io.github.landwarderer.futon.settings.utils.SliderPreference
+            android:key="search_bar_alpha"
+            android:stepSize="5"
+            android:summary="@string/search_bar_opacity_summary"
+            android:title="@string/search_bar_opacity"
+            android:valueFrom="10"
+            android:valueTo="100"
+            app:defaultValue="100" />
+
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
+            android:key="transparent_nav_bar"
+            android:summary="@string/transparent_nav_bar_summary"
+            android:title="@string/transparent_nav_bar" />
+
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
+            android:key="transparent_search_bar"
+            android:summary="@string/transparent_search_bar_summary"
+            android:title="@string/transparent_search_bar" />
+
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
+            android:key="nav_bar_blur_enabled"
+            android:title="@string/nav_bar_blur_enabled"
+            android:summary="@string/nav_bar_blur_enabled_summary" />
+
+        <io.github.landwarderer.futon.settings.utils.SliderPreference
+            android:dependency="nav_bar_blur_enabled"
+            android:defaultValue="50"
+            android:key="nav_bar_blur"
+            android:title="@string/nav_bar_blur"
+            android:valueFrom="0"
+            android:valueTo="100"
+            android:stepSize="5" />
+
+        <io.github.landwarderer.futon.settings.utils.SliderPreference
+            android:dependency="nav_bar_blur_enabled"
+            android:defaultValue="30"
+            android:key="nav_bar_blur_tint"
+            android:title="@string/nav_bar_blur_tint"
+            android:valueFrom="0"
+            android:valueTo="100"
+            android:stepSize="5" />
+
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
+            android:key="search_bar_blur_enabled"
+            android:title="@string/search_bar_blur_enabled"
+            android:summary="@string/search_bar_blur_enabled_summary" />
+
+        <io.github.landwarderer.futon.settings.utils.SliderPreference
+            android:dependency="search_bar_blur_enabled"
+            android:defaultValue="50"
+            android:key="search_bar_blur"
+            android:title="@string/search_bar_blur"
+            android:valueFrom="0"
+            android:valueTo="100"
+            android:stepSize="5" />
+
+        <io.github.landwarderer.futon.settings.utils.SliderPreference
+            android:dependency="search_bar_blur_enabled"
+            android:defaultValue="30"
+            android:key="search_bar_blur_tint"
+            android:title="@string/search_bar_blur_tint"
+            android:valueFrom="0"
+            android:valueTo="100"
+            android:stepSize="5" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="@string/tab_backgrounds">
+
+        <io.github.landwarderer.futon.settings.utils.SliderPreference
+            android:key="bg_blur_intensity"
+            android:defaultValue="75"
+            android:stepSize="5"
+            android:title="@string/background_blur"
+            android:valueFrom="0"
+            android:valueTo="100"
+            app:useSimpleSummaryProvider="true" />
+
+        <ListPreference
+            android:defaultValue="manga_cover"
+            android:entries="@array/history_bg_source_entries"
+            android:entryValues="@array/history_bg_source_values"
+            android:key="history_bg_source"
+            android:title="@string/history_bg_source"
+            app:useSimpleSummaryProvider="true" />
+
+        <SwitchPreferenceCompat
+            android:defaultValue="true"
+            android:key="history_bg_enabled"
+            android:summary="@string/history_background_summary"
+            android:title="@string/history_background" />
+
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
+            android:key="favourites_bg_enabled"
+            android:summary="@string/favourites_background_summary"
+            android:title="@string/favourites_background" />
+
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
+            android:key="feed_bg_enabled"
+            android:summary="@string/feed_background_summary"
+            android:title="@string/feed_background" />
+
+        <SwitchPreferenceCompat
+            android:defaultValue="true"
+            android:key="explore_bg_enabled"
+            android:summary="@string/explore_background_summary"
+            android:title="@string/explore_background" />
+
+        <SwitchPreferenceCompat
+            android:defaultValue="true"
+            android:key="glassy_explore_buttons"
+            android:summary="@string/glassy_explore_buttons_summary"
+            android:title="@string/glassy_explore_buttons" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="@string/privacy">
+
+        <SwitchPreferenceCompat
+            android:key="protect_app"
+            android:persistent="false"
+            android:summary="@string/protect_application_summary"
+            android:title="@string/protect_application" />
+
+        <ListPreference
+            android:defaultValue="allow"
+            android:entries="@array/screenshots_policy"
+            android:key="screenshots_policy"
+            android:title="@string/screenshots_policy"
+            app:useSimpleSummaryProvider="true" />
+
+    </PreferenceCategory>
+
+</PreferenceScreen>
