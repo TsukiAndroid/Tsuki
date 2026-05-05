@@ -1,3 +1,13 @@
+## Alpha-1.218 (Build #183)
+
+_2026-05-05 12:18 UTC_
+
+- fix(cms-detector): remove escaped quotes that broke Kotlin syntax (2cd3645)
+- feat(custom-sources): 4 new parsers, label consistency, detected-as toast (ef1e913)
+- fix(custom-sources): exhaustive when + add CMS auto-detect feature (d1041a3)
+- feat(custom-sources): add 5 new CMS parsers for custom sources (98bbc16)
+
+
 ## Alpha-1.215 (Build #181)
 
 _2026-05-05 11:35 UTC_
