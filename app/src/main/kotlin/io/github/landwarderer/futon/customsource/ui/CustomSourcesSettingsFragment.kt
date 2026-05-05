@@ -87,7 +87,8 @@ class CustomSourcesSettingsFragment : Fragment() {
     private fun openInBrowser(source: CustomSource) {
         val ctx = context ?: return
         val intent = when (source.type) {
-            CustomSourceType.MANGADEX_COMPATIBLE -> AppRouter.listIntent(
+            CustomSourceType.MANGADEX_COMPATIBLE,
+            CustomSourceType.MADARA -> AppRouter.listIntent(
                 context = ctx,
                 source = CustomMangaSource(source),
                 filter = null,
