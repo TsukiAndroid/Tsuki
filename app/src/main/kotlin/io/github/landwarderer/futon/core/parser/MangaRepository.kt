@@ -91,7 +91,8 @@ interface MangaRepository {
                         }
                 }
 
-                private fun createRepository(source: MangaSource): MangaRepository? = when (source) {
+                private fun createRepository(source: MangaSource): MangaRepository? {
+                return when (source) {
                         is MangaParserSource -> ParserMangaRepository(
                                 parser = loaderContext.newParserInstance(source),
                                 cache = contentCache,
@@ -173,6 +174,7 @@ interface MangaRepository {
                                 }
                                 null
                         }
+                }
                 }
         }
 }

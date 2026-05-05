@@ -101,6 +101,7 @@ package io.github.landwarderer.futon.customsource.data
               CustomSourceType.GUYA                  -> runCatching { guyaParser.getList(offset, order, filter) }.getOrElse { emptyList() }
               CustomSourceType.MANGAFIRE             -> runCatching { mangaFireParser.getList(offset, order, filter) }.getOrElse { emptyList() }
               CustomSourceType.MANGAPARK             -> runCatching { mangaParkParser.getList(offset, order, filter) }.getOrElse { emptyList() }
+              CustomSourceType.KOTATSU_PARSER        -> emptyList()
           }
       }
 
@@ -145,13 +146,13 @@ package io.github.landwarderer.futon.customsource.data
 
       override suspend fun getFilterOptions(): MangaListFilterOptions = when (customSource.source.type) {
           CustomSourceType.MADARA -> MangaListFilterOptions(
-              tags = runCatching { madaraParser.getGenres() }.getOrElse { emptySet() },
+              availableTags = runCatching { madaraParser.getGenres() }.getOrElse { emptySet() },
           )
           CustomSourceType.MANGATHEMESIA -> MangaListFilterOptions(
-              tags = runCatching { mangaThemesiaParser.getGenres() }.getOrElse { emptySet() },
+              availableTags = runCatching { mangaThemesiaParser.getGenres() }.getOrElse { emptySet() },
           )
           CustomSourceType.MANGASTREAM -> MangaListFilterOptions(
-              tags = runCatching { mangaStreamParser.getGenres() }.getOrElse { emptySet() },
+              availableTags = runCatching { mangaStreamParser.getGenres() }.getOrElse { emptySet() },
           )
           else -> MangaListFilterOptions()
       }
