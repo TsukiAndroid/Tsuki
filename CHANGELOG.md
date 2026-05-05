@@ -1,3 +1,12 @@
+## Alpha-1.220 (Build #184)
+
+_2026-05-05 12:34 UTC_
+
+- feat(custom-sources): Edit Source screen (997a0c0)
+- fix(cms-detector): remove escaped quotes that broke Kotlin syntax (2cd3645)
+- feat(custom-sources): 4 new parsers, label consistency, detected-as toast (ef1e913)
+
+
 ## Alpha-1.218 (Build #183)
 
 _2026-05-05 12:18 UTC_
