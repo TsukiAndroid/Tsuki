@@ -201,7 +201,11 @@ class GenkanHtmlParser(
         )
     }
 
-    private fun String.fixProtocol(): String = if (startsWith("//")) "https:$this" else this
+    private fun String?.fixProtocol(): String = when {
+        this == null -> ""
+        startsWith("//") -> "https:$this"
+        else -> this
+    }
 
     companion object {
         private const val PAGE_SIZE = 20
