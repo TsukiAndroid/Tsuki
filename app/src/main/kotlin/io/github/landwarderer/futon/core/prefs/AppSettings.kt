@@ -129,25 +129,16 @@ class AppSettings @Inject constructor(@ApplicationContext context: Context) {
                 get() = prefs.getInt(KEY_NAV_BAR_BLUR, 0)
                 set(value) = prefs.edit { putInt(KEY_NAV_BAR_BLUR, value) }
 
-      var searchBarBlurIntensity: Int
-                get() = prefs.getInt(KEY_SEARCH_BAR_BLUR, 0)
-                set(value) = prefs.edit { putInt(KEY_SEARCH_BAR_BLUR, value) }
 
         var isNavBarBlurEnabled: Boolean
                 get() = prefs.getBoolean(KEY_NAV_BAR_BLUR_ENABLED, false)
                 set(value) = prefs.edit { putBoolean(KEY_NAV_BAR_BLUR_ENABLED, value) }
 
-        var isSearchBarBlurEnabled: Boolean
-                get() = prefs.getBoolean(KEY_SEARCH_BAR_BLUR_ENABLED, false)
-                set(value) = prefs.edit { putBoolean(KEY_SEARCH_BAR_BLUR_ENABLED, value) }
 
         var navBarBlurTintAlpha: Int
                 get() = prefs.getInt(KEY_NAV_BAR_BLUR_TINT, 30)
                 set(value) = prefs.edit { putInt(KEY_NAV_BAR_BLUR_TINT, value) }
 
-        var searchBarBlurTintAlpha: Int
-                get() = prefs.getInt(KEY_SEARCH_BAR_BLUR_TINT, 30)
-                set(value) = prefs.edit { putInt(KEY_SEARCH_BAR_BLUR_TINT, value) }
 
         // ── Performance prefs ──────────────────────────────────────────────────
         var blurFps: Int
@@ -898,11 +889,8 @@ class AppSettings @Inject constructor(@ApplicationContext context: Context) {
                 const val KEY_TRANSPARENT_SEARCH_BAR = "transparent_search_bar"
                 const val KEY_GLASSY_EXPLORE_BUTTONS = "glassy_explore_buttons"
                   const val KEY_NAV_BAR_BLUR = "nav_bar_blur"
-                  const val KEY_SEARCH_BAR_BLUR = "search_bar_blur"
                 const val KEY_NAV_BAR_BLUR_ENABLED = "nav_bar_blur_enabled"
-                const val KEY_SEARCH_BAR_BLUR_ENABLED = "search_bar_blur_enabled"
                 const val KEY_NAV_BAR_BLUR_TINT = "nav_bar_blur_tint"
-                const val KEY_SEARCH_BAR_BLUR_TINT = "search_bar_blur_tint"
                 const val KEY_BLUR_FPS = "blur_fps"
                 const val KEY_BLUR_CAPTURE_QUALITY = "blur_capture_quality"
                 const val KEY_BLUR_SKIP_IDLE = "blur_skip_idle"
