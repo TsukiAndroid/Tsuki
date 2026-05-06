@@ -1,3 +1,11 @@
+## Alpha-1.229 (Build #190)
+
+_2026-05-06 00:35 UTC_
+
+- feat(customsource): comprehensive custom source improvements (4ae720d)
+- refactor: rename applicationId from space4414.tsuki to com.space4414.tsuki (7d03294)
+
+
 ## Alpha-1.227 (Build #189)
 
 _2026-05-06 00:17 UTC_
