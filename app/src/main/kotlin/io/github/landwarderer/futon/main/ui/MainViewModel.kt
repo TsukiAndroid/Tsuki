@@ -68,6 +68,11 @@ val onShowWhatsNew = MutableEventFlow<Unit>()
 				onFirstStart.call(Unit)
 			}
 		}
+		launchJob(Dispatchers.IO) {
+			if (appUpdateRepository.shouldShowWhatsNew()) {
+				onShowWhatsNew.call(Unit)
+			}
+		}
 	}
 
 	fun openLastReader() {
