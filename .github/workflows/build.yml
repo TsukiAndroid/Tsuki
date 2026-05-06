@@ -12,8 +12,31 @@ permissions:
 
 jobs:
   build:
-    name: Build Release APK
+    name: Build ${{ matrix.flavor_label }} APK
     runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - flavor: alpha
+            flavor_label: Alpha
+            task: assembleAlphaRelease
+            apk_path: app/build/outputs/apk/alpha/release
+            tag: alpha-latest
+            prerelease: true
+          - flavor: beta
+            flavor_label: Beta
+            task: assembleBetaRelease
+            apk_path: app/build/outputs/apk/beta/release
+            tag: beta-latest
+            prerelease: true
+          - flavor: stable
+            flavor_label: Stable
+            task: assembleStableRelease
+            apk_path: app/build/outputs/apk/stable/release
+            tag: stable-latest
+            prerelease: false
 
     steps:
       - name: Checkout code
@@ -44,14 +67,14 @@ jobs:
         id: version
         run: |
           COMMIT_COUNT=$(git rev-list --count HEAD)
-          echo "VERSION_NAME=Alpha-1.${COMMIT_COUNT}" >> $GITHUB_OUTPUT
+          echo "VERSION_NAME=1.${COMMIT_COUNT}" >> $GITHUB_OUTPUT
           echo "VERSION_CODE=${COMMIT_COUNT}" >> $GITHUB_OUTPUT
 
       - name: Generate changelog
         id: changelog
         run: |
           set -e
-          PREV_TAG="alpha-latest-prev"
+          PREV_TAG="${{ matrix.tag }}-prev"
           if git rev-parse --verify "refs/tags/${PREV_TAG}" >/dev/null 2>&1; then
             RANGE="${PREV_TAG}..HEAD"
           else
@@ -59,7 +82,7 @@ jobs:
           fi
 
           {
-            echo "## ${{ steps.version.outputs.VERSION_NAME }} (Build #${{ github.run_number }})"
+            echo "## ${{ matrix.flavor_label }} ${{ steps.version.outputs.VERSION_NAME }} (Build #${{ github.run_number }})"
             echo ""
             echo "_$(date -u +'%Y-%m-%d %H:%M UTC')_"
             echo ""
@@ -89,8 +112,8 @@ jobs:
         run: |
           echo "${{ secrets.KEYSTORE_FILE }}" | base64 -d > app/keystore.jks
 
-      - name: Build Release APK
-        run: ./gradlew assembleRelease --stacktrace --no-configuration-cache
+      - name: Build ${{ matrix.flavor_label }} Release APK
+        run: ./gradlew ${{ matrix.task }} --stacktrace --no-configuration-cache
         env:
           VERSION_NAME: ${{ steps.version.outputs.VERSION_NAME }}
           VERSION_CODE: ${{ steps.version.outputs.VERSION_CODE }}
@@ -99,29 +122,29 @@ jobs:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
 
-      - name: Upload Release APK (Actions artifact)
+      - name: Upload ${{ matrix.flavor_label }} APK (Actions artifact)
         uses: actions/upload-artifact@v4
         with:
-          name: Tsuki-release-${{ github.run_number }}
-          path: app/build/outputs/apk/release/*.apk
+          name: Tsuki-${{ matrix.flavor }}-${{ github.run_number }}
+          path: ${{ matrix.apk_path }}/*.apk
           retention-days: 30
 
-      - name: Snapshot previous alpha-latest tag for next diff
+      - name: Snapshot previous ${{ matrix.tag }} tag for next diff
         run: |
           git fetch --tags --force
-          if git rev-parse --verify refs/tags/alpha-latest >/dev/null 2>&1; then
-            PREV_SHA=$(git rev-list -n 1 refs/tags/alpha-latest)
-            git tag -f alpha-latest-prev "$PREV_SHA"
-            git push -f origin refs/tags/alpha-latest-prev || true
+          if git rev-parse --verify refs/tags/${{ matrix.tag }} >/dev/null 2>&1; then
+            PREV_SHA=$(git rev-list -n 1 refs/tags/${{ matrix.tag }})
+            git tag -f ${{ matrix.tag }}-prev "$PREV_SHA"
+            git push -f origin refs/tags/${{ matrix.tag }}-prev || true
           fi
 
-      - name: Delete old alpha-latest release
-        run: gh release delete "alpha-latest" --yes || true
+      - name: Delete old ${{ matrix.tag }} release
+        run: gh release delete "${{ matrix.tag }}" --yes || true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Delete old alpha-latest tag
-        run: git push origin :refs/tags/alpha-latest || true
+      - name: Delete old ${{ matrix.tag }} tag
+        run: git push origin :refs/tags/${{ matrix.tag }} || true
 
       - name: Commit updated CHANGELOG.md
         continue-on-error: true
@@ -133,18 +156,18 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add CHANGELOG.md
-          git commit -m "docs(changelog): update for build #${{ github.run_number }} [skip ci]"
+          git commit -m "docs(changelog): update ${{ matrix.flavor }} for build #${{ github.run_number }} [skip ci]"
           git pull --rebase --no-edit origin ${{ github.ref_name }} \
             && git push origin HEAD:${{ github.ref_name }} \
             || (git rebase --abort 2>/dev/null || true; echo "Changelog push skipped due to rebase conflict")
 
-      - name: Create Release
+      - name: Create ${{ matrix.flavor_label }} Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: alpha-latest
-          name: "Tsuki ${{ steps.version.outputs.VERSION_NAME }} (Build #${{ github.run_number }})"
+          tag_name: ${{ matrix.tag }}
+          name: "Tsuki ${{ matrix.flavor_label }} ${{ steps.version.outputs.VERSION_NAME }} (Build #${{ github.run_number }})"
           body: |
-            ## 🌙 Tsuki ${{ steps.version.outputs.VERSION_NAME }}
+            ## 🌙 Tsuki ${{ matrix.flavor_label }} ${{ steps.version.outputs.VERSION_NAME }}
             > Auto-built from latest commit · Build #${{ github.run_number }}
 
             ### What's new
@@ -160,8 +183,8 @@ jobs:
 
             ---
             🔗 Source: https://github.com/Space4414/Tsuki
-          files: app/build/outputs/apk/release/*.apk
-          prerelease: false
+          files: ${{ matrix.apk_path }}/*.apk
+          prerelease: ${{ matrix.prerelease }}
           draft: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
