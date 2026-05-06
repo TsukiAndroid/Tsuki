@@ -1,3 +1,10 @@
+## Alpha 1.286 (Build #6)
+
+_2026-05-06 18:30 UTC_
+
+- ci: add release_notes input to Stable workflow (87ab119)
+
+
 ## Alpha 1.281 (Build #2)
 
 _2026-05-06 18:05 UTC_
