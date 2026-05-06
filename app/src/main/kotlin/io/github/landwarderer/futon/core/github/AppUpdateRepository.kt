@@ -74,13 +74,22 @@ class AppUpdateRepository @Inject constructor(
                                 }
                                 if (!matchesChannel) continue
 
-                                // Strip the channel prefix to get a plain semver for VersionId
-                                val semver = when (channel) {
+                                // The CI uses floating tags ("alpha-latest", "beta-latest") that strip
+                                // to "latest" — an unparseable pseudo-version that VersionId maps to
+                                // (0,0,0), always less than any real install, so update detection never
+                                // fires. Fix: extract the real build version from the release *name*
+                                // (e.g. "Tsuki Alpha 1.274 (Build #226)" → "1.274").
+                                // Fall back to tag-derived semver for properly versioned tags like
+                                // "alpha-1.60" or "v1.60.0".
+                                val releaseName = item.optString("name", "")
+                                val nameVersion =
+                                        Regex("\\b(\\d+\\.\\d+(?:\\.\\d+)?)\\b").find(releaseName)?.groupValues?.get(1)
+                                val semver = nameVersion ?: when (channel) {
                                         "alpha" -> tagName.removePrefix("alpha-")
                                         "beta"  -> tagName.removePrefix("beta-")
                                         else    -> tagName.removePrefix("v")
                                 }
-                                if (semver.isEmpty()) continue
+                                if (semver.isEmpty() || !semver.first().isDigit()) continue
 
                                 val version = runCatching { VersionId(semver) }.getOrNull() ?: continue
                                 if (bestVersion == null || version > bestVersion) {

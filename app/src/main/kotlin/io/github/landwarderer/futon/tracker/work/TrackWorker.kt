@@ -284,7 +284,10 @@ class TrackWorker @AssistedInject constructor(
                         val constraints = createConstraints()
                         val runCount = dbProvider.get().getTracksDao().getTracksCount()
                         val runsPerFullCheck = (runCount / BATCH_SIZE.toFloat()).toIntUp().coerceAtLeast(1)
-                        val interval = (18 / runsPerFullCheck / frequency).roundToInt().coerceAtLeast(2)
+                        // 6-hour base (was 18 h) keeps chapter notifications timely and
+                        // reduces the chance that EMUI / MIUI battery optimisation kills
+                        // the job before it completes on its 18-hour window.
+                        val interval = (6 / runsPerFullCheck / frequency).roundToInt().coerceAtLeast(2)
                         val request = PeriodicWorkRequestBuilder<TrackWorker>(interval.toLong(), TimeUnit.HOURS)
                                 .setConstraints(constraints)
                                 .addTag(TAG)

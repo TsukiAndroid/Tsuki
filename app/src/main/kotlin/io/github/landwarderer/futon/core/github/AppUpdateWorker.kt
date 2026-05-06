@@ -50,12 +50,15 @@ class AppUpdateWorker @AssistedInject constructor(
                         val constraints = Constraints.Builder()
                                 .setRequiredNetworkType(NetworkType.CONNECTED)
                                 .build()
-                        val request = PeriodicWorkRequestBuilder<AppUpdateWorker>(1, TimeUnit.DAYS)
+                        // Check every 6 hours so users see the update notification soon after
+                        // CI publishes a new build. KEEP → UPDATE so the schedule is refreshed
+                        // after an app update (KEEP would silently keep the stale old schedule).
+                        val request = PeriodicWorkRequestBuilder<AppUpdateWorker>(6, TimeUnit.HOURS)
                                 .setConstraints(constraints)
                                 .addTag(TAG)
                                 .build()
                         workManager
-                                .enqueueUniquePeriodicWork(TAG, ExistingPeriodicWorkPolicy.KEEP, request)
+                                .enqueueUniquePeriodicWork(TAG, ExistingPeriodicWorkPolicy.UPDATE, request)
                                 .await()
                 }
 
