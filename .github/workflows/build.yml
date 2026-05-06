@@ -192,8 +192,8 @@ jobs:
             | APK filename | Best for |
             |--------------|----------|
             | `Tsuki-*-arm64-release.apk` | Most modern phones (2017+) ✅ recommended |
-            | `Tsuki-*-arm32-release.apk` | Older 32-bit Android phones (e.g. Huawei P9 Lite) |
-            | `Tsuki-*-x86_64-release.apk` | Emulators / rare Intel phones |
+            | `Tsuki-*-arm32-release.apk` | Older 32-bit Android phones|
+            | `Tsuki-*-x86_64-release.apk` | Emulators / rare Intel phones|
             | `Tsuki-*-universal-release.apk` | Not sure? Grab this one |
 
             ---
