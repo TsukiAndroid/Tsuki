@@ -375,6 +375,11 @@
     <string name="allow_unstable_updates">Allow unstable updates</string>
     <string name="allow_unstable_updates_summary">Check for nightly builds in addition to stable releases</string>
     <string name="download_started">Download started</string>
+      <string name="download_apk">Download APK</string>
+      <string name="downloading_apk">Downloading…</string>
+      <string name="whats_new_in">What's new in %s</string>
+      <string name="whats_new_close">Got it</string>
+      <string name="no_release_notes">No release notes available.</string>
     <string name="got_it">Got it</string>
     <string name="sources_reorder_tip">Tap and hold on an item to reorder them</string>
     <string name="user_agent">UserAgent header</string>
