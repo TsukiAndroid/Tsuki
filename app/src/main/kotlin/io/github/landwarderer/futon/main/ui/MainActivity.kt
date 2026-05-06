@@ -39,6 +39,7 @@ import io.github.landwarderer.futon.core.exceptions.resolve.SnackbarErrorObserve
 import io.github.landwarderer.futon.core.nav.router
 import io.github.landwarderer.futon.core.os.VoiceInputContract
 import io.github.landwarderer.futon.core.prefs.AppSettings
+import io.github.landwarderer.futon.settings.about.WhatsNewSheet
 import io.github.landwarderer.futon.core.prefs.NavItem
 import io.github.landwarderer.futon.core.ui.BaseActivity
 import io.github.landwarderer.futon.core.ui.util.FadingAppbarMediator
@@ -200,6 +201,9 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
                                 viewModel.feedCounter.observe(this@MainActivity, ::onFeedCounterChanged)
                                 viewModel.appUpdate.observe(this@MainActivity, MenuInvalidator(this@MainActivity))
                                 viewModel.onFirstStart.observeEvent(this@MainActivity) { router.showWelcomeSheet() }
+                                  viewModel.onShowWhatsNew.observeEvent(this@MainActivity) {
+                                          WhatsNewSheet.show(supportFragmentManager)
+                                  }
                                 viewModel.isBottomNavPinned.observe(this@MainActivity, ::setNavbarPinned)
                                 searchSuggestionViewModel.isIncognitoModeEnabled.observe(this@MainActivity, this@MainActivity::onIncognitoModeChanged)
                                 initSearch()
