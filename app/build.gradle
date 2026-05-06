@@ -56,9 +56,25 @@ android {
             keyPassword = System.getenv('KEY_PASSWORD') ?: System.console()?.readPassword("Key password: ")?.toString()
                 }
         }
+        flavorDimensions "release"
+        productFlavors {
+                alpha {
+                        dimension "release"
+                        applicationId "com.space4414.tsuki.alpha"
+                        versionNameSuffix "-alpha"
+                }
+                beta {
+                        dimension "release"
+                        applicationId "com.space4414.tsuki.beta"
+                        versionNameSuffix "-beta"
+                }
+                stable {
+                        dimension "release"
+                        applicationId "com.space4414.tsuki"
+                }
+        }
         buildTypes {
                 debug {
-                        
                         buildConfigField "String", "SENTRY_DSN", '""'
                 }
                 release {
@@ -73,12 +89,6 @@ android {
                         applicationIdSuffix = '.nightly'
                         signingConfig signingConfigs.release
                         buildConfigField "String", "SENTRY_DSN", "\"${System.getenv('SENTRY_DSN') ?: ''}\""
-                }
-                alpha {
-                        initWith release
-                        applicationIdSuffix = '.alpha'
-                        signingConfig signingConfigs.release
-                        buildConfigField "String", "SENTRY_DSN", '""'
                 }
         }
         buildFeatures {
@@ -164,18 +174,11 @@ android {
                 }
         }
         applicationVariants.configureEach { variant ->
-                if (variant.name == 'nightly') {
+                if (variant.buildType.name == 'nightly') {
                         variant.outputs.each { output ->
                                 def now = LocalDateTime.now()
                                 output.versionCodeOverride = now.format("yyMMdd").toInteger()
                                 output.versionNameOverride = 'N' + now.format("yyyyMMdd")
-                        }
-                }
-                if (variant.name == 'alpha') {
-                        variant.outputs.each { output ->
-                                def now = LocalDateTime.now()
-                                output.versionCodeOverride = now.format("yyMMdd").toInteger()
-                                output.versionNameOverride = 'A' + now.format("yyyyMMdd")
                         }
                 }
         }
