@@ -6,6 +6,11 @@ on:
     paths-ignore:
       - 'CHANGELOG.md'
   workflow_dispatch:
+    inputs:
+      version_name:
+        description: 'Version name (e.g. 1.5.0-alpha) — leave blank to auto-generate from commit count'
+        required: false
+        default: ''
 
 permissions:
   contents: write
@@ -44,7 +49,12 @@ jobs:
         id: version
         run: |
           COMMIT_COUNT=$(git rev-list --count HEAD)
-          echo "VERSION_NAME=1.${COMMIT_COUNT}" >> $GITHUB_OUTPUT
+          if [ -n "${{ github.event.inputs.version_name }}" ]; then
+            VER="${{ github.event.inputs.version_name }}"
+          else
+            VER="1.${COMMIT_COUNT}"
+          fi
+          echo "VERSION_NAME=${VER}" >> $GITHUB_OUTPUT
           echo "VERSION_CODE=${COMMIT_COUNT}" >> $GITHUB_OUTPUT
 
       - name: Generate changelog
