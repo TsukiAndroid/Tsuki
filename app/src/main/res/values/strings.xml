@@ -1008,4 +1008,13 @@
       <string name="save_changes_label">Save changes</string>
       <string name="redetect_type_label">Re-detect type from URL</string>
       <string name="source_updated">Source updated</string>
+    <!-- Custom source enable/disable -->
+    <string name="source_enabled_desc">Source enabled — tap to disable</string>
+    <string name="source_disabled_desc">Source disabled — tap to enable</string>
+    <string name="source_disabled_badge">Disabled</string>
+    <!-- Detection results -->
+    <string name="detected_kotatsu_toast">Matched built-in parser: %s</string>
+    <string name="site_unreachable_warning">Site appears unreachable — the source was saved. Check the URL if it doesn\'t work.</string>
+    <!-- Duplicate URL error -->
+    <string name="duplicate_url_error">Already added as \"%s\". Edit it from the list instead.</string>
 </resources>

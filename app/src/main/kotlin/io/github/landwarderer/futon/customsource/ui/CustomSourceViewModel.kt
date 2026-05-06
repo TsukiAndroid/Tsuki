@@ -1,230 +1,338 @@
 package io.github.landwarderer.futon.customsource.ui
 
-  import android.util.Patterns
-  import androidx.lifecycle.ViewModel
-  import androidx.lifecycle.viewModelScope
-  import dagger.hilt.android.lifecycle.HiltViewModel
-  import kotlinx.coroutines.Dispatchers
-  import kotlinx.coroutines.flow.MutableStateFlow
-  import kotlinx.coroutines.flow.StateFlow
-  import kotlinx.coroutines.flow.asStateFlow
-  import kotlinx.coroutines.launch
-  import kotlinx.coroutines.withContext
-  import io.github.landwarderer.futon.core.parser.KotatsuParserMatcher
-  import io.github.landwarderer.futon.customsource.data.CmsTypeDetector
-  import io.github.landwarderer.futon.customsource.data.CustomSourcesRepository
-  import io.github.landwarderer.futon.customsource.domain.CustomSource
-  import io.github.landwarderer.futon.customsource.domain.CustomSourceType
-  import okhttp3.OkHttpClient
-  import okhttp3.Request
-  import java.net.URI
-  import java.util.concurrent.TimeUnit
-  import javax.inject.Inject
+import android.util.Patterns
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import io.github.landwarderer.futon.core.parser.KotatsuParserMatcher
+import io.github.landwarderer.futon.customsource.data.CmsTypeDetector
+import io.github.landwarderer.futon.customsource.data.CustomSourcesRepository
+import io.github.landwarderer.futon.customsource.domain.CustomSource
+import io.github.landwarderer.futon.customsource.domain.CustomSourceType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import java.net.URI
+import java.util.concurrent.TimeUnit
+import javax.inject.Inject
 
-  @HiltViewModel
-  class CustomSourceViewModel @Inject constructor(
-      private val repository: CustomSourcesRepository,
-      private val kotatsuParserMatcher: KotatsuParserMatcher,
-  ) : ViewModel() {
+@HiltViewModel
+class CustomSourceViewModel @Inject constructor(
+    private val repository: CustomSourcesRepository,
+    private val kotatsuParserMatcher: KotatsuParserMatcher,
+) : ViewModel() {
 
-      val sources: StateFlow<List<CustomSource>> = repository.sources
+    val sources: StateFlow<List<CustomSource>> = repository.sources
 
-      private val _uiState = MutableStateFlow<UiState>(UiState.Idle)
-      val uiState: StateFlow<UiState> = _uiState.asStateFlow()
+    private val _uiState = MutableStateFlow<UiState>(UiState.Idle)
+    val uiState: StateFlow<UiState> = _uiState.asStateFlow()
 
-      /** Look up a saved source by its id (used to pre-fill the edit sheet). */
-      fun findById(id: Long): CustomSource? = repository.findById(id)
+    /** Look up a saved source by its id (used to pre-fill the edit sheet). */
+    fun findById(id: Long): CustomSource? = repository.findById(id)
 
-      /** Add a source with an already-known [type]. */
-      fun addSource(name: String, url: String, type: CustomSourceType, description: String) {
-          viewModelScope.launch {
-              val normalized = normalizeUrl(url)
-              if (normalized == null) {
-                  _uiState.value = UiState.Error("Please enter a valid website URL (e.g. example.com)")
-                  return@launch
-              }
-              val source = CustomSource(
-                  id = CustomSourcesRepository.generateId(),
-                  name = name.trim().ifBlank { hostFromUrl(normalized) ?: normalized },
-                  baseUrl = normalized,
-                  type = type,
-                  description = description.trim().takeIf { it.isNotEmpty() },
-              )
-              repository.add(source)
-              _uiState.value = UiState.SourceAdded(source)
-              fetchAndStoreFavicon(source)
-          }
-      }
+    /** Add a source with an already-known [type]. Rejects duplicates. */
+    fun addSource(name: String, url: String, type: CustomSourceType, description: String) {
+        viewModelScope.launch {
+            val normalized = normalizeUrl(url)
+            if (normalized == null) {
+                _uiState.value = UiState.Error("Please enter a valid website URL (e.g. example.com)")
+                return@launch
+            }
+            val existing = repository.findByUrl(normalized)
+            if (existing != null) {
+                _uiState.value = UiState.Error(
+                    "Already added as \"${existing.displayName}\". Edit it from the list instead."
+                )
+                return@launch
+            }
+            // parserSourceName is only meaningful for KOTATSU_PARSER, which cannot be
+            // manually selected — so it is always null on the manual-add path.
+            val source = CustomSource(
+                id = CustomSourcesRepository.generateId(),
+                name = name.trim().ifBlank { hostFromUrl(normalized) ?: normalized },
+                baseUrl = normalized,
+                type = type,
+                parserSourceName = null,
+                description = description.trim().takeIf { it.isNotEmpty() },
+            )
+            repository.add(source)
+            _uiState.value = UiState.SourceAdded(source)
+            fetchAndStoreFavicon(source)
+        }
+    }
 
-      /**
-       * Auto-detects the CMS type of [url] and saves a new source with that type.
-       *
-       * Detection order:
-       *  1. Check [KotatsuParserMatcher] — if the domain matches a built-in parser,
-       *     save as [CustomSourceType.KOTATSU_PARSER] so the factory routes it to
-       *     [ParserMangaRepository] giving full inbuilt-source quality.
-       *  2. Fall back to [CmsTypeDetector] HTML fingerprinting.
-       *
-       * Emits [UiState.Detecting] while the probe is in flight.
-       */
-      fun detectAndAddSource(name: String, url: String, description: String) {
-          viewModelScope.launch {
-              val normalized = normalizeUrl(url)
-              if (normalized == null) {
-                  _uiState.value = UiState.Error("Please enter a valid website URL (e.g. example.com)")
-                  return@launch
-              }
-              _uiState.value = UiState.Detecting
+    /**
+     * Auto-detects the CMS type of [url] and saves a new source with that type.
+     * Rejects duplicate URLs.
+     *
+     * Detection order:
+     *  1. Check [KotatsuParserMatcher] — if the domain matches a built-in parser,
+     *     save as [CustomSourceType.KOTATSU_PARSER] so the factory routes it to
+     *     [ParserMangaRepository] giving full inbuilt-source quality.
+     *  2. Fall back to [CmsTypeDetector] HTML fingerprinting.
+     *
+     * Emits [UiState.Detecting] while the probe is in flight.
+     */
+    fun detectAndAddSource(name: String, url: String, description: String) {
+        viewModelScope.launch {
+            val normalized = normalizeUrl(url)
+            if (normalized == null) {
+                _uiState.value = UiState.Error("Please enter a valid website URL (e.g. example.com)")
+                return@launch
+            }
+            val existing = repository.findByUrl(normalized)
+            if (existing != null) {
+                _uiState.value = UiState.Error(
+                    "Already added as \"${existing.displayName}\". Edit it from the list instead."
+                )
+                return@launch
+            }
+            _uiState.value = UiState.Detecting
 
-              // Step 1: check if a Kotatsu parser already covers this domain
-              val matchedParser = withContext(Dispatchers.IO) {
-                  runCatching { kotatsuParserMatcher.findForUrl(normalized) }.getOrNull()
-              }
+            val (detectedType, parserSourceName, reachable) = withContext(Dispatchers.IO) {
+                runDetectionPipeline(normalized)
+            }
 
-              val (detectedType, parserSourceName) = if (matchedParser != null) {
-                  CustomSourceType.KOTATSU_PARSER to matchedParser.name
-              } else {
-                  // Step 2: fall back to HTML fingerprinting
-                  val cms = withContext(Dispatchers.IO) {
-                      runCatching { CmsTypeDetector.detect(normalized) }.getOrElse { CustomSourceType.WEBVIEW }
-                  }
-                  cms to null
-              }
+            val source = CustomSource(
+                id = CustomSourcesRepository.generateId(),
+                // Always use what the user typed; fall back to the site hostname.
+                // Never inject the parser's internal title — the user's chosen name
+                // is what appears everywhere in the app.
+                name = name.trim().ifBlank { hostFromUrl(normalized) ?: normalized },
+                baseUrl = normalized,
+                type = detectedType,
+                parserSourceName = parserSourceName,
+                description = description.trim().takeIf { it.isNotEmpty() },
+            )
+            repository.add(source)
+            _uiState.value = UiState.SourceAdded(source, detectedType, parserSourceName, reachable)
+            fetchAndStoreFavicon(source)
+        }
+    }
 
-              val source = CustomSource(
-                  id = CustomSourcesRepository.generateId(),
-                  // Always use what the user typed; fall back to the site hostname.
-                  // Never inject the parser's internal title — the user's chosen name
-                  // is what appears everywhere in the app.
-                  name = name.trim().ifBlank { hostFromUrl(normalized) ?: normalized },
-                  baseUrl = normalized,
-                  type = detectedType,
-                  parserSourceName = parserSourceName,
-                  description = description.trim().takeIf { it.isNotEmpty() },
-              )
-              repository.add(source)
-              _uiState.value = UiState.SourceAdded(source, detectedType)
-              fetchAndStoreFavicon(source)
-          }
-      }
+    /**
+     * Save edits to an existing source.
+     * Preserves [createdAt] and [iconUrl]; re-fetches the favicon if the URL changed.
+     *
+     * [parserSourceName] is only valid when [type] == [CustomSourceType.KOTATSU_PARSER].
+     * For every other type it is explicitly cleared so stale data never lingers.
+     */
+    fun updateSource(
+        id: Long,
+        name: String,
+        url: String,
+        type: CustomSourceType,
+        description: String,
+    ) {
+        viewModelScope.launch {
+            val existing = repository.findById(id) ?: run {
+                _uiState.value = UiState.Error("Source not found")
+                return@launch
+            }
+            val normalized = normalizeUrl(url)
+            if (normalized == null) {
+                _uiState.value = UiState.Error("Please enter a valid website URL (e.g. example.com)")
+                return@launch
+            }
+            // Detect duplicate only when the URL actually changed
+            if (normalized != existing.baseUrl) {
+                val duplicate = repository.findByUrl(normalized)
+                if (duplicate != null && duplicate.id != id) {
+                    _uiState.value = UiState.Error(
+                        "\"${duplicate.displayName}\" already uses that URL."
+                    )
+                    return@launch
+                }
+            }
+            // Clear parserSourceName when the type is not KOTATSU_PARSER — it would
+            // point to the wrong (or old) parser and cause silent misfetches.
+            val resolvedParserName = if (type == CustomSourceType.KOTATSU_PARSER) {
+                existing.parserSourceName
+            } else {
+                null
+            }
+            val updated = existing.copy(
+                name = name.trim().ifBlank { hostFromUrl(normalized) ?: normalized },
+                baseUrl = normalized,
+                type = type,
+                parserSourceName = resolvedParserName,
+                description = description.trim().takeIf { it.isNotEmpty() },
+            )
+            repository.update(updated)
+            _uiState.value = UiState.SourceUpdated(updated)
+            if (normalized != existing.baseUrl) fetchAndStoreFavicon(updated)
+        }
+    }
 
-      /**
-       * Save edits to an existing source.
-       * Preserves [createdAt] and [iconUrl]; re-fetches the favicon if the URL changed.
-       */
-      fun updateSource(
-          id: Long,
-          name: String,
-          url: String,
-          type: CustomSourceType,
-          description: String,
-      ) {
-          viewModelScope.launch {
-              val existing = repository.findById(id) ?: run {
-                  _uiState.value = UiState.Error("Source not found")
-                  return@launch
-              }
-              val normalized = normalizeUrl(url)
-              if (normalized == null) {
-                  _uiState.value = UiState.Error("Please enter a valid website URL (e.g. example.com)")
-                  return@launch
-              }
-              val updated = existing.copy(
-                  name = name.trim().ifBlank { hostFromUrl(normalized) ?: normalized },
-                  baseUrl = normalized,
-                  type = type,
-                  description = description.trim().takeIf { it.isNotEmpty() },
-              )
-              repository.update(updated)
-              _uiState.value = UiState.SourceUpdated(updated)
-              // Refresh favicon only when the URL changed
-              if (normalized != existing.baseUrl) fetchAndStoreFavicon(updated)
-          }
-      }
+    /**
+     * Probes [url] using the full two-stage detection pipeline (Kotatsu matcher
+     * first, then HTML fingerprinting) and calls [onDetected] on the main thread
+     * with the result. Emits [UiState.Detecting] while the probe runs.
+     *
+     * Also persists the updated [CustomSourceType] and [CustomSource.parserSourceName]
+     * into the stored source so a subsequent "Save" doesn't lose the result.
+     *
+     * Used by the edit sheet's "Re-detect" button.
+     */
+    fun redetectType(sourceId: Long, url: String, onDetected: (CustomSourceType) -> Unit) {
+        viewModelScope.launch {
+            val normalized = normalizeUrl(url)
+            if (normalized == null) {
+                _uiState.value = UiState.Error("Please enter a valid website URL (e.g. example.com)")
+                return@launch
+            }
+            _uiState.value = UiState.Detecting
 
-      /**
-       * Probes [url] in the background and calls [onDetected] on the main thread
-       * with the result. Emits [UiState.Detecting] while the probe runs.
-       * Used by the edit sheet's "Re-detect" button so the dropdown updates without
-       * saving the source yet.
-       */
-      fun redetectType(sourceId: Long, url: String, onDetected: (CustomSourceType) -> Unit) {
-          viewModelScope.launch {
-              val normalized = normalizeUrl(url)
-              if (normalized == null) {
-                  _uiState.value = UiState.Error("Please enter a valid website URL (e.g. example.com)")
-                  return@launch
-              }
-              _uiState.value = UiState.Detecting
-              val detected = withContext(Dispatchers.IO) {
-                  runCatching { CmsTypeDetector.detect(normalized) }.getOrElse { CustomSourceType.WEBVIEW }
-              }
-              _uiState.value = UiState.Idle
-              onDetected(detected)
-          }
-      }
+            val (detectedType, parserSourceName, _) = withContext(Dispatchers.IO) {
+                runDetectionPipeline(normalized)
+            }
 
-      fun removeSource(id: Long) {
-          viewModelScope.launch { repository.remove(id) }
-      }
+            // Persist the detection result immediately so the edit sheet's "Save"
+            // button doesn't have to re-run detection or lose parserSourceName.
+            repository.findById(sourceId)?.let { existing ->
+                repository.update(
+                    existing.copy(
+                        type = detectedType,
+                        parserSourceName = if (detectedType == CustomSourceType.KOTATSU_PARSER) {
+                            parserSourceName
+                        } else {
+                            null
+                        },
+                    )
+                )
+            }
 
-      fun resetState() {
-          _uiState.value = UiState.Idle
-      }
+            _uiState.value = UiState.Idle
+            onDetected(detectedType)
+        }
+    }
 
-      fun exportSourcesJson(): String = repository.exportJson()
+    /** Flip the enabled/disabled flag of a source. */
+    fun toggleEnabled(id: Long) {
+        viewModelScope.launch {
+            val source = repository.findById(id) ?: return@launch
+            repository.setEnabled(id, !source.isEnabled)
+        }
+    }
 
-      fun importSourcesJson(json: String): Int = repository.importJson(json)
+    fun removeSource(id: Long) {
+        viewModelScope.launch { repository.remove(id) }
+    }
 
-      private fun normalizeUrl(raw: String): String? {
-          var trimmed = raw.trim().trimEnd('/')
-          if (trimmed.isEmpty()) return null
-          if (!trimmed.startsWith("http://", ignoreCase = true) &&
-              !trimmed.startsWith("https://", ignoreCase = true)
-          ) {
-              trimmed = "https://$trimmed"
-          }
-          return if (Patterns.WEB_URL.matcher(trimmed).matches()) trimmed else null
-      }
+    fun resetState() {
+        _uiState.value = UiState.Idle
+    }
 
-      private fun hostFromUrl(url: String): String? = runCatching {
-          URI(url).host?.removePrefix("www.")
-      }.getOrNull()
+    fun exportSourcesJson(): String = repository.exportJson()
 
-      private suspend fun fetchAndStoreFavicon(source: CustomSource) {
-          val host = hostFromUrl(source.baseUrl) ?: return
-          val candidate = withContext(Dispatchers.IO) {
-              runCatching {
-                  val gUrl = "https://www.google.com/s2/favicons?domain=$host&sz=128"
-                  val req = Request.Builder().url(gUrl).get().build()
-                  val resp = httpClient.newCall(req).execute()
-                  resp.use {
-                      if (it.isSuccessful && (it.body?.contentLength() ?: 0L) > 200L) {
-                          return@withContext gUrl
-                      }
-                  }
-                  "https://$host/favicon.ico"
-              }.getOrNull()
-          } ?: return
-          repository.update(source.copy(iconUrl = candidate))
-      }
+    fun importSourcesJson(json: String): Int = repository.importJson(json)
 
-      sealed class UiState {
-          object Idle : UiState()
-          object Detecting : UiState()
-          data class Error(val message: String) : UiState()
-          data class SourceAdded(val source: CustomSource, val detectedType: CustomSourceType? = null) : UiState()
-          data class SourceUpdated(val source: CustomSource, val detectedType: CustomSourceType? = null) : UiState()
-      }
+    // ── Private helpers ────────────────────────────────────────────────────────
 
-      companion object {
-          private val httpClient: OkHttpClient by lazy {
-              OkHttpClient.Builder()
-                  .connectTimeout(10, TimeUnit.SECONDS)
-                  .readTimeout(10, TimeUnit.SECONDS)
-                  .followRedirects(true)
-                  .build()
-          }
-      }
-  }
-  
+    /**
+     * Runs the two-stage detection pipeline on [normalizedUrl]:
+     *  1. [KotatsuParserMatcher] — built-in parser domain cache
+     *  2. [CmsTypeDetector] — HTML fingerprinting
+     *
+     * Also performs a lightweight reachability probe; [Triple.third] is false
+     * if the site returned an error or timed out entirely.
+     *
+     * Must be called from an IO coroutine.
+     */
+    private fun runDetectionPipeline(normalizedUrl: String): Triple<CustomSourceType, String?, Boolean> {
+        // Step 1: check if a Kotatsu parser already covers this domain
+        val matchedParser = runCatching { kotatsuParserMatcher.findForUrl(normalizedUrl) }.getOrNull()
+        if (matchedParser != null) {
+            return Triple(CustomSourceType.KOTATSU_PARSER, matchedParser.name, true)
+        }
+
+        // Step 2: HTML fingerprinting — capture reachability from the result
+        val cms = runCatching { CmsTypeDetector.detect(normalizedUrl) }.getOrElse { null }
+        val reachable = cms != null
+        return Triple(cms ?: CustomSourceType.WEBVIEW, null, reachable)
+    }
+
+    private fun normalizeUrl(raw: String): String? {
+        var trimmed = raw.trim().trimEnd('/')
+        if (trimmed.isEmpty()) return null
+        if (!trimmed.startsWith("http://", ignoreCase = true) &&
+            !trimmed.startsWith("https://", ignoreCase = true)
+        ) {
+            trimmed = "https://$trimmed"
+        }
+        return if (Patterns.WEB_URL.matcher(trimmed).matches()) trimmed else null
+    }
+
+    private fun hostFromUrl(url: String): String? = runCatching {
+        URI(url).host?.removePrefix("www.")
+    }.getOrNull()
+
+    /**
+     * Tries multiple favicon sources in order and stores the first one that
+     * returns a non-trivially-small image body:
+     *  1. Google S2 favicon API (128 px, usually best quality)
+     *  2. /favicon.ico (standard location)
+     *  3. /apple-touch-icon.png (often higher-res on modern sites)
+     *  4. /apple-touch-icon-precomposed.png (older sites)
+     */
+    private suspend fun fetchAndStoreFavicon(source: CustomSource) {
+        val host = hostFromUrl(source.baseUrl) ?: return
+        val clean = source.cleanBaseUrl
+        val candidates = listOf(
+            "https://www.google.com/s2/favicons?domain=$host&sz=128",
+            "$clean/favicon.ico",
+            "$clean/apple-touch-icon.png",
+            "$clean/apple-touch-icon-precomposed.png",
+        )
+        val iconUrl = withContext(Dispatchers.IO) {
+            for (url in candidates) {
+                val found = runCatching {
+                    val req = Request.Builder().url(url).get().build()
+                    httpClient.newCall(req).execute().use { resp ->
+                        if (resp.isSuccessful && (resp.body?.contentLength() ?: 0L) > 200L) url
+                        else null
+                    }
+                }.getOrNull()
+                if (found != null) return@withContext found
+            }
+            null
+        } ?: return
+        repository.update(source.copy(iconUrl = iconUrl))
+    }
+
+    // ── UI state ──────────────────────────────────────────────────────────────
+
+    sealed class UiState {
+        object Idle : UiState()
+        object Detecting : UiState()
+        data class Error(val message: String) : UiState()
+        data class SourceAdded(
+            val source: CustomSource,
+            /** Non-null when auto-detect was used. */
+            val detectedType: CustomSourceType? = null,
+            /** Non-null when detection matched a built-in Kotatsu parser. */
+            val parserName: String? = null,
+            /** False when the site was unreachable during detection. */
+            val siteReachable: Boolean = true,
+        ) : UiState()
+        data class SourceUpdated(
+            val source: CustomSource,
+            val detectedType: CustomSourceType? = null,
+        ) : UiState()
+    }
+
+    companion object {
+        private val httpClient: OkHttpClient by lazy {
+            OkHttpClient.Builder()
+                .connectTimeout(10, TimeUnit.SECONDS)
+                .readTimeout(10, TimeUnit.SECONDS)
+                .followRedirects(true)
+                .build()
+        }
+    }
+}

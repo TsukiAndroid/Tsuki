@@ -10,6 +10,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import io.github.landwarderer.futon.customsource.domain.CustomSource
 import io.github.landwarderer.futon.customsource.domain.CustomSourceType
+import java.util.concurrent.atomic.AtomicLong
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -25,9 +26,16 @@ class CustomSourcesRepository @Inject constructor(
 
     init {
         INSTANCE = this
+        // Seed ID counter above the highest existing ID so new IDs never collide
+        // with persisted ones even across app restarts.
+        val maxExisting = _sources.value.maxOfOrNull { it.id } ?: 0L
+        idCounter.getAndUpdate { current -> maxOf(current, maxExisting + 1) }
     }
 
     fun getAll(): List<CustomSource> = _sources.value
+
+    /** Returns all sources that are currently enabled. */
+    fun getEnabled(): List<CustomSource> = _sources.value.filter { it.isEnabled }
 
     fun add(source: CustomSource) {
         val updated = _sources.value.toMutableList().apply { add(source) }
@@ -47,7 +55,22 @@ class CustomSourcesRepository @Inject constructor(
         _sources.value = updated
     }
 
+    /** Flip the enabled flag of a source. No-op if the id is not found. */
+    fun setEnabled(id: Long, enabled: Boolean) {
+        val source = findById(id) ?: return
+        update(source.copy(isEnabled = enabled))
+    }
+
     fun findById(id: Long): CustomSource? = _sources.value.find { it.id == id }
+
+    /**
+     * Finds an existing source whose normalised base URL matches [url].
+     * Used for duplicate detection before adding a new source.
+     */
+    fun findByUrl(url: String): CustomSource? {
+        val normalised = url.trimEnd('/').lowercase()
+        return _sources.value.find { it.baseUrl.trimEnd('/').lowercase() == normalised }
+    }
 
     private fun loadAll(): List<CustomSource> {
         val json = prefs.getString(KEY_SOURCES, null) ?: return emptyList()
@@ -73,6 +96,7 @@ class CustomSourcesRepository @Inject constructor(
         description = optString("description").takeIf { it.isNotEmpty() },
         parserSourceName = optString("parserSourceName").takeIf { it.isNotEmpty() },
         createdAt = optLong("createdAt", System.currentTimeMillis()),
+        isEnabled = if (has("isEnabled")) getBoolean("isEnabled") else true,
     )
 
     private fun CustomSource.toJson() = JSONObject().apply {
@@ -84,6 +108,7 @@ class CustomSourcesRepository @Inject constructor(
         put("description", description ?: "")
         put("parserSourceName", parserSourceName ?: "")
         put("createdAt", createdAt)
+        put("isEnabled", isEnabled)
     }
 
     fun saveLastUrl(sourceId: Long, url: String) {
@@ -106,24 +131,28 @@ class CustomSourcesRepository @Inject constructor(
 
     /**
      * Parses a JSON string (previously produced by [exportJson] or compatible
-     * tools) and merges any sources not already present (matched by baseUrl,
-     * case-insensitive). Each imported source receives a fresh id to avoid
-     * collisions with local sources.
+     * tools) and merges any sources not already present (matched by normalised
+     * baseUrl — trailing slashes and case are ignored). Each imported source
+     * receives a fresh id to avoid collisions with local sources.
      *
      * @return the number of sources actually added (duplicates are skipped).
      */
     fun importJson(json: String): Int {
         val array = JSONArray(json)
         val existing = _sources.value
-        val existingUrls = existing.map { it.baseUrl.lowercase() }.toHashSet()
+        // Build a normalised URL set for deduplication
+        val existingUrls = existing
+            .map { it.baseUrl.trimEnd('/').lowercase() }
+            .toHashSet()
         val toAdd = mutableListOf<CustomSource>()
-        val baseId = System.currentTimeMillis()
         for (i in 0 until array.length()) {
             try {
                 val cs = array.getJSONObject(i).toCustomSource()
-                if (cs.baseUrl.lowercase() !in existingUrls) {
-                    toAdd.add(cs.copy(id = baseId + i))
-                    existingUrls.add(cs.baseUrl.lowercase())
+                // Normalise the imported URL the same way addSource() does
+                val normUrl = cs.baseUrl.trimEnd('/').lowercase()
+                if (normUrl !in existingUrls) {
+                    toAdd.add(cs.copy(id = generateId()))
+                    existingUrls.add(normUrl)
                 }
             } catch (_: Exception) {
                 // skip malformed entries
@@ -142,13 +171,20 @@ class CustomSourcesRepository @Inject constructor(
         private const val KEY_SOURCES = "sources"
         private const val KEY_LAST_URL_PREFIX = "last_url_"
 
+        /**
+         * Monotonically-increasing ID generator. Seeded in [init] to sit above
+         * the highest persisted ID, so IDs are unique across restarts and even
+         * if [generateId] is called many times within the same millisecond.
+         */
+        private val idCounter = AtomicLong(System.currentTimeMillis())
+
+        /** Returns a unique ID safe to use even under rapid concurrent adds. */
+        fun generateId(): Long = idCounter.getAndIncrement()
+
         @Volatile
         private var INSTANCE: CustomSourcesRepository? = null
 
         fun peekById(id: Long): CustomSource? = INSTANCE?.findById(id)
-
         fun peekAll(): List<CustomSource> = INSTANCE?.getAll().orEmpty()
-
-        fun generateId(): Long = System.currentTimeMillis()
     }
 }

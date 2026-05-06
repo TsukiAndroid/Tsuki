@@ -421,9 +421,9 @@ class MangaSourcesRepository @Inject constructor(
                 return external + mihon + custom
         }
 
-        /** User-defined sources surfaced as first-class [MangaSource]s. */
+        /** User-defined sources surfaced as first-class [MangaSource]s. Only enabled sources are included. */
         fun getCustomSources(): List<MangaSource> =
-                customSourcesRepository.getAll().map { CustomMangaSource(it) }
+                customSourcesRepository.getEnabled().map { CustomMangaSource(it) }
 
         private fun List<MangaSourceEntity>.toSources(
                 skipNsfwSources: Boolean,
