@@ -7,16 +7,19 @@ import javax.inject.Inject
 
 @HiltViewModel
 class AppUpdateViewModel @Inject constructor(
-	private val repository: AppUpdateRepository,
+        private val repository: AppUpdateRepository,
 ) : BaseViewModel() {
 
-	val nextVersion = repository.observeAvailableUpdate()
+        val nextVersion = repository.observeAvailableUpdate()
 
-	init {
-		if (nextVersion.value == null) {
-			launchLoadingJob {
-				repository.fetchUpdate()
-			}
-		}
-	}
+        /** Arch label used in the downloaded APK filename (arm64 / arm32 / x86_64 / universal). */
+        val deviceArch: String = repository.getDeviceArch()
+
+        init {
+                if (nextVersion.value == null) {
+                        launchLoadingJob {
+                                repository.fetchUpdate()
+                        }
+                }
+        }
 }
