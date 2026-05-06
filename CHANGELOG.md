@@ -1,3 +1,10 @@
+## Stable 1.248 (Build #206)
+
+_2026-05-06 07:01 UTC_
+
+- build: add UPDATE_CHANNEL and RELEASES_URL buildConfigFields per productFlavor (41fb80b)
+
+
 ## Alpha 1.241 (Build #200)
 
 _2026-05-06 06:47 UTC_
