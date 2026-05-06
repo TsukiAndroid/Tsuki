@@ -15,8 +15,31 @@ permissions:
 
 jobs:
   build:
-    name: Build Release APK
+    name: Build ${{ matrix.flavor_label }} Release APK
     runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - flavor: alpha
+            flavor_label: Alpha
+            task: assembleAlphaRelease
+            apk_path: app/build/outputs/apk/alpha/release
+            tag_suffix: -alpha
+            prerelease: true
+          - flavor: beta
+            flavor_label: Beta
+            task: assembleBetaRelease
+            apk_path: app/build/outputs/apk/beta/release
+            tag_suffix: -beta
+            prerelease: true
+          - flavor: stable
+            flavor_label: Stable
+            task: assembleStableRelease
+            apk_path: app/build/outputs/apk/stable/release
+            tag_suffix: ''
+            prerelease: false
 
     steps:
       - name: Checkout code
@@ -58,7 +81,8 @@ jobs:
           CODE=$((MAJOR * 10000 + MINOR * 100 + PATCH))
           echo "VERSION_NAME=$VERSION" >> $GITHUB_OUTPUT
           echo "VERSION_CODE=$CODE" >> $GITHUB_OUTPUT
-          echo "TAG_NAME=$TAG" >> $GITHUB_OUTPUT
+          echo "BASE_TAG=$TAG" >> $GITHUB_OUTPUT
+          echo "RELEASE_TAG=${TAG}${{ matrix.tag_suffix }}" >> $GITHUB_OUTPUT
 
       - name: Set up keystore
         run: |
@@ -86,7 +110,7 @@ jobs:
             echo "::warning::Auto-generated keystore used. Add KEYSTORE_FILE/KEYSTORE_PASSWORD/KEY_ALIAS/KEY_PASSWORD secrets for a stable release signing key."
           fi
 
-      - name: Build Release APKs
+      - name: Build ${{ matrix.flavor_label }} Release APK
         env:
           VERSION_NAME: ${{ steps.version.outputs.VERSION_NAME }}
           VERSION_CODE: ${{ steps.version.outputs.VERSION_CODE }}
@@ -94,15 +118,15 @@ jobs:
           KEYSTORE_PASSWORD: ${{ env.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ env.KEY_ALIAS }}
           KEY_PASSWORD: ${{ env.KEY_PASSWORD }}
-        run: ./gradlew assembleRelease --stacktrace --no-configuration-cache
+        run: ./gradlew ${{ matrix.task }} --stacktrace --no-configuration-cache
 
-      - name: Create GitHub Release
+      - name: Create ${{ matrix.flavor_label }} GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.version.outputs.TAG_NAME }}
-          name: "Tsuki ${{ steps.version.outputs.VERSION_NAME }}"
+          tag_name: ${{ steps.version.outputs.RELEASE_TAG }}
+          name: "Tsuki ${{ matrix.flavor_label }} ${{ steps.version.outputs.VERSION_NAME }}"
           body: |
-            ## Tsuki ${{ steps.version.outputs.VERSION_NAME }}
+            ## Tsuki ${{ matrix.flavor_label }} ${{ steps.version.outputs.VERSION_NAME }}
 
             ### 📱 Pick the right APK for your device:
             | APK | Best for |
@@ -111,8 +135,8 @@ jobs:
             | `armeabi-v7a` | Older 32-bit Android phones |
             | `x86_64` | Emulators / rare Intel phones |
             | `universal` | Not sure? Just grab this one |
-          files: app/build/outputs/apk/release/*.apk
-          prerelease: false
+          files: ${{ matrix.apk_path }}/*.apk
+          prerelease: ${{ matrix.prerelease }}
           draft: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
