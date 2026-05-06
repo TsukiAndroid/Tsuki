@@ -1,0 +1,185 @@
+name: Build Stable APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_name:
+        description: 'Version name (e.g. 1.5.0) — leave blank to auto-generate from commit count'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build Stable APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: ${{ runner.os }}-gradle-
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Generate version name
+        id: version
+        run: |
+          COMMIT_COUNT=$(git rev-list --count HEAD)
+          if [ -n "${{ github.event.inputs.version_name }}" ]; then
+            VER="${{ github.event.inputs.version_name }}"
+          else
+            VER="1.${COMMIT_COUNT}"
+          fi
+          echo "VERSION_NAME=${VER}" >> $GITHUB_OUTPUT
+          echo "VERSION_CODE=${COMMIT_COUNT}" >> $GITHUB_OUTPUT
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          set -e
+          PREV_TAG="stable-latest-prev"
+          if git rev-parse --verify "refs/tags/${PREV_TAG}" >/dev/null 2>&1; then
+            RANGE="${PREV_TAG}..HEAD"
+          else
+            RANGE="-50"
+          fi
+
+          {
+            echo "## Stable ${{ steps.version.outputs.VERSION_NAME }} (Build #${{ github.run_number }})"
+            echo ""
+            echo "_$(date -u +'%Y-%m-%d %H:%M UTC')_"
+            echo ""
+            git log "$RANGE" --pretty=format:'- %s (%h)' --no-merges \
+              | grep -viE '^- (chore|ci|docs)\(?(changelog|ci|build)\)?:|^- Update CHANGELOG' \
+              | head -n 100 || true
+            echo ""
+            echo ""
+          } > NEW_ENTRY.md
+
+          if [ -f CHANGELOG.md ]; then
+            cat NEW_ENTRY.md CHANGELOG.md > CHANGELOG.md.tmp
+            mv CHANGELOG.md.tmp CHANGELOG.md
+          else
+            echo "# Changelog" > CHANGELOG.md
+            echo "" >> CHANGELOG.md
+            cat NEW_ENTRY.md >> CHANGELOG.md
+          fi
+
+          {
+            echo 'BODY<<__EOF__'
+            cat NEW_ENTRY.md
+            echo '__EOF__'
+          } >> $GITHUB_OUTPUT
+
+      - name: Set up signing key
+        run: |
+          if [ -n "${{ secrets.KEYSTORE_FILE }}" ]; then
+            echo "Using production keystore from secrets"
+            echo "${{ secrets.KEYSTORE_FILE }}" | base64 -d > app/keystore.jks
+            echo "KEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> $GITHUB_ENV
+            echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> $GITHUB_ENV
+            echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> $GITHUB_ENV
+          else
+            echo "::warning::No KEYSTORE_FILE secret set — signing with committed debug.keystore."
+            cp app/debug.keystore app/keystore.jks
+            echo "KEYSTORE_PASSWORD=android" >> $GITHUB_ENV
+            echo "KEY_ALIAS=debug" >> $GITHUB_ENV
+            echo "KEY_PASSWORD=android" >> $GITHUB_ENV
+          fi
+
+      - name: Build Stable Release APK
+        run: ./gradlew assembleStableRelease --stacktrace --no-configuration-cache
+        env:
+          VERSION_NAME: ${{ steps.version.outputs.VERSION_NAME }}
+          VERSION_CODE: ${{ steps.version.outputs.VERSION_CODE }}
+          KEYSTORE_FILE: keystore.jks
+          KEYSTORE_PASSWORD: ${{ env.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ env.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ env.KEY_PASSWORD }}
+
+      - name: Upload Stable APK (Actions artifact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: Tsuki-stable-${{ github.run_number }}
+          path: app/build/outputs/apk/stable/release/*.apk
+          retention-days: 30
+
+      - name: Snapshot previous stable-latest tag for next diff
+        run: |
+          git fetch --tags --force
+          if git rev-parse --verify refs/tags/stable-latest >/dev/null 2>&1; then
+            PREV_SHA=$(git rev-list -n 1 refs/tags/stable-latest)
+            git tag -f stable-latest-prev "$PREV_SHA"
+            git push -f origin refs/tags/stable-latest-prev || true
+          fi
+
+      - name: Delete old stable-latest release
+        run: gh release delete "stable-latest" --yes || true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Delete old stable-latest tag
+        run: git push origin :refs/tags/stable-latest || true
+
+      - name: Commit updated CHANGELOG.md
+        continue-on-error: true
+        run: |
+          if git diff --quiet CHANGELOG.md; then
+            echo "No changelog changes to commit"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add CHANGELOG.md
+          git commit -m "docs(changelog): update stable for build #${{ github.run_number }} [skip ci]"
+          git pull --rebase --no-edit origin ${{ github.ref_name }} \
+            && git push origin HEAD:${{ github.ref_name }} \
+            || (git rebase --abort 2>/dev/null || true; echo "Changelog push skipped due to rebase conflict")
+
+      - name: Create Stable Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: stable-latest
+          name: "Tsuki Stable ${{ steps.version.outputs.VERSION_NAME }} (Build #${{ github.run_number }})"
+          body: |
+            ## 🌙 Tsuki Stable ${{ steps.version.outputs.VERSION_NAME }}
+            > Manually released · Build #${{ github.run_number }}
+
+            ### What's new
+            ${{ steps.changelog.outputs.BODY }}
+
+            ### 📱 Pick the right APK for your device:
+            | APK filename | Best for |
+            |--------------|----------|
+            | `Tsuki-stable-arm64-release.apk` | Most modern phones (2017+) ✅ recommended |
+            | `Tsuki-stable-arm32-release.apk` | Older 32-bit Android phones |
+            | `Tsuki-stable-x86_64-release.apk` | Emulators / rare Intel phones |
+            | `Tsuki-stable-universal-release.apk` | Not sure? Grab this one |
+
+            ---
+            🔗 Source: https://github.com/Space4414/Tsuki
+          files: app/build/outputs/apk/stable/release/*.apk
+          prerelease: false
+          draft: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
