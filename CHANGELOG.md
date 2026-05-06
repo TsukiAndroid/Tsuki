@@ -1,3 +1,13 @@
+## Beta 1.263 (Build #219)
+
+_2026-05-06 07:20 UTC_
+
+- fix(strings): escape apostrophe in whats_new_in (What\'s new in %s) (43196da)
+- fix(whats-new): remove conflicting onCreateView; onCreateDialog+setView() is sufficient (dc701f1)
+- fix(update): strip accidental 2-space over-indentation from entire file (71ffbd7)
+- fix(strings): escape apostrophe in whats_new_in; fix indentation of new strings (82667ea)
+
+
 ## Stable 1.248 (Build #206)
 
 _2026-05-06 07:01 UTC_
