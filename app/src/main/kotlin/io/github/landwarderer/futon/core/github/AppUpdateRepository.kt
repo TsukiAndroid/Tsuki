@@ -126,29 +126,30 @@ class AppUpdateRepository @Inject constructor(
         }
 
         /**
-         * Fetches the release notes for the CURRENTLY INSTALLED version.
-         * Used by the "What's New" dialog shown on first launch after an upgrade.
+         * Fetches the release notes for the CURRENTLY INSTALLED channel via the
+         * floating "{channel}-latest" tag that CI always reassigns on every build.
+         *
+         * Using a floating tag avoids the previous bug where an exact version tag
+         * like "alpha-1.219" was looked up but never exists in the releases list
+         * (only "alpha-latest" is ever created by the release workflow).
          */
         suspend fun fetchCurrentReleaseNotes(): String? = withContext(Dispatchers.IO) {
                 runCatchingCancellable {
                         val channel = BuildConfig.UPDATE_CHANNEL
-                        val baseVersion = BuildConfig.VERSION_NAME.removeSuffix("-" + channel)
-                        val expectedTag = when (channel) {
-                                "alpha" -> "alpha-" + baseVersion
-                                "beta"  -> "beta-"  + baseVersion
-                                else    -> "v"      + baseVersion
+                        val floatingTag = when (channel) {
+                                "alpha" -> "alpha-latest"
+                                "beta"  -> "beta-latest"
+                                else    -> "stable-latest"
                         }
 
-                        val request = Request.Builder().get().url(releasesUrl).build()
-                        val releases = JSONArray(okHttp.newCall(request).await().body?.string() ?: "[]")
+                        val tagUrl = "https://api.github.com/repos/Space4414/Tsuki/releases/tags/$floatingTag"
+                        val request = Request.Builder().get().url(tagUrl).build()
+                        val body = okHttp.newCall(request).await().body?.string() ?: return@runCatchingCancellable null
 
-                        for (i in 0 until releases.length()) {
-                                val item = releases.getJSONObject(i)
-                                if (item.optString("tag_name") == expectedTag) {
-                                        return@runCatchingCancellable item.optString("body", "")
-                                }
-                        }
-                        null
+                        val release = JSONObject(body)
+                        if (release.has("message")) return@runCatchingCancellable null
+
+                        release.optString("body", "").ifEmpty { null }
                 }.onFailure {
                         it.printStackTraceDebug("AppUpdateRepository::fetchCurrentReleaseNotes")
                 }.getOrNull()
