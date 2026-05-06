@@ -85,30 +85,23 @@ jobs:
           echo "VERSION_NAME=$VERSION"  >> $GITHUB_OUTPUT
           echo "VERSION_CODE=$CODE"     >> $GITHUB_OUTPUT
 
-      - name: Set up keystore
+      - name: Set up signing key
         run: |
           if [ -n "${{ secrets.KEYSTORE_FILE }}" ]; then
-            echo "Using keystore from secrets"
+            echo "Using production keystore from secrets"
             echo "${{ secrets.KEYSTORE_FILE }}" | base64 -d > ${{ github.workspace }}/keystore.jks
             echo "KEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> $GITHUB_ENV
             echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}"                 >> $GITHUB_ENV
             echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}"           >> $GITHUB_ENV
           else
-            echo "No keystore secret – auto-generating a signing key for this build"
-            keytool -genkeypair \
-              -alias tsuki \
-              -keyalg RSA \
-              -keysize 2048 \
-              -validity 10000 \
-              -keystore ${{ github.workspace }}/keystore.jks \
-              -storepass tsukidev \
-              -keypass tsukidev \
-              -dname "CN=Tsuki,OU=Dev,O=Space4414,L=Unknown,ST=Unknown,C=US" \
-              -noprompt
-            echo "KEYSTORE_PASSWORD=tsukidev" >> $GITHUB_ENV
-            echo "KEY_ALIAS=tsuki"            >> $GITHUB_ENV
-            echo "KEY_PASSWORD=tsukidev"      >> $GITHUB_ENV
-            echo "::warning::Auto-generated keystore used. Add KEYSTORE_FILE/KEYSTORE_PASSWORD/KEY_ALIAS/KEY_PASSWORD secrets for a stable release signing key."
+            # Fall back to the stable debug.keystore committed to the repo.
+            # Using the same key on every build means users can install updates
+            # without uninstalling first (no "package conflicts" signature error).
+            echo "::warning::No KEYSTORE_FILE secret set — signing with committed debug.keystore (consistent key across all builds)."
+            cp app/debug.keystore ${{ github.workspace }}/keystore.jks
+            echo "KEYSTORE_PASSWORD=android" >> $GITHUB_ENV
+            echo "KEY_ALIAS=debug"           >> $GITHUB_ENV
+            echo "KEY_PASSWORD=android"      >> $GITHUB_ENV
           fi
 
       - name: Build ${{ steps.flavor.outputs.FLAVOR_LABEL }} Release APK
@@ -130,12 +123,12 @@ jobs:
             ## Tsuki ${{ steps.flavor.outputs.FLAVOR_LABEL }} ${{ steps.flavor.outputs.VERSION_NAME }}
 
             ### 📱 Pick the right APK for your device:
-            | APK | Best for |
-            |-----|----------|
-            | `arm64-v8a` | Most modern phones (2017+) ✅ recommended |
-            | `armeabi-v7a` | Older 32-bit Android phones |
-            | `x86_64` | Emulators / rare Intel phones |
-            | `universal` | Not sure? Just grab this one |
+            | APK filename | Best for |
+            |--------------|----------|
+            | `Tsuki-*-arm64-release.apk` | Most modern phones (2017+) ✅ recommended |
+            | `Tsuki-*-arm32-release.apk` | Older 32-bit Android phones (e.g. Huawei P9 Lite) |
+            | `Tsuki-*-x86_64-release.apk` | Emulators / rare Intel phones |
+            | `Tsuki-*-universal-release.apk` | Not sure? Grab this one |
           files: ${{ steps.flavor.outputs.APK_PATH }}/*.apk
           prerelease: ${{ steps.flavor.outputs.PRERELEASE }}
           draft: false

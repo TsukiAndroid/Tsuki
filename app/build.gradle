@@ -50,10 +50,14 @@ android {
         }
         signingConfigs {
                 release {
-            storeFile file(System.getenv('KEYSTORE_FILE') ?: 'keystore.jks')
-            storePassword System.getenv('KEYSTORE_PASSWORD') ?: System.console()?.readPassword("Store password: ")?.toString()
-            keyAlias System.getenv('KEY_ALIAS') ?: System.console()?.readLine("Key alias: ")
-            keyPassword = System.getenv('KEY_PASSWORD') ?: System.console()?.readPassword("Key password: ")?.toString()
+                        // When KEYSTORE_FILE env var is set (CI with real secrets), use that keystore.
+                        // Otherwise fall back to the stable debug.keystore committed to the repo.
+                        // Using the same key every build means users can install updates without
+                        // having to uninstall first (no signature mismatch / "package conflicts" error).
+                        storeFile     file(System.getenv('KEYSTORE_FILE') ?: 'debug.keystore')
+                        storePassword System.getenv('KEYSTORE_PASSWORD') ?: 'android'
+                        keyAlias      System.getenv('KEY_ALIAS')          ?: 'debug'
+                        keyPassword   System.getenv('KEY_PASSWORD')        ?: 'android'
                 }
         }
         flavorDimensions "release"
@@ -182,12 +186,29 @@ android {
                 }
         }
         applicationVariants.configureEach { variant ->
-                if (variant.buildType.name == 'nightly') {
-                        variant.outputs.each { output ->
+                variant.outputs.each { output ->
+                        // Nightly: derive version code/name from the build date.
+                        if (variant.buildType.name == 'nightly') {
                                 def now = LocalDateTime.now()
                                 output.versionCodeOverride = now.format("yyMMdd").toInteger()
                                 output.versionNameOverride = 'N' + now.format("yyyyMMdd")
                         }
+
+                        // Rename every APK (split + universal) so filenames use the short arch
+                        // labels that AppUpdateRepository.getDeviceArch() returns:
+                        //   arm64-v8a   → arm64   (modern 64-bit phones)
+                        //   armeabi-v7a → arm32   (older 32-bit phones like Huawei P9 Lite)
+                        //   x86_64      → x86_64  (emulators / Intel phones)
+                        //   (no filter) → universal
+                        // Without this renaming the asset-name search in fetchUpdate() falls back
+                        // to "universal" for arm32 devices even when a proper arm32 APK exists.
+                        def abi = output.filters?.find { f -> f.filterType == 'ABI' }?.identifier
+                        def abiLabel = abi
+                                ?.replace('arm64-v8a',   'arm64')
+                                ?.replace('armeabi-v7a', 'arm32')
+                                ?: 'universal'
+                        output.outputFileName =
+                                "Tsuki-${variant.flavorName}-${abiLabel}-${variant.buildType.name}.apk"
                 }
         }
 }

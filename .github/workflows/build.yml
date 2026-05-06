@@ -108,9 +108,24 @@ jobs:
             echo '__EOF__'
           } >> $GITHUB_OUTPUT
 
-      - name: Decode Keystore
+      - name: Set up signing key
         run: |
-          echo "${{ secrets.KEYSTORE_FILE }}" | base64 -d > app/keystore.jks
+          if [ -n "${{ secrets.KEYSTORE_FILE }}" ]; then
+            echo "Using production keystore from secrets"
+            echo "${{ secrets.KEYSTORE_FILE }}" | base64 -d > app/keystore.jks
+            echo "KEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> $GITHUB_ENV
+            echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> $GITHUB_ENV
+            echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> $GITHUB_ENV
+          else
+            # Fall back to the stable debug.keystore committed to the repo.
+            # Using the same key on every build means users can install updates
+            # without uninstalling first (no "package conflicts" signature error).
+            echo "::warning::No KEYSTORE_FILE secret set — signing with committed debug.keystore (consistent key across all builds)."
+            cp app/debug.keystore app/keystore.jks
+            echo "KEYSTORE_PASSWORD=android" >> $GITHUB_ENV
+            echo "KEY_ALIAS=debug" >> $GITHUB_ENV
+            echo "KEY_PASSWORD=android" >> $GITHUB_ENV
+          fi
 
       - name: Build ${{ matrix.flavor_label }} Release APK
         run: ./gradlew ${{ matrix.task }} --stacktrace --no-configuration-cache
@@ -118,9 +133,9 @@ jobs:
           VERSION_NAME: ${{ steps.version.outputs.VERSION_NAME }}
           VERSION_CODE: ${{ steps.version.outputs.VERSION_CODE }}
           KEYSTORE_FILE: keystore.jks
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          KEYSTORE_PASSWORD: ${{ env.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ env.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ env.KEY_PASSWORD }}
 
       - name: Upload ${{ matrix.flavor_label }} APK (Actions artifact)
         uses: actions/upload-artifact@v4
@@ -174,12 +189,12 @@ jobs:
             ${{ steps.changelog.outputs.BODY }}
 
             ### 📱 Pick the right APK for your device:
-            | APK | Best for |
-            |-----|----------|
-            | `arm64-v8a` | Most modern phones (2017+) ✅ recommended |
-            | `armeabi-v7a` | Older 32-bit Android phones |
-            | `x86_64` | Emulators / rare Intel phones |
-            | `universal` | Not sure? Just grab this one |
+            | APK filename | Best for |
+            |--------------|----------|
+            | `Tsuki-*-arm64-release.apk` | Most modern phones (2017+) ✅ recommended |
+            | `Tsuki-*-arm32-release.apk` | Older 32-bit Android phones (e.g. Huawei P9 Lite) |
+            | `Tsuki-*-x86_64-release.apk` | Emulators / rare Intel phones |
+            | `Tsuki-*-universal-release.apk` | Not sure? Grab this one |
 
             ---
             🔗 Source: https://github.com/Space4414/Tsuki
