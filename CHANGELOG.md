@@ -1,3 +1,12 @@
+## Alpha 1.281 (Build #2)
+
+_2026-05-06 18:05 UTC_
+
+- ci: add build-beta.yml — manual-only Beta builds (5556b38)
+- ci: add build-alpha.yml — auto-builds Alpha on every push (4e7d2d6)
+- fix: restore com.space4414.tsuki base ID for alpha and beta flavors (e46978f)
+
+
 ## Stable 1.278 (Build #228)
 
 _2026-05-06 17:55 UTC_
