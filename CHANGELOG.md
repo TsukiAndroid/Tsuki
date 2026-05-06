@@ -1,3 +1,10 @@
+## Beta 1.276 (Build #227)
+
+_2026-05-06 16:02 UTC_
+
+- fix: update notifications + faster chapter checks (7d09391)
+
+
 ## Alpha 1.273 (Build #225)
 
 _2026-05-06 13:37 UTC_
