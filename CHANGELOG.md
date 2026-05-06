@@ -1,3 +1,11 @@
+## Alpha 1.273 (Build #225)
+
+_2026-05-06 13:37 UTC_
+
+- Update build.yml (ed24307)
+- fix: stable signing key + arm32 APK naming for Huawei P9 Lite (4e5a894)
+
+
 ## Alpha 1.271 (Build #224)
 
 _2026-05-06 09:04 UTC_
