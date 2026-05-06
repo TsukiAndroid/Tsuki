@@ -135,6 +135,8 @@ android {
                 androidTest.assets.srcDirs += files("$projectDir/schemas".toString())
                 main.java.srcDirs += 'src/main/kotlin/'
                 alpha.res.srcDirs += ['src/alpha/res']
+                beta.res.srcDirs += ['src/beta/res']
+                stable.res.srcDirs += ['src/stable/res']
                 nightly.res.srcDirs += ['src/nightly/res']
         }
         compileOptions {
