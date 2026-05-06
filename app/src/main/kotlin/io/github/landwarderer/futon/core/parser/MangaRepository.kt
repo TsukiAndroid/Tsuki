@@ -12,6 +12,7 @@ import io.github.landwarderer.futon.core.model.UnknownMangaSource
 import io.github.landwarderer.futon.core.parser.external.ExternalMangaRepository
 import io.github.landwarderer.futon.core.parser.external.ExternalMangaSource
 import io.github.landwarderer.futon.customsource.data.CustomMangaRepository
+import io.github.landwarderer.futon.customsource.data.CustomSourcesRepository
 import io.github.landwarderer.futon.customsource.domain.CustomMangaSource
 import io.github.landwarderer.futon.customsource.domain.CustomSourceType
 import io.github.landwarderer.futon.local.data.LocalMangaRepository
@@ -67,6 +68,7 @@ interface MangaRepository {
                 private val contentCache: MemoryContentCache,
                 private val mirrorSwitcher: MirrorSwitcher,
                 private val mihonExtensionManager: MihonExtensionManager,
+                @Suppress("unused") customSourcesRepository: CustomSourcesRepository,
         ) {
 
                 private val cache = ArrayMap<MangaSource, WeakReference<MangaRepository>>()
