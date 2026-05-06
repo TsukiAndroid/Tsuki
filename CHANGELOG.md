@@ -1,3 +1,11 @@
+## Stable 1.278 (Build #228)
+
+_2026-05-06 17:55 UTC_
+
+- fix: restore com.space4414.tsuki base ID for alpha and beta flavors (e46978f)
+- fix: update notifications + faster chapter checks (7d09391)
+
+
 ## Beta 1.276 (Build #227)
 
 _2026-05-06 16:02 UTC_
