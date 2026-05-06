@@ -60,14 +60,14 @@ android {
         productFlavors {
                 alpha {
                         dimension "release"
-                        applicationId "com.space4414.tsuki.alpha"
+                        applicationId "io.github.landwarderer.futon.alpha"
                         versionNameSuffix "-alpha"
                         buildConfigField "String", "UPDATE_CHANNEL", '"alpha"'
                         buildConfigField "String", "RELEASES_URL", '"https://api.github.com/repos/Space4414/Tsuki/releases"'
                 }
                 beta {
                         dimension "release"
-                        applicationId "com.space4414.tsuki.beta"
+                        applicationId "io.github.landwarderer.futon.beta"
                         versionNameSuffix "-beta"
                         buildConfigField "String", "UPDATE_CHANNEL", '"beta"'
                         buildConfigField "String", "RELEASES_URL", '"https://api.github.com/repos/Space4414/Tsuki/releases"'
