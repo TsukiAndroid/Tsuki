@@ -7,6 +7,10 @@ on:
         description: 'Version name (e.g. 1.5.0) — leave blank to auto-generate from commit count'
         required: false
         default: ''
+      release_notes:
+        description: 'Release notes — shown at the top of the GitHub release (optional)'
+        required: false
+        default: ''
 
 permissions:
   contents: write
@@ -165,6 +169,7 @@ jobs:
             ## 🌙 Tsuki Beta ${{ steps.version.outputs.VERSION_NAME }}
             > Manually released · Build #${{ github.run_number }}
 
+            ${{ github.event.inputs.release_notes != '' && format('### Release notes\n{0}\n', github.event.inputs.release_notes) || '' }}
             ### What's new
             ${{ steps.changelog.outputs.BODY }}
 
