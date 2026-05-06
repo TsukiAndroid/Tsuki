@@ -1,3 +1,14 @@
+## Alpha-1.227 (Build #189)
+
+_2026-05-06 00:17 UTC_
+
+- refactor: rename applicationId from space4414.tsuki to com.space4414.tsuki (7d03294)
+- fix: resolve 7 compile errors + expand fingerprint probes to 17 CMS families (f1efbc0)
+- fix: source name always from user input; add Madara fingerprint probe (1c810e6)
+- feat: API fingerprinting + domain override for truly new Kotatsu-compatible sites (c91b7d4)
+- feat: Kotatsu parser auto-match + genre filters for Madara/Themesia/MangaStream (4722e7c)
+
+
 ## Alpha-1.225 (Build #188)
 
 _2026-05-05 17:24 UTC_
