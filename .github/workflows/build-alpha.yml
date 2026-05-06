@@ -1,0 +1,179 @@
+name: Build Alpha APK
+
+on:
+  push:
+    branches: [ devel, main ]
+    paths-ignore:
+      - 'CHANGELOG.md'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build Alpha APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: ${{ runner.os }}-gradle-
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Generate version name
+        id: version
+        run: |
+          COMMIT_COUNT=$(git rev-list --count HEAD)
+          echo "VERSION_NAME=1.${COMMIT_COUNT}" >> $GITHUB_OUTPUT
+          echo "VERSION_CODE=${COMMIT_COUNT}" >> $GITHUB_OUTPUT
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          set -e
+          PREV_TAG="alpha-latest-prev"
+          if git rev-parse --verify "refs/tags/${PREV_TAG}" >/dev/null 2>&1; then
+            RANGE="${PREV_TAG}..HEAD"
+          else
+            RANGE="-50"
+          fi
+
+          {
+            echo "## Alpha ${{ steps.version.outputs.VERSION_NAME }} (Build #${{ github.run_number }})"
+            echo ""
+            echo "_$(date -u +'%Y-%m-%d %H:%M UTC')_"
+            echo ""
+            git log "$RANGE" --pretty=format:'- %s (%h)' --no-merges \
+              | grep -viE '^- (chore|ci|docs)\(?(changelog|ci|build)\)?:|^- Update CHANGELOG' \
+              | head -n 100 || true
+            echo ""
+            echo ""
+          } > NEW_ENTRY.md
+
+          if [ -f CHANGELOG.md ]; then
+            cat NEW_ENTRY.md CHANGELOG.md > CHANGELOG.md.tmp
+            mv CHANGELOG.md.tmp CHANGELOG.md
+          else
+            echo "# Changelog" > CHANGELOG.md
+            echo "" >> CHANGELOG.md
+            cat NEW_ENTRY.md >> CHANGELOG.md
+          fi
+
+          {
+            echo 'BODY<<__EOF__'
+            cat NEW_ENTRY.md
+            echo '__EOF__'
+          } >> $GITHUB_OUTPUT
+
+      - name: Set up signing key
+        run: |
+          if [ -n "${{ secrets.KEYSTORE_FILE }}" ]; then
+            echo "Using production keystore from secrets"
+            echo "${{ secrets.KEYSTORE_FILE }}" | base64 -d > app/keystore.jks
+            echo "KEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> $GITHUB_ENV
+            echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> $GITHUB_ENV
+            echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> $GITHUB_ENV
+          else
+            echo "::warning::No KEYSTORE_FILE secret set — signing with committed debug.keystore."
+            cp app/debug.keystore app/keystore.jks
+            echo "KEYSTORE_PASSWORD=android" >> $GITHUB_ENV
+            echo "KEY_ALIAS=debug" >> $GITHUB_ENV
+            echo "KEY_PASSWORD=android" >> $GITHUB_ENV
+          fi
+
+      - name: Build Alpha Release APK
+        run: ./gradlew assembleAlphaRelease --stacktrace --no-configuration-cache
+        env:
+          VERSION_NAME: ${{ steps.version.outputs.VERSION_NAME }}
+          VERSION_CODE: ${{ steps.version.outputs.VERSION_CODE }}
+          KEYSTORE_FILE: keystore.jks
+          KEYSTORE_PASSWORD: ${{ env.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ env.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ env.KEY_PASSWORD }}
+
+      - name: Upload Alpha APK (Actions artifact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: Tsuki-alpha-${{ github.run_number }}
+          path: app/build/outputs/apk/alpha/release/*.apk
+          retention-days: 30
+
+      - name: Snapshot previous alpha-latest tag for next diff
+        run: |
+          git fetch --tags --force
+          if git rev-parse --verify refs/tags/alpha-latest >/dev/null 2>&1; then
+            PREV_SHA=$(git rev-list -n 1 refs/tags/alpha-latest)
+            git tag -f alpha-latest-prev "$PREV_SHA"
+            git push -f origin refs/tags/alpha-latest-prev || true
+          fi
+
+      - name: Delete old alpha-latest release
+        run: gh release delete "alpha-latest" --yes || true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Delete old alpha-latest tag
+        run: git push origin :refs/tags/alpha-latest || true
+
+      - name: Commit updated CHANGELOG.md
+        continue-on-error: true
+        run: |
+          if git diff --quiet CHANGELOG.md; then
+            echo "No changelog changes to commit"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add CHANGELOG.md
+          git commit -m "docs(changelog): update alpha for build #${{ github.run_number }} [skip ci]"
+          git pull --rebase --no-edit origin ${{ github.ref_name }} \
+            && git push origin HEAD:${{ github.ref_name }} \
+            || (git rebase --abort 2>/dev/null || true; echo "Changelog push skipped due to rebase conflict")
+
+      - name: Create Alpha Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: alpha-latest
+          name: "Tsuki Alpha ${{ steps.version.outputs.VERSION_NAME }} (Build #${{ github.run_number }})"
+          body: |
+            ## 🌙 Tsuki Alpha ${{ steps.version.outputs.VERSION_NAME }}
+            > Auto-built from latest commit · Build #${{ github.run_number }}
+
+            ### What's new
+            ${{ steps.changelog.outputs.BODY }}
+
+            ### 📱 Pick the right APK for your device:
+            | APK filename | Best for |
+            |--------------|----------|
+            | `Tsuki-alpha-arm64-release.apk` | Most modern phones (2017+) ✅ recommended |
+            | `Tsuki-alpha-arm32-release.apk` | Older 32-bit Android phones |
+            | `Tsuki-alpha-x86_64-release.apk` | Emulators / rare Intel phones |
+            | `Tsuki-alpha-universal-release.apk` | Not sure? Grab this one |
+
+            ---
+            🔗 Source: https://github.com/Space4414/Tsuki
+          files: app/build/outputs/apk/alpha/release/*.apk
+          prerelease: true
+          draft: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
