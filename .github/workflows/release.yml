@@ -1,146 +1,148 @@
 name: Release Build
 
-on:
-  push:
-    tags:
-      - 'v*'
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: 'Release tag (e.g. v1.60.0)'
-        required: true
+  on:
+    push:
+      tags:
+        - 'v*'
+        - 'alpha-*'
+        - 'beta-*'
+    workflow_dispatch:
+      inputs:
+        tag:
+          description: 'Release tag (e.g. v1.60.0, alpha-1.2, beta-1.2)'
+          required: true
 
-permissions:
-  contents: write
+  permissions:
+    contents: write
 
-jobs:
-  build:
-    name: Build ${{ matrix.flavor_label }} Release APK
-    runs-on: ubuntu-latest
+  jobs:
+    build:
+      name: Build Release APK
+      runs-on: ubuntu-latest
 
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - flavor: alpha
-            flavor_label: Alpha
-            task: assembleAlphaRelease
-            apk_path: app/build/outputs/apk/alpha/release
-            tag_suffix: -alpha
-            prerelease: true
-          - flavor: beta
-            flavor_label: Beta
-            task: assembleBetaRelease
-            apk_path: app/build/outputs/apk/beta/release
-            tag_suffix: -beta
-            prerelease: true
-          - flavor: stable
-            flavor_label: Stable
-            task: assembleStableRelease
-            apk_path: app/build/outputs/apk/stable/release
-            tag_suffix: ''
-            prerelease: false
+      steps:
+        - name: Checkout code
+          uses: actions/checkout@v4
+          with:
+            fetch-depth: 0
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+        - name: Set up JDK 17
+          uses: actions/setup-java@v4
+          with:
+            java-version: '17'
+            distribution: 'temurin'
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
+        - name: Cache Gradle packages
+          uses: actions/cache@v4
+          with:
+            path: |
+              ~/.gradle/caches
+              ~/.gradle/wrapper
+            key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+            restore-keys: ${{ runner.os }}-gradle-
 
-      - name: Cache Gradle packages
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: ${{ runner.os }}-gradle-
+        - name: Grant execute permission for gradlew
+          run: chmod +x gradlew
 
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
+        - name: Determine flavor from tag
+          id: flavor
+          run: |
+            if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+              TAG="${{ github.event.inputs.tag }}"
+            else
+              TAG="${GITHUB_REF#refs/tags/}"
+            fi
+            echo "TAG_NAME=${TAG}" >> $GITHUB_OUTPUT
 
-      - name: Compute version info
-        id: version
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            TAG="${{ github.event.inputs.tag }}"
-          else
-            TAG="${GITHUB_REF#refs/tags/}"
-          fi
-          VERSION="${TAG#v}"
-          MAJOR=$(echo "$VERSION" | cut -d. -f1)
-          MINOR=$(echo "$VERSION" | cut -d. -f2)
-          PATCH=$(echo "$VERSION" | cut -d. -f3)
-          PATCH=${PATCH:-0}
-          CODE=$((MAJOR * 10000 + MINOR * 100 + PATCH))
-          echo "VERSION_NAME=$VERSION" >> $GITHUB_OUTPUT
-          echo "VERSION_CODE=$CODE" >> $GITHUB_OUTPUT
-          echo "BASE_TAG=$TAG" >> $GITHUB_OUTPUT
-          echo "RELEASE_TAG=${TAG}${{ matrix.tag_suffix }}" >> $GITHUB_OUTPUT
+            if [[ "$TAG" == alpha-* ]]; then
+              echo "FLAVOR=alpha"          >> $GITHUB_OUTPUT
+              echo "FLAVOR_LABEL=Alpha"    >> $GITHUB_OUTPUT
+              echo "TASK=assembleAlphaRelease"                      >> $GITHUB_OUTPUT
+              echo "APK_PATH=app/build/outputs/apk/alpha/release"   >> $GITHUB_OUTPUT
+              echo "PRERELEASE=true"       >> $GITHUB_OUTPUT
+              VERSION="${TAG#alpha-}"
+            elif [[ "$TAG" == beta-* ]]; then
+              echo "FLAVOR=beta"           >> $GITHUB_OUTPUT
+              echo "FLAVOR_LABEL=Beta"     >> $GITHUB_OUTPUT
+              echo "TASK=assembleBetaRelease"                       >> $GITHUB_OUTPUT
+              echo "APK_PATH=app/build/outputs/apk/beta/release"    >> $GITHUB_OUTPUT
+              echo "PRERELEASE=true"       >> $GITHUB_OUTPUT
+              VERSION="${TAG#beta-}"
+            else
+              echo "FLAVOR=stable"         >> $GITHUB_OUTPUT
+              echo "FLAVOR_LABEL=Stable"   >> $GITHUB_OUTPUT
+              echo "TASK=assembleStableRelease"                      >> $GITHUB_OUTPUT
+              echo "APK_PATH=app/build/outputs/apk/stable/release"  >> $GITHUB_OUTPUT
+              echo "PRERELEASE=false"      >> $GITHUB_OUTPUT
+              VERSION="${TAG#v}"
+            fi
 
-      - name: Set up keystore
-        run: |
-          if [ -n "${{ secrets.KEYSTORE_FILE }}" ]; then
-            echo "Using keystore from secrets"
-            echo "${{ secrets.KEYSTORE_FILE }}" | base64 -d > ${{ github.workspace }}/keystore.jks
-            echo "KEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> $GITHUB_ENV
-            echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> $GITHUB_ENV
-            echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> $GITHUB_ENV
-          else
-            echo "No keystore secret – auto-generating a signing key for this build"
-            keytool -genkeypair \
-              -alias tsuki \
-              -keyalg RSA \
-              -keysize 2048 \
-              -validity 10000 \
-              -keystore ${{ github.workspace }}/keystore.jks \
-              -storepass tsukidev \
-              -keypass tsukidev \
-              -dname "CN=Tsuki,OU=Dev,O=Space4414,L=Unknown,ST=Unknown,C=US" \
-              -noprompt
-            echo "KEYSTORE_PASSWORD=tsukidev" >> $GITHUB_ENV
-            echo "KEY_ALIAS=tsuki" >> $GITHUB_ENV
-            echo "KEY_PASSWORD=tsukidev" >> $GITHUB_ENV
-            echo "::warning::Auto-generated keystore used. Add KEYSTORE_FILE/KEYSTORE_PASSWORD/KEY_ALIAS/KEY_PASSWORD secrets for a stable release signing key."
-          fi
+            MAJOR=$(echo "$VERSION" | cut -d. -f1)
+            MINOR=$(echo "$VERSION" | cut -d. -f2)
+            PATCH=$(echo "$VERSION" | cut -d. -f3)
+            PATCH=${PATCH:-0}
+            CODE=$((MAJOR * 10000 + MINOR * 100 + PATCH))
+            echo "VERSION_NAME=$VERSION"  >> $GITHUB_OUTPUT
+            echo "VERSION_CODE=$CODE"     >> $GITHUB_OUTPUT
 
-      - name: Build ${{ matrix.flavor_label }} Release APK
-        env:
-          VERSION_NAME: ${{ steps.version.outputs.VERSION_NAME }}
-          VERSION_CODE: ${{ steps.version.outputs.VERSION_CODE }}
-          KEYSTORE_FILE: ${{ github.workspace }}/keystore.jks
-          KEYSTORE_PASSWORD: ${{ env.KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ env.KEY_ALIAS }}
-          KEY_PASSWORD: ${{ env.KEY_PASSWORD }}
-        run: ./gradlew ${{ matrix.task }} --stacktrace --no-configuration-cache
+        - name: Set up keystore
+          run: |
+            if [ -n "${{ secrets.KEYSTORE_FILE }}" ]; then
+              echo "Using keystore from secrets"
+              echo "${{ secrets.KEYSTORE_FILE }}" | base64 -d > ${{ github.workspace }}/keystore.jks
+              echo "KEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> $GITHUB_ENV
+              echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}"                 >> $GITHUB_ENV
+              echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}"           >> $GITHUB_ENV
+            else
+              echo "No keystore secret – auto-generating a signing key for this build"
+              keytool -genkeypair \
+                -alias tsuki \
+                -keyalg RSA \
+                -keysize 2048 \
+                -validity 10000 \
+                -keystore ${{ github.workspace }}/keystore.jks \
+                -storepass tsukidev \
+                -keypass tsukidev \
+                -dname "CN=Tsuki,OU=Dev,O=Space4414,L=Unknown,ST=Unknown,C=US" \
+                -noprompt
+              echo "KEYSTORE_PASSWORD=tsukidev" >> $GITHUB_ENV
+              echo "KEY_ALIAS=tsuki"            >> $GITHUB_ENV
+              echo "KEY_PASSWORD=tsukidev"      >> $GITHUB_ENV
+              echo "::warning::Auto-generated keystore used. Add KEYSTORE_FILE/KEYSTORE_PASSWORD/KEY_ALIAS/KEY_PASSWORD secrets for a stable release signing key."
+            fi
 
-      - name: Create ${{ matrix.flavor_label }} GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ steps.version.outputs.RELEASE_TAG }}
-          name: "Tsuki ${{ matrix.flavor_label }} ${{ steps.version.outputs.VERSION_NAME }}"
-          body: |
-            ## Tsuki ${{ matrix.flavor_label }} ${{ steps.version.outputs.VERSION_NAME }}
+        - name: Build ${{ steps.flavor.outputs.FLAVOR_LABEL }} Release APK
+          env:
+            VERSION_NAME:      ${{ steps.flavor.outputs.VERSION_NAME }}
+            VERSION_CODE:      ${{ steps.flavor.outputs.VERSION_CODE }}
+            KEYSTORE_FILE:     ${{ github.workspace }}/keystore.jks
+            KEYSTORE_PASSWORD: ${{ env.KEYSTORE_PASSWORD }}
+            KEY_ALIAS:         ${{ env.KEY_ALIAS }}
+            KEY_PASSWORD:      ${{ env.KEY_PASSWORD }}
+          run: ./gradlew ${{ steps.flavor.outputs.TASK }} --stacktrace --no-configuration-cache
 
-            ### 📱 Pick the right APK for your device:
-            | APK | Best for |
-            |-----|----------|
-            | `arm64-v8a` | Most modern phones (2017+) ✅ recommended |
-            | `armeabi-v7a` | Older 32-bit Android phones |
-            | `x86_64` | Emulators / rare Intel phones |
-            | `universal` | Not sure? Just grab this one |
-          files: ${{ matrix.apk_path }}/*.apk
-          prerelease: ${{ matrix.prerelease }}
-          draft: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        - name: Create ${{ steps.flavor.outputs.FLAVOR_LABEL }} GitHub Release
+          uses: softprops/action-gh-release@v2
+          with:
+            tag_name: ${{ steps.flavor.outputs.TAG_NAME }}
+            name: "Tsuki ${{ steps.flavor.outputs.FLAVOR_LABEL }} ${{ steps.flavor.outputs.VERSION_NAME }}"
+            body: |
+              ## Tsuki ${{ steps.flavor.outputs.FLAVOR_LABEL }} ${{ steps.flavor.outputs.VERSION_NAME }}
 
-      - name: Clean up keystore
-        if: always()
-        run: rm -f ${{ github.workspace }}/keystore.jks
+              ### 📱 Pick the right APK for your device:
+              | APK | Best for |
+              |-----|----------|
+              | `arm64-v8a` | Most modern phones (2017+) ✅ recommended |
+              | `armeabi-v7a` | Older 32-bit Android phones |
+              | `x86_64` | Emulators / rare Intel phones |
+              | `universal` | Not sure? Just grab this one |
+            files: ${{ steps.flavor.outputs.APK_PATH }}/*.apk
+            prerelease: ${{ steps.flavor.outputs.PRERELEASE }}
+            draft: false
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+        - name: Clean up keystore
+          if: always()
+          run: rm -f ${{ github.workspace }}/keystore.jks
+  
