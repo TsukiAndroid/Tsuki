@@ -1,3 +1,10 @@
+## Alpha 1.289 (Build #8)
+
+_2026-05-06 18:43 UTC_
+
+- ci: add draft mode input to Beta workflow (95b6c91)
+
+
 ## Alpha 1.286 (Build #6)
 
 _2026-05-06 18:30 UTC_
