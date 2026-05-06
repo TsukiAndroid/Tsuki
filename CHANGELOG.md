@@ -1,3 +1,11 @@
+## Alpha 1.241 (Build #200)
+
+_2026-05-06 06:47 UTC_
+
+- feat(icons): alpha flavor uses amber background to distinguish from stable (32a5d1f)
+- fix(notifications): BigPictureStyle with cover image; InboxStyle kept for group summary (1e5109e)
+
+
 ## Stable 1.233 (Build #193)
 
 _2026-05-06 06:24 UTC_
