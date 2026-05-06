@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+  <!-- Beta build: teal background to distinguish from alpha and stable -->
+  <resources>
+      <color name="ic_launcher_background">#00695C</color>
+  </resources>
+  
