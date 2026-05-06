@@ -1,3 +1,11 @@
+## Beta 1.267 (Build #221)
+
+_2026-05-06 08:23 UTC_
+
+- fix(flavors): change alpha/beta applicationIds to avoid MIUI install conflict (f2bc817)
+- fix(ci): fix release.yml top-level YAML indentation; exclude floating tags from trigger (71c88b0)
+
+
 ## Beta 1.265 (Build #220)
 
 _2026-05-06 07:50 UTC_
