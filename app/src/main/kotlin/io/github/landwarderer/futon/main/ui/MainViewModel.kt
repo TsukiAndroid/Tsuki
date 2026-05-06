@@ -34,6 +34,7 @@ class MainViewModel @Inject constructor(
 
 	val onOpenReader = MutableEventFlow<Manga>()
 	val onFirstStart = MutableEventFlow<Unit>()
+val onShowWhatsNew = MutableEventFlow<Unit>()
 
 	val isResumeEnabled = readingResumeEnabledUseCase()
 		.withErrorHandling()
