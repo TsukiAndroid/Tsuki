@@ -73,17 +73,32 @@ jobs:
             RANGE="-50"
           fi
 
-          {
-            echo "## Stable ${{ steps.version.outputs.VERSION_NAME }} (Build [#${{ github.run_number }}](https://github.com/Space4414/Tsuki/actions/runs/${{ github.run_id }}))"
-            echo ""
-            echo "_$(date -u +'%Y-%m-%d %H:%M UTC')_"
-            echo ""
-            git log "$RANGE" --pretty=format:'- %s (%h)' --no-merges \
-              | grep -viE '^- (chore|ci|docs)\(?(changelog|ci|build)\)?:|^- Update CHANGELOG' \
-              | head -n 100 || true
-            echo ""
-            echo ""
-          } > NEW_ENTRY.md
+          VERSION="${{ steps.version.outputs.VERSION_NAME }}"
+          BUILD_LINK="[#${{ github.run_number }}](https://github.com/Space4414/Tsuki/actions/runs/${{ github.run_id }})"
+          HEADER="## Stable ${VERSION} (Build ${BUILD_LINK})"
+          DATE="$(date -u +'%Y-%m-%d %H:%M UTC')"
+
+          # If CHANGELOG.md starts with ## [Unreleased], use those hand-written notes
+          if [ -f CHANGELOG.md ] && head -1 CHANGELOG.md | grep -q '^\#\# \[Unreleased\]'; then
+            MANUAL="$(awk 'NR==1{next} /^\#\# /{exit} {print}' CHANGELOG.md)"
+            printf '%s\n\n_%s_\n\n%s\n\n' "${HEADER}" "${DATE}" "${MANUAL}" > NEW_ENTRY.md
+            # Drop the consumed [Unreleased] section so it isn't duplicated
+            awk '/^\#\# \[Unreleased\]/{skip=1;next} /^\#\# / && skip{skip=0} !skip{print}' \
+              CHANGELOG.md > CHANGELOG.tmp && mv CHANGELOG.tmp CHANGELOG.md
+          else
+            # Auto-generate from git log
+            {
+              echo "${HEADER}"
+              echo ""
+              echo "_${DATE}_"
+              echo ""
+              git log "$RANGE" --pretty=format:'- %s (%h)' --no-merges \
+                | grep -viE '^- (chore|ci|docs)\(?(changelog|ci|build)\)?:|^- Update CHANGELOG' \
+                | head -n 100 || true
+              echo ""
+              echo ""
+            } > NEW_ENTRY.md
+          fi
 
           if [ -f CHANGELOG.md ]; then
             cat NEW_ENTRY.md CHANGELOG.md > CHANGELOG.md.tmp
