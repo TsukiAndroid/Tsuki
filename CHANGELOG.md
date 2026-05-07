@@ -1,3 +1,11 @@
+## Alpha 1.309 (Build #21)
+
+_2026-05-07 08:11 UTC_
+
+- fix: correct 3 remaining update-checker bugs for stable APK (861743b)
+- fix: stable channel now matches stable-latest CI tag (07b77d6)
+
+
 ## Alpha 1.307 (Build #20)
 
 _2026-05-07 03:31 UTC_
