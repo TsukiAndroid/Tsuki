@@ -7,6 +7,7 @@ import io.github.landwarderer.futon.core.github.AppUpdateWorker
 import io.github.landwarderer.futon.core.prefs.AppSettings
 import io.github.landwarderer.futon.core.util.ext.processLifecycleScope
 import io.github.landwarderer.futon.suggestions.ui.SuggestionsWorker
+import io.github.landwarderer.futon.sync.work.SyncHealthWorker
 import io.github.landwarderer.futon.tracker.work.TrackWorker
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -17,6 +18,7 @@ class WorkScheduleManager @Inject constructor(
         private val suggestionScheduler: SuggestionsWorker.Scheduler,
         private val trackerScheduler: TrackWorker.Scheduler,
         private val appUpdateScheduler: AppUpdateWorker.Scheduler,
+        private val syncHealthScheduler: SyncHealthWorker.Scheduler,
 ) : SharedPreferences.OnSharedPreferenceChangeListener {
 
         override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
@@ -44,6 +46,7 @@ class WorkScheduleManager @Inject constructor(
                         updateWorkerImpl(trackerScheduler, settings.isTrackerEnabled, true) // always force due to adaptive interval
                         updateWorkerImpl(suggestionScheduler, settings.isSuggestionsEnabled, false)
                         updateWorkerImpl(appUpdateScheduler, true, false)
+                        updateWorkerImpl(syncHealthScheduler, true, false)
                 }
         }
 

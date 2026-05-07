@@ -379,6 +379,11 @@
     <string name="downloading_apk">Downloading…</string>
     <string name="whats_new_in">What\'s new in %s</string>
     <string name="whats_new_close">Got it</string>
+    <string name="sync_migration_message">Sync account updated — please sign in again in Settings</string>
+    <string name="sync_migration_action">Settings</string>
+    <string name="sync_health_channel">Sync health</string>
+    <string name="sync_overdue_title">Sync may be paused</string>
+    <string name="sync_overdue_message">Sync for %s hasn\'t run in a while — tap to check settings.</string>
     <string name="no_release_notes">No release notes available.</string>
     <string name="got_it">Got it</string>
     <string name="sources_reorder_tip">Tap and hold on an item to reorder them</string>
