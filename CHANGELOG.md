@@ -1,3 +1,24 @@
+## Stable 1.4.4 (Build [#3](https://github.com/Space4414/Tsuki/actions/runs/25501741547))
+
+_2026-05-07 14:22 UTC_
+
+- ci: support manual [Unreleased] release notes in CHANGELOG.md (654aa2f)
+- brand: add Tsuki Project badge to README and release footers (e8d9c6e)
+- ci: replace bare #N build refs with Tsuki CI run links (487dee5)
+- fix: correct 3 remaining update-checker bugs for stable APK (861743b)
+- fix: stable channel now matches stable-latest CI tag (07b77d6)
+- fix: add LEGACY_SYNC_ACCOUNT_TYPE BuildConfig field to all flavors (f6130b8)
+- feat: sync health worker + in-app update banner (6ecbabe)
+- feat: fallback migration banner detection via had_sync_account flag (57a3f45)
+- feat: write had_sync_account flag in SyncController for migration fallback detection (a770326)
+- feat: call removeLegacySyncAccount before firing migration banner (ea24cf0)
+- feat: show sync migration Snackbar in MainActivity (a8e2a12)
+- feat: fire onShowSyncMigrationBanner event in MainViewModel init (456e135)
+- fix: migrate Stable flavor authorities to com.space4414.tsuki branding (c9c14d7)
+- fix: give Beta flavor unique ContentProvider authorities and account type (98550b9)
+- fix: give Alpha flavor unique ContentProvider authorities and account type (8c28af5)
+
+
 ## Alpha 1.314 (Build [#24](https://github.com/Space4414/Tsuki/actions/runs/25485244590))
 
 _2026-05-07 08:38 UTC_
