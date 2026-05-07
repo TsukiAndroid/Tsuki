@@ -89,8 +89,12 @@ class AppUpdateRepository @Inject constructor(
                                 // Fall back to tag-derived semver for properly versioned tags like
                                 // "alpha-1.60" or "v1.60.0".
                                 val releaseName = item.optString("name", "")
+                                // Strip inline "v" prefixes before version numbers
+                                // (e.g. "Tsuki Stable v1.4.3 (Build #2)" → "Tsuki Stable 1.4.3 (Build #2)")
+                                // so the word-boundary regex can anchor correctly.
+                                val cleanName = releaseName.replace(Regex("(?i)\\bv(\\d)"), "$1")
                                 val nameVersion =
-                                        Regex("\\b(\\d+\\.\\d+(?:\\.\\d+)?)\\b").find(releaseName)?.groupValues?.get(1)
+                                        Regex("\\b(\\d+\\.\\d+(?:\\.\\d+)?)\\b").find(cleanName)?.groupValues?.get(1)
                                 val semver = nameVersion ?: when (channel) {
                                         "alpha"  -> tagName.removePrefix("alpha-")
                                         "beta"   -> tagName.removePrefix("beta-")
@@ -112,9 +116,12 @@ class AppUpdateRepository @Inject constructor(
                         val release = bestRelease ?: return@runCatchingCancellable null
                         val releaseVersion = bestVersion ?: return@runCatchingCancellable null
 
-                        // Strip our own flavor suffix before comparing so "1.60.0-alpha"
-                        // is treated the same as "1.60.0" in the semver comparison.
-                        val baseVersionName = BuildConfig.VERSION_NAME.removeSuffix("-" + channel)
+                        // Strip our own flavor suffix then any leading "v" so that a
+                        // VERSION_NAME like "v1.4.3" (produced by older build configs)
+                        // parses correctly — VersionId("v1.4.3") fails on "v1" → major=0.
+                        val baseVersionName = BuildConfig.VERSION_NAME
+                                .removeSuffix("-" + channel)
+                                .removePrefix("v")
                         val currentVersion = runCatching { VersionId(baseVersionName) }.getOrNull()
                                 ?: return@runCatchingCancellable null
 
@@ -133,7 +140,8 @@ class AppUpdateRepository @Inject constructor(
                                 id = release.getLong("id"),
                                 url = release.getString("html_url"),
                                 name = release.optString("name").ifEmpty { release.getString("tag_name") }
-                                        .removePrefix("v"),
+                                        .removePrefix("v")                          // strip leading "v"
+                                        .replace(Regex("(?i)\\bv(\\d)"), "$1"),     // strip inline "v1.x" → "1.x"
                                 apkSize = matchingAsset?.getLong("size") ?: 0L,
                                 apkUrl = matchingAsset?.getString("browser_download_url") ?: "",
                                 description = release.optString("body", ""),
