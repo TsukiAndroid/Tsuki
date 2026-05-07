@@ -1,3 +1,11 @@
+## Alpha 1.294 (Build #11)
+
+_2026-05-07 00:54 UTC_
+
+- fix: give Beta flavor unique ContentProvider authorities and account type (98550b9)
+- fix: give Alpha flavor unique ContentProvider authorities and account type (8c28af5)
+
+
 ## Stable 1.4.2 (Build #1)
 
 _2026-05-07 00:29 UTC_
