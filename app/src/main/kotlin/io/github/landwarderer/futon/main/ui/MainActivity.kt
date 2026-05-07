@@ -27,6 +27,7 @@ import androidx.lifecycle.withResumed
 import androidx.recyclerview.widget.ItemTouchHelper
 import com.google.android.material.appbar.AppBarLayout
 import com.google.android.material.appbar.AppBarLayout.LayoutParams.SCROLL_FLAG_ENTER_ALWAYS
+import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.appbar.AppBarLayout.LayoutParams.SCROLL_FLAG_NO_SCROLL
 import com.google.android.material.appbar.AppBarLayout.LayoutParams.SCROLL_FLAG_SCROLL
 import com.google.android.material.appbar.AppBarLayout.LayoutParams.SCROLL_FLAG_SNAP
@@ -202,8 +203,17 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
                                 viewModel.appUpdate.observe(this@MainActivity, MenuInvalidator(this@MainActivity))
                                 viewModel.onFirstStart.observeEvent(this@MainActivity) { router.showWelcomeSheet() }
                                   viewModel.onShowWhatsNew.observeEvent(this@MainActivity) {
-                                          WhatsNewSheet.show(supportFragmentManager)
-                                  }
+                                        WhatsNewSheet.show(supportFragmentManager)
+                                }
+                                viewModel.onShowSyncMigrationBanner.observeEvent(this@MainActivity) {
+                                        Snackbar.make(
+                                                viewBinding.container,
+                                                getString(R.string.sync_migration_message),
+                                                Snackbar.LENGTH_INDEFINITE,
+                                        ).setAction(R.string.sync_migration_action) {
+                                                router.openSettings()
+                                        }.show()
+                                }
                                 viewModel.isBottomNavPinned.observe(this@MainActivity, ::setNavbarPinned)
                                 searchSuggestionViewModel.isIncognitoModeEnabled.observe(this@MainActivity, this@MainActivity::onIncognitoModeChanged)
                                 initSearch()
