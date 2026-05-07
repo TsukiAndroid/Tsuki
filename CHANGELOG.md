@@ -1,3 +1,16 @@
+## Alpha 1.304 (Build #19)
+
+_2026-05-07 01:33 UTC_
+
+- fix: add LEGACY_SYNC_ACCOUNT_TYPE BuildConfig field to all flavors (f6130b8)
+- feat: sync health worker + in-app update banner (6ecbabe)
+- feat: fallback migration banner detection via had_sync_account flag (57a3f45)
+- feat: write had_sync_account flag in SyncController for migration fallback detection (a770326)
+- feat: call removeLegacySyncAccount before firing migration banner (ea24cf0)
+- feat: show sync migration Snackbar in MainActivity (a8e2a12)
+- feat: fire onShowSyncMigrationBanner event in MainViewModel init (456e135)
+
+
 ## Alpha 1.294 (Build #11)
 
 _2026-05-07 00:54 UTC_
