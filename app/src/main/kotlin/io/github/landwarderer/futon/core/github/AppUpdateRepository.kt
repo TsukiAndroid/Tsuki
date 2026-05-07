@@ -68,11 +68,16 @@ class AppUpdateRepository @Inject constructor(
                                 val tagName = item.optString("tag_name", "")
                                 val isPreRelease = item.optBoolean("prerelease", false)
 
-                                // Each channel only considers releases with its own tag prefix
+                                // Each channel only considers releases with its own tag prefix.
+                                // Stable uses the floating "stable-latest" tag (same convention as
+                                // alpha/beta) for builds produced by CI. Older hand-cut releases used
+                                // "v1.x.x" tags — keep matching those too for backward compatibility.
                                 val matchesChannel = when (channel) {
-                                        "alpha" -> tagName.startsWith("alpha-")
-                                        "beta"  -> tagName.startsWith("beta-")
-                                        else    -> !isPreRelease && tagName.startsWith("v")
+                                        "alpha"  -> tagName.startsWith("alpha-")
+                                        "beta"   -> tagName.startsWith("beta-")
+                                        "stable" -> tagName.startsWith("stable-") ||
+                                                    (!isPreRelease && tagName.startsWith("v"))
+                                        else     -> !isPreRelease && tagName.startsWith("v")
                                 }
                                 if (!matchesChannel) continue
 
@@ -87,9 +92,13 @@ class AppUpdateRepository @Inject constructor(
                                 val nameVersion =
                                         Regex("\\b(\\d+\\.\\d+(?:\\.\\d+)?)\\b").find(releaseName)?.groupValues?.get(1)
                                 val semver = nameVersion ?: when (channel) {
-                                        "alpha" -> tagName.removePrefix("alpha-")
-                                        "beta"  -> tagName.removePrefix("beta-")
-                                        else    -> tagName.removePrefix("v")
+                                        "alpha"  -> tagName.removePrefix("alpha-")
+                                        "beta"   -> tagName.removePrefix("beta-")
+                                        "stable" -> if (tagName.startsWith("stable-"))
+                                                        tagName.removePrefix("stable-")
+                                                    else
+                                                        tagName.removePrefix("v")
+                                        else     -> tagName.removePrefix("v")
                                 }
                                 if (semver.isEmpty() || !semver.first().isDigit()) continue
 
