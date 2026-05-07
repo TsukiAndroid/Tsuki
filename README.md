@@ -6,6 +6,7 @@
 
 **A free and open-source manga / manhwa / manhua reader for Android.**
 
+[![Tsuki Project](https://img.shields.io/badge/%F0%9F%8C%99%20Tsuki%20Project-Space4414%2FTsuki-6a0dad?style=flat&logo=github)](https://github.com/Space4414/Tsuki)
 ![Android 6.0+](https://img.shields.io/badge/android-6.0+-brightgreen)
 ![Based on Futon](https://img.shields.io/badge/based%20on-Futon-orange)
 ![Maintained by Space4414](https://img.shields.io/badge/maintained%20by-Space4414-blueviolet)

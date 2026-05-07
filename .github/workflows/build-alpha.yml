@@ -181,7 +181,7 @@ jobs:
             | `Tsuki-alpha-universal-release.apk` | Not sure? Grab this one |
 
             ---
-            🔗 Source: https://github.com/Space4414/Tsuki
+            🌙 **[Tsuki Project](https://github.com/Space4414/Tsuki)** — open-source manga reader for Android
           files: app/build/outputs/apk/alpha/release/*.apk
           prerelease: true
           draft: false

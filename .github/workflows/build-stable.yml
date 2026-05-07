@@ -187,7 +187,7 @@ jobs:
             | `Tsuki-stable-universal-release.apk` | Not sure? Grab this one |
 
             ---
-            🔗 Source: https://github.com/Space4414/Tsuki
+            🌙 **[Tsuki Project](https://github.com/Space4414/Tsuki)** — open-source manga reader for Android
           files: app/build/outputs/apk/stable/release/*.apk
           prerelease: false
           draft: ${{ github.event.inputs.draft == 'true' }}
