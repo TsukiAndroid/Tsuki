@@ -76,6 +76,7 @@ class MainViewModel @Inject constructor(
                 }
                 launchJob(Dispatchers.IO) {
                         if (appUpdateRepository.shouldShowSyncMigrationBanner()) {
+                                appUpdateRepository.removeLegacySyncAccount()
                                 appUpdateRepository.markSyncMigrationBannerSeen()
                                 onShowSyncMigrationBanner.call(Unit)
                         }
