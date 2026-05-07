@@ -1,3 +1,10 @@
+## Alpha 1.312 (Build [#23](https://github.com/Space4414/Tsuki/actions/runs/25484797825))
+
+_2026-05-07 08:28 UTC_
+
+- brand: add Tsuki Project badge to README and release footers (e8d9c6e)
+
+
 ## Alpha 1.309 (Build #21)
 
 _2026-05-07 08:11 UTC_
