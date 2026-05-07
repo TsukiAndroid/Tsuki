@@ -1,3 +1,13 @@
+## Stable 1.4.2 (Build #1)
+
+_2026-05-07 00:29 UTC_
+
+- ci: add draft mode input to Stable workflow (2166317)
+- ci: add draft mode input to Beta workflow (95b6c91)
+- ci: add release_notes input to Beta workflow (cff53c4)
+- ci: add release_notes input to Stable workflow (87ab119)
+
+
 ## Alpha 1.289 (Build #8)
 
 _2026-05-06 18:43 UTC_
