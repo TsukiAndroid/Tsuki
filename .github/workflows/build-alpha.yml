@@ -69,7 +69,7 @@ jobs:
           fi
 
           {
-            echo "## Alpha ${{ steps.version.outputs.VERSION_NAME }} (Build #${{ github.run_number }})"
+            echo "## Alpha ${{ steps.version.outputs.VERSION_NAME }} (Build [#${{ github.run_number }}](https://github.com/Space4414/Tsuki/actions/runs/${{ github.run_id }}))"
             echo ""
             echo "_$(date -u +'%Y-%m-%d %H:%M UTC')_"
             echo ""
@@ -167,7 +167,7 @@ jobs:
           name: "Tsuki Alpha ${{ steps.version.outputs.VERSION_NAME }} (Build #${{ github.run_number }})"
           body: |
             ## 🌙 Tsuki Alpha ${{ steps.version.outputs.VERSION_NAME }}
-            > Auto-built from latest commit · Build #${{ github.run_number }}
+            > Auto-built from latest commit · [Build #${{ github.run_number }}](https://github.com/Space4414/Tsuki/actions/runs/${{ github.run_id }})
 
             ### What's new
             ${{ steps.changelog.outputs.BODY }}

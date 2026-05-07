@@ -74,7 +74,7 @@ jobs:
           fi
 
           {
-            echo "## Stable ${{ steps.version.outputs.VERSION_NAME }} (Build #${{ github.run_number }})"
+            echo "## Stable ${{ steps.version.outputs.VERSION_NAME }} (Build [#${{ github.run_number }}](https://github.com/Space4414/Tsuki/actions/runs/${{ github.run_id }}))"
             echo ""
             echo "_$(date -u +'%Y-%m-%d %H:%M UTC')_"
             echo ""
@@ -172,7 +172,7 @@ jobs:
           name: "Tsuki Stable ${{ steps.version.outputs.VERSION_NAME }} (Build #${{ github.run_number }})"
           body: |
             ## 🌙 Tsuki Stable ${{ steps.version.outputs.VERSION_NAME }}
-            > Manually released · Build #${{ github.run_number }}
+            > Manually released · [Build #${{ github.run_number }}](https://github.com/Space4414/Tsuki/actions/runs/${{ github.run_id }})
 
             ${{ github.event.inputs.release_notes != '' && format('### Release notes\n{0}\n', github.event.inputs.release_notes) || '' }}
             ### What's new
