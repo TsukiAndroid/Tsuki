@@ -1,3 +1,23 @@
+## Stable v1.4.3 (Build #2)
+
+_2026-05-07 02:10 UTC_
+
+- fix: add LEGACY_SYNC_ACCOUNT_TYPE BuildConfig field to all flavors (f6130b8)
+- feat: sync health worker + in-app update banner (6ecbabe)
+- feat: fallback migration banner detection via had_sync_account flag (57a3f45)
+- feat: write had_sync_account flag in SyncController for migration fallback detection (a770326)
+- feat: call removeLegacySyncAccount before firing migration banner (ea24cf0)
+- feat: show sync migration Snackbar in MainActivity (a8e2a12)
+- feat: fire onShowSyncMigrationBanner event in MainViewModel init (456e135)
+- fix: migrate Stable flavor authorities to com.space4414.tsuki branding (c9c14d7)
+- fix: give Beta flavor unique ContentProvider authorities and account type (98550b9)
+- fix: give Alpha flavor unique ContentProvider authorities and account type (8c28af5)
+- ci: add draft mode input to Stable workflow (2166317)
+- ci: add draft mode input to Beta workflow (95b6c91)
+- ci: add release_notes input to Beta workflow (cff53c4)
+- ci: add release_notes input to Stable workflow (87ab119)
+
+
 ## Alpha 1.304 (Build #19)
 
 _2026-05-07 01:33 UTC_
