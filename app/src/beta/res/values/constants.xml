@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="account_type_sync" translatable="false">com.space4414.tsuki.beta.sync</string>
+    <string name="sync_authority_history" translatable="false">com.space4414.tsuki.beta.history</string>
+    <string name="sync_authority_favourites" translatable="false">com.space4414.tsuki.beta.favourites</string>
+</resources>

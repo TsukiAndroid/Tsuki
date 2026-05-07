@@ -1,9 +1,11 @@
 package io.github.landwarderer.futon.core.github
 
+import android.accounts.AccountManager
 import android.content.Context
 import android.os.Build
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.landwarderer.futon.BuildConfig
+import io.github.landwarderer.futon.R
 import io.github.landwarderer.futon.core.network.BaseHttpClient
 import io.github.landwarderer.futon.core.prefs.AppSettings
 import io.github.landwarderer.futon.core.util.ext.printStackTraceDebug
@@ -193,6 +195,51 @@ class AppUpdateRepository @Inject constructor(
         }
 
         /**
+         * Returns true if this is a Stable build that previously used the legacy sync account type
+         * (io.github.landwarderer.futon.sync) and that old account still exists on the device,
+         * meaning the user had sync set up before the authority migration and needs to sign in again.
+         * Alpha and Beta have an empty LEGACY_SYNC_ACCOUNT_TYPE so this is always false for them.
+         */
+        fun shouldShowSyncMigrationBanner(): Boolean {
+                if (BuildConfig.LEGACY_SYNC_ACCOUNT_TYPE.isEmpty()) return false
+                val prefs = context.getSharedPreferences(SYNC_MIGRATION_PREFS, Context.MODE_PRIVATE)
+                if (prefs.getBoolean(KEY_SYNC_MIGRATION_SHOWN, false)) return false
+                val am = AccountManager.get(context)
+                // Primary path: old account still on device (not yet auto-removed by OS).
+                if (am.getAccountsByType(BuildConfig.LEGACY_SYNC_ACCOUNT_TYPE).isNotEmpty()) return true
+                // Fallback: OS already cleaned up the orphaned account on package update, but
+                // SyncController wrote KEY_HAD_SYNC_ACCOUNT while the old build was running.
+                // Only trigger if the user hasn't already signed in under the new account type.
+                val newAccountMissing = am.getAccountsByType(
+                        context.getString(R.string.account_type_sync),
+                ).isEmpty()
+                return prefs.getBoolean(KEY_HAD_SYNC_ACCOUNT, false) && newAccountMissing
+        }
+
+        /** Records that the migration banner has been shown so it never appears again. */
+        fun markSyncMigrationBannerSeen() {
+                context.getSharedPreferences(SYNC_MIGRATION_PREFS, Context.MODE_PRIVATE)
+                        .edit()
+                        .putBoolean(KEY_SYNC_MIGRATION_SHOWN, true)
+                        .apply()
+        }
+
+        /**
+         * Removes every account still registered under the legacy account type.
+         * Uses removeAccountExplicitly() (API 22+, our minSdk is 23) which requires the caller
+         * to be the authenticator UID that owns the account type. If the OS has already
+         * auto-removed the orphaned accounts on package update the call is a no-op.
+         * SecurityExceptions are swallowed — the OS cleans up stragglers on its own schedule.
+         */
+        fun removeLegacySyncAccount() {
+                if (BuildConfig.LEGACY_SYNC_ACCOUNT_TYPE.isEmpty()) return
+                val am = AccountManager.get(context)
+                am.getAccountsByType(BuildConfig.LEGACY_SYNC_ACCOUNT_TYPE).forEach { account ->
+                        runCatching { am.removeAccountExplicitly(account) }
+                }
+        }
+
+        /**
          * Returns the arch label used to match APK asset names in GitHub releases.
          * Naming convention (must match what the release CI names the APK files):
          *   arm64-v8a   -> "arm64"
@@ -210,5 +257,9 @@ class AppUpdateRepository @Inject constructor(
         companion object {
                 private const val WHATS_NEW_PREFS = "whats_new"
                 private const val KEY_LAST_SEEN_VERSION_CODE = "last_seen_version_code"
+                private const val SYNC_MIGRATION_PREFS = "sync_migration"
+                private const val KEY_SYNC_MIGRATION_SHOWN = "banner_shown"
+                // Must match SyncController.KEY_HAD_SYNC_ACCOUNT — both read/write the same prefs file.
+                private const val KEY_HAD_SYNC_ACCOUNT = "had_sync_account"
         }
 }

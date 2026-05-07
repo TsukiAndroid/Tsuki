@@ -1,3 +1,21 @@
+## Alpha 1.294 (Build #11)
+
+_2026-05-07 00:54 UTC_
+
+- fix: give Beta flavor unique ContentProvider authorities and account type (98550b9)
+- fix: give Alpha flavor unique ContentProvider authorities and account type (8c28af5)
+
+
+## Stable 1.4.2 (Build #1)
+
+_2026-05-07 00:29 UTC_
+
+- ci: add draft mode input to Stable workflow (2166317)
+- ci: add draft mode input to Beta workflow (95b6c91)
+- ci: add release_notes input to Beta workflow (cff53c4)
+- ci: add release_notes input to Stable workflow (87ab119)
+
+
 ## Alpha 1.289 (Build #8)
 
 _2026-05-06 18:43 UTC_
