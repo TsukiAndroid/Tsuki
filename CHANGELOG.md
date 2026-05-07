@@ -1,3 +1,15 @@
+## Alpha 1.307 (Build #20)
+
+_2026-05-07 03:31 UTC_
+
+- fix: stable channel now matches stable-latest CI tag (07b77d6)
+- fix: add LEGACY_SYNC_ACCOUNT_TYPE BuildConfig field to all flavors (f6130b8)
+- feat: sync health worker + in-app update banner (6ecbabe)
+- feat: fallback migration banner detection via had_sync_account flag (57a3f45)
+- feat: write had_sync_account flag in SyncController for migration fallback detection (a770326)
+- feat: call removeLegacySyncAccount before firing migration banner (ea24cf0)
+
+
 ## Stable v1.4.3 (Build #2)
 
 _2026-05-07 02:10 UTC_
