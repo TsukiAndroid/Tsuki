@@ -7,17 +7,14 @@ import android.view.WindowManager
 import androidx.core.content.ContextCompat
 import androidx.viewbinding.ViewBinding
 import io.github.landwarderer.futon.R
-import io.github.landwarderer.futon.core.ui.util.SystemUiController
 
 abstract class BaseFullscreenActivity<B : ViewBinding> :
         BaseActivity<B>() {
 
-        protected lateinit var systemUiController: SystemUiController
-
         override fun onCreate(savedInstanceState: Bundle?) {
                 super.onCreate(savedInstanceState)
+                // systemUiController is now initialised by BaseActivity.onCreate() above.
                 with(window) {
-                        systemUiController = SystemUiController(this)
                         statusBarColor = Color.TRANSPARENT
                         navigationBarColor = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O_MR1) {
                                 ContextCompat.getColor(this@BaseFullscreenActivity, R.color.dim)
@@ -38,4 +35,12 @@ abstract class BaseFullscreenActivity<B : ViewBinding> :
                 }
                 systemUiController.setSystemUiVisible(true)
         }
+
+        /**
+         * The reader (and any other fullscreen activity) manages system bar visibility
+         * through its own show/hide logic ([ReaderActivity.setUiIsVisible]).
+         * Suppress the global "app-wide immersive mode" so the two systems don't fight
+         * each other — the reader's own controls take full precedence.
+         */
+        override fun applyImmersiveMode() = Unit
 }

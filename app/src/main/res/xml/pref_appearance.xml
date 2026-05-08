@@ -123,6 +123,15 @@
             android:summary="@string/pin_navigation_ui_summary"
             android:title="@string/pin_navigation_ui" />
 
+        <!-- Immersive mode: hides status bar + nav bar app-wide (API 23+).      -->
+        <!-- Swipe from any screen edge to temporarily reveal the bars.          -->
+        <!-- The reader has its own independent fullscreen toggle in Reader tab. -->
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
+            android:key="app_fullscreen"
+            android:summary="@string/app_immersive_mode_summary"
+            android:title="@string/app_immersive_mode" />
+
         <SwitchPreferenceCompat
             android:defaultValue="false"
             android:key="exit_confirm"

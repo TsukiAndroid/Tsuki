@@ -87,6 +87,14 @@ class AppSettings @Inject constructor(@ApplicationContext context: Context) {
         val isNavBarPinned: Boolean
                 get() = prefs.getBoolean(KEY_NAV_PINNED, false)
 
+        /**
+         * Hide the status bar and navigation bar app-wide using sticky-immersive mode.
+         * Available on all API 23+ devices (the app's entire supported range).
+         * The reader overrides this with its own fullscreen toggle.
+         */
+        val isAppImmersiveModeEnabled: Boolean
+                get() = prefs.getBoolean(KEY_APP_FULLSCREEN, false)
+
         val isMainFabEnabled: Boolean
                 get() = prefs.getBoolean(KEY_MAIN_FAB, true)
 
@@ -892,6 +900,7 @@ class AppSettings @Inject constructor(@ApplicationContext context: Context) {
                 const val KEY_NAV_MAIN = "nav_main"
                 const val KEY_NAV_LABELS = "nav_labels"
                 const val KEY_NAV_PINNED = "nav_pinned"
+                const val KEY_APP_FULLSCREEN = "app_fullscreen"
                 const val KEY_NAV_BAR_ALPHA = "nav_bar_alpha"
                 const val KEY_SEARCH_BAR_ALPHA = "search_bar_alpha"
                 const val KEY_TRANSPARENT_NAV_BAR = "transparent_nav_bar"
