@@ -1,6 +1,7 @@
 package io.github.landwarderer.futon.core.ui.util
 
 import android.graphics.Color
+import android.os.Build
 import android.view.ViewGroup
 import android.view.Window
 import androidx.activity.OnBackPressedCallback
@@ -10,6 +11,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.view.updateLayoutParams
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
@@ -18,76 +20,93 @@ import com.google.android.material.R as materialR
 
 class ActionModeDelegate : OnBackPressedCallback(false) {
 
-	private var activeActionMode: ActionMode? = null
-	private var listeners: MutableList<ActionModeListener>? = null
-	private var defaultStatusBarColor = Color.TRANSPARENT
+        private var activeActionMode: ActionMode? = null
+        private var listeners: MutableList<ActionModeListener>? = null
+        private var defaultStatusBarColor = Color.TRANSPARENT
+        // Saved appearance state for API 35+ (statusBarColor is a no-op there)
+        private var savedLightStatusBars = true
 
-	val isActionModeStarted: Boolean
-		get() = activeActionMode != null
+        val isActionModeStarted: Boolean
+                get() = activeActionMode != null
 
-	override fun handleOnBackPressed() {
-		finishActionMode()
-	}
+        override fun handleOnBackPressed() {
+                finishActionMode()
+        }
 
-	fun onSupportActionModeStarted(mode: ActionMode, window: Window?) {
-		activeActionMode = mode
-		isEnabled = true
-		listeners?.forEach { it.onActionModeStarted(mode) }
-		if (window != null) {
-			val ctx = window.context
-			val actionModeColor = ColorUtils.compositeColors(
-				ContextCompat.getColor(ctx, materialR.color.m3_appbar_overlay_color),
-				ctx.getThemeColor(materialR.attr.colorSurface),
-			)
-			defaultStatusBarColor = window.statusBarColor
-			window.statusBarColor = actionModeColor
-			val insets = ViewCompat.getRootWindowInsets(window.decorView)
-				?.getInsets(WindowInsetsCompat.Type.systemBars()) ?: return
-			window.decorView.findViewById<ActionBarContextView?>(androidx.appcompat.R.id.action_mode_bar)?.apply {
-				setBackgroundColor(actionModeColor)
-				updateLayoutParams<ViewGroup.MarginLayoutParams> {
-					topMargin = insets.top
-				}
-			}
-		}
-	}
+        fun onSupportActionModeStarted(mode: ActionMode, window: Window?) {
+                activeActionMode = mode
+                isEnabled = true
+                listeners?.forEach { it.onActionModeStarted(mode) }
+                if (window != null) {
+                        val ctx = window.context
+                        val actionModeColor = ColorUtils.compositeColors(
+                                ContextCompat.getColor(ctx, materialR.color.m3_appbar_overlay_color),
+                                ctx.getThemeColor(materialR.attr.colorSurface),
+                        )
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
+                                // API 35+: window.statusBarColor is ignored (edge-to-edge is enforced).
+                                // Instead, flip status bar icon appearance so they stay legible against
+                                // the action mode bar that now covers the status bar area.
+                                val ctrl = WindowInsetsControllerCompat(window, window.decorView)
+                                savedLightStatusBars = ctrl.isAppearanceLightStatusBars
+                                ctrl.isAppearanceLightStatusBars = false
+                        } else {
+                                defaultStatusBarColor = window.statusBarColor
+                                window.statusBarColor = actionModeColor
+                        }
+                        val insets = ViewCompat.getRootWindowInsets(window.decorView)
+                                ?.getInsets(WindowInsetsCompat.Type.systemBars()) ?: return
+                        window.decorView.findViewById<ActionBarContextView?>(androidx.appcompat.R.id.action_mode_bar)?.apply {
+                                setBackgroundColor(actionModeColor)
+                                updateLayoutParams<ViewGroup.MarginLayoutParams> {
+                                        topMargin = insets.top
+                                }
+                        }
+                }
+        }
 
-	fun onSupportActionModeFinished(mode: ActionMode, window: Window?) {
-		activeActionMode = null
-		isEnabled = false
-		listeners?.forEach { it.onActionModeFinished(mode) }
-		if (window != null) {
-			window.statusBarColor = defaultStatusBarColor
-		}
-	}
+        fun onSupportActionModeFinished(mode: ActionMode, window: Window?) {
+                activeActionMode = null
+                isEnabled = false
+                listeners?.forEach { it.onActionModeFinished(mode) }
+                if (window != null) {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
+                                // Restore saved icon appearance
+                                WindowInsetsControllerCompat(window, window.decorView)
+                                        .isAppearanceLightStatusBars = savedLightStatusBars
+                        } else {
+                                window.statusBarColor = defaultStatusBarColor
+                        }
+                }
+        }
 
-	fun addListener(listener: ActionModeListener) {
-		if (listeners == null) {
-			listeners = ArrayList()
-		}
-		checkNotNull(listeners).add(listener)
-	}
+        fun addListener(listener: ActionModeListener) {
+                if (listeners == null) {
+                        listeners = ArrayList()
+                }
+                checkNotNull(listeners).add(listener)
+        }
 
-	fun removeListener(listener: ActionModeListener) {
-		listeners?.remove(listener)
-	}
+        fun removeListener(listener: ActionModeListener) {
+                listeners?.remove(listener)
+        }
 
-	fun addListener(listener: ActionModeListener, owner: LifecycleOwner) {
-		addListener(listener)
-		owner.lifecycle.addObserver(ListenerLifecycleObserver(listener))
-	}
+        fun addListener(listener: ActionModeListener, owner: LifecycleOwner) {
+                addListener(listener)
+                owner.lifecycle.addObserver(ListenerLifecycleObserver(listener))
+        }
 
-	fun finishActionMode() {
-		activeActionMode?.finish()
-	}
+        fun finishActionMode() {
+                activeActionMode?.finish()
+        }
 
-	private inner class ListenerLifecycleObserver(
-		private val listener: ActionModeListener,
-	) : DefaultLifecycleObserver {
+        private inner class ListenerLifecycleObserver(
+                private val listener: ActionModeListener,
+        ) : DefaultLifecycleObserver {
 
-		override fun onDestroy(owner: LifecycleOwner) {
-			super.onDestroy(owner)
-			removeListener(listener)
-		}
-	}
+                override fun onDestroy(owner: LifecycleOwner) {
+                        super.onDestroy(owner)
+                        removeListener(listener)
+                }
+        }
 }
