@@ -34,7 +34,8 @@ class MangaLinkResolver @Inject constructor(
         }
 
         private suspend fun resolveAppLink(uri: Uri): Manga? {
-                require(uri.pathSegments.singleOrNull() == "manga") { "Invalid url" }
+                // tsuki://manga?... puts "manga" in the host; https://futonapp.pages.dev/manga puts it in the path
+                require(uri.host == "manga" || uri.pathSegments.singleOrNull() == "manga") { "Invalid url" }
                 uri.getQueryParameter("id")?.let { mangaId ->
                         // short url
                         return dataRepository.findMangaById(mangaId.toLong(), withChapters = false)
@@ -118,7 +119,7 @@ class MangaLinkResolver @Inject constructor(
         companion object {
 
                 fun isValidLink(str: String): Boolean {
-                        return str.isHttpUrl() || str.startsWith("futon://", ignoreCase = true)
+                        return str.isHttpUrl() || str.startsWith("futon://", ignoreCase = true) || str.startsWith("tsuki://", ignoreCase = true)
                 }
         }
 }
