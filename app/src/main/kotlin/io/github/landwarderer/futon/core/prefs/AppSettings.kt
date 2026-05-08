@@ -279,6 +279,12 @@ class AppSettings @Inject constructor(@ApplicationContext context: Context) {
         val trackerFrequencyFactor: Float
                 get() = prefs.getString(KEY_TRACKER_FREQUENCY, null)?.toFloatOrNull() ?: 1f
 
+        val trackerCheckIntervalHours: Int
+                get() = prefs.getString(KEY_TRACKER_CHECK_HOURS, null)?.toIntOrNull() ?: 6
+
+        val appUpdateCheckIntervalHours: Int
+                get() = prefs.getString(KEY_APP_UPDATE_CHECK_HOURS, null)?.toIntOrNull() ?: 6
+
         val isTrackerNotificationsEnabled: Boolean
                 get() = prefs.getBoolean(KEY_TRACKER_NOTIFICATIONS, true)
 
@@ -803,6 +809,8 @@ class AppSettings @Inject constructor(@ApplicationContext context: Context) {
                 const val KEY_TRACKER_ENABLED = "tracker_enabled"
                 const val KEY_TRACKER_WIFI_ONLY = "tracker_wifi"
                 const val KEY_TRACKER_FREQUENCY = "tracker_freq"
+                const val KEY_TRACKER_CHECK_HOURS = "tracker_check_hours"
+                const val KEY_APP_UPDATE_CHECK_HOURS = "app_update_check_hours"
                 const val KEY_TRACK_SOURCES = "track_sources"
                 const val KEY_TRACK_CATEGORIES = "track_categories"
                 const val KEY_TRACK_WARNING = "track_warning"
