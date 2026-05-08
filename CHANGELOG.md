@@ -1,3 +1,12 @@
+## Alpha 1.333 (Build [#33](https://github.com/Space4414/Tsuki/actions/runs/25551716628))
+
+_2026-05-08 10:55 UTC_
+
+- ci: add Discord role mentions to build-alpha webhook notification (bc9ee19)
+- ci: add Discord role mentions to build-beta webhook notification (3d06372)
+- feat(ci): add Discord webhook notifications to all release workflows (95dadc2)
+
+
 ## Stable 1.4.5 (Build [#4](https://github.com/Space4414/Tsuki/actions/runs/25550193582))
 
 _2026-05-08 10:18 UTC_
