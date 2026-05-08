@@ -130,8 +130,9 @@ val Manga.isBroken: Boolean
 
 val Manga.appUrl: Uri
         get() = Uri.Builder()
-                .scheme("tsuki")
-                .authority("manga")
+                .scheme("https")
+                .authority("space4414.github.io")
+                .path("/Tsuki/open")
                 .appendQueryParameter("source", source.name)
                 .appendQueryParameter("name", title)
                 .appendQueryParameter("url", url)
