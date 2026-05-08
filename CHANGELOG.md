@@ -1,3 +1,11 @@
+## Alpha 1.321 (Build [#27](https://github.com/Space4414/Tsuki/actions/runs/25539226137))
+
+_2026-05-08 05:46 UTC_
+
+- fix: reader cutout mode on Android 12+ and action mode status bar on Android 15+ (262b959)
+- fix: nav bar blur on Android 12+ and toggleable performance mode (48ef288)
+
+
 ## Alpha 1.319 (Build [#26](https://github.com/Space4414/Tsuki/actions/runs/25538946372))
 
 _2026-05-08 05:37 UTC_
