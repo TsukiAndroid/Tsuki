@@ -1,3 +1,21 @@
+## Stable 1.4.5 (Build [#4](https://github.com/Space4414/Tsuki/actions/runs/25550193582))
+
+_2026-05-08 10:18 UTC_
+
+- feat(ci): add Discord webhook notifications to all release workflows (95dadc2)
+- feat: app-wide immersive mode for Android 6+ (API 23+) (78e53dc)
+- feat: smooth IME animation + haptic feedback for API 23+ devices (5fb9d89)
+- fix: IME keyboard overlap on password screens and predictive-back double animation (b66bdd7)
+- fix: reader cutout mode on Android 12+ and action mode status bar on Android 15+ (262b959)
+- fix: nav bar blur on Android 12+ and toggleable performance mode (48ef288)
+- Update CONTRIBUTING.md (121e0df)
+- ci: support manual [Unreleased] release notes in CHANGELOG.md (654aa2f)
+- brand: add Tsuki Project badge to README and release footers (e8d9c6e)
+- ci: replace bare #N build refs with Tsuki CI run links (487dee5)
+- fix: correct 3 remaining update-checker bugs for stable APK (861743b)
+- fix: stable channel now matches stable-latest CI tag (07b77d6)
+
+
 ## Alpha 1.329 (Build [#31](https://github.com/Space4414/Tsuki/actions/runs/25549449569))
 
 _2026-05-08 10:01 UTC_
