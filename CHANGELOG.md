@@ -1,3 +1,11 @@
+## Alpha 1.323 (Build [#28](https://github.com/Space4414/Tsuki/actions/runs/25539639814))
+
+_2026-05-08 05:58 UTC_
+
+- fix: IME keyboard overlap on password screens and predictive-back double animation (b66bdd7)
+- fix: reader cutout mode on Android 12+ and action mode status bar on Android 15+ (262b959)
+
+
 ## Alpha 1.321 (Build [#27](https://github.com/Space4414/Tsuki/actions/runs/25539226137))
 
 _2026-05-08 05:46 UTC_
