@@ -214,13 +214,14 @@ jobs:
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_BETA_WEBHOOK }}
           VERSION: ${{ steps.version.outputs.VERSION_NAME }}
+          BETA_ROLE_ID: ${{ secrets.DISCORD_BETA_ROLE_ID }}
         run: |
           curl -fsSL -X POST "$DISCORD_WEBHOOK" \
             -H "Content-Type: application/json" \
             -d "{
               \"embeds\": [{
                 \"title\": \"🟡 New Beta Release\",
-                \"description\": \"Version: ${VERSION}\\nA new beta build is available!\",
+                \"description\": \"<@&${BETA_ROLE_ID}>\\nNew beta build is available!\\nVersion: ${VERSION}\",
                 \"color\": 16776960,
                 \"fields\": [{
                   \"name\": \"Download\",
