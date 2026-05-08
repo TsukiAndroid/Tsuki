@@ -1,3 +1,11 @@
+## Alpha 1.325 (Build [#29](https://github.com/Space4414/Tsuki/actions/runs/25539992197))
+
+_2026-05-08 06:09 UTC_
+
+- feat: smooth IME animation + haptic feedback for API 23+ devices (5fb9d89)
+- fix: IME keyboard overlap on password screens and predictive-back double animation (b66bdd7)
+
+
 ## Alpha 1.323 (Build [#28](https://github.com/Space4414/Tsuki/actions/runs/25539639814))
 
 _2026-05-08 05:58 UTC_
