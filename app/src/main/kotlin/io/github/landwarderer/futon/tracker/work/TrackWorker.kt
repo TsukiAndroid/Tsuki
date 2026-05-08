@@ -48,7 +48,6 @@ import io.github.landwarderer.futon.download.ui.worker.DownloadTask
 import io.github.landwarderer.futon.download.ui.worker.DownloadWorker
 import io.github.landwarderer.futon.local.data.LocalMangaRepository
 import org.koitharu.kotatsu.parsers.util.runCatchingCancellable
-import org.koitharu.kotatsu.parsers.util.toIntUp
 import io.github.landwarderer.futon.settings.work.PeriodicWorkScheduler
 import io.github.landwarderer.futon.tracker.domain.CheckNewChaptersUseCase
 import io.github.landwarderer.futon.tracker.domain.GetTracksUseCase
@@ -68,8 +67,6 @@ import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
-import javax.inject.Provider
-import kotlin.math.roundToInt
 import androidx.appcompat.R as appcompatR
 
 @HiltWorker
@@ -273,22 +270,15 @@ class TrackWorker @AssistedInject constructor(
         class Scheduler @Inject constructor(
                 private val workManager: WorkManager,
                 private val settings: AppSettings,
-                private val dbProvider: Provider<MangaDatabase>,
         ) : PeriodicWorkScheduler {
 
                 override suspend fun schedule() {
-                        val frequency = settings.trackerFrequencyFactor
-                        if (frequency <= 0f) {
+                        if (!settings.isTrackerEnabled) {
                                 return unschedule()
                         }
                         val constraints = createConstraints()
-                        val runCount = dbProvider.get().getTracksDao().getTracksCount()
-                        val runsPerFullCheck = (runCount / BATCH_SIZE.toFloat()).toIntUp().coerceAtLeast(1)
-                        // 6-hour base (was 18 h) keeps chapter notifications timely and
-                        // reduces the chance that EMUI / MIUI battery optimisation kills
-                        // the job before it completes on its 18-hour window.
-                        val interval = (6 / runsPerFullCheck / frequency).roundToInt().coerceAtLeast(2)
-                        val request = PeriodicWorkRequestBuilder<TrackWorker>(interval.toLong(), TimeUnit.HOURS)
+                        val intervalHours = settings.trackerCheckIntervalHours.coerceAtLeast(1).toLong()
+                        val request = PeriodicWorkRequestBuilder<TrackWorker>(intervalHours, TimeUnit.HOURS)
                                 .setConstraints(constraints)
                                 .addTag(TAG)
                                 .setBackoffCriteria(BackoffPolicy.LINEAR, 30, TimeUnit.MINUTES)
