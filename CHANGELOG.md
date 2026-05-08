@@ -1,3 +1,10 @@
+## Alpha 1.350 (Build [#47](https://github.com/Space4414/Tsuki/actions/runs/25555493331))
+
+_2026-05-08 12:27 UTC_
+
+- fix: resolve tsuki://manga deep links (host-based path check + isValidLink) (da7bf5c)
+
+
 ## Alpha 1.342 (Build [#40](https://github.com/Space4414/Tsuki/actions/runs/25554072992))
 
 _2026-05-08 11:52 UTC_
