@@ -1,3 +1,13 @@
+## Alpha 1.342 (Build [#40](https://github.com/Space4414/Tsuki/actions/runs/25554072992))
+
+_2026-05-08 11:52 UTC_
+
+- feat: interval settings, notifications fix, download fix (AppSettings.kt) (3c312bd)
+- feat: interval settings, notifications fix, download fix (constants.xml) (49afe79)
+- feat: interval settings, notifications fix, download fix (arrays.xml) (5b2f4a0)
+- feat: interval settings, notifications fix, download fix (strings.xml) (a9a3928)
+
+
 ## Alpha 1.336 (Build [#35](https://github.com/Space4414/Tsuki/actions/runs/25553542677))
 
 _2026-05-08 11:39 UTC_
