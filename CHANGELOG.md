@@ -1,3 +1,11 @@
+## Alpha 1.327 (Build [#30](https://github.com/Space4414/Tsuki/actions/runs/25541104547))
+
+_2026-05-08 06:39 UTC_
+
+- feat: app-wide immersive mode for Android 6+ (API 23+) (78e53dc)
+- feat: smooth IME animation + haptic feedback for API 23+ devices (5fb9d89)
+
+
 ## Alpha 1.325 (Build [#29](https://github.com/Space4414/Tsuki/actions/runs/25539992197))
 
 _2026-05-08 06:09 UTC_
