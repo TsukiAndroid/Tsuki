@@ -1,3 +1,12 @@
+## Alpha 1.317 (Build [#25](https://github.com/Space4414/Tsuki/actions/runs/25531665198))
+
+_2026-05-08 01:36 UTC_
+
+- Update CONTRIBUTING.md (121e0df)
+- ci: support manual [Unreleased] release notes in CHANGELOG.md (654aa2f)
+- brand: add Tsuki Project badge to README and release footers (e8d9c6e)
+
+
 ## Stable 1.4.4 (Build [#3](https://github.com/Space4414/Tsuki/actions/runs/25501741547))
 
 _2026-05-07 14:22 UTC_
