@@ -25,10 +25,17 @@ class WorkScheduleManager @Inject constructor(
                 when (key) {
                         AppSettings.KEY_TRACKER_ENABLED,
                         AppSettings.KEY_TRACKER_FREQUENCY,
-                        AppSettings.KEY_TRACKER_WIFI_ONLY -> updateWorker(
+                        AppSettings.KEY_TRACKER_WIFI_ONLY,
+                        AppSettings.KEY_TRACKER_CHECK_HOURS -> updateWorker(
                                 scheduler = trackerScheduler,
                                 isEnabled = settings.isTrackerEnabled,
                                 force = key != AppSettings.KEY_TRACKER_ENABLED,
+                        )
+
+                        AppSettings.KEY_APP_UPDATE_CHECK_HOURS -> updateWorker(
+                                scheduler = appUpdateScheduler,
+                                isEnabled = true,
+                                force = true,
                         )
 
                         AppSettings.KEY_SUGGESTIONS,
