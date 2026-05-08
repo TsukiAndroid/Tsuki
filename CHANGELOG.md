@@ -1,3 +1,11 @@
+## Alpha 1.319 (Build [#26](https://github.com/Space4414/Tsuki/actions/runs/25538946372))
+
+_2026-05-08 05:37 UTC_
+
+- fix: nav bar blur on Android 12+ and toggleable performance mode (48ef288)
+- Update CONTRIBUTING.md (121e0df)
+
+
 ## Alpha 1.317 (Build [#25](https://github.com/Space4414/Tsuki/actions/runs/25531665198))
 
 _2026-05-08 01:36 UTC_
