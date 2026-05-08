@@ -1,3 +1,11 @@
+## Alpha 1.329 (Build [#31](https://github.com/Space4414/Tsuki/actions/runs/25549449569))
+
+_2026-05-08 10:01 UTC_
+
+- feat(ci): add Discord webhook notifications to all release workflows (95dadc2)
+- feat: app-wide immersive mode for Android 6+ (API 23+) (78e53dc)
+
+
 ## Alpha 1.327 (Build [#30](https://github.com/Space4414/Tsuki/actions/runs/25541104547))
 
 _2026-05-08 06:39 UTC_
