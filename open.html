@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+  <html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Open in Tsuki</title>
+    <style>
+      *{box-sizing:border-box;margin:0;padding:0}
+      body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background:#0d1117;color:#e6edf3;text-align:center;padding:24px}
+      .logo{font-size:3.5em;margin-bottom:.5em}
+      h1{font-size:1.4em;font-weight:700;margin-bottom:.4em;max-width:480px;line-height:1.3}
+      .source{font-size:.85em;color:#8b949e;margin-bottom:1.8em}
+      .btn{display:inline-block;background:#58a6ff;color:#0d1117;text-decoration:none;padding:14px 32px;border-radius:28px;font-weight:700;font-size:1em;transition:.15s}
+      .btn:hover{background:#79b8ff}
+      .note{font-size:.75em;color:#6e7681;margin-top:1.6em;line-height:1.6}
+      .note a{color:#58a6ff;text-decoration:none}
+    </style>
+  </head>
+  <body>
+    <div class="logo">&#x1F319;</div>
+    <h1 id="manga-title">Opening manga&hellip;</h1>
+    <p class="source" id="manga-source"></p>
+    <a class="btn" id="open-btn" href="#">Open in Tsuki</a>
+    <p class="note">
+      If Tsuki does not open, make sure it is installed.<br>
+      <a href="https://github.com/Space4414/Tsuki/releases/latest">Download the latest Tsuki APK</a>
+    </p>
+    <script>
+      var p = new URLSearchParams(location.search);
+      var source = p.get('source') || '';
+      var name   = p.get('name')   || '';
+      var url    = p.get('url')    || '';
+      var deep   = 'tsuki://manga'
+                   + '?source=' + encodeURIComponent(source)
+                   + '&name='   + encodeURIComponent(name)
+                   + '&url='    + encodeURIComponent(url);
+      if (name)   document.getElementById('manga-title').textContent = name;
+      if (source) document.getElementById('manga-source').textContent = 'Source: ' + source;
+      document.getElementById('open-btn').href = deep;
+      // Auto-fire the deep link; if the app is installed Android will intercept it
+      window.location.replace(deep);
+    </script>
+  </body>
+  </html>
