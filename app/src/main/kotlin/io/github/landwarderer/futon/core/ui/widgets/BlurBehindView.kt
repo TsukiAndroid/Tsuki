@@ -9,6 +9,7 @@ package io.github.landwarderer.futon.core.ui.widgets
   import android.util.AttributeSet
   import android.view.View
   import android.view.ViewTreeObserver
+  import androidx.annotation.RequiresApi
   import java.lang.ref.WeakReference
 
   /**
@@ -72,12 +73,16 @@ package io.github.landwarderer.futon.core.ui.widgets
 
       override fun onAttachedToWindow() {
           super.onAttachedToWindow()
-          if (blurIntensity > 0) viewTreeObserver.addOnPreDrawListener(preDrawListener)
+          if (blurIntensity > 0) {
+              viewTreeObserver.addOnPreDrawListener(preDrawListener)
+              if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) updateRenderEffect()
+          }
       }
 
       override fun onDetachedFromWindow() {
           viewTreeObserver.removeOnPreDrawListener(preDrawListener)
           releaseRenderScriptResources()
+          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) setRenderEffect(null)
           currentBitmap?.recycle(); currentBitmap = null
           super.onDetachedFromWindow()
       }
@@ -120,9 +125,30 @@ package io.github.landwarderer.futon.core.ui.widgets
               if (blurIntensity > 0 && prev == 0) viewTreeObserver.addOnPreDrawListener(preDrawListener)
               if (blurIntensity == 0 && prev > 0) viewTreeObserver.removeOnPreDrawListener(preDrawListener)
           }
+          // API 31+: drive blur via RenderEffect on the view itself; no RenderScript needed.
+          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) updateRenderEffect()
           if (blurIntensity == 0) {
               currentBitmap?.recycle(); currentBitmap = null
               invalidate()
+          }
+      }
+
+      /**
+       * API 31+: apply or remove a hardware-accelerated [RenderEffect] blur on this view.
+       * The snapshot bitmap drawn in [onDraw] provides the content; the GPU handles the blur.
+       * This replaces the deprecated RenderScript path which fails silently on Android 12+.
+       */
+      @RequiresApi(Build.VERSION_CODES.S)
+      private fun updateRenderEffect() {
+          if (blurIntensity <= 0) {
+              setRenderEffect(null)
+          } else {
+              val radius = (blurIntensity / 100f * 25f).coerceIn(1f, 25f)
+              setRenderEffect(
+                  android.graphics.RenderEffect.createBlurEffect(
+                      radius, radius, android.graphics.Shader.TileMode.CLAMP,
+                  ),
+              )
           }
       }
 
@@ -223,8 +249,14 @@ package io.github.landwarderer.futon.core.ui.widgets
               lastFrameHash = hash
           }
 
-          // 4. Blur with RenderScript
-          val blurred = blurBitmap(cropped, blurIntensity)
+          // 4. Blur with RenderScript (API < 31 only).
+          //    On API 31+ the RenderEffect set in updateRenderEffect() handles blurring at draw
+          //    time on the GPU, so we skip the expensive RenderScript pass entirely.
+          val blurred = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+              cropped
+          } else {
+              blurBitmap(cropped, blurIntensity)
+          }
           if (blurred !== cropped) cropped.recycle()
 
           // 5. Scale blurred result up to view dimensions

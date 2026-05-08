@@ -575,9 +575,13 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
                 navBlur.setBlurIntensity(navIntensity)
                 navBlur.setBlurTint(if (navIntensity > 0) settings.navBarBlurTintAlpha else 0)
 
-                val blurFps = settings.blurFps
-                val captureQuality = settings.blurCaptureQuality
-                val idleSkip = settings.isBlurIdleSkipEnabled
+                // Only apply the performance sub-settings when Performance mode is enabled.
+                // When off, use full quality defaults so all devices get the best experience
+                // by default and users opt in to quality reductions themselves.
+                val perfMode = settings.isPerformanceModeEnabled
+                val blurFps = if (perfMode) settings.blurFps else 30
+                val captureQuality = if (perfMode) settings.blurCaptureQuality else 25
+                val idleSkip = perfMode && settings.isBlurIdleSkipEnabled
                 navBlur.setFrameRate(blurFps)
                 navBlur.setCaptureQuality(captureQuality)
                 navBlur.setIdleSkip(idleSkip)

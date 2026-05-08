@@ -999,6 +999,8 @@
     <string name="blur_capture_quality_summary">Fraction of full screen resolution sampled for blur. Lower resolution means faster blurring with a barely noticeable softness increase — the upscale step hides the difference.</string>
     <string name="blur_skip_idle">Skip blur when idle</string>
     <string name="blur_skip_idle_summary">Detect when the content behind the bar has not changed and skip re-rendering entirely. Saves significant CPU when reading or browsing without scrolling — zero visual impact.</string>
+    <string name="perf_mode">Performance mode</string>
+    <string name="perf_mode_summary">Reduce blur quality to improve smoothness on older or low-RAM devices. Enable to unlock and apply the settings below.</string>
 
 
     <string name="action_export_sources">Export sources</string>

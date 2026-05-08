@@ -1,17 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!--
+      Master toggle. When OFF the app uses full quality blur settings and
+      all the sub-settings below are disabled in the UI.
+    -->
+    <SwitchPreferenceCompat
+        android:defaultValue="false"
+        android:key="performance_mode"
+        android:title="@string/perf_mode"
+        android:summary="@string/perf_mode_summary" />
+
     <PreferenceCategory
         android:title="@string/perf_blur_category"
         android:summary="@string/perf_blur_category_summary">
 
         <!--
           How many times per second the blur re-captures and re-renders.
-          30 fps = smoothest, 8 fps = lowest CPU cost on very old devices.
+          30 fps = smoothest, 5 fps = lowest CPU cost on very old devices.
           Values: 5, 10, 15, 20, 25, 30 (stepSize=5)
+          Only takes effect when Performance mode is ON.
         -->
         <io.github.landwarderer.futon.settings.utils.SliderPreference
             android:defaultValue="30"
+            android:dependency="performance_mode"
             android:key="blur_fps"
             android:title="@string/blur_fps"
             android:summary="@string/blur_fps_summary"
@@ -23,9 +35,11 @@
           Percentage of screen resolution used for the blur sample bitmap.
           25% = default quality, 10% = most performant.
           The upscale step hides the resolution difference at all values.
+          Only takes effect when Performance mode is ON.
         -->
         <io.github.landwarderer.futon.settings.utils.SliderPreference
             android:defaultValue="25"
+            android:dependency="performance_mode"
             android:key="blur_capture_quality"
             android:title="@string/blur_capture_quality"
             android:summary="@string/blur_capture_quality_summary"
@@ -34,12 +48,14 @@
             android:stepSize="5" />
 
         <!--
-          Skip the expensive RenderScript blur pass when a quick pixel hash
-          shows the content behind the bar has not changed since the last frame.
+          Skip the blur re-render when a quick pixel hash shows the content
+          behind the bar has not changed since the last frame.
           Biggest single saving when the user is reading or not scrolling.
+          Only takes effect when Performance mode is ON.
         -->
         <SwitchPreferenceCompat
             android:defaultValue="false"
+            android:dependency="performance_mode"
             android:key="blur_skip_idle"
             android:title="@string/blur_skip_idle"
             android:summary="@string/blur_skip_idle_summary" />
