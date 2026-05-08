@@ -501,6 +501,8 @@
     <string name="reader_zoom_buttons_summary">Whether to show zoom control buttons in the bottom right corner</string>
     <string name="keep_screen_on">Keep screen on</string>
     <string name="keep_screen_on_summary">Do not turn the screen off while you\'re reading manga</string>
+    <string name="reader_haptic_feedback">Haptic page turns</string>
+    <string name="reader_haptic_feedback_summary">Feel a subtle vibration on each page flip and a stronger buzz on chapter changes</string>
     <string name="state_abandoned">Dropped</string>
     <string name="enhanced_colors_summary">Reduces banding, but may impact performance</string>
     <string name="enhanced_colors">32-bit color mode</string>

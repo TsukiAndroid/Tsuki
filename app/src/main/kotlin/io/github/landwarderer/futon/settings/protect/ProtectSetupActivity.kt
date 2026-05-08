@@ -20,102 +20,119 @@ import io.github.landwarderer.futon.core.ui.util.DefaultTextWatcher
 import io.github.landwarderer.futon.core.util.ext.consumeAll
 import io.github.landwarderer.futon.core.util.ext.observe
 import io.github.landwarderer.futon.core.util.ext.observeEvent
+import io.github.landwarderer.futon.core.util.ext.performHapticFeedbackCompat
+import io.github.landwarderer.futon.core.util.ext.performTickHaptic
+import io.github.landwarderer.futon.core.util.ext.syncImeAnimationToPadding
 import io.github.landwarderer.futon.databinding.ActivitySetupProtectBinding
 
 private const val MIN_PASSWORD_LENGTH = 4
 
 @AndroidEntryPoint
 class ProtectSetupActivity :
-        BaseActivity<ActivitySetupProtectBinding>(),
-        DefaultTextWatcher,
-        View.OnClickListener,
-        TextView.OnEditorActionListener,
-        CompoundButton.OnCheckedChangeListener {
+	BaseActivity<ActivitySetupProtectBinding>(),
+	DefaultTextWatcher,
+	View.OnClickListener,
+	TextView.OnEditorActionListener,
+	CompoundButton.OnCheckedChangeListener {
 
-        private val viewModel by viewModels<ProtectSetupViewModel>()
+	private val viewModel by viewModels<ProtectSetupViewModel>()
 
-        override fun onCreate(savedInstanceState: Bundle?) {
-                super.onCreate(savedInstanceState)
-                window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
-                setContentView(ActivitySetupProtectBinding.inflate(layoutInflater))
-                viewBinding.editPassword.addTextChangedListener(this)
-                viewBinding.editPassword.setOnEditorActionListener(this)
-                viewBinding.buttonNext.setOnClickListener(this)
-                viewBinding.buttonCancel.setOnClickListener(this)
+	override fun onCreate(savedInstanceState: Bundle?) {
+		super.onCreate(savedInstanceState)
+		window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+		setContentView(ActivitySetupProtectBinding.inflate(layoutInflater))
 
-                viewBinding.switchBiometric.isChecked = viewModel.isBiometricEnabled
-                viewBinding.switchBiometric.setOnCheckedChangeListener(this)
+		// Smooth animated keyboard: padding tracks the IME in real-time (API 30+)
+		// instead of jumping when the keyboard finishes opening. Falls back to the
+		// same instant behaviour on API 23–29 — no regression on older devices.
+		viewBinding.root.syncImeAnimationToPadding(
+			resources.getDimensionPixelOffset(R.dimen.screen_padding),
+		)
 
-                viewModel.isSecondStep.observe(this, this::onStepChanged)
-                viewModel.onPasswordSet.observeEvent(this) {
-                        finishAfterTransition()
-                }
-                viewModel.onPasswordMismatch.observeEvent(this) {
-                        viewBinding.editPassword.error = getString(R.string.passwords_mismatch)
-                }
-                viewModel.onClearText.observeEvent(this) {
-                        viewBinding.editPassword.text?.clear()
-                }
-        }
+		viewBinding.editPassword.addTextChangedListener(this)
+		viewBinding.editPassword.setOnEditorActionListener(this)
+		viewBinding.buttonNext.setOnClickListener(this)
+		viewBinding.buttonCancel.setOnClickListener(this)
 
-        override fun onApplyWindowInsets(v: View, insets: WindowInsetsCompat): WindowInsetsCompat {
-                // Union systemBars + ime so that bottom padding grows to accommodate the
-                // keyboard on API 30+ where adjustResize does not work with edge-to-edge.
-                val type = WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.ime()
-                val barsInsets = insets.getInsets(type)
-                val basePadding = resources.getDimensionPixelOffset(R.dimen.screen_padding)
-                viewBinding.root.setPadding(
-                        barsInsets.left + basePadding,
-                        barsInsets.top + basePadding,
-                        barsInsets.right + basePadding,
-                        barsInsets.bottom + basePadding,
-                )
-                return insets.consumeAll(type)
-        }
+		viewBinding.switchBiometric.isChecked = viewModel.isBiometricEnabled
+		viewBinding.switchBiometric.setOnCheckedChangeListener(this)
 
-        override fun onClick(v: View) {
-                when (v.id) {
-                        R.id.button_cancel -> finish()
-                        R.id.button_next -> viewModel.onNextClick(
-                                password = viewBinding.editPassword.text?.toString() ?: return,
-                        )
-                }
-        }
+		viewModel.isSecondStep.observe(this, this::onStepChanged)
+		viewModel.onPasswordSet.observeEvent(this) {
+			// Password confirmed — give a satisfying "done" haptic before closing
+			viewBinding.root.performHapticFeedbackCompat(isSuccess = true)
+			finishAfterTransition()
+		}
+		viewModel.onPasswordMismatch.observeEvent(this) {
+			viewBinding.editPassword.error = getString(R.string.passwords_mismatch)
+			// Passwords don't match — buzz to let the user know without looking up
+			viewBinding.root.performHapticFeedbackCompat(isSuccess = false)
+		}
+		viewModel.onClearText.observeEvent(this) {
+			viewBinding.editPassword.text?.clear()
+		}
+	}
 
-        override fun onCheckedChanged(buttonView: CompoundButton, isChecked: Boolean) {
-                viewModel.setBiometricEnabled(isChecked)
-        }
+	override fun onApplyWindowInsets(v: View, insets: WindowInsetsCompat): WindowInsetsCompat {
+		// Union systemBars + ime so that bottom padding grows to accommodate the
+		// keyboard on API 30+ where adjustResize does not work with edge-to-edge.
+		val type = WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.ime()
+		val barsInsets = insets.getInsets(type)
+		val basePadding = resources.getDimensionPixelOffset(R.dimen.screen_padding)
+		viewBinding.root.setPadding(
+			barsInsets.left + basePadding,
+			barsInsets.top + basePadding,
+			barsInsets.right + basePadding,
+			barsInsets.bottom + basePadding,
+		)
+		return insets.consumeAll(type)
+	}
 
-        override fun onEditorAction(v: TextView?, actionId: Int, event: KeyEvent?): Boolean {
-                return if (actionId == EditorInfo.IME_ACTION_DONE && viewBinding.buttonNext.isEnabled) {
-                        viewBinding.buttonNext.performClick()
-                        true
-                } else {
-                        false
-                }
-        }
+	override fun onClick(v: View) {
+		when (v.id) {
+			R.id.button_cancel -> finish()
+			R.id.button_next -> viewModel.onNextClick(
+				password = viewBinding.editPassword.text?.toString() ?: return,
+			)
+		}
+	}
 
-        override fun afterTextChanged(s: Editable?) {
-                viewBinding.editPassword.error = null
-                val isEnoughLength = (s?.length ?: 0) >= MIN_PASSWORD_LENGTH
-                viewBinding.buttonNext.isEnabled = isEnoughLength
-                viewBinding.layoutPassword.isHelperTextEnabled =
-                        !isEnoughLength || viewModel.isSecondStep.value == true
-        }
+	override fun onCheckedChanged(buttonView: CompoundButton, isChecked: Boolean) {
+		viewModel.setBiometricEnabled(isChecked)
+	}
 
-        private fun onStepChanged(isSecondStep: Boolean) {
-                viewBinding.buttonCancel.isGone = isSecondStep
-                viewBinding.switchBiometric.isVisible = isSecondStep && isBiometricAvailable()
-                if (isSecondStep) {
-                        viewBinding.layoutPassword.helperText = getString(R.string.repeat_password)
-                        viewBinding.buttonNext.setText(R.string.confirm)
-                } else {
-                        viewBinding.layoutPassword.helperText = getString(R.string.password_length_hint)
-                        viewBinding.buttonNext.setText(R.string.next)
-                }
-        }
+	override fun onEditorAction(v: TextView?, actionId: Int, event: KeyEvent?): Boolean {
+		return if (actionId == EditorInfo.IME_ACTION_DONE && viewBinding.buttonNext.isEnabled) {
+			viewBinding.buttonNext.performClick()
+			true
+		} else {
+			false
+		}
+	}
 
-        private fun isBiometricAvailable(): Boolean {
-                return packageManager.hasSystemFeature(PackageManager.FEATURE_FINGERPRINT)
-        }
+	override fun afterTextChanged(s: Editable?) {
+		viewBinding.editPassword.error = null
+		val isEnoughLength = (s?.length ?: 0) >= MIN_PASSWORD_LENGTH
+		viewBinding.buttonNext.isEnabled = isEnoughLength
+		viewBinding.layoutPassword.isHelperTextEnabled =
+			!isEnoughLength || viewModel.isSecondStep.value == true
+	}
+
+	private fun onStepChanged(isSecondStep: Boolean) {
+		viewBinding.buttonCancel.isGone = isSecondStep
+		viewBinding.switchBiometric.isVisible = isSecondStep && isBiometricAvailable()
+		if (isSecondStep) {
+			viewBinding.layoutPassword.helperText = getString(R.string.repeat_password)
+			viewBinding.buttonNext.setText(R.string.confirm)
+			// Subtle tick to confirm the first password was accepted
+			viewBinding.root.performTickHaptic()
+		} else {
+			viewBinding.layoutPassword.helperText = getString(R.string.password_length_hint)
+			viewBinding.buttonNext.setText(R.string.next)
+		}
+	}
+
+	private fun isBiometricAvailable(): Boolean {
+		return packageManager.hasSystemFeature(PackageManager.FEATURE_FINGERPRINT)
+	}
 }

@@ -504,6 +504,10 @@ class AppSettings @Inject constructor(@ApplicationContext context: Context) {
         val isReaderKeepScreenOn: Boolean
                 get() = prefs.getBoolean(KEY_READER_SCREEN_ON, true)
 
+        /** Haptic feedback on page and chapter turns. Available on all API 23+ devices. */
+        val isReaderHapticEnabled: Boolean
+                get() = prefs.getBoolean(KEY_READER_HAPTIC, false)
+
         var readerColorFilter: ReaderColorFilter?
                 get() = runCatching {
                         ReaderColorFilter(
@@ -854,6 +858,7 @@ class AppSettings @Inject constructor(@ApplicationContext context: Context) {
                 const val KEY_READER_CHAPTER_TOAST = "reader_chapter_toast"
                 const val KEY_READER_BACKGROUND = "reader_background"
                 const val KEY_READER_SCREEN_ON = "reader_screen_on"
+                const val KEY_READER_HAPTIC = "reader_haptic"
                 const val KEY_SHORTCUTS = "dynamic_shortcuts"
                 const val KEY_READER_TAP_ACTIONS = "reader_tap_actions"
                 const val KEY_READER_OPTIMIZE = "reader_optimize"

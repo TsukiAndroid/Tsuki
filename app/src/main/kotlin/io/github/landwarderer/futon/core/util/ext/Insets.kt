@@ -2,6 +2,8 @@ package io.github.landwarderer.futon.core.util.ext
 
 import android.view.View
 import androidx.core.graphics.Insets
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsAnimationCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsCompat.Type.InsetsType
 
@@ -87,3 +89,45 @@ fun Insets.consume(
 	/* right = */ if (if (view.isRtl) start else end) 0 else this.right,
 	/* bottom = */ if (bottom) 0 else this.bottom,
 )
+
+/**
+ * Install a [WindowInsetsAnimationCompat.Callback] on this view so that its
+ * padding smoothly tracks the on-screen keyboard as it animates in and out.
+ *
+ * The callback mirrors the same `systemBars | ime` padding logic used in each
+ * activity's [onApplyWindowInsets], so the static and animated states always
+ * produce identical results — the only difference is that during the animation
+ * the padding updates every frame instead of jumping at the end.
+ *
+ * On API 30+ the platform exposes the IME animation interpolator for
+ * frame-perfect synchronisation (the layout slides with the keyboard).
+ * On API 23–29 the compat library has no IME animation info from the system,
+ * so the callback fires once and the padding jumps instantly — exactly the
+ * same behaviour as before, with no regression.
+ *
+ * @param basePadding additional constant padding applied on every side on top
+ *   of the inset values (mirrors the `R.dimen.screen_padding` constant used
+ *   in the password screens).
+ */
+fun View.syncImeAnimationToPadding(basePadding: Int = 0) {
+	ViewCompat.setWindowInsetsAnimationCallback(
+		this,
+		object : WindowInsetsAnimationCompat.Callback(DISPATCH_MODE_STOP) {
+			override fun onProgress(
+				insets: WindowInsetsCompat,
+				runningAnimations: List<WindowInsetsAnimationCompat>,
+			): WindowInsetsCompat {
+				val type = WindowInsetsCompat.Type.systemBars() or
+					WindowInsetsCompat.Type.ime()
+				val bars = insets.getInsets(type)
+				setPadding(
+					bars.left + basePadding,
+					bars.top + basePadding,
+					bars.right + basePadding,
+					bars.bottom + basePadding,
+				)
+				return insets
+			}
+		},
+	)
+}

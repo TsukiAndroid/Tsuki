@@ -57,6 +57,8 @@ import io.github.landwarderer.futon.core.util.ext.hasGlobalPoint
 import io.github.landwarderer.futon.core.util.ext.isAnimationsEnabled
 import io.github.landwarderer.futon.core.util.ext.observe
 import io.github.landwarderer.futon.core.util.ext.observeEvent
+import io.github.landwarderer.futon.core.util.ext.performMilestoneHaptic
+import io.github.landwarderer.futon.core.util.ext.performTickHaptic
 import io.github.landwarderer.futon.core.util.ext.postDelayed
 import io.github.landwarderer.futon.core.util.ext.toUriOrNull
 import io.github.landwarderer.futon.core.util.ext.zipWithPrevious
@@ -434,10 +436,18 @@ class ReaderActivity :
 
     override fun switchPageBy(delta: Int) {
         readerManager.currentReader?.switchPageBy(delta)
+        // Subtle CLOCK_TICK per page flip — works on every Android 6+ device
+        if (settings.isReaderHapticEnabled) {
+            viewBinding.root.performTickHaptic()
+        }
     }
 
     override fun switchChapterBy(delta: Int) {
         viewModel.switchChapterBy(delta)
+        // Stronger CONFIRM (API 30+) / VIRTUAL_KEY haptic for chapter milestones
+        if (settings.isReaderHapticEnabled) {
+            viewBinding.root.performMilestoneHaptic()
+        }
     }
 
     override fun openMenu() {
