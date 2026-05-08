@@ -1,3 +1,10 @@
+## Alpha 1.336 (Build [#35](https://github.com/Space4414/Tsuki/actions/runs/25553542677))
+
+_2026-05-08 11:39 UTC_
+
+- feat: use tsuki:// scheme for manga share links (69230bd)
+
+
 ## Alpha 1.333 (Build [#33](https://github.com/Space4414/Tsuki/actions/runs/25551716628))
 
 _2026-05-08 10:55 UTC_
