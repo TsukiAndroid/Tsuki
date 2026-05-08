@@ -118,7 +118,8 @@ class AppUpdateActivity : BaseActivity<ActivityAppUpdateBinding>(), View.OnClick
                         )
                         .setMimeType("application/vnd.android.package-archive")
                         .setAllowedOverMetered(true)
-                        .setAllowedOverRoaming(false)
+                        .setAllowedOverRoaming(true)
+                        .addRequestHeader("User-Agent", "Tsuki/${io.github.landwarderer.futon.BuildConfig.VERSION_NAME} (Android)")
 
                 val dm = getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
                 dm.enqueue(request)
