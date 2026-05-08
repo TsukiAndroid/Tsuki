@@ -214,13 +214,14 @@ jobs:
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_STABLE_WEBHOOK }}
           VERSION: ${{ steps.version.outputs.VERSION_NAME }}
+          STABLE_ROLE_ID: ${{ secrets.DISCORD_STABLE_ROLE_ID }}
         run: |
           curl -fsSL -X POST "$DISCORD_WEBHOOK" \
             -H "Content-Type: application/json" \
             -d "{
               \"embeds\": [{
                 \"title\": \"🟢 New Stable Release\",
-                \"description\": \"Version: ${VERSION}\\nA new stable build is available!\",
+                \"description\": \"<@&${STABLE_ROLE_ID}>\\nNew stable build is available!\\nVersion: ${VERSION}\",
                 \"color\": 65280,
                 \"fields\": [{
                   \"name\": \"Download\",
