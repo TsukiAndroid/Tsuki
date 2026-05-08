@@ -208,13 +208,14 @@ jobs:
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_ALPHA_WEBHOOK }}
           VERSION: ${{ steps.version.outputs.VERSION_NAME }}
+          ALPHA_ROLE_ID: ${{ secrets.DISCORD_ALPHA_ROLE_ID }}
         run: |
           curl -fsSL -X POST "$DISCORD_WEBHOOK" \
             -H "Content-Type: application/json" \
             -d "{
               \"embeds\": [{
                 \"title\": \"🔴 New Alpha Release\",
-                \"description\": \"Version: ${VERSION}\\nA new alpha build is available!\",
+                \"description\": \"<@&${ALPHA_ROLE_ID}>\\nNew alpha build is available!\\nVersion: ${VERSION}\",
                 \"color\": 15158332,
                 \"fields\": [{
                   \"name\": \"Download\",
