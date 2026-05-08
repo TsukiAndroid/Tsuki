@@ -1,3 +1,13 @@
+## Alpha 1.354 (Build [#50](https://github.com/Space4414/Tsuki/actions/runs/25557489581))
+
+_2026-05-08 13:12 UTC_
+
+- feat: add space4414.github.io intent-filter for Tsuki share links (45c6c77)
+- fix: resolve space4414.github.io/Tsuki/open share links in MangaLinkResolver (17ca831)
+- fix: share URL → https://space4414.github.io/Tsuki/open (clickable in all apps) (5e1ed99)
+- fix: resolve tsuki://manga deep links (host-based path check + isValidLink) (da7bf5c)
+
+
 ## Alpha 1.350 (Build [#47](https://github.com/Space4414/Tsuki/actions/runs/25555493331))
 
 _2026-05-08 12:27 UTC_
