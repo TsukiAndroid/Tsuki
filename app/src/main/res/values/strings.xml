@@ -1033,4 +1033,13 @@
     <string name="site_unreachable_warning">Site appears unreachable — the source was saved. Check the URL if it doesn\'t work.</string>
     <!-- Duplicate URL error -->
     <string name="duplicate_url_error">Already added as \"%s\". Edit it from the list instead.</string>
+    <!-- Check interval settings -->
+    <string name="chapter_check_frequency">Chapter check frequency</string>
+    <string name="app_update_check_frequency">App update check frequency</string>
+    <string name="every_1_hour">Every 1 hour</string>
+    <string name="every_2_hours">Every 2 hours</string>
+    <string name="every_4_hours">Every 4 hours</string>
+    <string name="every_6_hours">Every 6 hours</string>
+    <string name="every_12_hours">Every 12 hours</string>
+    <string name="every_24_hours">Every 24 hours</string>
 </resources>
