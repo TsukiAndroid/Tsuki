@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+        <!--
+            On Android 14+ (API 34) predictive back is enabled app-wide via
+            android:enableOnBackInvokedCallback="true".  The system animates the
+            finishing activity with its own scale/reveal transition while the user
+            is swiping.  Keeping our custom activityCloseExitAnimation /
+            activityCloseEnterAnimation causes a second animation to play on top
+            of the system one the moment the swipe commits, resulting in a
+            double-animation glitch.  Null them out here so the system owns the
+            close transition entirely.  The open (forward-navigation) animations
+            are unchanged — they are not affected by predictive back.
+        -->
+        <style name="TsukiWindowAnimation" parent="@android:style/Animation.Activity">
+                <item name="android:activityOpenEnterAnimation">@anim/activity_enter</item>
+                <item name="android:activityOpenExitAnimation">@anim/activity_exit</item>
+                <item name="android:activityCloseEnterAnimation">@null</item>
+                <item name="android:activityCloseExitAnimation">@null</item>
+        </style>
+
+</resources>
