@@ -26,7 +26,9 @@ class MangaLinkResolver @Inject constructor(
 ) {
 
         suspend fun resolve(uri: Uri): Manga {
-                return if (uri.scheme == "futon" || uri.scheme == "tsuki" || uri.host == "futonapp.pages.dev") {
+                return if (uri.scheme == "futon" || uri.scheme == "tsuki"
+                        || uri.host == "futonapp.pages.dev"
+                        || uri.host == "space4414.github.io") {
                         resolveAppLink(uri)
                 } else {
                         resolveExternalLink(uri.toString())
@@ -34,8 +36,14 @@ class MangaLinkResolver @Inject constructor(
         }
 
         private suspend fun resolveAppLink(uri: Uri): Manga? {
-                // tsuki://manga?... puts "manga" in the host; https://futonapp.pages.dev/manga puts it in the path
-                require(uri.host == "manga" || uri.pathSegments.singleOrNull() == "manga") { "Invalid url" }
+                // tsuki://manga?...          → host="manga", path empty
+                // https://futonapp.pages.dev/manga?... → pathSegments=["manga"]
+                // https://space4414.github.io/Tsuki/open?... → pathSegments=["Tsuki","open"]
+                require(
+                        uri.host == "manga" ||
+                        uri.pathSegments.singleOrNull() == "manga" ||
+                        uri.pathSegments.lastOrNull() == "open"
+                ) { "Invalid url" }
                 uri.getQueryParameter("id")?.let { mangaId ->
                         // short url
                         return dataRepository.findMangaById(mangaId.toLong(), withChapters = false)
@@ -119,7 +127,9 @@ class MangaLinkResolver @Inject constructor(
         companion object {
 
                 fun isValidLink(str: String): Boolean {
-                        return str.isHttpUrl() || str.startsWith("futon://", ignoreCase = true) || str.startsWith("tsuki://", ignoreCase = true)
+                        return str.isHttpUrl()
+                                || str.startsWith("futon://", ignoreCase = true)
+                                || str.startsWith("tsuki://", ignoreCase = true)
                 }
         }
 }
