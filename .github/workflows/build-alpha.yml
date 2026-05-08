@@ -202,3 +202,23 @@ jobs:
           draft: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Notify Discord — Alpha release
+        if: success() && startsWith('alpha-latest', 'alpha-')
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_ALPHA_WEBHOOK }}
+          VERSION: ${{ steps.version.outputs.VERSION_NAME }}
+        run: |
+          curl -fsSL -X POST "$DISCORD_WEBHOOK" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"embeds\": [{
+                \"title\": \"🔴 New Alpha Release\",
+                \"description\": \"Version: ${VERSION}\\nA new alpha build is available!\",
+                \"color\": 15158332,
+                \"fields\": [{
+                  \"name\": \"Download\",
+                  \"value\": \"Get it from [GitHub Releases](https://github.com/Space4414/Tsuki/releases/tag/alpha-latest)\"
+                }]
+              }]
+            }"

@@ -208,3 +208,23 @@ jobs:
           draft: ${{ github.event.inputs.draft == 'true' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Notify Discord — Beta release
+        if: success() && startsWith('beta-latest', 'beta-')
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_BETA_WEBHOOK }}
+          VERSION: ${{ steps.version.outputs.VERSION_NAME }}
+        run: |
+          curl -fsSL -X POST "$DISCORD_WEBHOOK" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"embeds\": [{
+                \"title\": \"🟡 New Beta Release\",
+                \"description\": \"Version: ${VERSION}\\nA new beta build is available!\",
+                \"color\": 16776960,
+                \"fields\": [{
+                  \"name\": \"Download\",
+                  \"value\": \"Get it from [GitHub Releases](https://github.com/Space4414/Tsuki/releases/tag/beta-latest)\"
+                }]
+              }]
+            }"

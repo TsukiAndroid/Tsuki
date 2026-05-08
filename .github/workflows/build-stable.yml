@@ -208,3 +208,23 @@ jobs:
           draft: ${{ github.event.inputs.draft == 'true' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Notify Discord — Stable release
+        if: success() && startsWith('stable-latest', 'stable-')
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_STABLE_WEBHOOK }}
+          VERSION: ${{ steps.version.outputs.VERSION_NAME }}
+        run: |
+          curl -fsSL -X POST "$DISCORD_WEBHOOK" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"embeds\": [{
+                \"title\": \"🟢 New Stable Release\",
+                \"description\": \"Version: ${VERSION}\\nA new stable build is available!\",
+                \"color\": 65280,
+                \"fields\": [{
+                  \"name\": \"Download\",
+                  \"value\": \"Get it from [GitHub Releases](https://github.com/Space4414/Tsuki/releases/tag/stable-latest)\"
+                }]
+              }]
+            }"
