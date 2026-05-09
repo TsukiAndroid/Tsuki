@@ -1,3 +1,11 @@
+## Alpha 1.360 (Build [#54](https://github.com/Space4414/Tsuki/actions/runs/25588051696))
+
+_2026-05-09 01:40 UTC_
+
+- remove: dead KEY_LINK_GITHUB handler (Our Story section removed) (69dd9cf)
+- remove: "Our Story" section from About settings (d477748)
+
+
 ## Alpha 1.356 (Build [#51](https://github.com/Space4414/Tsuki/actions/runs/25587102444))
 
 _2026-05-09 01:02 UTC_
