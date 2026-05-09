@@ -11,6 +11,7 @@
 [![Tsuki Project](https://img.shields.io/badge/%F0%9F%8C%99%20Tsuki%20Project-Space4414%2FTsuki-6a0dad?style=flat&logo=github)](https://github.com/Space4414/Tsuki)
 ![Android 6.0+](https://img.shields.io/badge/android-6.0+-brightgreen)
 ![Forked from Yukimi](https://img.shields.io/badge/forked%20from-Yukimi-orange)
+[![Discord](https://img.shields.io/badge/Discord-Join%20Us-5865F2?style=flat&logo=discord&logoColor=white)](https://discord.gg/gXsesG8G7H)
 
 </div>
 
