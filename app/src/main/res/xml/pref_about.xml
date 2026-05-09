@@ -30,22 +30,6 @@
                 android:summary="@string/changelog_summary"
                 android:title="@string/changelog" />
 
-        <PreferenceCategory android:title="@string/our_story_title">
-
-                <Preference
-                        android:key="our_story"
-                        android:persistent="false"
-                        android:summary="@string/our_story_summary"
-                        android:title="@string/our_story_title" />
-
-                <Preference
-                        android:key="about_github"
-                        android:persistent="false"
-                        android:summary="@string/url_github"
-                        android:title="@string/source_code" />
-
-        </PreferenceCategory>
-
         <Preference
                 android:key="about_help"
                 android:persistent="false"
