@@ -24,79 +24,74 @@ import io.github.landwarderer.futon.core.util.ext.observeEvent
 @AndroidEntryPoint
 class AboutSettingsFragment : BasePreferenceFragment(R.string.about) {
 
-	private val viewModel by viewModels<AboutSettingsViewModel>()
+        private val viewModel by viewModels<AboutSettingsViewModel>()
 
-	override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
-		addPreferencesFromResource(R.xml.pref_about)
-		findPreference<Preference>(AppSettings.KEY_APP_VERSION)?.run {
-			title = getString(R.string.app_version, BuildConfig.VERSION_NAME)
-		}
-		findPreference<Preference>(AppSettings.KEY_LINK_TELEGRAM)?.isVisible = false
-		findPreference<SwitchPreferenceCompat>(AppSettings.KEY_UPDATES_UNSTABLE)?.run {
-			isEnabled = VersionId(BuildConfig.VERSION_NAME).isStable
-			if (!isEnabled) isChecked = true
-		}
-	}
+        override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
+                addPreferencesFromResource(R.xml.pref_about)
+                findPreference<Preference>(AppSettings.KEY_APP_VERSION)?.run {
+                        title = getString(R.string.app_version, BuildConfig.VERSION_NAME)
+                }
+                findPreference<Preference>(AppSettings.KEY_LINK_TELEGRAM)?.isVisible = false
+                findPreference<SwitchPreferenceCompat>(AppSettings.KEY_UPDATES_UNSTABLE)?.run {
+                        isEnabled = VersionId(BuildConfig.VERSION_NAME).isStable
+                        if (!isEnabled) isChecked = true
+                }
+        }
 
-	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-		super.onViewCreated(view, savedInstanceState)
-		combine(viewModel.isUpdateSupported, viewModel.isLoading, ::Pair)
-			.observe(viewLifecycleOwner) { (isUpdateSupported, isLoading) ->
-				findPreference<Preference>(AppSettings.KEY_UPDATES_UNSTABLE)?.isVisible = isUpdateSupported
-				findPreference<Preference>(AppSettings.KEY_APP_VERSION)?.isEnabled = isUpdateSupported && !isLoading
+        override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+                super.onViewCreated(view, savedInstanceState)
+                combine(viewModel.isUpdateSupported, viewModel.isLoading, ::Pair)
+                        .observe(viewLifecycleOwner) { (isUpdateSupported, isLoading) ->
+                                findPreference<Preference>(AppSettings.KEY_UPDATES_UNSTABLE)?.isVisible = isUpdateSupported
+                                findPreference<Preference>(AppSettings.KEY_APP_VERSION)?.isEnabled = isUpdateSupported && !isLoading
 
-			}
-		viewModel.onUpdateAvailable.observeEvent(viewLifecycleOwner, ::onUpdateAvailable)
-	}
+                        }
+                viewModel.onUpdateAvailable.observeEvent(viewLifecycleOwner, ::onUpdateAvailable)
+        }
 
-	override fun onPreferenceTreeClick(preference: Preference): Boolean {
-		return when (preference.key) {
-			AppSettings.KEY_APP_VERSION -> {
-				viewModel.checkForUpdates()
-				true
-			}
+        override fun onPreferenceTreeClick(preference: Preference): Boolean {
+                return when (preference.key) {
+                        AppSettings.KEY_APP_VERSION -> {
+                                viewModel.checkForUpdates()
+                                true
+                        }
 
-			AppSettings.KEY_LINK_WEBLATE -> {
-				openLink(R.string.url_weblate, preference.title)
-				true
-			}
+                        AppSettings.KEY_LINK_WEBLATE -> {
+                                openLink(R.string.url_weblate, preference.title)
+                                true
+                        }
 
-			AppSettings.KEY_LINK_GITHUB -> {
-				openLink(R.string.url_github, preference.title)
-				true
-			}
+                        AppSettings.KEY_LINK_MANUAL -> {
+                                openLink(R.string.url_user_manual, preference.title)
+                                true
+                        }
 
-			AppSettings.KEY_LINK_MANUAL -> {
-				openLink(R.string.url_user_manual, preference.title)
-				true
-			}
+                        AppSettings.KEY_LINK_TELEGRAM -> {
+                                if (!openLink(R.string.url_telegram, null)) {
+                                        openLink(R.string.url_telegram_web, preference.title)
+                                }
+                                true
+                        }
 
-			AppSettings.KEY_LINK_TELEGRAM -> {
-				if (!openLink(R.string.url_telegram, null)) {
-					openLink(R.string.url_telegram_web, preference.title)
-				}
-				true
-			}
+                        else -> super.onPreferenceTreeClick(preference)
+                }
+        }
 
-			else -> super.onPreferenceTreeClick(preference)
-		}
-	}
+        private fun onUpdateAvailable(version: AppVersion?) {
+                if (version == null) {
+                        Snackbar.make(listView, R.string.no_update_available, Snackbar.LENGTH_SHORT).show()
+                } else {
+                        startActivity(Intent(requireContext(), AppUpdateActivity::class.java))
+                }
+        }
 
-	private fun onUpdateAvailable(version: AppVersion?) {
-		if (version == null) {
-			Snackbar.make(listView, R.string.no_update_available, Snackbar.LENGTH_SHORT).show()
-		} else {
-			startActivity(Intent(requireContext(), AppUpdateActivity::class.java))
-		}
-	}
-
-	private fun openLink(
-		@StringRes url: Int,
-		title: CharSequence?
-	): Boolean = if (router.openExternalBrowser(getString(url), title)) {
-		true
-	} else {
-		Snackbar.make(listView, R.string.operation_not_supported, Snackbar.LENGTH_SHORT).show()
-		false
-	}
+        private fun openLink(
+                @StringRes url: Int,
+                title: CharSequence?
+        ): Boolean = if (router.openExternalBrowser(getString(url), title)) {
+                true
+        } else {
+                Snackbar.make(listView, R.string.operation_not_supported, Snackbar.LENGTH_SHORT).show()
+                false
+        }
 }
