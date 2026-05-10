@@ -36,8 +36,18 @@ package io.github.landwarderer.futon.customsource.data
    *  22. ReaderFront           — /graphql returns data.works JSON
    *  23. KissManga             — kissmanga, lstImagesUrl in script
    *  24. Cubari                — cubari, /read/api/ endpoint
-   *  25. MangaDex-compatible  — REST API returns { result: ok }
-   *  26. Fallback             — WEBVIEW
+   *  25. MangaPill             — mangapill, js-page class on img elements
+   *  26. MangaHub              — mangahub, manga-page + media-heading
+   *  27. MangaHere/Foxaholic   — mangahere, .manga-list + .detail-main-list
+   *  28. MangaLib              — mangalib/ranobelib + lib.social API
+   *  29. Mangago               — mangago, #book_list + .booklist_item
+   *  30. MangaFreak            — mangafreak, .manga_search_item
+   *  31. MangaOwl              — mangaowl, .comic-item + #images
+   *  32. NetTruyen             — nettruyen, .ModuleContent + .reading-detail
+   *  33. TruyenQQ              — truyenqq, .book_avatar + .listChapters
+   *  34. MangaKatana           — mangakatana, img.chapter-img + #chapters
+   *  35. MangaDex-compatible  — REST API returns { result: ok }
+   *  36. Fallback             — WEBVIEW
    */
   object CmsTypeDetector {
 
@@ -178,7 +188,75 @@ package io.github.landwarderer.futon.customsource.data
               return CustomSourceType.CUBARI
           }
 
-          // 25. MangaDex-compatible REST API
+          // 25. MangaPill — distinctive js-page img class or domain name
+          if (html.contains("mangapill", ignoreCase = true) ||
+              (html.contains("js-page") && html.contains("data-src") && html.contains("chapters"))) {
+              return CustomSourceType.MANGAPILL
+          }
+
+          // 26. MangaHub — domain name or media-heading + manga-page markers
+          if (html.contains("mangahub", ignoreCase = true) ||
+              (html.contains("media-heading") && html.contains("manga-page") && html.contains("chapter-table"))) {
+              return CustomSourceType.MANGAHUB
+          }
+
+          // 27. MangaHere / Foxaholic CMS — checked AFTER MangaFox to avoid false-positives
+          // MangaHere uses .manga-list (with hyphen) vs FanFox which uses .list-2
+          if (html.contains("mangahere", ignoreCase = true) ||
+              (html.contains("manga-list") && html.contains("detail-main-list") &&
+               !html.contains("fanfox") && !html.contains("mangafox"))) {
+              return CustomSourceType.MANGAHERE
+          }
+
+          // 28. MangaLib / RanobeLib / lib.social — Russian platform REST API
+          if (html.contains("mangalib", ignoreCase = true) ||
+              html.contains("ranobelib", ignoreCase = true) ||
+              html.contains("lib.social", ignoreCase = true) ||
+              isMangaLib(clean)) {
+              return CustomSourceType.MANGALIB
+          }
+
+          // 29. Mangago — #book_list + .booklist_item or domain name
+          if (html.contains("mangago", ignoreCase = true) ||
+              (html.contains("book_list") && html.contains("booklist_item"))) {
+              return CustomSourceType.MANGAGO
+          }
+
+          // 30. MangaFreak — distinctive .manga_search_item class or domain
+          if (html.contains("mangafreak", ignoreCase = true) ||
+              html.contains("manga_search_item") ||
+              (html.contains("/Manga/") && html.contains("/Search/") && html.contains("reader_images"))) {
+              return CustomSourceType.MANGAFREAK
+          }
+
+          // 31. MangaOwl — .comic-item cards + #images reader, or domain name
+          if (html.contains("mangaowl", ignoreCase = true) ||
+              (html.contains("comic-item") && html.contains("story-chapter-item"))) {
+              return CustomSourceType.MANGAOWL
+          }
+
+          // 32. NetTruyen — .ModuleContent + truyen-tranh URL pattern (Vietnamese CMS)
+          // Must come before TruyenQQ since both share some Vietnamese vocabulary
+          if (html.contains("nettruyen", ignoreCase = true) ||
+              (html.contains("ModuleContent") && html.contains("reading-detail") &&
+               html.contains("truyen-tranh"))) {
+              return CustomSourceType.NETTRUYEN
+          }
+
+          // 33. TruyenQQ — .book_avatar + .listChapters + .html URL convention
+          if (html.contains("truyenqq", ignoreCase = true) ||
+              (html.contains("book_avatar") && html.contains("listChapters") &&
+               html.contains(".html"))) {
+              return CustomSourceType.TRUYENQQ
+          }
+
+          // 34. MangaKatana — img.chapter-img + #chapters table, or domain name
+          if (html.contains("mangakatana", ignoreCase = true) ||
+              (html.contains("chapter-img") && html.contains("id=\"chapters\""))) {
+              return CustomSourceType.MANGAKATANA
+          }
+
+          // 35. MangaDex-compatible REST API
           val apiJson = fetchText("$clean/manga?limit=1") ?: fetchText("$clean/api/manga?limit=1")
           if (apiJson != null && apiJson.contains("result") && apiJson.contains("ok")) {
               return CustomSourceType.MANGADEX_COMPATIBLE
@@ -224,6 +302,15 @@ package io.github.landwarderer.futon.customsource.data
           val apiResp = fetchText("$baseUrl/read/api/gist/series/")
               ?: fetchText("$baseUrl/read/api/guya/series/")
           return apiResp != null && apiResp.startsWith("{") && apiResp.contains("title")
+      }
+
+      // ── MangaLib API fingerprint ──────────────────────────────────────────────
+
+      private fun isMangaLib(baseUrl: String): Boolean {
+          // Try the new unified API endpoint
+          val apiResp = fetchText("https://api.lib.social/api/manga?page=1&site_id[]=1&fields[]=slug_url")
+              ?: fetchText("https://api.mangalib.me/api/manga?page=1&fields[]=slug_url")
+          return apiResp != null && apiResp.contains("slug_url") && apiResp.contains("data")
       }
 
       // ── MangaFire fingerprint ─────────────────────────────────────────────────
