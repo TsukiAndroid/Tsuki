@@ -90,6 +90,80 @@ enum class CustomSourceType(val label: String) {
      */
     MANGAPARK("MangaPark / Next.js"),
 
+    // ── New parsers added below ───────────────────────────────────────────────
+
+    /**
+     * Comix.to and sites sharing its PHP-based manga/comic CMS layout.
+     * Recognisable by .list-story-item cards and lstImages JS variable.
+     */
+    COMIXTO("Comix.to Style"),
+
+    /**
+     * ComicK.io — large aggregator with a public REST API at api.comick.io.
+     * Very fast and reliable; chapters available per language.
+     */
+    COMICK_API("ComicK API"),
+
+    /**
+     * Bato.to (Batocomic / Comiko) — huge community manga host.
+     * Uses server-side HTML with embedded JSON for chapter pages.
+     */
+    BATO("Bato.to"),
+
+    /**
+     * NineManga CMS — distinctive PHP site with per-language subdomains
+     * (en/es/de.ninemanga.com). Paginated per-image chapter reader.
+     */
+    NINEMANGA("NineManga Style"),
+
+    /**
+     * MangaHost / Leitor.net — Brazilian/Portuguese manga aggregators.
+     * Recognisable by .manga-card grid and PT-BR status labels.
+     */
+    MANGAHOST("MangaHost / Leitor.net"),
+
+    /**
+     * MangaReader.to and sites sharing its card-grid + DS-image reader.
+     * Related to the Zoro/9anime CMS family adapted for manga.
+     */
+    MANGAREADER("MangaReader Style"),
+
+    /**
+     * FanFox.net (MangaFox) and clones using the classic .listing
+     * chapter table with per-page reader pagination.
+     */
+    MANGAFOX("FanFox / MangaFox"),
+
+    /**
+     * TCBScans.me and similar scanlation group static sites (Hugo/Jekyll).
+     * Serves a small curated catalogue; no server-side search.
+     */
+    TCBSCANS("TCBScans / Static Scanlation"),
+
+    /**
+     * MangaNato.com and MangaBat/MangaBuddy derivatives — the spiritual
+     * successor to Manganelo with different URL structure and selectors.
+     */
+    MANGANATO("MangaNato / MangaBat"),
+
+    /**
+     * ReaderFront — open-source scanlation group CMS with a GraphQL API.
+     * Used by JManga, ManhwaSmut, and other scanlation groups.
+     */
+    READERFRONT("ReaderFront GraphQL"),
+
+    /**
+     * KissManga / MangaKiss family — classic CMS with .listing chapter
+     * table, lstImagesUrl JS variable, and .barContent layout.
+     */
+    KISSMANGA("KissManga Style"),
+
+    /**
+     * Cubari.moe — proxy reader that hosts content from GitHub Gists,
+     * Imgur, and other backends via a clean JSON API.
+     */
+    CUBARI("Cubari / Gist Reader"),
+
     /** Any website opened in a WebView — user navigates manually (no parsing) */
     WEBVIEW("Web Browser (Manual)"),
 
