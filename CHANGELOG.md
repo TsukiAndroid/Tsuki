@@ -1,3 +1,10 @@
+## Alpha 1.379 (Build [#70](https://github.com/Space4414/Tsuki/actions/runs/25630236487))
+
+_2026-05-10 13:41 UTC_
+
+- feat: add MangaPill parser (img.js-page reader) (1c7cc33)
+
+
 ## Alpha 1.364 (Build [#56](https://github.com/Space4414/Tsuki/actions/runs/25629719567))
 
 _2026-05-10 13:16 UTC_
