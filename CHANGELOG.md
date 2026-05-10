@@ -1,3 +1,13 @@
+## Alpha 1.399 (Build [#87](https://github.com/Space4414/Tsuki/actions/runs/25635014567))
+
+_2026-05-10 17:23 UTC_
+
+- ci: trigger clean build after fixing release conflict (4b630c8)
+- fix(customsource): replace selectLast with select().last() in KeyoappHtmlParser (fb89410)
+- fix(customsource): remove SortOrder.ALPHABETICAL_DESC and fix IkenApiParser authors (6d41475)
+- feat(customsource): add 14 new CMS parser types (batch 3) (4ff6a6f)
+
+
 ## Alpha 1.397 (Build [#86](https://github.com/Space4414/Tsuki/actions/runs/25634532452))
 
 _2026-05-10 17:00 UTC_
