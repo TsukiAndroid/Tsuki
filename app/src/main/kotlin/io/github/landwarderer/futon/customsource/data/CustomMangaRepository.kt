@@ -57,7 +57,16 @@ package io.github.landwarderer.futon.customsource.data
               CustomSourceType.MANGAREADER,
               CustomSourceType.MANGAFOX,
               CustomSourceType.MANGANATO,
-              CustomSourceType.KISSMANGA -> MangaListFilterCapabilities(
+              CustomSourceType.KISSMANGA,
+              CustomSourceType.MANGAPILL,
+              CustomSourceType.MANGAHUB,
+              CustomSourceType.MANGAHERE,
+              CustomSourceType.MANGAGO,
+              CustomSourceType.MANGAFREAK,
+              CustomSourceType.MANGAOWL,
+              CustomSourceType.NETTRUYEN,
+              CustomSourceType.TRUYENQQ,
+              CustomSourceType.MANGAKATANA -> MangaListFilterCapabilities(
                   isSearchSupported = true,
                   isSearchWithFiltersSupported = true,
                   isMultipleTagsSupported = false,
@@ -86,7 +95,7 @@ package io.github.landwarderer.futon.customsource.data
       private val mangaFireParser: MangaFireHtmlParser by lazy { MangaFireHtmlParser(customSource) }
       private val mangaParkParser: MangaParkHtmlParser by lazy { MangaParkHtmlParser(customSource) }
 
-      // ── New parsers ────────────────────────────────────────────────────────────
+      // ── New parsers (batch 1) ─────────────────────────────────────────────────
       private val comixToParser: ComixToHtmlParser by lazy { ComixToHtmlParser(customSource) }
       private val comicKParser: ComicKApiParser by lazy { ComicKApiParser(customSource) }
       private val batoParser: BatoHtmlParser by lazy { BatoHtmlParser(customSource) }
@@ -99,6 +108,18 @@ package io.github.landwarderer.futon.customsource.data
       private val readerFrontParser: ReaderFrontApiParser by lazy { ReaderFrontApiParser(customSource) }
       private val kissMangaParser: KissMangaHtmlParser by lazy { KissMangaHtmlParser(customSource) }
       private val cubariParser: CubariHtmlParser by lazy { CubariHtmlParser(customSource) }
+
+      // ── New parsers (batch 2) ─────────────────────────────────────────────────
+      private val mangaPillParser: MangaPillHtmlParser by lazy { MangaPillHtmlParser(customSource) }
+      private val mangaHubParser: MangaHubHtmlParser by lazy { MangaHubHtmlParser(customSource) }
+      private val mangaHereParser: MangaHereHtmlParser by lazy { MangaHereHtmlParser(customSource) }
+      private val mangaLibParser: MangaLibApiParser by lazy { MangaLibApiParser(customSource) }
+      private val mangagoParser: MangagoHtmlParser by lazy { MangagoHtmlParser(customSource) }
+      private val mangaFreakParser: MangaFreakHtmlParser by lazy { MangaFreakHtmlParser(customSource) }
+      private val mangaOwlParser: MangaOwlHtmlParser by lazy { MangaOwlHtmlParser(customSource) }
+      private val nettruyenParser: NettruyenHtmlParser by lazy { NettruyenHtmlParser(customSource) }
+      private val truyenQQParser: TruyenQQHtmlParser by lazy { TruyenQQHtmlParser(customSource) }
+      private val mangaKatanaParser: MangaKatanaHtmlParser by lazy { MangaKatanaHtmlParser(customSource) }
 
       // ── MangaRepository implementation ────────────────────────────────────────
 
@@ -134,6 +155,16 @@ package io.github.landwarderer.futon.customsource.data
               CustomSourceType.READERFRONT           -> runCatching { readerFrontParser.getList(offset, order, filter) }.getOrElse { emptyList() }
               CustomSourceType.KISSMANGA             -> runCatching { kissMangaParser.getList(offset, order, filter) }.getOrElse { emptyList() }
               CustomSourceType.CUBARI                -> runCatching { cubariParser.getList(offset, order, filter) }.getOrElse { emptyList() }
+              CustomSourceType.MANGAPILL             -> runCatching { mangaPillParser.getList(offset, order, filter) }.getOrElse { emptyList() }
+              CustomSourceType.MANGAHUB              -> runCatching { mangaHubParser.getList(offset, order, filter) }.getOrElse { emptyList() }
+              CustomSourceType.MANGAHERE             -> runCatching { mangaHereParser.getList(offset, order, filter) }.getOrElse { emptyList() }
+              CustomSourceType.MANGALIB              -> runCatching { mangaLibParser.getList(offset, order, filter) }.getOrElse { emptyList() }
+              CustomSourceType.MANGAGO               -> runCatching { mangagoParser.getList(offset, order, filter) }.getOrElse { emptyList() }
+              CustomSourceType.MANGAFREAK            -> runCatching { mangaFreakParser.getList(offset, order, filter) }.getOrElse { emptyList() }
+              CustomSourceType.MANGAOWL              -> runCatching { mangaOwlParser.getList(offset, order, filter) }.getOrElse { emptyList() }
+              CustomSourceType.NETTRUYEN             -> runCatching { nettruyenParser.getList(offset, order, filter) }.getOrElse { emptyList() }
+              CustomSourceType.TRUYENQQ              -> runCatching { truyenQQParser.getList(offset, order, filter) }.getOrElse { emptyList() }
+              CustomSourceType.MANGAKATANA           -> runCatching { mangaKatanaParser.getList(offset, order, filter) }.getOrElse { emptyList() }
               CustomSourceType.KOTATSU_PARSER        -> emptyList()
           }
       }
@@ -165,6 +196,16 @@ package io.github.landwarderer.futon.customsource.data
               CustomSourceType.READERFRONT           -> runCatching { readerFrontParser.getDetails(manga) }.getOrElse { manga }
               CustomSourceType.KISSMANGA             -> runCatching { kissMangaParser.getDetails(manga) }.getOrElse { manga }
               CustomSourceType.CUBARI                -> runCatching { cubariParser.getDetails(manga) }.getOrElse { manga }
+              CustomSourceType.MANGAPILL             -> runCatching { mangaPillParser.getDetails(manga) }.getOrElse { manga }
+              CustomSourceType.MANGAHUB              -> runCatching { mangaHubParser.getDetails(manga) }.getOrElse { manga }
+              CustomSourceType.MANGAHERE             -> runCatching { mangaHereParser.getDetails(manga) }.getOrElse { manga }
+              CustomSourceType.MANGALIB              -> runCatching { mangaLibParser.getDetails(manga) }.getOrElse { manga }
+              CustomSourceType.MANGAGO               -> runCatching { mangagoParser.getDetails(manga) }.getOrElse { manga }
+              CustomSourceType.MANGAFREAK            -> runCatching { mangaFreakParser.getDetails(manga) }.getOrElse { manga }
+              CustomSourceType.MANGAOWL              -> runCatching { mangaOwlParser.getDetails(manga) }.getOrElse { manga }
+              CustomSourceType.NETTRUYEN             -> runCatching { nettruyenParser.getDetails(manga) }.getOrElse { manga }
+              CustomSourceType.TRUYENQQ              -> runCatching { truyenQQParser.getDetails(manga) }.getOrElse { manga }
+              CustomSourceType.MANGAKATANA           -> runCatching { mangaKatanaParser.getDetails(manga) }.getOrElse { manga }
               else                                   -> manga
           }
       }
@@ -195,6 +236,16 @@ package io.github.landwarderer.futon.customsource.data
               CustomSourceType.READERFRONT           -> runCatching { readerFrontParser.getPages(chapter) }.getOrElse { emptyList() }
               CustomSourceType.KISSMANGA             -> runCatching { kissMangaParser.getPages(chapter) }.getOrElse { emptyList() }
               CustomSourceType.CUBARI                -> runCatching { cubariParser.getPages(chapter) }.getOrElse { emptyList() }
+              CustomSourceType.MANGAPILL             -> runCatching { mangaPillParser.getPages(chapter) }.getOrElse { emptyList() }
+              CustomSourceType.MANGAHUB              -> runCatching { mangaHubParser.getPages(chapter) }.getOrElse { emptyList() }
+              CustomSourceType.MANGAHERE             -> runCatching { mangaHereParser.getPages(chapter) }.getOrElse { emptyList() }
+              CustomSourceType.MANGALIB              -> runCatching { mangaLibParser.getPages(chapter) }.getOrElse { emptyList() }
+              CustomSourceType.MANGAGO               -> runCatching { mangagoParser.getPages(chapter) }.getOrElse { emptyList() }
+              CustomSourceType.MANGAFREAK            -> runCatching { mangaFreakParser.getPages(chapter) }.getOrElse { emptyList() }
+              CustomSourceType.MANGAOWL              -> runCatching { mangaOwlParser.getPages(chapter) }.getOrElse { emptyList() }
+              CustomSourceType.NETTRUYEN             -> runCatching { nettruyenParser.getPages(chapter) }.getOrElse { emptyList() }
+              CustomSourceType.TRUYENQQ              -> runCatching { truyenQQParser.getPages(chapter) }.getOrElse { emptyList() }
+              CustomSourceType.MANGAKATANA           -> runCatching { mangaKatanaParser.getPages(chapter) }.getOrElse { emptyList() }
               else                                   -> emptyList()
           }
       }
@@ -234,6 +285,33 @@ package io.github.landwarderer.futon.customsource.data
           )
           CustomSourceType.KISSMANGA -> MangaListFilterOptions(
               availableTags = runCatching { kissMangaParser.getGenres() }.getOrElse { emptySet() },
+          )
+          CustomSourceType.MANGAPILL -> MangaListFilterOptions(
+              availableTags = runCatching { mangaPillParser.getGenres() }.getOrElse { emptySet() },
+          )
+          CustomSourceType.MANGAHUB -> MangaListFilterOptions(
+              availableTags = runCatching { mangaHubParser.getGenres() }.getOrElse { emptySet() },
+          )
+          CustomSourceType.MANGAHERE -> MangaListFilterOptions(
+              availableTags = runCatching { mangaHereParser.getGenres() }.getOrElse { emptySet() },
+          )
+          CustomSourceType.MANGAGO -> MangaListFilterOptions(
+              availableTags = runCatching { mangagoParser.getGenres() }.getOrElse { emptySet() },
+          )
+          CustomSourceType.MANGAFREAK -> MangaListFilterOptions(
+              availableTags = runCatching { mangaFreakParser.getGenres() }.getOrElse { emptySet() },
+          )
+          CustomSourceType.MANGAOWL -> MangaListFilterOptions(
+              availableTags = runCatching { mangaOwlParser.getGenres() }.getOrElse { emptySet() },
+          )
+          CustomSourceType.NETTRUYEN -> MangaListFilterOptions(
+              availableTags = runCatching { nettruyenParser.getGenres() }.getOrElse { emptySet() },
+          )
+          CustomSourceType.TRUYENQQ -> MangaListFilterOptions(
+              availableTags = runCatching { truyenQQParser.getGenres() }.getOrElse { emptySet() },
+          )
+          CustomSourceType.MANGAKATANA -> MangaListFilterOptions(
+              availableTags = runCatching { mangaKatanaParser.getGenres() }.getOrElse { emptySet() },
           )
           else -> MangaListFilterOptions()
       }
