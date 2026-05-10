@@ -164,6 +164,72 @@ enum class CustomSourceType(val label: String) {
      */
     CUBARI("Cubari / Gist Reader"),
 
+    // ── Second batch of new parsers ───────────────────────────────────────────
+
+    /**
+     * MangaPill (mangapill.com) — fast Next.js-based English aggregator.
+     * Distinctive chapter reader: every page image is img.js-page[data-src].
+     */
+    MANGAPILL("MangaPill"),
+
+    /**
+     * MangaHub (mangahub.io) — one of the largest English manga aggregators.
+     * Bootstrap + custom PHP layout; chapter images served in img.manga-page.
+     */
+    MANGAHUB("MangaHub"),
+
+    /**
+     * MangaHere / Foxaholic CMS (mangahere.cc) — classic large aggregator.
+     * Distinct from FanFox: uses .manga-list + .detail-main-list selectors
+     * and a paginated per-image chapter reader (select.m).
+     */
+    MANGAHERE("MangaHere / Foxaholic"),
+
+    /**
+     * MangaLib (mangalib.me / mangalib.org / ranobelib.me) — the largest
+     * Russian-language manga and light novel platform. Uses a clean REST API
+     * at api.lib.social (with fallback to api.mangalib.me).
+     */
+    MANGALIB("MangaLib (Russian API)"),
+
+    /**
+     * Mangago (mangago.me) — long-running site popular for BL/GL titles.
+     * Classic PHP CMS; chapter reader is paginated with select.nav_select.
+     */
+    MANGAGO("Mangago"),
+
+    /**
+     * MangaFreak (mangafreak.net) — bespoke PHP CMS with /Manga/{slug} URLs.
+     * Distinctive: .manga_search_item cards, .reader_images chapter reader.
+     */
+    MANGAFREAK("MangaFreak"),
+
+    /**
+     * MangaOwl (mangaowl.net / mangaowl.io) — high-traffic English aggregator.
+     * Uses .comic-item card grid and #images for chapter page images.
+     */
+    MANGAOWL("MangaOwl"),
+
+    /**
+     * NetTruyen (nettruyenvn.com and mirror network) — the largest Vietnamese
+     * manga platform. Custom PHP CMS with .ModuleContent wrapper and
+     * .reading-detail chapter image container.
+     */
+    NETTRUYEN("NetTruyen (Vietnamese)"),
+
+    /**
+     * TruyenQQ (truyenqq.com.vn and mirrors) — second-largest Vietnamese manga
+     * site with a completely different CMS from NetTruyen.
+     * Distinctive: .book_avatar cards, .listChapters chapter table, .html URLs.
+     */
+    TRUYENQQ("TruyenQQ (Vietnamese)"),
+
+    /**
+     * MangaKatana (mangakatana.com) — clean English aggregator with stable PHP
+     * layout. Chapters in #chapters table; reader uses img.chapter-img[data-src].
+     */
+    MANGAKATANA("MangaKatana"),
+
     /** Any website opened in a WebView — user navigates manually (no parsing) */
     WEBVIEW("Web Browser (Manual)"),
 
