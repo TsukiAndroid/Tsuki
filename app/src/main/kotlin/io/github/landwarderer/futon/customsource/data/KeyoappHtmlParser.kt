@@ -74,7 +74,7 @@ class KeyoappHtmlParser(
                     .ifEmpty { "Chapter ${i + 1}" }
                 val number = CHAPTER_RE.find(rawName)?.groupValues?.getOrNull(1)?.toFloatOrNull()
                     ?: (i + 1).toFloat()
-                val dateText = a.selectLast("div.text-xs, .chapter-date")?.text()?.trim() ?: ""
+                val dateText = a.select("div.text-xs, .chapter-date").last()?.text()?.trim() ?: ""
                 MangaChapter(
                     id = href.hashCode().toLong(),
                     title = rawName,
