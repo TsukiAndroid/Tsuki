@@ -1,3 +1,10 @@
+## Alpha 1.393 (Build [#83](https://github.com/Space4414/Tsuki/actions/runs/25631295973))
+
+_2026-05-10 14:30 UTC_
+
+- fix: workflow concurrency + dropdown non-filtering adapter (ae15d1b)
+
+
 ## Alpha 1.379 (Build [#70](https://github.com/Space4414/Tsuki/actions/runs/25630236487))
 
 _2026-05-10 13:41 UTC_
