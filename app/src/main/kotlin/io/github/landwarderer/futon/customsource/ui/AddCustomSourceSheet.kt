@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
+import android.widget.Filter
 import android.widget.Toast
 import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
@@ -46,7 +47,22 @@ class AddCustomSourceSheet : BottomSheetDialogFragment() {
         val autoDetectLabel = getString(R.string.auto_detect_label)
         val manualTypes = CustomSourceType.entries.filter { it != CustomSourceType.KOTATSU_PARSER }
         val typeLabels = listOf(autoDetectLabel) + manualTypes.map { it.label }
-        val adapter = ArrayAdapter(requireContext(), R.layout.item_dropdown_simple, typeLabels)
+        // Use a non-filtering adapter so ALL entries appear regardless of the current field text.
+        // MaterialAutoCompleteTextView re-runs the adapter filter when the dropdown opens, using
+        // the current field text as the constraint. The default "Auto-detect" text would filter
+        // out every parser label (none start with "Auto-detect"), hiding the full list.
+        val adapter = object : ArrayAdapter<String>(requireContext(), R.layout.item_dropdown_simple, typeLabels) {
+            private val noOpFilter = object : Filter() {
+                override fun performFiltering(constraint: CharSequence?) = FilterResults().apply {
+                    values = typeLabels
+                    count = typeLabels.size
+                }
+                override fun publishResults(constraint: CharSequence?, results: FilterResults?) {
+                    notifyDataSetChanged()
+                }
+            }
+            override fun getFilter(): Filter = noOpFilter
+        }
         typeDropdown.setAdapter(adapter)
         // Default: auto-detect — most users will never need to change this
         typeDropdown.setText(autoDetectLabel, false)
@@ -123,35 +139,43 @@ class AddCustomSourceSheet : BottomSheetDialogFragment() {
     }
 
     private fun hintForType(type: CustomSourceType): String = when (type) {
-        CustomSourceType.MANGADEX_COMPATIBLE ->
-            "API base URL (e.g. https://api.mangadex.org)"
-        CustomSourceType.MADARA ->
-            "Site URL — WordPress Madara (e.g. https://mangakakalot.com)"
-        CustomSourceType.MANGATHEMESIA ->
-            "Site URL — MangaThemesia (e.g. https://reaperscans.com)"
-        CustomSourceType.MANGASTREAM ->
-            "Site URL — MangaStream/WPManga (e.g. https://toonily.com)"
-        CustomSourceType.GENKAN ->
-            "Site URL — Genkan CMS (e.g. https://leviatanscans.com)"
-        CustomSourceType.FOOLSLIDE2 ->
-            "Site URL — FoolSlide2 (e.g. https://reader.fallenangels.com)"
-        CustomSourceType.MANGANELO ->
-            "Site URL — Manganelo / MangaKakalot (e.g. https://manganelo.com)"
-        CustomSourceType.ZEROSCANS_API ->
-            "API URL — Zeroscans JSON API (e.g. https://api.zeroscans.com)"
-        CustomSourceType.LHTRANSLATION ->
-            "Site URL — LHTranslation style (e.g. https://lhscans.com)"
-        CustomSourceType.MANGASEE ->
-            "Site URL — MangaSee / MangaLife (e.g. https://mangasee123.com)"
-        CustomSourceType.GUYA ->
-            "Site URL — Guya reader (e.g. https://guya.moe)"
-        CustomSourceType.MANGAFIRE ->
-            "Site URL — MangaFire style (e.g. https://mangafire.to)"
-        CustomSourceType.MANGAPARK ->
-            "Site URL — MangaPark (e.g. https://mangapark.net)"
-        // WEBVIEW and any future types
-        else ->
-            "Website URL — opens in browser (e.g. https://example.com)"
+        CustomSourceType.MANGADEX_COMPATIBLE -> "API base URL (e.g. https://api.mangadex.org)"
+        CustomSourceType.MADARA             -> "Site URL — WordPress Madara (e.g. https://mangakakalot.com)"
+        CustomSourceType.MANGATHEMESIA      -> "Site URL — MangaThemesia (e.g. https://reaperscans.com)"
+        CustomSourceType.MANGASTREAM        -> "Site URL — MangaStream/WPManga (e.g. https://toonily.com)"
+        CustomSourceType.GENKAN             -> "Site URL — Genkan CMS (e.g. https://leviatanscans.com)"
+        CustomSourceType.FOOLSLIDE2         -> "Site URL — FoolSlide2 (e.g. https://reader.fallenangels.com)"
+        CustomSourceType.MANGANELO          -> "Site URL — Manganelo / MangaKakalot (e.g. https://manganelo.com)"
+        CustomSourceType.ZEROSCANS_API      -> "API URL — Zeroscans JSON API (e.g. https://api.zeroscans.com)"
+        CustomSourceType.LHTRANSLATION      -> "Site URL — LHTranslation style (e.g. https://lhscans.com)"
+        CustomSourceType.MANGASEE           -> "Site URL — MangaSee / MangaLife (e.g. https://mangasee123.com)"
+        CustomSourceType.GUYA               -> "Site URL — Guya reader (e.g. https://guya.moe)"
+        CustomSourceType.MANGAFIRE          -> "Site URL — MangaFire style (e.g. https://mangafire.to)"
+        CustomSourceType.MANGAPARK          -> "Site URL — MangaPark (e.g. https://mangapark.net)"
+        CustomSourceType.COMIXTO            -> "Site URL — Comix.to style (e.g. https://comix.to)"
+        CustomSourceType.COMICK_API         -> "Site URL — ComicK (e.g. https://comick.io)"
+        CustomSourceType.BATO               -> "Site URL — Bato.to (e.g. https://bato.to)"
+        CustomSourceType.NINEMANGA          -> "Site URL — NineManga (e.g. https://en.ninemanga.com)"
+        CustomSourceType.MANGAHOST          -> "Site URL — MangaHost / Leitor.net (e.g. https://mangahost4.com)"
+        CustomSourceType.MANGAREADER        -> "Site URL — MangaReader style (e.g. https://mangareader.to)"
+        CustomSourceType.MANGAFOX           -> "Site URL — FanFox / MangaFox (e.g. https://fanfox.net)"
+        CustomSourceType.TCBSCANS           -> "Site URL — TCBScans static site (e.g. https://tcbscans.me)"
+        CustomSourceType.MANGANATO          -> "Site URL — MangaNato / MangaBat (e.g. https://manganato.com)"
+        CustomSourceType.READERFRONT        -> "Site URL — ReaderFront GraphQL (e.g. https://jmanga.me)"
+        CustomSourceType.KISSMANGA          -> "Site URL — KissManga style (e.g. https://kissmanga.in)"
+        CustomSourceType.CUBARI             -> "Site URL — Cubari / Gist reader (e.g. https://cubari.moe)"
+        CustomSourceType.MANGAPILL          -> "Site URL — MangaPill (e.g. https://mangapill.com)"
+        CustomSourceType.MANGAHUB           -> "Site URL — MangaHub (e.g. https://mangahub.io)"
+        CustomSourceType.MANGAHERE          -> "Site URL — MangaHere / Foxaholic (e.g. https://www.mangahere.cc)"
+        CustomSourceType.MANGALIB           -> "Site URL — MangaLib Russian (e.g. https://mangalib.me)"
+        CustomSourceType.MANGAGO            -> "Site URL — Mangago (e.g. https://www.mangago.me)"
+        CustomSourceType.MANGAFREAK         -> "Site URL — MangaFreak (e.g. https://mangafreak.net)"
+        CustomSourceType.MANGAOWL           -> "Site URL — MangaOwl (e.g. https://mangaowl.net)"
+        CustomSourceType.NETTRUYEN          -> "Site URL — NetTruyen Vietnamese (e.g. https://nettruyenvn.com)"
+        CustomSourceType.TRUYENQQ           -> "Site URL — TruyenQQ Vietnamese (e.g. https://truyenqq.com.vn)"
+        CustomSourceType.MANGAKATANA        -> "Site URL — MangaKatana (e.g. https://mangakatana.com)"
+        CustomSourceType.WEBVIEW            -> "Website URL — opens in browser (e.g. https://example.com)"
+        else                                -> "Website URL (e.g. https://example.com)"
     }
 
     companion object {

@@ -12,6 +12,10 @@ on:
         required: false
         default: ''
 
+concurrency:
+  group: build-alpha
+  cancel-in-progress: false
+
 permissions:
   contents: write
 
