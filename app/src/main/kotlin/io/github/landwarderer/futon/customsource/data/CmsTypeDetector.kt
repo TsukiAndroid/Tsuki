@@ -12,20 +12,32 @@ package io.github.landwarderer.futon.customsource.data
    * between types that previously had "(Auto)" in their label and those that did not.
    *
    * Detection priority:
-   *  1. MangaSee / MangaLife  — vm.Directory or vm.Chapters JS globals
-   *  2. MangaFire style       — MOVED UP: checked before Guya to prevent false-positives
-   *  3. Guya reader           — /api/series/ returns Guya-structured JSON (title+cover+chapters)
-   *  4. MangaPark             — __NEXT_DATA__ + /browse path
-   *  5. MangaThemesia         — ts_reader.run, .bsx container
-   *  6. Madara                — wp-manga, WpMangaReader
-   *  7. MangaStream           — WPMangaStream, readerarea
-   *  8. FoolSlide2            — foolslide or /read/ + /directory/
-   *  9. Manganelo             — manganelo / mangakakalot markers
-   * 10. Zeroscans API         — /api/comics JSON endpoint
-   * 11. LHTranslation         — row-content-chapter, reading-detail
-   * 12. Genkan               — /comics/ + genkan marker
-   * 13. MangaDex-compatible  — REST API returns { result: ok }
-   * 14. Fallback             — WEBVIEW
+   *  1.  MangaSee / MangaLife  — vm.Directory or vm.Chapters JS globals
+   *  2.  MangaFire style       — checked before Guya to prevent false-positives
+   *  3.  Guya reader           — /api/series/ returns Guya-structured JSON
+   *  4.  MangaPark             — __NEXT_DATA__ + /browse path
+   *  5.  MangaThemesia         — ts_reader.run, .bsx container
+   *  6.  Madara                — wp-manga, WpMangaReader
+   *  7.  MangaStream           — WPMangaStream, readerarea
+   *  8.  FoolSlide2            — foolslide or /read/ + /directory/
+   *  9.  Manganelo             — manganelo / mangakakalot markers
+   *  10. Zeroscans API         — /api/comics JSON endpoint
+   *  11. LHTranslation         — row-content-chapter, reading-detail
+   *  12. Genkan                — /comics/ + genkan marker
+   *  13. Comix.to              — comix.to markers OR .list-story-item + chapImages
+   *  14. ComicK API            — api.comick.io responds to /v1.0/comic/
+   *  15. Bato.to               — bato.to / batocomic / comiko markers
+   *  16. NineManga             — ninemanga, .detail_list, .manga_detail
+   *  17. MangaHost             — mangahost, leitor.net, .manga-card
+   *  18. MangaReader           — mangareader.to, .manga-poster + .sort-name
+   *  19. FanFox / MangaFox     — fanfox, mangafox, .list-2 .item
+   *  20. TCBScans              — tcbscans, .entry-img + scanlation static
+   *  21. MangaNato             — manganato, mangabat, .panel-story-chapter-list
+   *  22. ReaderFront           — /graphql returns data.works JSON
+   *  23. KissManga             — kissmanga, lstImagesUrl in script
+   *  24. Cubari                — cubari, /read/api/ endpoint
+   *  25. MangaDex-compatible  — REST API returns { result: ok }
+   *  26. Fallback             — WEBVIEW
    */
   object CmsTypeDetector {
 
@@ -39,13 +51,11 @@ package io.github.landwarderer.futon.customsource.data
           }
 
           // 2. MangaFire style — checked BEFORE Guya so mangafire.to is not falsely detected
-          // as Guya just because it happens to respond to /api/series/ with JSON.
           if (isMangaFire(html, clean)) {
               return CustomSourceType.MANGAFIRE
           }
 
-          // 3. Guya reader — JSON API endpoint with Guya-specific structure.
-          // Requires at least title+cover or title+chapters keys to avoid false-positives.
+          // 3. Guya reader — JSON API endpoint with Guya-specific structure
           if (isGuyaApi(clean)) {
               return CustomSourceType.GUYA
           }
@@ -97,7 +107,78 @@ package io.github.landwarderer.futon.customsource.data
               return CustomSourceType.GENKAN
           }
 
-          // 13. MangaDex-compatible REST API
+          // 13. Comix.to
+          if (isComixTo(html, clean)) {
+              return CustomSourceType.COMIXTO
+          }
+
+          // 14. ComicK API — api.comick.io or self-hosted ComicK instance
+          if (isComicK(html, clean)) {
+              return CustomSourceType.COMICK_API
+          }
+
+          // 15. Bato.to / Batocomic / Comiko
+          if (html.contains("bato.to", ignoreCase = true) || html.contains("batocomic", ignoreCase = true) ||
+              html.contains("comiko", ignoreCase = true) ||
+              (html.contains("item-text") && html.contains("browse?sort="))) {
+              return CustomSourceType.BATO
+          }
+
+          // 16. NineManga
+          if (html.contains("ninemanga", ignoreCase = true) || html.contains("detail_list") ||
+              html.contains("manga_detail") || html.contains("page_select")) {
+              return CustomSourceType.NINEMANGA
+          }
+
+          // 17. MangaHost / Leitor.net
+          if (html.contains("mangahost", ignoreCase = true) || html.contains("leitor.net", ignoreCase = true) ||
+              (html.contains("manga-card") && html.contains("kw-title"))) {
+              return CustomSourceType.MANGAHOST
+          }
+
+          // 18. MangaReader.to style
+          if (html.contains("mangareader", ignoreCase = true) ||
+              (html.contains("manga-poster") && html.contains("sort-name") && html.contains("manga-detail"))) {
+              return CustomSourceType.MANGAREADER
+          }
+
+          // 19. FanFox / MangaFox
+          if (html.contains("fanfox", ignoreCase = true) || html.contains("mangafox", ignoreCase = true) ||
+              (html.contains("detail-info-right") && html.contains("detail-main-list"))) {
+              return CustomSourceType.MANGAFOX
+          }
+
+          // 20. TCBScans / static scanlation sites
+          if (html.contains("tcbscans", ignoreCase = true) ||
+              (html.contains("entry-img") && html.contains("latest-chapter") && html.contains("chapter"))) {
+              return CustomSourceType.TCBSCANS
+          }
+
+          // 21. MangaNato / MangaBat
+          if (html.contains("manganato", ignoreCase = true) || html.contains("mangabat", ignoreCase = true) ||
+              html.contains("mangabuddy", ignoreCase = true) ||
+              html.contains("panel-story-chapter-list") || html.contains("panel-list-story")) {
+              return CustomSourceType.MANGANATO
+          }
+
+          // 22. ReaderFront GraphQL
+          if (isReaderFront(clean)) {
+              return CustomSourceType.READERFRONT
+          }
+
+          // 23. KissManga / MangaKiss family
+          if (html.contains("kissmanga", ignoreCase = true) || html.contains("readcomiconline", ignoreCase = true) ||
+              html.contains("lstImagesUrl") ||
+              (html.contains("barContent") && html.contains("listing"))) {
+              return CustomSourceType.KISSMANGA
+          }
+
+          // 24. Cubari.moe
+          if (html.contains("cubari", ignoreCase = true) || isCubari(clean)) {
+              return CustomSourceType.CUBARI
+          }
+
+          // 25. MangaDex-compatible REST API
           val apiJson = fetchText("$clean/manga?limit=1") ?: fetchText("$clean/api/manga?limit=1")
           if (apiJson != null && apiJson.contains("result") && apiJson.contains("ok")) {
               return CustomSourceType.MANGADEX_COMPATIBLE
@@ -109,16 +190,49 @@ package io.github.landwarderer.futon.customsource.data
       /** Human-readable display name shown in the detection toast. */
       fun displayName(type: CustomSourceType): String = type.label
 
+      // ── Comix.to fingerprint ──────────────────────────────────────────────────
+
+      private fun isComixTo(html: String, baseUrl: String): Boolean {
+          if (html.contains("comix.to", ignoreCase = true)) return true
+          if (html.contains("list-story-item") && html.contains("story-item-wrap")) return true
+          if (html.contains("chapImages") || html.contains("lstImages")) return true
+          return false
+      }
+
+      // ── ComicK fingerprint ────────────────────────────────────────────────────
+
+      private fun isComicK(html: String, baseUrl: String): Boolean {
+          if (html.contains("comick", ignoreCase = true)) return true
+          val apiResp = fetchText("https://api.comick.io/v1.0/comic/?limit=1")
+          if (apiResp != null && apiResp.contains("title") && apiResp.contains("hid")) return true
+          val selfApi = fetchText("$baseUrl/api/v1.0/comic/?limit=1")
+          if (selfApi != null && selfApi.contains("title") && selfApi.contains("hid")) return true
+          return false
+      }
+
+      // ── ReaderFront fingerprint ───────────────────────────────────────────────
+
+      private fun isReaderFront(baseUrl: String): Boolean {
+          val gql = fetchText("$baseUrl/graphql?query={works{name}}")
+              ?: fetchText("$baseUrl/api/graphql?query={works{name}}")
+          return gql != null && gql.contains("works") && gql.contains("name")
+      }
+
+      // ── Cubari fingerprint ────────────────────────────────────────────────────
+
+      private fun isCubari(baseUrl: String): Boolean {
+          val apiResp = fetchText("$baseUrl/read/api/gist/series/")
+              ?: fetchText("$baseUrl/read/api/guya/series/")
+          return apiResp != null && apiResp.startsWith("{") && apiResp.contains("title")
+      }
+
       // ── MangaFire fingerprint ─────────────────────────────────────────────────
 
       private fun isMangaFire(html: String, baseUrl: String): Boolean {
-          // Strong self-identification
           if (html.contains("mangafire", ignoreCase = true)) return true
-          // MangaFire card grid: .manga-poster covers + ep-item chapter rows or manga-list
           if (html.contains("manga-poster") &&
               (html.contains("chapter-images") || html.contains("ep-item") || html.contains("manga-list"))
           ) return true
-          // Some MangaFire-style clones use .manga-poster + a filter/browse button
           if (html.contains("manga-poster") && html.contains("btn-filter")) return true
           return false
       }
@@ -128,10 +242,7 @@ package io.github.landwarderer.futon.customsource.data
       private fun isGuyaApi(baseUrl: String): Boolean {
           val json = fetchText("$baseUrl/api/series/") ?: return false
           val trimmed = json.trimStart()
-          // Must be a JSON object (not array)
           if (!trimmed.startsWith("{")) return false
-          // Guya API root is a map of slug → series object containing title, cover, chapters
-          // Require at least 2 of 3 Guya-specific keys
           val hasTitle = json.contains("\"title\"")
           val hasCover = json.contains("\"cover\"")
           val hasChapters = json.contains("\"chapters\"")
@@ -160,4 +271,3 @@ package io.github.landwarderer.futon.customsource.data
               .build()
       }
   }
-  
