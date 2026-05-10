@@ -170,7 +170,7 @@ class IkenApiParser(
                 coverUrl = cover,
                 tags = emptySet(),
                 state = state,
-                authors = item.optString("author").takeIf { it.isNotEmpty() }?.let { setOf(it) } ?: emptySet(),
+                authors = emptySet(),
                 largeCoverUrl = cover,
                 description = item.optString("postContent").ifEmpty { item.optString("description") }
                     .takeIf { it.isNotEmpty() },

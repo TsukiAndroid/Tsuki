@@ -43,7 +43,6 @@ class HeanCmsApiParser(
         return runCatching {
             val orderParam = when (order) {
                 SortOrder.ALPHABETICAL -> "name"
-                SortOrder.ALPHABETICAL_DESC -> "name"
                 SortOrder.NEWEST -> "created_at"
                 SortOrder.POPULARITY -> "total_views"
                 SortOrder.RATING -> "rating"

@@ -48,7 +48,6 @@ class LilianaHtmlParser(
                         SortOrder.UPDATED -> append("latest-updated")
                         SortOrder.POPULARITY -> append("views")
                         SortOrder.ALPHABETICAL -> append("az")
-                        SortOrder.ALPHABETICAL_DESC -> append("za")
                         SortOrder.NEWEST -> append("new")
                         SortOrder.RATING -> append("score")
                         else -> append("latest-updated")

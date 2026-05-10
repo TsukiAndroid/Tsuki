@@ -50,7 +50,6 @@ class MmrcmsHtmlParser(
                 when (order) {
                     SortOrder.POPULARITY -> append("views&asc=false")
                     SortOrder.ALPHABETICAL -> append("name&asc=true")
-                    SortOrder.ALPHABETICAL_DESC -> append("name&asc=false")
                     else -> append("name&asc=true")
                 }
             }
