@@ -1,3 +1,11 @@
+## Alpha 1.401 (Build [#88](https://github.com/Space4414/Tsuki/actions/runs/25635319045))
+
+_2026-05-10 17:38 UTC_
+
+- fix(detector): tighten Zeroscans check to avoid false-positive on PizzaReader sites (bd5c0f9)
+- ci: trigger clean build after fixing release conflict (4b630c8)
+
+
 ## Alpha 1.399 (Build [#87](https://github.com/Space4414/Tsuki/actions/runs/25635014567))
 
 _2026-05-10 17:23 UTC_
