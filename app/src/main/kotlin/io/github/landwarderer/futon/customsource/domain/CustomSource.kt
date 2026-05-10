@@ -230,6 +230,97 @@ enum class CustomSourceType(val label: String) {
      */
     MANGAKATANA("MangaKatana"),
 
+    // ── Third batch of new parsers (kotatsu-parsers-redo families) ───────────
+
+    /**
+     * ZeistManga — Blogger/Blogspot-hosted manga sites using the Atom JSON feed
+     * at /feeds/posts/default/-/{category}?alt=json. 51 sites worldwide including
+     * MangaSoul, LonerTL, and Indonesian/Spanish/Arabic scanlation blogs.
+     */
+    ZEISTMANGA("ZeistManga (Blogger-based)"),
+
+    /**
+     * Keyoapp CMS — modern Tailwind-based scanlation platform used by AsuraScans,
+     * FingerScans, Luminous Scans, and 12+ English scanlation groups. All series
+     * on /series/ page; chapters at #chapters > a.
+     */
+    KEYOAPP("Keyoapp Scanlation CMS"),
+
+    /**
+     * HeanCms — JSON REST API manga platform used by ReaperScans, FlameScans,
+     * VoidScans, and others. API hosted at api.{domain}; endpoints /query, /series/{slug}.
+     */
+    HEANCMS("HeanCms (JSON API)"),
+
+    /**
+     * WpComics — Vietnamese WordPress manga CMS. Used by WpComics.vn and 17 other
+     * Vietnamese/Asian aggregators. Distinctive /tim-truyen listing with div.items grid.
+     */
+    WPCOMICS("WpComics (Vietnamese WP)"),
+
+    /**
+     * Mmrcms — Classic PHP manga CMS powering 17 sites including IsekaiScan
+     * and other long-running aggregators. /filterList + /latest-release endpoints;
+     * div.media Bootstrap cards.
+     */
+    MMRCMS("Mmrcms (Classic PHP CMS)"),
+
+    /**
+     * Madtheme — Modern Bootstrap manga theme powering 12 sites including MangaKomi
+     * and Zinmanga. /search/ endpoint with div.book-item cards. Tag + status filters.
+     */
+    MADTHEME("Madtheme (Modern WP Theme)"),
+
+    /**
+     * Mangabox — Mangakakalot successor platform used by Mangakakalot.to and 6 other
+     * sites. Distinct /manga-list?type=latest|topview URL structure; .content-genres-item cards.
+     */
+    MANGABOX("Mangabox / Mangakakalot.to"),
+
+    /**
+     * Liliana CMS — modern PHP manga platform with tag exclusion and multi-language
+     * support. Used by KulManga, Manga-Raw.club, and 5 other sites. /filter/{page}/ URLs.
+     */
+    LILIANA("Liliana Manga CMS"),
+
+    /**
+     * Iken CMS — JSON API-first platform with optional api.{domain} subdomain.
+     * Used by Mangaclash, Mangagreat, and 5 other sites. /api/query endpoint.
+     */
+    IKEN("Iken (JSON API CMS)"),
+
+    /**
+     * Scan CMS — PHP scanlation group platform used by Sushiscan.net, Lelscans,
+     * and 6 other French/Spanish scanlation teams. /manga listing with /page/{n} URLs.
+     */
+    SCAN("Scan Scanlation CMS"),
+
+    /**
+     * PizzaReader — open-source Italian scanlation platform with JSON REST API.
+     * Used by PizzaReader.it, SushiScan.fr, and 7 other European scanlation groups.
+     * /api/comics lists all series; /api/search/{q} for search.
+     */
+    PIZZAREADER("PizzaReader (Italian API)"),
+
+    /**
+     * FmReader — PHP manga aggregator CMS used by FmReader.com, KissManga.in,
+     * and 3 other sites. /?page={n}&search={q} URL pattern; .manga-list-4-list cards.
+     */
+    FMREADER("FmReader PHP CMS"),
+
+    /**
+     * Gattsu CMS — WordPress-derived manga platform with /page/{n}/ URL pagination
+     * and CSS background-image covers. Used by 5 sites.
+     */
+    GATTSU("Gattsu Manga CMS"),
+
+    /**
+     * AnimeBootstrap — Bootstrap-based PHP manga theme primarily serving Turkish
+     * and Middle Eastern communities. /manga?page={n}&search={q} URL pattern.
+     * Used by AnimeBootstrap.net and 4 other sites.
+     */
+    ANIMEBOOTSTRAP("AnimeBootstrap Theme"),
+
     /** Any website opened in a WebView — user navigates manually (no parsing) */
     WEBVIEW("Web Browser (Manual)"),
 

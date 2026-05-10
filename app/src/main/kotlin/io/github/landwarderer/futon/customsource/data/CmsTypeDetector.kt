@@ -256,7 +256,97 @@ package io.github.landwarderer.futon.customsource.data
               return CustomSourceType.MANGAKATANA
           }
 
-          // 35. MangaDex-compatible REST API
+          // 35. ZeistManga (Blogger-based) — Atom feed at /feeds/posts/default/-/Series?alt=json
+          if (html.contains("blogger.com", ignoreCase = true) ||
+              html.contains("blogspot.com", ignoreCase = true) ||
+              isZeistManga(html, clean)) {
+              return CustomSourceType.ZEISTMANGA
+          }
+
+          // 36. Keyoapp CMS — #series_tags_page + div.grid > div.group + #chapters
+          if (html.contains("series_tags_page") ||
+              (html.contains("div.grid") && html.contains("div.group") && html.contains("#chapters")) ||
+              (html.contains("keyoapp") || html.contains("asuracomic"))) {
+              return CustomSourceType.KEYOAPP
+          }
+
+          // 37. HeanCms — JSON API at api.{domain}/query with posts or series_type=Comic
+          if (isHeanCms(clean)) {
+              return CustomSourceType.HEANCMS
+          }
+
+          // 38. Iken CMS — JSON API at api.{domain}/api/query with posts[] response
+          if (isIkenCms(clean)) {
+              return CustomSourceType.IKEN
+          }
+
+          // 39. PizzaReader — /api/comics returns JSON with comics[] array
+          if (isPizzaReader(clean)) {
+              return CustomSourceType.PIZZAREADER
+          }
+
+          // 40. WpComics — Vietnamese WordPress CMS with /tim-truyen and div.items
+          if (html.contains("tim-truyen", ignoreCase = true) ||
+              (html.contains("div.items") && html.contains("box_tootip")) ||
+              (html.contains("wpcomics", ignoreCase = true))) {
+              return CustomSourceType.WPCOMICS
+          }
+
+          // 41. Mmrcms — /filterList endpoint + div.media Bootstrap cards
+          if (html.contains("filterList", ignoreCase = true) ||
+              (html.contains("media-body") && html.contains("chapter-item")) ||
+              isMmrcms(clean)) {
+              return CustomSourceType.MMRCMS
+          }
+
+          // 42. Madtheme — div.book-item + /search/ URL + meta score class
+          if (html.contains("book-item") &&
+              (html.contains("score") || html.contains("madtheme") || html.contains("/search/?")) &&
+              !html.contains("wp-manga")) {
+              return CustomSourceType.MADTHEME
+          }
+
+          // 43. Mangabox — /manga-list?type= URL pattern + .content-genres-item
+          if (html.contains("manga-list") && html.contains("content-genres-item") ||
+              html.contains("topview") && html.contains("list-truyen-item-wrap")) {
+              return CustomSourceType.MANGABOX
+          }
+
+          // 44. Liliana CMS — /filter/{page}/ + y6x11p class + syn-target
+          if (html.contains("y6x11p") || html.contains("syn-target") ||
+              (html.contains("/filter/") && html.contains("latest-updated"))) {
+              return CustomSourceType.LILIANA
+          }
+
+          // 45. Scan CMS — /manga listing + .chapter-list + no Madara markers
+          if (html.contains("sushiscan", ignoreCase = true) ||
+              html.contains("lelscans", ignoreCase = true) ||
+              (html.contains("chapter-list") && html.contains("/manga") &&
+               !html.contains("wp-manga") && !html.contains("madara"))) {
+              return CustomSourceType.SCAN
+          }
+
+          // 46. FmReader — .manga-list-4-list or chapter-image class (specific to FmReader)
+          if (html.contains("manga-list-4-list") || html.contains("chapter-image") ||
+              html.contains("fmreader", ignoreCase = true)) {
+              return CustomSourceType.FMREADER
+          }
+
+          // 47. Gattsu CMS — WordPress-derived with /page/ URLs and manga grid
+          if (html.contains("gattsu", ignoreCase = true) ||
+              (html.contains("/page/") && html.contains("chapters-list") &&
+               !html.contains("wp-manga"))) {
+              return CustomSourceType.GATTSU
+          }
+
+          // 48. AnimeBootstrap — /manga?page= + .list-manga-item or Bootstrap manga theme
+          if (html.contains("animebootstrap", ignoreCase = true) ||
+              html.contains("list-manga-item") ||
+              (html.contains("sort_by=") && html.contains("/manga?page="))) {
+              return CustomSourceType.ANIMEBOOTSTRAP
+          }
+
+          // 49. MangaDex-compatible REST API
           val apiJson = fetchText("$clean/manga?limit=1") ?: fetchText("$clean/api/manga?limit=1")
           if (apiJson != null && apiJson.contains("result") && apiJson.contains("ok")) {
               return CustomSourceType.MANGADEX_COMPATIBLE
@@ -335,6 +425,49 @@ package io.github.landwarderer.futon.customsource.data
           val hasChapters = json.contains("\"chapters\"")
           val score = (if (hasTitle) 1 else 0) + (if (hasCover) 1 else 0) + (if (hasChapters) 1 else 0)
           return score >= 2
+      }
+
+      // ── ZeistManga fingerprint ────────────────────────────────────────────────
+
+      private fun isZeistManga(html: String, baseUrl: String): Boolean {
+          if (html.contains("feeds/posts/default")) return true
+          val feedResp = fetchText("$baseUrl/feeds/posts/default/-/Series?alt=json&max-results=1")
+          if (feedResp != null && feedResp.contains("\"feed\"") && feedResp.contains("entry")) return true
+          return false
+      }
+
+      // ── HeanCms fingerprint ───────────────────────────────────────────────────
+
+      private fun isHeanCms(baseUrl: String): Boolean {
+          val host = runCatching { java.net.URI(baseUrl).host ?: "" }.getOrElse { "" }
+          if (host.isEmpty()) return false
+          val apiResp = fetchText("https://api.$host/query?query_string=&series_type=Comic&perPage=1&page=1&order=desc&order_by=updated_at")
+          return apiResp != null && (apiResp.contains("series_slug") || apiResp.contains("series_type") ||
+              (apiResp.contains("data") && apiResp.contains("thumbnail")))
+      }
+
+      // ── Iken CMS fingerprint ──────────────────────────────────────────────────
+
+      private fun isIkenCms(baseUrl: String): Boolean {
+          val host = runCatching { java.net.URI(baseUrl).host ?: "" }.getOrElse { "" }
+          if (host.isEmpty()) return false
+          val apiResp = fetchText("https://api.$host/api/query?page=1&perPage=1")
+          return apiResp != null && apiResp.contains("posts") && apiResp.contains("postTitle")
+      }
+
+      // ── PizzaReader fingerprint ───────────────────────────────────────────────
+
+      private fun isPizzaReader(baseUrl: String): Boolean {
+          val apiResp = fetchText("$baseUrl/api/comics")
+          return apiResp != null && apiResp.contains("\"comics\"") && apiResp.contains("\"url\"") &&
+              apiResp.contains("\"title\"") && apiResp.contains("\"status\"")
+      }
+
+      // ── Mmrcms fingerprint ────────────────────────────────────────────────────
+
+      private fun isMmrcms(baseUrl: String): Boolean {
+          val resp = fetchText("$baseUrl/filterList?page=1&sortBy=name&asc=true")
+          return resp != null && (resp.contains("media-body") || resp.contains("manga-item"))
       }
 
       private fun fetchText(url: String): String? = runCatching {
