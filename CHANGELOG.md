@@ -1,3 +1,11 @@
+## Alpha 1.364 (Build [#56](https://github.com/Space4414/Tsuki/actions/runs/25629719567))
+
+_2026-05-10 13:16 UTC_
+
+- feat: add ComicK REST API parser (comick.io) (bccfe4a)
+- feat: add ComixTo parser for comix.to and clones (dae13e3)
+
+
 ## Stable 1.4.6 (Build [#5](https://github.com/Space4414/Tsuki/actions/runs/25599286527))
 
 _2026-05-09 10:50 UTC_
