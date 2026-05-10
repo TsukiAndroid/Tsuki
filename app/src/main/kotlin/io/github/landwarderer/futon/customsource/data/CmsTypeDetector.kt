@@ -101,9 +101,13 @@ package io.github.landwarderer.futon.customsource.data
               return CustomSourceType.MANGANELO
           }
 
-          // 10. Zeroscans / JSON API
+          // 10. Zeroscans / JSON API — must NOT match PizzaReader which also serves /api/comics.
+          // Zeroscans responses contain "slug" and "name" per comic object.
+          // PizzaReader responses contain "url" and "title" instead — exclude those.
           val zeroscansJson = fetchText("$clean/api/comics")
-          if (zeroscansJson != null && zeroscansJson.contains("comics")) {
+          if (zeroscansJson != null &&
+              (zeroscansJson.contains("\"slug\"") || zeroscansJson.contains("\"name\"")) &&
+              !zeroscansJson.contains("\"url\"") && !zeroscansJson.contains("\"title\"")) {
               return CustomSourceType.ZEROSCANS_API
           }
 
