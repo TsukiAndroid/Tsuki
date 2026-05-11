@@ -1,3 +1,10 @@
+## Alpha 1.404 (Build [#90](https://github.com/Space4414/Tsuki/actions/runs/25648850432))
+
+_2026-05-11 03:33 UTC_
+
+- feat: persistent language filter for sources (AppSettings.kt) (384c1bb)
+
+
 ## Beta 1.4.7 (Build [#1](https://github.com/Space4414/Tsuki/actions/runs/25635971999))
 
 _2026-05-10 18:08 UTC_
