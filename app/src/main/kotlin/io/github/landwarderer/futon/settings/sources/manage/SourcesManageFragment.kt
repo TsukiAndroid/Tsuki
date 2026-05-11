@@ -167,6 +167,11 @@ class SourcesManageFragment :
 				true
 			}
 
+			R.id.action_filter_language -> {
+				showLanguageFilterDialog()
+				true
+			}
+
 			R.id.action_no_nsfw -> {
 				settings.isNsfwContentDisabled = !menuItem.isChecked
 				true
@@ -271,4 +276,36 @@ class SourcesManageFragment :
 			viewModel.saveSourcesOrder(sourcesAdapter?.items ?: return)
 		}
 	}
+
+	private fun showLanguageFilterDialog() {
+		val allLocales = org.koitharu.kotatsu.parsers.model.MangaParserSource.entries
+			.map { it.locale }
+			.filter { it.isNotEmpty() }
+			.distinct()
+			.sortedWith(compareBy {
+				java.util.Locale.forLanguageTag(it).getDisplayName(java.util.Locale.getDefault()).lowercase()
+			})
+		val displayNames = allLocales.map { tag ->
+			java.util.Locale.forLanguageTag(tag)
+				.getDisplayName(java.util.Locale.getDefault())
+				.replaceFirstChar { c -> c.uppercaseChar() }
+		}.toTypedArray()
+		val currentFilter = settings.sourcesLanguageFilter
+		val checked = BooleanArray(allLocales.size) { i -> allLocales[i] in currentFilter }
+		val selection = mutableSetOf<String>().also { it.addAll(currentFilter) }
+		androidx.appcompat.app.AlertDialog.Builder(requireContext())
+			.setTitle(R.string.filter_languages_title)
+			.setMultiChoiceItems(displayNames, checked) { _, which, isChecked ->
+				if (isChecked) selection.add(allLocales[which]) else selection.remove(allLocales[which])
+			}
+			.setNeutralButton(R.string.show_all_languages) { _, _ ->
+				settings.sourcesLanguageFilter = emptySet()
+			}
+			.setPositiveButton(R.string.save) { _, _ ->
+				settings.sourcesLanguageFilter = selection
+			}
+			.setNegativeButton(R.string.cancel, null)
+			.show()
+	}
+
 }
