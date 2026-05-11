@@ -12,6 +12,7 @@ import io.github.landwarderer.futon.customsource.ui.AddCustomSourceSheet
 class ExploreMenuProvider(
 	private val router: AppRouter,
 	private val fragmentManager: FragmentManager,
+	private val onFilterLanguages: () -> Unit,
 ) : MenuProvider {
 
 	override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
@@ -20,6 +21,11 @@ class ExploreMenuProvider(
 
 	override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
 		return when (menuItem.itemId) {
+			R.id.action_filter_language -> {
+				onFilterLanguages()
+				true
+			}
+
 			R.id.action_manage -> {
 				router.openSourcesSettings()
 				true
