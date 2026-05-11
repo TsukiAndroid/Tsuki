@@ -1,15 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu
-	xmlns:android="http://schemas.android.com/apk/res/android">
+        xmlns:android="http://schemas.android.com/apk/res/android">
 
-	<item
-		android:id="@+id/action_manage"
-		android:title="@string/manage_sources"
-		android:titleCondensed="@string/manage" />
+        <item
+                android:id="@+id/action_filter_language"
+                android:title="@string/filter_languages_title" />
 
-	<item
-		android:id="@+id/action_add_custom_source"
-		android:title="@string/add_custom_source"
-		android:titleCondensed="@string/custom_source" />
+        <item
+                android:id="@+id/action_manage"
+                android:title="@string/manage_sources"
+                android:titleCondensed="@string/manage" />
+
+        <item
+                android:id="@+id/action_add_custom_source"
+                android:title="@string/add_custom_source"
+                android:titleCondensed="@string/custom_source" />
 
 </menu>
