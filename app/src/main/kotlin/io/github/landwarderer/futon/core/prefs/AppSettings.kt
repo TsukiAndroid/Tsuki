@@ -212,6 +212,10 @@ class AppSettings @Inject constructor(@ApplicationContext context: Context) {
                 
                 set(value) = prefs.edit { putBoolean(KEY_DISABLE_NSFW, value) }
 
+        var sourcesLanguageFilter: Set<String>
+                get() = prefs.getStringSet(KEY_SOURCES_LANGUAGE_FILTER, emptySet()) ?: emptySet()
+                set(value) = prefs.edit { putStringSet(KEY_SOURCES_LANGUAGE_FILTER, value) }
+
         var appLocales: LocaleListCompat
                 get() {
                         val raw = prefs.getString(KEY_APP_LOCALE, null)
@@ -953,6 +957,7 @@ class AppSettings @Inject constructor(@ApplicationContext context: Context) {
                 const val KEY_SEARCH_SUGGESTION_TYPES = "search_suggest_types"
                 const val KEY_SOURCES_VERSION = "sources_version"
                 const val KEY_SOURCES_ENABLED_ALL = "sources_enabled_all"
+                const val KEY_SOURCES_LANGUAGE_FILTER = "sources_language_filter"
                 const val KEY_QUICK_FILTER = "quick_filter"
                 const val KEY_COLLAPSE_DESCRIPTION = "description_collapse"
                 const val KEY_BACKUP_TG_ENABLED = "backup_periodic_tg_enabled"
