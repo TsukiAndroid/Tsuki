@@ -23,6 +23,7 @@ import io.github.landwarderer.futon.core.prefs.observeAsFlow
 import io.github.landwarderer.futon.core.ui.util.ReversibleHandle
 import io.github.landwarderer.futon.core.util.ext.flattenLatest
 import io.github.landwarderer.futon.mihon.MihonExtensionManager
+import io.github.landwarderer.futon.mihon.model.MihonMangaSource
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.flow.Flow
@@ -67,12 +68,15 @@ class MangaSourcesRepository @Inject constructor(
         suspend fun getEnabledSources(): List<MangaSource> {
                 assimilateNewSources()
                 val order = settings.sourcesSortOrder
+                val langFilter = settings.sourcesLanguageFilter
                 return dao.findAll(!settings.isAllSourcesEnabled, order).toSources(settings.isNsfwContentDisabled, order)
                         .let { enabled ->
+                                val filtered = if (langFilter.isEmpty()) enabled
+                                else enabled.filter { passesLanguageFilter(it.mangaSource, langFilter) }
                                 val external = getExternalSources()
-                                val list = ArrayList<MangaSourceInfo>(enabled.size + external.size)
+                                val list = ArrayList<MangaSourceInfo>(filtered.size + external.size)
                                 external.mapTo(list) { MangaSourceInfo(it, isEnabled = true, isPinned = true) }
-                                list.addAll(enabled)
+                                list.addAll(filtered)
                                 list
                         }
         }
@@ -229,6 +233,10 @@ class MangaSourcesRepository @Inject constructor(
                         external.mapTo(list) { MangaSourceInfo(it, isEnabled = true, isPinned = true) }
                         list.addAll(enabled)
                         list
+                }
+                .combine(observeLanguageFilter()) { sources, langFilter ->
+                        if (langFilter.isEmpty()) sources
+                        else sources.filter { passesLanguageFilter(it.mangaSource, langFilter) }
                 }
 
         fun observeAll(): Flow<List<Pair<MangaSource, Boolean>>> = dao.observeAll().map { entities ->
@@ -465,6 +473,20 @@ class MangaSourcesRepository @Inject constructor(
 
         private fun observeAllEnabled() = settings.observeAsFlow(AppSettings.KEY_SOURCES_ENABLED_ALL) {
                 isAllSourcesEnabled
+        }
+
+        private fun observeLanguageFilter() = settings.observeAsFlow(AppSettings.KEY_SOURCES_LANGUAGE_FILTER) {
+                sourcesLanguageFilter
+        }
+
+        private fun passesLanguageFilter(source: MangaSource, filter: Set<String>): Boolean {
+                if (filter.isEmpty()) return true
+                val localeTag: String? = when (source) {
+                        is MangaParserSource -> source.locale.takeIf { it.isNotEmpty() }
+                        is MihonMangaSource -> source.language.takeIf { it.isNotEmpty() }
+                        else -> null
+                }
+                return localeTag == null || localeTag in filter
         }
 
         private fun String.toMangaSourceOrNull(): MangaSource? {
