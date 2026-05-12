@@ -565,7 +565,7 @@
       setStatus('success', `✓ Parser generated for ${siteName}! Download and import it into Tsuki.`);
     } catch (err) {
       console.error(err);
-      setStatus('error', 'Something went wrong. Make sure the URL is correct and try again.');
+      setStatus('error', err.message || 'Something went wrong.');
     }
 
     btn.disabled = false;
