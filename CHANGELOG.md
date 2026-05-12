@@ -1,3 +1,11 @@
+## Alpha 1.444 (Build [#118](https://github.com/Space4414/Tsuki/actions/runs/25742219717))
+
+_2026-05-12 14:48 UTC_
+
+- Update index.html (28f6d8a)
+- Update index.html (9030165)
+
+
 ## Alpha 1.442 (Build [#117](https://github.com/Space4414/Tsuki/actions/runs/25724640288))
 
 _2026-05-12 09:05 UTC_
