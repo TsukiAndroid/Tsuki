@@ -21,7 +21,7 @@ export default async function handler(req, res) {
   const prompt = `You are a manga parser expert. Generate a Tsuki manga reader parser template JSON for this site: ${url}\n\nThe site domain is: ${siteName}\n\nBased on your knowledge of manga sites and their common CMS families (Madara/WordPress, MangaDex API, ComicK API, MangaThemesia, MangaStream, Guya, MangaSee, MangaFire, Manganelo, ZeroScans, FoolSlide2, Genkan, etc.), generate the most accurate parser template possible.\n\nReturn ONLY a valid JSON object, no explanation, no markdown backticks, just raw JSON.`;
 
   try {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-8b:generateContent?key=${process.env.GEMINI_API_KEY}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
