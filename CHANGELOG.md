@@ -1,3 +1,13 @@
+## Alpha 1.419 (Build [#102](https://github.com/Space4414/Tsuki/actions/runs/25707286963))
+
+_2026-05-12 01:19 UTC_
+
+- ci: upgrade all workflows from JDK 17 to JDK 21 (aceac5b)
+- fix: dialog_add_template_site hint + template fingerprint auto-detect (eb320cd)
+- feat(parser-templates): Phase 2 — TemplateHtmlParser runtime engine + full CUSTOM_TEMPLATE wiring (3b31854)
+- feat: user-importable parser templates (3a97b7a)
+
+
 ## Alpha 1.417 (Build [#101](https://github.com/Space4414/Tsuki/actions/runs/25706303907))
 
 _2026-05-12 00:50 UTC_
