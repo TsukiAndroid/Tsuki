@@ -14,13 +14,13 @@
         android:id="@+id/layout_add_site_url"
         style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:hint="@string/add_site_for_template_hint">
+        android:layout_height="wrap_content">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/input_add_site_url"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:hint="@string/add_site_for_template_hint"
             android:inputType="textUri"
             android:maxLines="1"
             android:singleLine="true" />

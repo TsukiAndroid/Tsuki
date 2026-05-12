@@ -13,10 +13,13 @@ import kotlinx.coroutines.withContext
 import io.github.landwarderer.futon.core.parser.KotatsuParserMatcher
 import io.github.landwarderer.futon.customsource.data.CmsTypeDetector
 import io.github.landwarderer.futon.customsource.data.CustomSourcesRepository
+import io.github.landwarderer.futon.customsource.data.ParserTemplateRepository
 import io.github.landwarderer.futon.customsource.domain.CustomSource
 import io.github.landwarderer.futon.customsource.domain.CustomSourceType
+import io.github.landwarderer.futon.customsource.domain.ParserTemplate
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import org.json.JSONObject
 import java.net.URI
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -198,10 +201,10 @@ class CustomSourceViewModel @Inject constructor(
                 repository.update(
                     existing.copy(
                         type = detectedType,
-                        parserSourceName = if (detectedType == CustomSourceType.KOTATSU_PARSER) {
-                            parserSourceName
-                        } else {
-                            null
+                        parserSourceName = when (detectedType) {
+                            CustomSourceType.KOTATSU_PARSER,
+                            CustomSourceType.CUSTOM_TEMPLATE -> parserSourceName
+                            else -> null
                         },
                     )
                 )
@@ -235,9 +238,12 @@ class CustomSourceViewModel @Inject constructor(
     // ── Private helpers ────────────────────────────────────────────────────────
 
     /**
-     * Runs the two-stage detection pipeline on [normalizedUrl]:
-     *  1. [KotatsuParserMatcher] — built-in parser domain cache
-     *  2. [CmsTypeDetector] — HTML fingerprinting
+     * Runs the three-stage detection pipeline on [normalizedUrl]:
+     *  1. [KotatsuParserMatcher] — built-in parser domain cache (highest priority)
+     *  2. Template fingerprint matching — checks imported [ParserTemplate] fingerprints
+     *     against the site's homepage HTML before generic CMS detection, so user
+     *     templates can override or supplement the built-in parser catalogue.
+     *  3. [CmsTypeDetector] — generic HTML fingerprinting (49 built-in CMS checks)
      *
      * Also performs a lightweight reachability probe; [Triple.third] is false
      * if the site returned an error or timed out entirely.
@@ -251,11 +257,61 @@ class CustomSourceViewModel @Inject constructor(
             return Triple(CustomSourceType.KOTATSU_PARSER, matchedParser.name, true)
         }
 
+        // Step 1.5: check if any imported template's fingerprints match this site.
+        // No-op when the user has not imported any templates (peekAll returns empty).
+        val templateMatch = runCatching {
+            matchTemplateFingerprints(normalizedUrl, ParserTemplateRepository.peekAll())
+        }.getOrNull()
+        if (templateMatch != null) {
+            return Triple(CustomSourceType.CUSTOM_TEMPLATE, templateMatch, true)
+        }
+
         // Step 2: HTML fingerprinting — capture reachability from the result
         val cms = runCatching { CmsTypeDetector.detect(normalizedUrl) }.getOrElse { null }
         val reachable = cms != null
         return Triple(cms ?: CustomSourceType.WEBVIEW, null, reachable)
     }
+
+    /**
+     * Returns the name of the first imported [ParserTemplate] whose optional
+     * `fingerprints` JSON array (list of HTML substrings) all appear in the
+     * site's homepage HTML, or null if no template matches.
+     *
+     * Template fingerprint example inside a template JSON:
+     * ```json
+     * { "fingerprints": ["wp-manga", "my-special-class"] }
+     * ```
+     * All listed strings must appear (case-insensitive) for a match.
+     * Returns null immediately when [templates] is empty (no network request made).
+     */
+    private fun matchTemplateFingerprints(
+        url: String,
+        templates: List<ParserTemplate>,
+    ): String? {
+        if (templates.isEmpty()) return null
+        val html = fetchHomepage(url) ?: return null
+        for (template in templates) {
+            val root = runCatching { JSONObject(template.rawJson) }.getOrNull() ?: continue
+            val fpArr = root.optJSONArray("fingerprints") ?: continue
+            if (fpArr.length() == 0) continue
+            val fingerprints = (0 until fpArr.length()).map { fpArr.getString(it) }
+            if (fingerprints.all { marker -> html.contains(marker, ignoreCase = true) }) {
+                return template.name
+            }
+        }
+        return null
+    }
+
+    private fun fetchHomepage(url: String): String? = runCatching {
+        val req = Request.Builder()
+            .url(url.trimEnd('/'))
+            .header("User-Agent", "Tsuki/1.0 (Android)")
+            .get()
+            .build()
+        httpClient.newCall(req).execute().use { resp ->
+            if (!resp.isSuccessful) null else resp.body?.string()?.take(65_536)
+        }
+    }.getOrNull()
 
     private fun normalizeUrl(raw: String): String? {
         var trimmed = raw.trim().trimEnd('/')

@@ -116,10 +116,13 @@ class AddCustomSourceSheet : BottomSheetDialogFragment() {
                     is CustomSourceViewModel.UiState.SourceAdded -> {
                         // Show detection result toast when auto-detect was used
                         state.detectedType?.let { detected ->
-                            val msg = if (detected == CustomSourceType.KOTATSU_PARSER && state.parserName != null) {
-                                getString(R.string.detected_kotatsu_toast, state.parserName)
-                            } else {
-                                getString(R.string.detected_as_toast, detected.label)
+                            val msg = when {
+                                detected == CustomSourceType.KOTATSU_PARSER && state.parserName != null ->
+                                    getString(R.string.detected_kotatsu_toast, state.parserName)
+                                detected == CustomSourceType.CUSTOM_TEMPLATE && state.parserName != null ->
+                                    getString(R.string.detected_template_toast, state.parserName)
+                                else ->
+                                    getString(R.string.detected_as_toast, detected.label)
                             }
                             Toast.makeText(requireContext(), msg, Toast.LENGTH_LONG).show()
                         }

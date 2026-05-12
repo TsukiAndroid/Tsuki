@@ -1032,6 +1032,7 @@
     <string name="source_disabled_badge">Disabled</string>
     <!-- Detection results -->
     <string name="detected_kotatsu_toast">Matched built-in parser: %s</string>
+    <string name="detected_template_toast">Matched imported template: %s</string>
     <string name="site_unreachable_warning">Site appears unreachable — the source was saved. Check the URL if it doesn\'t work.</string>
     <!-- Duplicate URL error -->
     <string name="duplicate_url_error">Already added as \"%s\". Edit it from the list instead.</string>
