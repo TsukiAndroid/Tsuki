@@ -1,3 +1,12 @@
+## Alpha 1.417 (Build [#101](https://github.com/Space4414/Tsuki/actions/runs/25706303907))
+
+_2026-05-12 00:50 UTC_
+
+- fix: dialog_add_template_site hint + template fingerprint auto-detect (eb320cd)
+- feat(parser-templates): Phase 2 — TemplateHtmlParser runtime engine + full CUSTOM_TEMPLATE wiring (3b31854)
+- feat: user-importable parser templates (3a97b7a)
+
+
 ## Beta 1.4.8 (Build [#2](https://github.com/Space4414/Tsuki/actions/runs/25650421750))
 
 _2026-05-11 04:32 UTC_
