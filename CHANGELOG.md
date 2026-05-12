@@ -1,3 +1,11 @@
+## Alpha 1.425 (Build [#105](https://github.com/Space4414/Tsuki/actions/runs/25718085998))
+
+_2026-05-12 06:42 UTC_
+
+- Update index.html (ec675e9)
+- Add files via upload (28da118)
+
+
 ## Alpha 1.423 (Build [#104](https://github.com/Space4414/Tsuki/actions/runs/25717718216))
 
 _2026-05-12 06:33 UTC_
