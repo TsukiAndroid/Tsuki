@@ -1,3 +1,11 @@
+## Alpha 1.456 (Build [#125](https://github.com/Space4414/Tsuki/actions/runs/25768786243))
+
+_2026-05-12 23:42 UTC_
+
+- Update generate-parser.js (0e71514)
+- Update parser-gen.html (9dfa9f6)
+
+
 ## Alpha 1.454 (Build [#124](https://github.com/Space4414/Tsuki/actions/runs/25749849167))
 
 _2026-05-12 17:06 UTC_
