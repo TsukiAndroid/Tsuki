@@ -48,6 +48,15 @@
         </LinearLayout>
 
         <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_add_site_template"
+            style="@style/Widget.Material3.Button.IconButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:contentDescription="@string/add_site_label"
+            app:icon="@drawable/ic_add"
+            app:iconTint="?attr/colorPrimary" />
+
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_delete_template"
             style="@style/Widget.Material3.Button.IconButton"
             android:layout_width="wrap_content"

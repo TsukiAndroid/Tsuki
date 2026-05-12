@@ -1071,4 +1071,11 @@
     <string name="parser_template_what_body">Parser templates define the scraping rules for entire families of manga websites. One Madara template, for example, works on dozens of WordPress Madara-based sites.\n\nImport a .json template to add support for any compatible site without waiting for an app update.</string>
     <string name="parser_template_example_title">Valid template fields</string>
     <string name="parser_template_example">Required: name, version, type, mangaList, pageList\nOptional: mangaDetail, chapterList, genres</string>
+
+    <!-- Add site using a parser template -->
+    <string name="add_site_label">Add site</string>
+    <string name="add_site_for_template_title">Add site using %s</string>
+    <string name="add_site_for_template_hint">Site URL (e.g. https://example.com)</string>
+    <string name="add_site_success">"%1$s" added using template "%2$s"</string>
+    <string name="add_site_error_invalid_url">Please enter a valid URL (e.g. https://example.com)</string>
 </resources>

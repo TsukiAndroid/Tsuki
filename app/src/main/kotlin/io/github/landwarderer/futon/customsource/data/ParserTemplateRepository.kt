@@ -31,6 +31,7 @@ class ParserTemplateRepository @Inject constructor(
     val templates: StateFlow<List<ParserTemplate>> = _templates.asStateFlow()
 
     init {
+        INSTANCE = this
         val maxExisting = _templates.value.maxOfOrNull { it.id } ?: 0L
         idCounter.getAndUpdate { current -> maxOf(current, maxExisting + 1) }
     }
@@ -90,6 +91,22 @@ class ParserTemplateRepository @Inject constructor(
 
         private val idCounter = AtomicLong(System.currentTimeMillis())
 
+        @Volatile
+        private var INSTANCE: ParserTemplateRepository? = null
+
         fun generateId(): Long = idCounter.getAndIncrement()
+
+        /**
+         * Returns the [ParserTemplate] with the given [name] (case-insensitive),
+         * or null if no template with that name has been imported yet.
+         *
+         * Intended for use by [TemplateHtmlParser], which is constructed outside
+         * of Hilt's dependency-injection graph and therefore cannot receive
+         * [ParserTemplateRepository] as a constructor parameter.
+         */
+        fun peekByName(name: String): ParserTemplate? =
+            INSTANCE?.getAll()?.find { it.name.equals(name, ignoreCase = true) }
+
+        fun peekAll(): List<ParserTemplate> = INSTANCE?.getAll().orEmpty()
     }
 }

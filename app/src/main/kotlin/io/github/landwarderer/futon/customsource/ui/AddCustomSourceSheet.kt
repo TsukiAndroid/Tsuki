@@ -45,7 +45,9 @@ class AddCustomSourceSheet : BottomSheetDialogFragment() {
 
         // "Auto-detect" is first; KOTATSU_PARSER is set automatically and excluded from manual selection
         val autoDetectLabel = getString(R.string.auto_detect_label)
-        val manualTypes = CustomSourceType.entries.filter { it != CustomSourceType.KOTATSU_PARSER }
+        val manualTypes = CustomSourceType.entries.filter {
+            it != CustomSourceType.KOTATSU_PARSER && it != CustomSourceType.CUSTOM_TEMPLATE
+        }
         val typeLabels = listOf(autoDetectLabel) + manualTypes.map { it.label }
         // Use a non-filtering adapter so ALL entries appear regardless of the current field text.
         // MaterialAutoCompleteTextView re-runs the adapter filter when the dropdown opens, using

@@ -14,6 +14,8 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.TextInputLayout
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -25,8 +27,10 @@ import io.github.landwarderer.futon.settings.SettingsActivity
  * Settings screen — "Parsers" subsection inside Manga Sources.
  *
  * Shows all imported [ParserTemplate]s with their name, version, and type.
- * From here the user can delete individual templates or import a new one
- * via [ImportParserSheet].
+ * From here the user can:
+ *  - import a new template via [ImportParserSheet]
+ *  - delete an existing template
+ *  - add a manga site that uses a specific template via the "Add Site" button
  */
 @AndroidEntryPoint
 class ParserTemplatesFragment : Fragment() {
@@ -61,6 +65,26 @@ class ParserTemplatesFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewModel.templates.collectLatest { templates -> render(templates) }
         }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.addSiteState.collectLatest { state ->
+                when (state) {
+                    is ParserTemplateViewModel.AddSiteState.Success -> {
+                        Toast.makeText(
+                            requireContext(),
+                            getString(
+                                R.string.add_site_success,
+                                state.siteName,
+                                state.templateName,
+                            ),
+                            Toast.LENGTH_SHORT,
+                        ).show()
+                        viewModel.resetAddSiteState()
+                    }
+                    else -> { /* Idle — nothing to do */ }
+                }
+            }
+        }
     }
 
     override fun onDestroyView() {
@@ -75,6 +99,7 @@ class ParserTemplatesFragment : Fragment() {
         recyclerView?.adapter = ParserTemplatesAdapter(
             templates = templates,
             onDelete = ::confirmDelete,
+            onAddSite = ::showAddSiteDialog,
         )
     }
 
@@ -94,9 +119,53 @@ class ParserTemplatesFragment : Fragment() {
             .show()
     }
 
+    private fun showAddSiteDialog(template: ParserTemplate) {
+        val dialogView = LayoutInflater.from(requireContext())
+            .inflate(R.layout.dialog_add_template_site, null, false)
+        val urlLayout = dialogView.findViewById<TextInputLayout>(R.id.layout_add_site_url)
+        val urlInput  = dialogView.findViewById<TextInputEditText>(R.id.input_add_site_url)
+
+        val dialog = MaterialAlertDialogBuilder(requireContext())
+            .setTitle(getString(R.string.add_site_for_template_title, template.name))
+            .setView(dialogView)
+            .setNegativeButton(R.string.cancel, null)
+            .setPositiveButton(R.string.add_source_label, null)
+            .create()
+
+        dialog.setOnShowListener {
+            dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                val url = urlInput.text?.toString().orEmpty().trim()
+                if (url.isBlank()) {
+                    urlLayout.error = getString(R.string.add_site_error_invalid_url)
+                    return@setOnClickListener
+                }
+                urlLayout.error = null
+
+                viewLifecycleOwner.lifecycleScope.launch {
+                    viewModel.addSiteState.collectLatest { state ->
+                        when (state) {
+                            is ParserTemplateViewModel.AddSiteState.Error -> {
+                                urlLayout.error = state.message
+                                viewModel.resetAddSiteState()
+                            }
+                            is ParserTemplateViewModel.AddSiteState.Success -> {
+                                dialog.dismiss()
+                            }
+                            else -> { /* Idle or in-flight */ }
+                        }
+                    }
+                }
+                viewModel.addSourceForTemplate(template, url, "")
+            }
+        }
+
+        dialog.show()
+    }
+
     private class ParserTemplatesAdapter(
         private val templates: List<ParserTemplate>,
         private val onDelete: (ParserTemplate) -> Unit,
+        private val onAddSite: (ParserTemplate) -> Unit,
     ) : RecyclerView.Adapter<ParserTemplatesAdapter.VH>() {
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
@@ -106,23 +175,29 @@ class ParserTemplatesFragment : Fragment() {
         }
 
         override fun onBindViewHolder(holder: VH, position: Int) {
-            holder.bind(templates[position], onDelete)
+            holder.bind(templates[position], onDelete, onAddSite)
         }
 
         override fun getItemCount(): Int = templates.size
 
         class VH(view: View) : RecyclerView.ViewHolder(view) {
-            private val nameView:    TextView      = view.findViewById(R.id.text_template_name)
-            private val metaView:    TextView      = view.findViewById(R.id.text_template_meta)
-            private val deleteBtn:   MaterialButton = view.findViewById(R.id.btn_delete_template)
+            private val nameView:   TextView       = view.findViewById(R.id.text_template_name)
+            private val metaView:   TextView       = view.findViewById(R.id.text_template_meta)
+            private val addSiteBtn: MaterialButton = view.findViewById(R.id.btn_add_site_template)
+            private val deleteBtn:  MaterialButton = view.findViewById(R.id.btn_delete_template)
 
-            fun bind(template: ParserTemplate, onDelete: (ParserTemplate) -> Unit) {
+            fun bind(
+                template: ParserTemplate,
+                onDelete: (ParserTemplate) -> Unit,
+                onAddSite: (ParserTemplate) -> Unit,
+            ) {
                 nameView.text = template.name
                 metaView.text = itemView.context.getString(
                     R.string.template_meta,
                     template.version,
                     template.type,
                 )
+                addSiteBtn.setOnClickListener { onAddSite(template) }
                 deleteBtn.setOnClickListener { onDelete(template) }
             }
         }

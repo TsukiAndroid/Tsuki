@@ -162,6 +162,9 @@ package io.github.landwarderer.futon.customsource.data
       private val gattsuParser: GattsuHtmlParser by lazy { GattsuHtmlParser(customSource) }
       private val animeBootstrapParser: AnimeBootstrapHtmlParser by lazy { AnimeBootstrapHtmlParser(customSource) }
 
+      // ── Template-driven parser ────────────────────────────────────────────────
+      private val templateParser: TemplateHtmlParser by lazy { TemplateHtmlParser(customSource) }
+
       // ── MangaRepository implementation ────────────────────────────────────────
 
       override suspend fun getList(
@@ -220,6 +223,7 @@ package io.github.landwarderer.futon.customsource.data
               CustomSourceType.FMREADER              -> runCatching { fmReaderParser.getList(offset, order, filter) }.getOrElse { emptyList() }
               CustomSourceType.GATTSU                -> runCatching { gattsuParser.getList(offset, order, filter) }.getOrElse { emptyList() }
               CustomSourceType.ANIMEBOOTSTRAP        -> runCatching { animeBootstrapParser.getList(offset, order, filter) }.getOrElse { emptyList() }
+              CustomSourceType.CUSTOM_TEMPLATE       -> runCatching { templateParser.getList(offset, order, filter) }.getOrElse { emptyList() }
               CustomSourceType.KOTATSU_PARSER        -> emptyList()
           }
       }
@@ -275,6 +279,7 @@ package io.github.landwarderer.futon.customsource.data
               CustomSourceType.FMREADER              -> runCatching { fmReaderParser.getDetails(manga) }.getOrElse { manga }
               CustomSourceType.GATTSU                -> runCatching { gattsuParser.getDetails(manga) }.getOrElse { manga }
               CustomSourceType.ANIMEBOOTSTRAP        -> runCatching { animeBootstrapParser.getDetails(manga) }.getOrElse { manga }
+              CustomSourceType.CUSTOM_TEMPLATE       -> runCatching { templateParser.getDetails(manga) }.getOrElse { manga }
               else                                   -> manga
           }
       }
@@ -329,6 +334,7 @@ package io.github.landwarderer.futon.customsource.data
               CustomSourceType.FMREADER              -> runCatching { fmReaderParser.getPages(chapter) }.getOrElse { emptyList() }
               CustomSourceType.GATTSU                -> runCatching { gattsuParser.getPages(chapter) }.getOrElse { emptyList() }
               CustomSourceType.ANIMEBOOTSTRAP        -> runCatching { animeBootstrapParser.getPages(chapter) }.getOrElse { emptyList() }
+              CustomSourceType.CUSTOM_TEMPLATE       -> runCatching { templateParser.getPages(chapter) }.getOrElse { emptyList() }
               else                                   -> emptyList()
           }
       }
@@ -437,6 +443,9 @@ package io.github.landwarderer.futon.customsource.data
           )
           CustomSourceType.ANIMEBOOTSTRAP -> MangaListFilterOptions(
               availableTags = runCatching { animeBootstrapParser.getGenres() }.getOrElse { emptySet() },
+          )
+          CustomSourceType.CUSTOM_TEMPLATE -> MangaListFilterOptions(
+              availableTags = runCatching { templateParser.getGenres() }.getOrElse { emptySet() },
           )
           else -> MangaListFilterOptions()
       }
