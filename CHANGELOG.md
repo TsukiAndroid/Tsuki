@@ -1,3 +1,11 @@
+## Alpha 1.421 (Build [#103](https://github.com/Space4414/Tsuki/actions/runs/25714204860))
+
+_2026-05-12 04:54 UTC_
+
+- Create index.html (2293b7e)
+- ci: upgrade all workflows from JDK 17 to JDK 21 (aceac5b)
+
+
 ## Alpha 1.419 (Build [#102](https://github.com/Space4414/Tsuki/actions/runs/25707286963))
 
 _2026-05-12 01:19 UTC_
