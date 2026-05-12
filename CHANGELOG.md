@@ -1,3 +1,11 @@
+## Alpha 1.429 (Build [#107](https://github.com/Space4414/Tsuki/actions/runs/25721078154))
+
+_2026-05-12 07:51 UTC_
+
+- Delete docs/parser-gen.html (5385496)
+- Update index.html (e9e351e)
+
+
 ## Alpha 1.427 (Build [#106](https://github.com/Space4414/Tsuki/actions/runs/25719882359))
 
 _2026-05-12 07:24 UTC_
