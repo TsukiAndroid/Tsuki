@@ -331,4 +331,12 @@ enum class CustomSourceType(val label: String) {
      * filters, chapter lists, page reader — everything the Kotatsu parser supports.
      */
     KOTATSU_PARSER("Built-in Parser (Auto-matched)"),
+
+    /**
+     * A source driven by a user-imported parser template (.json file).
+     * [CustomSource.parserSourceName] stores the template name so the
+     * repository factory can look up the saved [ParserTemplate] and apply
+     * its scraping rules at runtime.
+     */
+    CUSTOM_TEMPLATE("Custom Template"),
 }

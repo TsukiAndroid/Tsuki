@@ -16,4 +16,9 @@
                 android:title="@string/add_custom_source"
                 android:titleCondensed="@string/custom_source" />
 
+        <item
+                android:id="@+id/action_import_parser"
+                android:title="@string/import_parser_template"
+                android:titleCondensed="@string/import_parser_short" />
+
 </menu>

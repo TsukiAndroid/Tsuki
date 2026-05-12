@@ -27,6 +27,13 @@
         android:summary="@string/manage_custom_sources_summary"
         android:title="@string/manage_custom_sources" />
 
+    <PreferenceScreen
+        android:fragment="io.github.landwarderer.futon.customsource.ui.ParserTemplatesFragment"
+        android:key="parser_templates"
+        android:persistent="false"
+        android:summary="@string/parser_templates_summary"
+        android:title="@string/parser_templates" />
+
     <SwitchPreferenceCompat
         android:defaultValue="false"
         android:key="sources_enabled_all"

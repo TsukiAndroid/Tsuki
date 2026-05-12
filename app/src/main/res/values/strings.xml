@@ -1044,4 +1044,31 @@
     <string name="every_6_hours">Every 6 hours</string>
     <string name="every_12_hours">Every 12 hours</string>
     <string name="every_24_hours">Every 24 hours</string>
+
+    <!-- Parser Templates feature -->
+    <string name="import_parser_template">Import Parser</string>
+    <string name="import_parser_short">Import parser</string>
+    <string name="parser_templates">Parsers</string>
+    <string name="parser_templates_summary">Import and manage universal parser templates</string>
+    <string name="no_parser_templates_title">No parser templates yet</string>
+    <string name="no_parser_templates_summary">Import a .json template from Tsuki\'s GitHub repo, Discord server, or the community to add support for entire families of manga websites.</string>
+    <string name="import_parser_title">Import Parser Template</string>
+    <string name="pick_json_file">Pick .json file</string>
+    <string name="no_file_selected">No file selected</string>
+    <string name="no_file_selected_error">Please pick a .json file first.</string>
+    <string name="import_action">Import</string>
+    <string name="import_parser_guide_title">About parser templates</string>
+    <string name="import_parser_guide_format">Accepted format: .json</string>
+    <string name="import_parser_guide_sources">Where to find templates: Tsuki\'s GitHub repo (/parsers folder), Tsuki\'s Discord server, community shares on Reddit</string>
+    <string name="import_parser_guide_what">Templates define universal parser rules for entire families of websites — for example, one Madara template works on any WordPress Madara-based manga site.</string>
+    <string name="template_imported">Parser template \"%s\" imported successfully</string>
+    <string name="template_import_failed">Failed to read the file — please try again</string>
+    <string name="parser_template_removed">Template \"%s\" removed</string>
+    <string name="remove_parser_template_title">Remove parser template?</string>
+    <string name="remove_parser_template_message">\"%1$s\" will be removed. You can re-import it later.</string>
+    <string name="template_meta">v%1$s · %2$s</string>
+    <string name="parser_template_what_title">What are parser templates?</string>
+    <string name="parser_template_what_body">Parser templates define the scraping rules for entire families of manga websites. One Madara template, for example, works on dozens of WordPress Madara-based sites.\n\nImport a .json template to add support for any compatible site without waiting for an app update.</string>
+    <string name="parser_template_example_title">Valid template fields</string>
+    <string name="parser_template_example">Required: name, version, type, mangaList, pageList\nOptional: mangaDetail, chapterList, genres</string>
 </resources>
