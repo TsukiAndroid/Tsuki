@@ -80,8 +80,16 @@ package io.github.landwarderer.futon.customsource.data
               return CustomSourceType.MANGATHEMESIA
           }
 
-          // 6. WordPress Madara
-          if (html.contains("wp-manga") || html.contains("madara") || html.contains("WpMangaReader")) {
+          // 6. WordPress Madara — canonical markers plus known derivative plugins/themes.
+          // "mangomic-core" is a renamed Madara plugin used by sites such as manhwaread.com
+          // that do not carry the word "madara" or "wp-manga" anywhere in their HTML.
+          if (html.contains("wp-manga") ||
+              html.contains("madara") ||
+              html.contains("WpMangaReader") ||
+              html.contains("mangomic-core") ||
+              html.contains("summary_image") ||
+              html.contains("tab-summary") ||
+              html.contains("wp-manga-chapter")) {
               return CustomSourceType.MADARA
           }
 

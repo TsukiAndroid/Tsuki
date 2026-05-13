@@ -168,6 +168,12 @@ class KotatsuParserMatcher @Inject constructor(
     fun findForUrl(url: String): MangaParserSource? {
         val host = hostFromUrl(url) ?: return null
 
+        // Bypass the domain cache for sites that have a dedicated custom parser
+        // (COMIXTO etc.) whose selectors are more current than any upstream library
+        // match.  Returning null here lets the pipeline fall through to
+        // CmsTypeDetector which will pick the correct CustomSourceType.
+        if (host in CUSTOM_PARSER_DOMAINS) return null
+
         // Step 1: free, instant exact-domain hit
         domainCache[host]?.let { return it }
 
@@ -251,17 +257,34 @@ class KotatsuParserMatcher @Inject constructor(
     /**
      * WordPress Madara theme:
      * `GET /wp-json/` → JSON whose body contains "madara" AND "wp/v2".
-     * Fallback: homepage HTML contains Madara theme/plugin paths.
+     * Fallback: homepage HTML contains Madara theme/plugin paths or UI class markers.
+     *
+     * Extended to detect renamed/derivative Madara installations (e.g. sites using
+     * mangomic-core or manga-core plugins instead of the canonical madara-core) that
+     * do not advertise "madara" anywhere in the WP REST API namespace list.
      */
     private fun probeMadara(base: String): Boolean = runCatching {
-        val body = httpGet("$base/wp-json/") ?: return@runCatching false
-        if (body.contains("madara", ignoreCase = true) &&
+        // Primary: WP REST API namespace includes "madara" explicitly
+        val body = httpGet("$base/wp-json/")
+        if (body != null &&
+            body.contains("madara", ignoreCase = true) &&
             body.contains("wp/v2", ignoreCase = true)
         ) return@runCatching true
+
+        // Secondary: homepage HTML markers — survive theme/plugin renaming
         val html = httpGetHtml(base) ?: return@runCatching false
         html.contains("wp-content/themes/madara", ignoreCase = true) ||
             html.contains("/wp-content/plugins/madara-", ignoreCase = true) ||
-            html.contains("madara-core", ignoreCase = true)
+            html.contains("madara-core", ignoreCase = true) ||
+            // Known Madara-derivative plugins (renamed but structurally identical)
+            html.contains("mangomic-core", ignoreCase = true) ||
+            html.contains("manga-core\"", ignoreCase = true) ||
+            // Madara theme HTML class fingerprints (present even on renamed themes)
+            html.contains("class=\"summary_image\"", ignoreCase = true) ||
+            html.contains("class=\"tab-summary\"", ignoreCase = true) ||
+            html.contains("class=\"wp-manga-chapter\"", ignoreCase = true) ||
+            html.contains("\"wp-manga-type\"", ignoreCase = true) ||
+            html.contains("wp-manga", ignoreCase = true)
     }.getOrElse { false }
 
     /**
@@ -541,5 +564,16 @@ class KotatsuParserMatcher @Inject constructor(
 
     companion object {
         private const val USER_AGENT = "Mozilla/5.0 (Android 14; Mobile) Tsuki/1.0"
+
+        /**
+         * Domains that have a dedicated custom parser implementation (e.g. COMIXTO)
+         * that is more up-to-date than the upstream Kotatsu library entry for that
+         * domain.  These domains bypass the instant domain-cache hit in [findForUrl]
+         * so detection falls through to [CmsTypeDetector] and selects the correct
+         * [CustomSourceType] instead of blindly using the stale built-in parser.
+         */
+        private val CUSTOM_PARSER_DOMAINS: Set<String> = setOf(
+            "comix.to",
+        )
     }
 }
