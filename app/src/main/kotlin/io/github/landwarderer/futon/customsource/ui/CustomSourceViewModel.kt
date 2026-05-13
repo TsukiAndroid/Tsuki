@@ -240,9 +240,10 @@ class CustomSourceViewModel @Inject constructor(
     /**
      * Runs the three-stage detection pipeline on [normalizedUrl]:
      *  1. [KotatsuParserMatcher] — built-in parser domain cache (highest priority)
-     *  2. Template fingerprint matching — checks imported [ParserTemplate] fingerprints
-     *     against the site's homepage HTML before generic CMS detection, so user
-     *     templates can override or supplement the built-in parser catalogue.
+     *  2. Template matching — checks imported [ParserTemplate]s using two strategies:
+     *       a. `fingerprints` — HTML substrings matched against the homepage (one fetch shared)
+     *       b. `endpointProbes` — API paths probed individually (fallback for API-only sites)
+     *     Templates are checked before generic CMS detection so user rules take priority.
      *  3. [CmsTypeDetector] — generic HTML fingerprinting (49 built-in CMS checks)
      *
      * Also performs a lightweight reachability probe; [Triple.third] is false
@@ -275,34 +276,87 @@ class CustomSourceViewModel @Inject constructor(
     /**
      * Returns the name of the first imported [ParserTemplate] whose optional
      * `fingerprints` JSON array (list of HTML substrings) all appear in the
-     * site's homepage HTML, or null if no template matches.
+     * site's homepage HTML or via endpoint probes, or null if no template matches.
      *
-     * Template fingerprint example inside a template JSON:
+     * Two detection strategies are supported per template (checked in order):
+     *
+     * **1. HTML fingerprints** — substrings that must all appear in the homepage HTML.
+     * The homepage is fetched at most once, shared across all fingerprint-bearing templates.
      * ```json
      * { "fingerprints": ["wp-manga", "my-special-class"] }
      * ```
-     * All listed strings must appear (case-insensitive) for a match.
-     * Returns null immediately when [templates] is empty (no network request made).
+     *
+     * **2. Endpoint probes** — API paths probed with a real HTTP request; used as a
+     * fallback when a template has no `fingerprints` (or as the primary strategy for
+     * API-driven sites where the homepage carries no CMS markers). Each probe must
+     * return a response containing the expected substring.
+     * ```json
+     * { "endpointProbes": [
+     *     { "path": "/api/comics",    "contains": "\"slug\""     },
+     *     { "path": "/api/v1/series", "contains": "\"chapters\"" }
+     * ] }
+     * ```
+     * `path` may be a full URL or a root-relative path (prefixed with [url]).
+     * All probes must pass for the template to match.
+     *
+     * Returns null immediately when [templates] is empty (zero network requests made).
      */
     private fun matchTemplateFingerprints(
         url: String,
         templates: List<ParserTemplate>,
     ): String? {
         if (templates.isEmpty()) return null
-        val html = fetchHomepage(url) ?: return null
+
+        // Lazy homepage fetch — shared across all fingerprint checks so the site
+        // is probed at most once even when multiple templates declare fingerprints.
+        var homepageFetched = false
+        var homepageHtml: String? = null
+        fun homepage(): String? {
+            if (!homepageFetched) {
+                homepageHtml = fetchEndpoint(url.trimEnd('/'))
+                homepageFetched = true
+            }
+            return homepageHtml
+        }
+
         for (template in templates) {
             val root = runCatching { JSONObject(template.rawJson) }.getOrNull() ?: continue
-            val fpArr = root.optJSONArray("fingerprints") ?: continue
-            if (fpArr.length() == 0) continue
-            val fingerprints = (0 until fpArr.length()).map { fpArr.getString(it) }
-            if (fingerprints.all { marker -> html.contains(marker, ignoreCase = true) }) {
-                return template.name
+
+            // Strategy 1: HTML fingerprints (homepage markers, no extra requests)
+            val fpArr = root.optJSONArray("fingerprints")
+            if (fpArr != null && fpArr.length() > 0) {
+                val html = homepage() ?: continue   // site unreachable; skip template
+                val fingerprints = (0 until fpArr.length()).map { fpArr.getString(it) }
+                if (fingerprints.all { marker -> html.contains(marker, ignoreCase = true) }) {
+                    return template.name
+                }
+                // fingerprints present but didn't match — do NOT fall through to probes
+                continue
             }
+
+            // Strategy 2: Endpoint probes (one HTTP request per probe entry)
+            val probeArr = root.optJSONArray("endpointProbes") ?: continue
+            if (probeArr.length() == 0) continue
+            val allProbesPass = (0 until probeArr.length()).all { i ->
+                val probe = probeArr.optJSONObject(i) ?: return@all false
+                val path = probe.optString("path").takeIf { it.isNotEmpty() } ?: return@all false
+                val expected = probe.optString("contains").takeIf { it.isNotEmpty() } ?: return@all false
+                val probeUrl = if (path.startsWith("http")) path
+                               else "${url.trimEnd('/')}$path"
+                val body = fetchEndpoint(probeUrl) ?: return@all false
+                body.contains(expected, ignoreCase = true)
+            }
+            if (allProbesPass) return template.name
         }
         return null
     }
 
-    private fun fetchHomepage(url: String): String? = runCatching {
+    /**
+     * Fetches [url] and returns the response body (up to 64 KB), or null on
+     * any network or HTTP error. Used for both homepage fingerprinting and
+     * endpoint probe checks.
+     */
+    private fun fetchEndpoint(url: String): String? = runCatching {
         val req = Request.Builder()
             .url(url.trimEnd('/'))
             .header("User-Agent", "Tsuki/1.0 (Android)")
