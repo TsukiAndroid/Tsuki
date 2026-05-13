@@ -27,15 +27,15 @@ You MUST return a JSON object with these REQUIRED fields:
 - "version": always "1.0" (REQUIRED)
 - "author": "Tsuki Parser Generator" (REQUIRED)
 - "domain": "${parsedUrl.hostname}" (REQUIRED)
-- "type" (NOT "sourceType", the key must be exactly "type"): pick EXACTLY one from this list based on the site's CMS:
+- "type" (NOT "sourceType", the key must be exactly "type"): Analyze the site's CMS and pick the best match from this list if it fits:
   MANGADEX_COMPATIBLE, MADARA, MANGATHEMESIA, MANGASTREAM, GENKAN, FOOLSLIDE2,
   MANGANELO, ZEROSCANS_API, LHTRANSLATION, MANGASEE, GUYA, MANGAFIRE, MANGAPARK,
   COMIXTO, COMICK_API, BATO, NINEMANGA, MANGAHOST, MANGAREADER, MANGAFOX,
   TCBSCANS, MANGANATO, READERFRONT, KISSMANGA, CUBARI, MANGAPILL, MANGAHUB,
   MANGAHERE, MANGALIB, MANGAGO, MANGAFREAK, MANGAOWL, NETTRUYEN, TRUYENQQ,
   MANGAKATANA, ZEISTMANGA, KEYOAPP, HEANCMS, WPCOMICS, MMRCMS, MADTHEME,
-  MANGABOX, LILIANA, IKEN, SCAN, PIZZAREADER, FMREADER, GATTSU, ANIMEBOOTSTRAP,
-  WEBVIEW, KOTATSU_PARSER, CUSTOM_TEMPLATE
+  MANGABOX, LILIANA, IKEN, SCAN, PIZZAREADER, FMREADER, GATTSU, ANIMEBOOTSTRAP.
+  If the site does not match any of these, use CUSTOM_TEMPLATE instead.
 - "mangaList": { "endpoint": "/path", "method": "GET or POST", "pagination": "page or ajax or offset", "pageParam": "page" }
 - "mangaDetail": { "titleSelector": "css selector", "coverSelector": "css selector", "descriptionSelector": "css selector", "authorSelector": "css selector", "statusSelector": "css selector" }
 - "chapterList": { "endpoint": "/path or ajax endpoint", "method": "GET or POST", "action": "ajax action or null", "dateSelector": "css selector", "titleSelector": "css selector", "urlSelector": "css selector" }
