@@ -1083,4 +1083,13 @@
     <string name="export_template_cd">Export</string>
     <string name="export_template_subject">Parser template: %s</string>
     <string name="export_template_failed">Export failed</string>
+    <!-- Change Parser feature -->
+    <string name="change_parser">Change Parser</string>
+    <string name="change_parser_subtitle">Tap a parser to switch this source to it. Use the toggle to enable or disable a parser globally.</string>
+    <string name="section_builtin_parsers">Built-in Parsers</string>
+    <string name="section_imported_parsers">Imported Parsers</string>
+    <string name="no_imported_parsers">No imported parsers yet — go to Settings → Parsers to import a .json template.</string>
+    <string name="parser_changed">Parser changed to %s</string>
+    <string name="parser_enabled">%s enabled</string>
+    <string name="parser_disabled">%s disabled</string>
 </resources>

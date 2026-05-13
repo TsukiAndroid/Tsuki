@@ -17,12 +17,28 @@ import com.google.android.material.textfield.TextInputLayout
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import io.github.landwarderer.futon.R
+import io.github.landwarderer.futon.customsource.data.ParserTemplateRepository
+import io.github.landwarderer.futon.customsource.domain.CustomSource
 import io.github.landwarderer.futon.customsource.domain.CustomSourceType
+import io.github.landwarderer.futon.customsource.domain.ParserTemplate
 
 @AndroidEntryPoint
 class EditCustomSourceSheet : BottomSheetDialogFragment() {
 
     private val viewModel: CustomSourceViewModel by viewModels()
+
+    /**
+     * Represents one row in the parser picker dropdown (same model as AddCustomSourceSheet).
+     */
+    private sealed class ParserEntry(val displayLabel: String) {
+        object AutoDetect : ParserEntry("Auto-detect (Recommended)")
+        class SectionHeader(label: String) : ParserEntry(label)
+        class BuiltIn(val type: CustomSourceType) : ParserEntry(type.label)
+        class Imported(val template: ParserTemplate) : ParserEntry(template.name)
+    }
+
+    /** Tracks which entry the user has selected; pre-filled from the existing source. */
+    private var selectedEntry: ParserEntry = ParserEntry.AutoDetect
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -50,62 +66,65 @@ class EditCustomSourceSheet : BottomSheetDialogFragment() {
         urlInput.setText(source.baseUrl)
         descInput.setText(source.description.orEmpty())
 
-        // Build type dropdown — KOTATSU_PARSER can only be set via Re-detect; exclude from
-        // manual selection so users cannot accidentally wipe the parserSourceName.
-        val autoLabel = getString(R.string.auto_detect_label)
-        val manualTypes = CustomSourceType.entries.filter { it != CustomSourceType.KOTATSU_PARSER }
-        val typeLabels = listOf(autoLabel) + manualTypes.map { it.label }
-        // Non-filtering adapter — see AddCustomSourceSheet for full explanation.
-        val adapter = object : ArrayAdapter<String>(requireContext(), R.layout.item_dropdown_simple, typeLabels) {
+        // Build dropdown entries including both built-in parsers and imported templates
+        val templates = ParserTemplateRepository.peekAll()
+        val entries = buildEntries(templates)
+
+        val adapter = object : ArrayAdapter<String>(
+            requireContext(),
+            R.layout.item_dropdown_simple,
+            entries.map { it.displayLabel },
+        ) {
             private val noOpFilter = object : Filter() {
                 override fun performFiltering(constraint: CharSequence?) = FilterResults().apply {
-                    values = typeLabels
-                    count = typeLabels.size
+                    values = entries.map { it.displayLabel }
+                    count = entries.size
                 }
                 override fun publishResults(constraint: CharSequence?, results: FilterResults?) {
                     notifyDataSetChanged()
                 }
             }
             override fun getFilter(): Filter = noOpFilter
+            override fun isEnabled(position: Int) = entries[position] !is ParserEntry.SectionHeader
         }
         typeDropdown.setAdapter(adapter)
 
-        // Pre-select the source's current type; fall back to Auto-detect for KOTATSU_PARSER
-        // (it can only be re-detected, not manually chosen)
-        val initialLabel = if (source.type == CustomSourceType.KOTATSU_PARSER) {
-            autoLabel
-        } else {
-            source.type.label
-        }
-        typeDropdown.setText(initialLabel, false)
-        urlLayout.hint = if (source.type == CustomSourceType.KOTATSU_PARSER) {
-            getString(R.string.url_hint_auto_detect)
-        } else {
-            hintForType(source.type)
-        }
+        // Pre-select the source's current type.
+        // KOTATSU_PARSER → auto-detect label (it can only be set via Re-detect).
+        // CUSTOM_TEMPLATE → show the template name if we can find it; otherwise the generic label.
+        selectedEntry = preSelectEntry(source, entries)
+        typeDropdown.setText(selectedEntry.displayLabel, false)
+        urlLayout.hint = hintForEntry(selectedEntry)
 
         typeDropdown.setOnItemClickListener { _, _, position, _ ->
-            if (position == 0) {
-                urlLayout.hint = getString(R.string.url_hint_auto_detect)
-            } else {
-                urlLayout.hint = hintForType(manualTypes[position - 1])
-            }
+            val entry = entries[position]
+            if (entry is ParserEntry.SectionHeader) return@setOnItemClickListener
+            selectedEntry = entry
+            urlLayout.hint = hintForEntry(entry)
         }
 
         // Re-detect: runs the full Kotatsu + CMS pipeline and updates the dropdown.
-        // The result is also persisted immediately so "Save" doesn't lose parserSourceName.
         btnRedetect.setOnClickListener {
             val url = urlInput.text?.toString().orEmpty()
             urlLayout.error = null
             viewModel.redetectType(sourceId, url) { detected ->
-                val label = if (detected == CustomSourceType.KOTATSU_PARSER) autoLabel else detected.label
-                typeDropdown.setText(label, false)
-                urlLayout.hint = if (detected == CustomSourceType.KOTATSU_PARSER) {
-                    getString(R.string.url_hint_auto_detect)
-                } else {
-                    hintForType(detected)
+                val entry = when (detected) {
+                    CustomSourceType.KOTATSU_PARSER -> ParserEntry.AutoDetect
+                    CustomSourceType.CUSTOM_TEMPLATE -> {
+                        val updatedSource = viewModel.findById(sourceId)
+                        val templateName = updatedSource?.parserSourceName
+                        templates.find { it.name == templateName }
+                            ?.let { ParserEntry.Imported(it) }
+                            ?: ParserEntry.AutoDetect
+                    }
+                    else -> entries.filterIsInstance<ParserEntry.BuiltIn>()
+                        .find { it.type == detected }
+                        ?: ParserEntry.AutoDetect
                 }
-                // Show an informative toast — for Kotatsu matches include the parser name
+                selectedEntry = entry
+                typeDropdown.setText(entry.displayLabel, false)
+                urlLayout.hint = hintForEntry(entry)
+
                 val updatedSource = viewModel.findById(sourceId)
                 val msg = if (detected == CustomSourceType.KOTATSU_PARSER &&
                     updatedSource?.parserSourceName != null
@@ -119,22 +138,24 @@ class EditCustomSourceSheet : BottomSheetDialogFragment() {
         }
 
         btnSave.setOnClickListener {
-            val name      = nameInput.text?.toString().orEmpty()
-            val url       = urlInput.text?.toString().orEmpty()
-            val desc      = descInput.text?.toString().orEmpty()
-            val typeLabel = typeDropdown.text?.toString().orEmpty()
+            val name = nameInput.text?.toString().orEmpty()
+            val url  = urlInput.text?.toString().orEmpty()
+            val desc = descInput.text?.toString().orEmpty()
             urlLayout.error = null
 
-            val type = when {
-                typeLabel == autoLabel -> {
-                    // "Auto-detect" in the dropdown means the user hasn't manually overridden
-                    // the type. Use whatever is currently stored (which may already be
-                    // KOTATSU_PARSER from a Re-detect run, or the original type).
-                    viewModel.findById(sourceId)?.type ?: source.type
+            when (val e = selectedEntry) {
+                is ParserEntry.AutoDetect -> {
+                    // Preserve whatever is currently stored (may be KOTATSU_PARSER from re-detect)
+                    val storedType = viewModel.findById(sourceId)?.type ?: source.type
+                    viewModel.updateSource(sourceId, name, url, storedType, desc)
                 }
-                else -> manualTypes.find { it.label == typeLabel } ?: source.type
+                is ParserEntry.BuiltIn -> viewModel.updateSource(sourceId, name, url, e.type, desc)
+                is ParserEntry.Imported -> viewModel.updateSource(
+                    sourceId, name, url, CustomSourceType.CUSTOM_TEMPLATE, desc,
+                    parserSourceName = e.template.name,
+                )
+                is ParserEntry.SectionHeader -> { /* no-op */ }
             }
-            viewModel.updateSource(sourceId, name, url, type, desc)
         }
 
         btnCancel.setOnClickListener { dismiss() }
@@ -165,6 +186,50 @@ class EditCustomSourceSheet : BottomSheetDialogFragment() {
                 }
             }
         }
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private fun buildEntries(templates: List<ParserTemplate>): List<ParserEntry> {
+        val list = mutableListOf<ParserEntry>()
+        list.add(ParserEntry.AutoDetect)
+        list.add(ParserEntry.SectionHeader("── Built-in Parsers ──"))
+        CustomSourceType.entries
+            .filter { it != CustomSourceType.KOTATSU_PARSER && it != CustomSourceType.CUSTOM_TEMPLATE }
+            .forEach { list.add(ParserEntry.BuiltIn(it)) }
+        if (templates.isNotEmpty()) {
+            list.add(ParserEntry.SectionHeader("── Imported Parsers ──"))
+            templates.forEach { list.add(ParserEntry.Imported(it)) }
+        }
+        return list
+    }
+
+    /**
+     * Determines the initial selection for the dropdown based on the existing source.
+     * - KOTATSU_PARSER → Auto-detect (cannot be manually selected)
+     * - CUSTOM_TEMPLATE → look up the template by [CustomSource.parserSourceName]
+     * - Any other type → the matching BuiltIn entry
+     */
+    private fun preSelectEntry(source: CustomSource, entries: List<ParserEntry>): ParserEntry {
+        return when (source.type) {
+            CustomSourceType.KOTATSU_PARSER -> ParserEntry.AutoDetect
+            CustomSourceType.CUSTOM_TEMPLATE -> {
+                val templateName = source.parserSourceName
+                entries.filterIsInstance<ParserEntry.Imported>()
+                    .find { it.template.name == templateName }
+                    ?: ParserEntry.AutoDetect
+            }
+            else -> entries.filterIsInstance<ParserEntry.BuiltIn>()
+                .find { it.type == source.type }
+                ?: ParserEntry.AutoDetect
+        }
+    }
+
+    private fun hintForEntry(entry: ParserEntry): String = when (entry) {
+        is ParserEntry.AutoDetect -> getString(R.string.url_hint_auto_detect)
+        is ParserEntry.Imported   -> "Site URL for ${entry.template.name} (e.g. https://example.com)"
+        is ParserEntry.BuiltIn    -> hintForType(entry.type)
+        else                      -> getString(R.string.url_hint_auto_detect)
     }
 
     private fun hintForType(type: CustomSourceType): String = when (type) {

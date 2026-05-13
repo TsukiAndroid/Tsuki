@@ -22,6 +22,8 @@ import io.github.landwarderer.futon.core.util.ext.isHttpUrl
 import io.github.landwarderer.futon.core.util.ext.observe
 import io.github.landwarderer.futon.core.util.ext.observeEvent
 import io.github.landwarderer.futon.core.util.ext.withArgs
+import io.github.landwarderer.futon.customsource.domain.CustomMangaSource
+import io.github.landwarderer.futon.customsource.ui.ChangeParserSheet
 import io.github.landwarderer.futon.databinding.FragmentListBinding
 import io.github.landwarderer.futon.filter.ui.FilterCoordinator
 import io.github.landwarderer.futon.list.ui.MangaListFragment
@@ -125,6 +127,15 @@ class RemoteListFragment : MangaListFragment(), FilterCoordinator.Owner, View.On
                 true
             }
 
+            R.id.action_change_parser -> {
+                val customId = CustomMangaSource.extractId(viewModel.source.name)
+                if (customId != null) {
+                    ChangeParserSheet.newInstance(customId)
+                        .show(childFragmentManager, ChangeParserSheet.TAG)
+                }
+                true
+            }
+
             R.id.action_random -> {
                 viewModel.openRandom()
                 true
@@ -147,6 +158,9 @@ class RemoteListFragment : MangaListFragment(), FilterCoordinator.Owner, View.On
             super.onPrepareMenu(menu)
             menu.findItem(R.id.action_random)?.isEnabled = !viewModel.isRandomLoading.value
             menu.findItem(R.id.action_filter_reset)?.isVisible = filterCoordinator.isFilterApplied
+            // Show "Change Parser" only for user-added custom sources
+            menu.findItem(R.id.action_change_parser)?.isVisible =
+                CustomMangaSource.extractId(viewModel.source.name) != null
         }
     }
 

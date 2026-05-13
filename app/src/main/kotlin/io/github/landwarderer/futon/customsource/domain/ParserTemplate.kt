@@ -24,4 +24,10 @@ data class ParserTemplate(
     /** The complete raw JSON string as the user imported it. */
     val rawJson: String,
     val importedAt: Long = System.currentTimeMillis(),
+    /**
+     * Whether this template is active. Disabled templates are hidden from
+     * the parser picker and skipped during auto-detection fingerprinting,
+     * but remain importable so the user can re-enable them later.
+     */
+    val isEnabled: Boolean = true,
 ) : Parcelable

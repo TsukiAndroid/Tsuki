@@ -12,19 +12,36 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.button.MaterialButton
-import com.google.android.material.progressindicator.CircularProgressIndicator
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import io.github.landwarderer.futon.R
+import io.github.landwarderer.futon.customsource.data.ParserTemplateRepository
 import io.github.landwarderer.futon.customsource.domain.CustomSourceType
+import io.github.landwarderer.futon.customsource.domain.ParserTemplate
 
 @AndroidEntryPoint
 class AddCustomSourceSheet : BottomSheetDialogFragment() {
 
     private val viewModel: CustomSourceViewModel by viewModels()
+
+    /**
+     * Represents one row in the parser picker dropdown.
+     * Section headers are not clickable; the rest carry enough data to
+     * reconstruct the [CustomSourceType] and [CustomSource.parserSourceName]
+     * needed when the user taps "Add".
+     */
+    private sealed class ParserEntry(val displayLabel: String) {
+        object AutoDetect : ParserEntry("Auto-detect (Recommended)")
+        class SectionHeader(label: String) : ParserEntry(label)
+        class BuiltIn(val type: CustomSourceType) : ParserEntry(type.label)
+        class Imported(val template: ParserTemplate) : ParserEntry(template.name)
+    }
+
+    /** Tracks which entry is currently selected in the dropdown. */
+    private var selectedEntry: ParserEntry = ParserEntry.AutoDetect
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -43,55 +60,57 @@ class AddCustomSourceSheet : BottomSheetDialogFragment() {
         val btnAdd       = view.findViewById<MaterialButton>(R.id.btn_add_source)
         val btnCancel    = view.findViewById<MaterialButton>(R.id.btn_cancel)
 
-        // "Auto-detect" is first; KOTATSU_PARSER is set automatically and excluded from manual selection
-        val autoDetectLabel = getString(R.string.auto_detect_label)
-        val manualTypes = CustomSourceType.entries.filter {
-            it != CustomSourceType.KOTATSU_PARSER && it != CustomSourceType.CUSTOM_TEMPLATE
-        }
-        val typeLabels = listOf(autoDetectLabel) + manualTypes.map { it.label }
-        // Use a non-filtering adapter so ALL entries appear regardless of the current field text.
-        // MaterialAutoCompleteTextView re-runs the adapter filter when the dropdown opens, using
-        // the current field text as the constraint. The default "Auto-detect" text would filter
-        // out every parser label (none start with "Auto-detect"), hiding the full list.
-        val adapter = object : ArrayAdapter<String>(requireContext(), R.layout.item_dropdown_simple, typeLabels) {
+        // Build the entries list including both built-in parsers and imported templates.
+        // Templates are fetched at open-time from the singleton repository.
+        val templates = ParserTemplateRepository.peekAll()
+        val entries = buildEntries(templates)
+
+        val adapter = object : ArrayAdapter<String>(
+            requireContext(),
+            R.layout.item_dropdown_simple,
+            entries.map { it.displayLabel },
+        ) {
+            // No-op filter: always show all items regardless of the current field text.
+            // Without this, MaterialAutoCompleteTextView would filter by the typed text and
+            // hide every parser label when the field still shows "Auto-detect".
             private val noOpFilter = object : Filter() {
                 override fun performFiltering(constraint: CharSequence?) = FilterResults().apply {
-                    values = typeLabels
-                    count = typeLabels.size
+                    values = entries.map { it.displayLabel }
+                    count = entries.size
                 }
                 override fun publishResults(constraint: CharSequence?, results: FilterResults?) {
                     notifyDataSetChanged()
                 }
             }
             override fun getFilter(): Filter = noOpFilter
+            // Section headers are not selectable
+            override fun isEnabled(position: Int) = entries[position] !is ParserEntry.SectionHeader
         }
         typeDropdown.setAdapter(adapter)
-        // Default: auto-detect — most users will never need to change this
-        typeDropdown.setText(autoDetectLabel, false)
+        typeDropdown.setText(ParserEntry.AutoDetect.displayLabel, false)
         urlLayout.hint = getString(R.string.url_hint_auto_detect)
 
         typeDropdown.setOnItemClickListener { _, _, position, _ ->
-            if (position == 0) {
-                urlLayout.hint = getString(R.string.url_hint_auto_detect)
-            } else {
-                val selectedType = manualTypes[position - 1]
-                urlLayout.hint = hintForType(selectedType)
-            }
+            val entry = entries[position]
+            if (entry is ParserEntry.SectionHeader) return@setOnItemClickListener
+            selectedEntry = entry
+            urlLayout.hint = hintForEntry(entry)
         }
 
         btnAdd.setOnClickListener {
-            val name      = nameInput.text?.toString().orEmpty()
-            val url       = urlInput.text?.toString().orEmpty()
-            val desc      = descInput.text?.toString().orEmpty()
-            val typeLabel = typeDropdown.text?.toString().orEmpty()
+            val name = nameInput.text?.toString().orEmpty()
+            val url  = urlInput.text?.toString().orEmpty()
+            val desc = descInput.text?.toString().orEmpty()
             urlLayout.error = null
 
-            if (typeLabel == autoDetectLabel) {
-                viewModel.detectAndAddSource(name, url, desc)
-            } else {
-                val type = manualTypes.find { it.label == typeLabel }
-                    ?: CustomSourceType.WEBVIEW
-                viewModel.addSource(name, url, type, desc)
+            when (val e = selectedEntry) {
+                is ParserEntry.AutoDetect -> viewModel.detectAndAddSource(name, url, desc)
+                is ParserEntry.BuiltIn    -> viewModel.addSource(name, url, e.type, desc)
+                is ParserEntry.Imported   -> viewModel.addSource(
+                    name, url, CustomSourceType.CUSTOM_TEMPLATE, desc,
+                    parserSourceName = e.template.name,
+                )
+                is ParserEntry.SectionHeader -> { /* no-op */ }
             }
         }
 
@@ -114,7 +133,6 @@ class AddCustomSourceSheet : BottomSheetDialogFragment() {
                         viewModel.resetState()
                     }
                     is CustomSourceViewModel.UiState.SourceAdded -> {
-                        // Show detection result toast when auto-detect was used
                         state.detectedType?.let { detected ->
                             val msg = when {
                                 detected == CustomSourceType.KOTATSU_PARSER && state.parserName != null ->
@@ -126,7 +144,6 @@ class AddCustomSourceSheet : BottomSheetDialogFragment() {
                             }
                             Toast.makeText(requireContext(), msg, Toast.LENGTH_LONG).show()
                         }
-                        // Warn if the site was unreachable during detection
                         if (!state.siteReachable) {
                             Toast.makeText(
                                 requireContext(),
@@ -141,6 +158,38 @@ class AddCustomSourceSheet : BottomSheetDialogFragment() {
                 }
             }
         }
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    /**
+     * Builds the flat list of dropdown entries with section headers.
+     * Layout:
+     *   Auto-detect (Recommended)
+     *   ── Built-in Parsers ──        ← header (not clickable)
+     *   ManualType1, ManualType2, …
+     *   ── Imported Parsers ──         ← header (only if templates exist)
+     *   Template1, Template2, …
+     */
+    private fun buildEntries(templates: List<ParserTemplate>): List<ParserEntry> {
+        val list = mutableListOf<ParserEntry>()
+        list.add(ParserEntry.AutoDetect)
+        list.add(ParserEntry.SectionHeader("── Built-in Parsers ──"))
+        CustomSourceType.entries
+            .filter { it != CustomSourceType.KOTATSU_PARSER && it != CustomSourceType.CUSTOM_TEMPLATE }
+            .forEach { list.add(ParserEntry.BuiltIn(it)) }
+        if (templates.isNotEmpty()) {
+            list.add(ParserEntry.SectionHeader("── Imported Parsers ──"))
+            templates.forEach { list.add(ParserEntry.Imported(it)) }
+        }
+        return list
+    }
+
+    private fun hintForEntry(entry: ParserEntry): String = when (entry) {
+        is ParserEntry.AutoDetect -> getString(R.string.url_hint_auto_detect)
+        is ParserEntry.Imported   -> "Site URL for ${entry.template.name} (e.g. https://example.com)"
+        is ParserEntry.BuiltIn    -> hintForType(entry.type)
+        else                      -> getString(R.string.url_hint_auto_detect)
     }
 
     private fun hintForType(type: CustomSourceType): String = when (type) {

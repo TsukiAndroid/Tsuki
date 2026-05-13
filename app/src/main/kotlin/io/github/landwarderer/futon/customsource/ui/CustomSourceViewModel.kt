@@ -27,10 +27,14 @@ import javax.inject.Inject
 @HiltViewModel
 class CustomSourceViewModel @Inject constructor(
     private val repository: CustomSourcesRepository,
+    private val templateRepository: ParserTemplateRepository,
     private val kotatsuParserMatcher: KotatsuParserMatcher,
 ) : ViewModel() {
 
     val sources: StateFlow<List<CustomSource>> = repository.sources
+
+    /** Live list of all imported parser templates. */
+    val parserTemplates: StateFlow<List<ParserTemplate>> = templateRepository.templates
 
     private val _uiState = MutableStateFlow<UiState>(UiState.Idle)
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
@@ -38,8 +42,19 @@ class CustomSourceViewModel @Inject constructor(
     /** Look up a saved source by its id (used to pre-fill the edit sheet). */
     fun findById(id: Long): CustomSource? = repository.findById(id)
 
-    /** Add a source with an already-known [type]. Rejects duplicates. */
-    fun addSource(name: String, url: String, type: CustomSourceType, description: String) {
+    /**
+     * Add a source with an already-known [type].
+     *
+     * [parserSourceName] must be supplied when [type] is [CustomSourceType.CUSTOM_TEMPLATE];
+     * it identifies which imported template backs the source. Rejects duplicates.
+     */
+    fun addSource(
+        name: String,
+        url: String,
+        type: CustomSourceType,
+        description: String,
+        parserSourceName: String? = null,
+    ) {
         viewModelScope.launch {
             val normalized = normalizeUrl(url)
             if (normalized == null) {
@@ -53,14 +68,17 @@ class CustomSourceViewModel @Inject constructor(
                 )
                 return@launch
             }
-            // parserSourceName is only meaningful for KOTATSU_PARSER, which cannot be
-            // manually selected — so it is always null on the manual-add path.
+            val resolvedParserName = when (type) {
+                CustomSourceType.CUSTOM_TEMPLATE -> parserSourceName
+                CustomSourceType.KOTATSU_PARSER -> parserSourceName
+                else -> null
+            }
             val source = CustomSource(
                 id = CustomSourcesRepository.generateId(),
                 name = name.trim().ifBlank { hostFromUrl(normalized) ?: normalized },
                 baseUrl = normalized,
                 type = type,
-                parserSourceName = null,
+                parserSourceName = resolvedParserName,
                 description = description.trim().takeIf { it.isNotEmpty() },
             )
             repository.add(source)
@@ -122,8 +140,9 @@ class CustomSourceViewModel @Inject constructor(
      * Save edits to an existing source.
      * Preserves [createdAt] and [iconUrl]; re-fetches the favicon if the URL changed.
      *
-     * [parserSourceName] is only valid when [type] == [CustomSourceType.KOTATSU_PARSER].
-     * For every other type it is explicitly cleared so stale data never lingers.
+     * [parserSourceName] is required when [type] == [CustomSourceType.CUSTOM_TEMPLATE].
+     * For every other type (except KOTATSU_PARSER which keeps its existing name) it is
+     * explicitly cleared so stale data never lingers.
      */
     fun updateSource(
         id: Long,
@@ -131,6 +150,7 @@ class CustomSourceViewModel @Inject constructor(
         url: String,
         type: CustomSourceType,
         description: String,
+        parserSourceName: String? = null,
     ) {
         viewModelScope.launch {
             val existing = repository.findById(id) ?: run {
@@ -152,12 +172,10 @@ class CustomSourceViewModel @Inject constructor(
                     return@launch
                 }
             }
-            // Clear parserSourceName when the type is not KOTATSU_PARSER — it would
-            // point to the wrong (or old) parser and cause silent misfetches.
-            val resolvedParserName = if (type == CustomSourceType.KOTATSU_PARSER) {
-                existing.parserSourceName
-            } else {
-                null
+            val resolvedParserName = when (type) {
+                CustomSourceType.KOTATSU_PARSER -> existing.parserSourceName
+                CustomSourceType.CUSTOM_TEMPLATE -> parserSourceName ?: existing.parserSourceName
+                else -> null
             }
             val updated = existing.copy(
                 name = name.trim().ifBlank { hostFromUrl(normalized) ?: normalized },
@@ -169,6 +187,28 @@ class CustomSourceViewModel @Inject constructor(
             repository.update(updated)
             _uiState.value = UiState.SourceUpdated(updated)
             if (normalized != existing.baseUrl) fetchAndStoreFavicon(updated)
+        }
+    }
+
+    /**
+     * Directly change the parser for a saved source — used by [ChangeParserSheet].
+     *
+     * Updates [CustomSource.type] and [CustomSource.parserSourceName] in the repository
+     * and emits [UiState.SourceUpdated] so any listening UI can react.
+     */
+    fun changeParser(sourceId: Long, newType: CustomSourceType, parserSourceName: String?) {
+        viewModelScope.launch {
+            val existing = repository.findById(sourceId) ?: return@launch
+            val updated = existing.copy(
+                type = newType,
+                parserSourceName = when (newType) {
+                    CustomSourceType.CUSTOM_TEMPLATE,
+                    CustomSourceType.KOTATSU_PARSER -> parserSourceName
+                    else -> null
+                },
+            )
+            repository.update(updated)
+            _uiState.value = UiState.SourceUpdated(updated)
         }
     }
 
@@ -223,6 +263,20 @@ class CustomSourceViewModel @Inject constructor(
         }
     }
 
+    /** Enable or disable a built-in parser type in the picker. */
+    fun setBuiltinParserEnabled(type: CustomSourceType, enabled: Boolean) {
+        repository.setBuiltinParserEnabled(type, enabled)
+    }
+
+    /** Returns whether a built-in parser type is currently enabled in the picker. */
+    fun isBuiltinParserEnabled(type: CustomSourceType): Boolean =
+        repository.isBuiltinParserEnabled(type)
+
+    /** Enable or disable an imported parser template. */
+    fun setTemplateEnabled(templateId: Long, enabled: Boolean) {
+        templateRepository.setEnabled(templateId, enabled)
+    }
+
     fun removeSource(id: Long) {
         viewModelScope.launch { repository.remove(id) }
     }
@@ -243,7 +297,7 @@ class CustomSourceViewModel @Inject constructor(
      *  2. Template matching — checks imported [ParserTemplate]s using two strategies:
      *       a. `fingerprints` — HTML substrings matched against the homepage (one fetch shared)
      *       b. `endpointProbes` — API paths probed individually (fallback for API-only sites)
-     *     Templates are checked before generic CMS detection so user rules take priority.
+     *     Only *enabled* templates are checked so disabled ones are truly skipped.
      *  3. [CmsTypeDetector] — generic HTML fingerprinting (49 built-in CMS checks)
      *
      * Also performs a lightweight reachability probe; [Triple.third] is false
@@ -258,10 +312,9 @@ class CustomSourceViewModel @Inject constructor(
             return Triple(CustomSourceType.KOTATSU_PARSER, matchedParser.name, true)
         }
 
-        // Step 1.5: check if any imported template's fingerprints match this site.
-        // No-op when the user has not imported any templates (peekAll returns empty).
+        // Step 1.5: check if any *enabled* imported template's fingerprints match this site.
         val templateMatch = runCatching {
-            matchTemplateFingerprints(normalizedUrl, ParserTemplateRepository.peekAll())
+            matchTemplateFingerprints(normalizedUrl, ParserTemplateRepository.peekEnabled())
         }.getOrNull()
         if (templateMatch != null) {
             return Triple(CustomSourceType.CUSTOM_TEMPLATE, templateMatch, true)

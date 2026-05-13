@@ -38,6 +38,9 @@ class ParserTemplateRepository @Inject constructor(
 
     fun getAll(): List<ParserTemplate> = _templates.value
 
+    /** Returns only templates that are currently enabled. */
+    fun getEnabled(): List<ParserTemplate> = _templates.value.filter { it.isEnabled }
+
     fun add(template: ParserTemplate) {
         val updated = _templates.value.toMutableList().apply { add(template) }
         saveAll(updated)
@@ -51,6 +54,16 @@ class ParserTemplateRepository @Inject constructor(
     }
 
     fun findById(id: Long): ParserTemplate? = _templates.value.find { it.id == id }
+
+    /** Flip the enabled flag of a template. No-op if the id is not found. */
+    fun setEnabled(id: Long, enabled: Boolean) {
+        val template = findById(id) ?: return
+        val updated = _templates.value.map {
+            if (it.id == id) it.copy(isEnabled = enabled) else it
+        }
+        saveAll(updated)
+        _templates.value = updated
+    }
 
     private fun loadAll(): List<ParserTemplate> {
         val json = prefs.getString(KEY_TEMPLATES, null) ?: return emptyList()
@@ -74,6 +87,7 @@ class ParserTemplateRepository @Inject constructor(
         type = getString("type"),
         rawJson = getString("rawJson"),
         importedAt = optLong("importedAt", System.currentTimeMillis()),
+        isEnabled = if (has("isEnabled")) getBoolean("isEnabled") else true,
     )
 
     private fun ParserTemplate.toJson() = JSONObject().apply {
@@ -83,6 +97,7 @@ class ParserTemplateRepository @Inject constructor(
         put("type", type)
         put("rawJson", rawJson)
         put("importedAt", importedAt)
+        put("isEnabled", isEnabled)
     }
 
     companion object {
@@ -108,5 +123,8 @@ class ParserTemplateRepository @Inject constructor(
             INSTANCE?.getAll()?.find { it.name.equals(name, ignoreCase = true) }
 
         fun peekAll(): List<ParserTemplate> = INSTANCE?.getAll().orEmpty()
+
+        /** Returns only enabled templates — safe to call from any thread. */
+        fun peekEnabled(): List<ParserTemplate> = INSTANCE?.getEnabled().orEmpty()
     }
 }

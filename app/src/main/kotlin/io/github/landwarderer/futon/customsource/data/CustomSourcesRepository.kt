@@ -72,6 +72,32 @@ class CustomSourcesRepository @Inject constructor(
         return _sources.value.find { it.baseUrl.trimEnd('/').lowercase() == normalised }
     }
 
+    // ── Built-in parser enable/disable ────────────────────────────────────────
+
+    /**
+     * Returns the set of [CustomSourceType] names that the user has disabled in
+     * the parser picker. Disabled parsers are still stored but hidden from the
+     * picker UI and skipped during manual selection flows.
+     */
+    fun getDisabledBuiltinParsers(): Set<String> =
+        prefs.getStringSet(KEY_DISABLED_PARSERS, emptySet()).orEmpty().toSet()
+
+    /**
+     * Enable or disable a built-in parser type in the parser picker.
+     * Persists to [SharedPreferences] immediately.
+     */
+    fun setBuiltinParserEnabled(type: CustomSourceType, enabled: Boolean) {
+        val current = getDisabledBuiltinParsers().toMutableSet()
+        if (enabled) current.remove(type.name) else current.add(type.name)
+        prefs.edit().putStringSet(KEY_DISABLED_PARSERS, current).apply()
+    }
+
+    /** Returns true when the given built-in parser type is not in the disabled set. */
+    fun isBuiltinParserEnabled(type: CustomSourceType): Boolean =
+        type.name !in getDisabledBuiltinParsers()
+
+    // ── Persistence ───────────────────────────────────────────────────────────
+
     private fun loadAll(): List<CustomSource> {
         val json = prefs.getString(KEY_SOURCES, null) ?: return emptyList()
         return try {
@@ -170,6 +196,7 @@ class CustomSourcesRepository @Inject constructor(
         private const val PREFS_NAME = "tsuki_custom_sources"
         private const val KEY_SOURCES = "sources"
         private const val KEY_LAST_URL_PREFIX = "last_url_"
+        private const val KEY_DISABLED_PARSERS = "disabled_builtin_parsers"
 
         /**
          * Monotonically-increasing ID generator. Seeded in [init] to sit above
