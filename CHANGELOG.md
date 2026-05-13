@@ -1,3 +1,11 @@
+## Alpha 1.487 (Build [#143](https://github.com/Space4414/Tsuki/actions/runs/25797813493))
+
+_2026-05-13 12:02 UTC_
+
+- fix: flawless parser system — 4 bugs resolved (6c12b7c)
+- feat: add domain-based auto-detection (Strategy 0) for CUSTOM_TEMPLATE sources (1267a4b)
+
+
 ## Alpha 1.485 (Build [#142](https://github.com/Space4414/Tsuki/actions/runs/25796703038))
 
 _2026-05-13 11:38 UTC_
