@@ -12,6 +12,7 @@ package io.github.landwarderer.futon.customsource.data
    * between types that previously had "(Auto)" in their label and those that did not.
    *
    * Detection priority:
+   *  0.  Known-domain fast path — instant, no network (manhwaread.com → MADARA, comix.to → COMIXTO)
    *  1.  MangaSee / MangaLife  — vm.Directory or vm.Chapters JS globals
    *  2.  MangaFire style       — checked before Guya to prevent false-positives
    *  3.  Guya reader           — /api/series/ returns Guya-structured JSON
@@ -51,8 +52,33 @@ package io.github.landwarderer.futon.customsource.data
    */
   object CmsTypeDetector {
 
+      /**
+       * Known-domain fast path: returns the type immediately without any network
+       * probes for sites whose CMS is established with certainty.  This prevents
+       * the "spinning forever" symptom caused by slow probe endpoints running
+       * before the HTML fingerprint check that would have matched.
+       *
+       * Add a domain here whenever:
+       *  - detection is reliable but slow (probe endpoints time out before the
+       *    correct HTML check fires), OR
+       *  - the site has Cloudflare / bot-protection that blocks the plain fetch
+       *    so detection always falls back to WEBVIEW.
+       */
+      private val KNOWN_DOMAIN_TYPES: Map<String, CustomSourceType> = mapOf(
+          "manhwaread.com"   to CustomSourceType.MADARA,
+          "manhwaread.net"   to CustomSourceType.MADARA,
+          "comix.to"         to CustomSourceType.COMIXTO,
+      )
+
       fun detect(baseUrl: String): CustomSourceType {
           val clean = baseUrl.trimEnd('/')
+
+          // Fast path: known domains bypass all network probes.
+          val host = runCatching {
+              java.net.URI(clean).host?.lowercase()?.removePrefix("www.")
+          }.getOrNull()
+          KNOWN_DOMAIN_TYPES[host]?.let { return it }
+
           val html = fetchText(clean) ?: return CustomSourceType.WEBVIEW
 
           // 1. MangaSee / MangaLife — distinctive JS globals
@@ -406,7 +432,7 @@ package io.github.landwarderer.futon.customsource.data
           return apiResp != null && apiResp.startsWith("{") && apiResp.contains("title")
       }
 
-      // ── MangaLib API fingerprint ──────────────────────────────────────────────
+      // ── MangaLib API fingerprint ─────────────────────────────────────────────���
 
       private fun isMangaLib(baseUrl: String): Boolean {
           // Try the new unified API endpoint
@@ -475,7 +501,7 @@ package io.github.landwarderer.futon.customsource.data
               apiResp.contains("\"title\"") && apiResp.contains("\"status\"")
       }
 
-      // ── Mmrcms fingerprint ────────────────────────────────────────────────────
+      // ── Mmrcms fingerprint ───────────────────────────���────────────────────────
 
       private fun isMmrcms(baseUrl: String): Boolean {
           val resp = fetchText("$baseUrl/filterList?page=1&sortBy=name&asc=true")

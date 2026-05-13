@@ -194,7 +194,8 @@ class MadaraHtmlParser(
             .header("User-Agent", USER_AGENT)
             .header("Referer", baseUrl)
             .build()
-        val resp = httpClient.newCall(request).execute()
+        // Use ajaxClient (8s/12s timeouts) — AJAX is either fast or unavailable.
+        val resp = ajaxClient.newCall(request).execute()
         val html = resp.use { it.body?.string() ?: return emptyList() }
         return parseMangaListItems(Jsoup.parse(html, baseUrl))
     }
@@ -244,7 +245,7 @@ class MadaraHtmlParser(
             .header("User-Agent", USER_AGENT)
             .header("Referer", referer)
             .build()
-        val resp = httpClient.newCall(request).execute()
+        val resp = ajaxClient.newCall(request).execute()
         val html = resp.use { it.body?.string() ?: return emptyList() }
         return Jsoup.parse(html, baseUrl)
             .select("li.wp-manga-chapter")
@@ -317,13 +318,30 @@ class MadaraHtmlParser(
 
     companion object {
         private const val PAGE_SIZE = 16
-        private const val USER_AGENT = "Tsuki/1.0 (Android)"
+        // Browser-like UA avoids being blocked by sites with basic bot-detection.
+        private const val USER_AGENT =
+            "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36"
         private val CHAPTER_NUMBER_RE = Regex("""[Cc]hapter[s]?\s*([\d.]+)""")
 
+        /** Standard client for page fetches (detail pages, search, genre browse). */
         private val httpClient: OkHttpClient by lazy {
             OkHttpClient.Builder()
-                .connectTimeout(20, TimeUnit.SECONDS)
-                .readTimeout(30, TimeUnit.SECONDS)
+                .connectTimeout(15, TimeUnit.SECONDS)
+                .readTimeout(20, TimeUnit.SECONDS)
+                .followRedirects(true)
+                .build()
+        }
+
+        /**
+         * Shorter-timeout client used exclusively for AJAX calls.
+         * Madara AJAX endpoints (/wp-admin/admin-ajax.php) are either fast or
+         * not available at all; a 30-second wait just causes the "spinning
+         * forever" symptom.  If the AJAX call fails, we fall back to plain HTML.
+         */
+        private val ajaxClient: OkHttpClient by lazy {
+            OkHttpClient.Builder()
+                .connectTimeout(8, TimeUnit.SECONDS)
+                .readTimeout(12, TimeUnit.SECONDS)
                 .followRedirects(true)
                 .build()
         }

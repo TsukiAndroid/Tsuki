@@ -73,7 +73,23 @@ interface MangaRepository {
 
                 private val cache = ArrayMap<MangaSource, WeakReference<MangaRepository>>()
 
-                @AnyThread
+                /**
+         * Evicts every cached [MangaRepository] whose underlying [CustomMangaSource]
+         * has the given [id].  Call this after changing a custom source's parser type
+         * so the next [create] call builds a fresh repository instead of returning
+         * the stale cached instance.
+         */
+        @AnyThread
+        fun invalidateBySourceId(id: Long) {
+            synchronized(cache) {
+                val toRemove = cache.keys
+                    .filterIsInstance<CustomMangaSource>()
+                    .filter { it.source.id == id }
+                toRemove.forEach { cache.remove(it) }
+            }
+        }
+
+        @AnyThread
                 fun create(source: MangaSource): MangaRepository {
                         when (source) {
                                 is MangaSourceInfo -> return create(source.mangaSource)

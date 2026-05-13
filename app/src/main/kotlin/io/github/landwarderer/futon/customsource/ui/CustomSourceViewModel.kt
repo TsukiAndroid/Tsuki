@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import io.github.landwarderer.futon.core.parser.KotatsuParserMatcher
+import io.github.landwarderer.futon.core.parser.MangaRepository
 import io.github.landwarderer.futon.customsource.data.CmsTypeDetector
 import io.github.landwarderer.futon.customsource.data.CustomSourcesRepository
 import io.github.landwarderer.futon.customsource.data.ParserTemplateRepository
@@ -29,6 +30,7 @@ class CustomSourceViewModel @Inject constructor(
     private val repository: CustomSourcesRepository,
     private val templateRepository: ParserTemplateRepository,
     private val kotatsuParserMatcher: KotatsuParserMatcher,
+    private val repositoryFactory: MangaRepository.Factory,
 ) : ViewModel() {
 
     val sources: StateFlow<List<CustomSource>> = repository.sources
@@ -199,6 +201,10 @@ class CustomSourceViewModel @Inject constructor(
     fun changeParser(sourceId: Long, newType: CustomSourceType, parserSourceName: String?) {
         viewModelScope.launch {
             val existing = repository.findById(sourceId) ?: return@launch
+            // Evict the cached repository so the screen picks up the new parser type
+            // immediately on next load — without this, the stale repository stays alive
+            // as long as the screen holds a strong reference to the old CustomMangaSource.
+            repositoryFactory.invalidateBySourceId(sourceId)
             val updated = existing.copy(
                 type = newType,
                 parserSourceName = when (newType) {

@@ -23,9 +23,12 @@ import io.github.landwarderer.futon.customsource.domain.ParserTemplate
 /**
  * Bottom sheet that lets the user change which parser a custom source uses.
  *
- * Shows two sections — "Built-in Parsers" and "Imported Parsers".
- * The currently active parser is highlighted with a check icon.
- * Tapping any row immediately updates the source and dismisses the sheet.
+ * Shows a "Currently using" info row at the very top so the active parser is
+ * always visible — especially important for KOTATSU_PARSER sources where the
+ * built-in match would otherwise be invisible (KOTATSU_PARSER is not listed as
+ * a selectable option).  Below that are two sections: "Built-in Parsers" and
+ * "Imported Parsers".  The currently active parser is highlighted with a check
+ * icon.  Tapping any row immediately updates the source and dismisses the sheet.
  *
  * Shown from [RemoteListFragment] via the "Change Parser" overflow menu item.
  */
@@ -52,7 +55,7 @@ class ChangeParserSheet : BottomSheetDialogFragment() {
         val currentType      = currentSource?.type
         val currentTemplate  = currentSource?.parserSourceName
 
-        val items = buildItems(viewModel.parserTemplates.value)
+        val items = buildItems(currentType, currentTemplate, viewModel.parserTemplates.value)
 
         recycler.adapter = ParserPickerAdapter(
             items           = items,
@@ -82,14 +85,35 @@ class ChangeParserSheet : BottomSheetDialogFragment() {
     // ── Item model ────────────────────────────────────────────────────────────
 
     private sealed class PickerItem {
+        /** Non-tappable row that displays the currently active parser at the top. */
+        data class CurrentInfo(val label: String) : PickerItem()
         data class Header(val title: String) : PickerItem()
         data class BuiltIn(val type: CustomSourceType) : PickerItem()
         data class Imported(val template: ParserTemplate) : PickerItem()
         data class EmptyHint(val message: String) : PickerItem()
     }
 
-    private fun buildItems(templates: List<ParserTemplate>): List<PickerItem> {
+    private fun buildItems(
+        currentType: CustomSourceType?,
+        currentTemplate: String?,
+        templates: List<ParserTemplate>,
+    ): List<PickerItem> {
         val items = mutableListOf<PickerItem>()
+
+        // Always show what is currently active at the top so the user can see at a
+        // glance — especially for KOTATSU_PARSER where the matched parser name
+        // would not appear anywhere else in the list.
+        val currentLabel: String? = when (currentType) {
+            CustomSourceType.KOTATSU_PARSER ->
+                "Auto-matched: ${currentTemplate ?: "Built-in parser"}"
+            CustomSourceType.CUSTOM_TEMPLATE ->
+                "Template: ${currentTemplate ?: "Custom Template"}"
+            null -> null
+            else -> "Currently: ${currentType.label}"
+        }
+        if (currentLabel != null) {
+            items.add(PickerItem.CurrentInfo(currentLabel))
+        }
 
         items.add(PickerItem.Header(getString(R.string.section_builtin_parsers)))
         CustomSourceType.entries
@@ -117,20 +141,25 @@ class ChangeParserSheet : BottomSheetDialogFragment() {
     ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
         companion object {
-            private const val VIEW_HEADER = 0
-            private const val VIEW_PARSER = 1
-            private const val VIEW_HINT   = 2
+            private const val VIEW_CURRENT = 0
+            private const val VIEW_HEADER  = 1
+            private const val VIEW_PARSER  = 2
+            private const val VIEW_HINT    = 3
         }
 
         override fun getItemViewType(position: Int) = when (items[position]) {
-            is PickerItem.Header    -> VIEW_HEADER
-            is PickerItem.EmptyHint -> VIEW_HINT
-            else                    -> VIEW_PARSER
+            is PickerItem.CurrentInfo   -> VIEW_CURRENT
+            is PickerItem.Header        -> VIEW_HEADER
+            is PickerItem.EmptyHint     -> VIEW_HINT
+            else                        -> VIEW_PARSER
         }
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
             val inflater = LayoutInflater.from(parent.context)
             return when (viewType) {
+                VIEW_CURRENT -> CurrentInfoVH(
+                    inflater.inflate(R.layout.item_parser_option, parent, false)
+                )
                 VIEW_HEADER -> HeaderVH(
                     inflater.inflate(R.layout.item_parser_section_header, parent, false)
                 )
@@ -145,14 +174,36 @@ class ChangeParserSheet : BottomSheetDialogFragment() {
 
         override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
             when (val item = items[position]) {
-                is PickerItem.Header    -> (holder as HeaderVH).bind(item.title)
-                is PickerItem.EmptyHint -> (holder as HintVH).bind(item.message)
-                is PickerItem.BuiltIn   -> (holder as ParserVH).bindBuiltIn(item)
-                is PickerItem.Imported  -> (holder as ParserVH).bindImported(item)
+                is PickerItem.CurrentInfo -> (holder as CurrentInfoVH).bind(item.label)
+                is PickerItem.Header      -> (holder as HeaderVH).bind(item.title)
+                is PickerItem.EmptyHint   -> (holder as HintVH).bind(item.message)
+                is PickerItem.BuiltIn     -> (holder as ParserVH).bindBuiltIn(item)
+                is PickerItem.Imported    -> (holder as ParserVH).bindImported(item)
             }
         }
 
         override fun getItemCount() = items.size
+
+        /** Non-tappable info row showing the currently active parser. */
+        class CurrentInfoVH(view: View) : RecyclerView.ViewHolder(view) {
+            private val nameView: TextView   = view.findViewById(R.id.text_parser_name)
+            private val checkIcon: ImageView = view.findViewById(R.id.icon_selected)
+
+            fun bind(label: String) {
+                nameView.text = label
+                checkIcon.isVisible = true
+                nameView.setTypeface(null, android.graphics.Typeface.BOLD)
+                val color = itemView.context.getThemeColor(
+                    appcompatR.attr.colorPrimary,
+                    nameView.currentTextColor,
+                )
+                nameView.setTextColor(color)
+                // Non-interactive — just an info display
+                itemView.isClickable = false
+                itemView.isFocusable = false
+                itemView.alpha = 1f
+            }
+        }
 
         class HeaderVH(view: View) : RecyclerView.ViewHolder(view) {
             private val text: TextView = view.findViewById(R.id.text_section_header)
@@ -169,7 +220,7 @@ class ChangeParserSheet : BottomSheetDialogFragment() {
         }
 
         inner class ParserVH(view: View) : RecyclerView.ViewHolder(view) {
-            private val nameView: TextView  = view.findViewById(R.id.text_parser_name)
+            private val nameView: TextView   = view.findViewById(R.id.text_parser_name)
             private val checkIcon: ImageView = view.findViewById(R.id.icon_selected)
 
             fun bindBuiltIn(item: PickerItem.BuiltIn) {

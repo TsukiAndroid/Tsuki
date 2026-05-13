@@ -133,11 +133,18 @@ class ComixToHtmlParser(
             SortOrder.RATING     -> "topview"
             else                 -> "latest"
         }
-        val urls = listOf(
-            "$baseUrl/comic-genre/all/?page=$page&sort=$sort",
-            "$baseUrl/manga-list/type-manga/order-$sort/page-$page/",
-            "$baseUrl/advanced-search?sort=$sort&page=$page",
-        )
+        // Try a broad set of URL patterns; comix.to-family sites vary in layout.
+        // The homepage itself (page 1) often lists latest updates with the same
+        // .list-story-item selector, so try it first with no extra path segment.
+        val urls = buildList {
+            if (page == 1) add("$baseUrl/")
+            add("$baseUrl/?page=$page")
+            add("$baseUrl/comic-genre/all/?page=$page&sort=$sort")
+            add("$baseUrl/category/all/?page=$page")
+            add("$baseUrl/manga-list/?page=$page&sort=$sort")
+            add("$baseUrl/manga-list.html?page=$page")
+            add("$baseUrl/advanced-search?sort=$sort&page=$page")
+        }
         for (url in urls) {
             val result = runCatching { parseMangaListPage(fetchDocument(url)) }.getOrNull()
             if (!result.isNullOrEmpty()) return result
@@ -157,6 +164,7 @@ class ComixToHtmlParser(
         val urls = listOf(
             "$baseUrl/search-comic?q=$encoded&page=$page",
             "$baseUrl/?s=$encoded&post_type=comics&paged=$page",
+            "$baseUrl/search?keyword=$encoded&page=$page",
             "$baseUrl/search?q=$encoded&page=$page",
         )
         for (url in urls) {
@@ -267,7 +275,8 @@ class ComixToHtmlParser(
 
     companion object {
         private const val PAGE_SIZE = 24
-        private const val USER_AGENT = "Tsuki/1.0 (Android)"
+        private const val USER_AGENT =
+            "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36"
         private val CHAPTER_NUMBER_RE = Regex("""(?:[Cc]hapter|[Cc]h\.?)\s*([\d.]+)""")
         private val CHAP_IMAGES_RE = Regex(
             """(?:chapImages|lstImages|imgArr|var\s+images)\s*=\s*(\[.*?])""",
