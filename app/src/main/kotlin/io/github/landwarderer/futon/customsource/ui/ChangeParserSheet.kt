@@ -12,6 +12,7 @@ import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.google.android.material.color.MaterialColors
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.landwarderer.futon.R
 import io.github.landwarderer.futon.customsource.domain.CustomSourceType
@@ -191,12 +192,12 @@ class ChangeParserSheet : BottomSheetDialogFragment() {
                     if (active) android.graphics.Typeface.BOLD
                     else android.graphics.Typeface.NORMAL,
                 )
+                val colorAttr = if (active)
+                    com.google.android.material.R.attr.colorPrimary
+                else
+                    com.google.android.material.R.attr.colorOnSurface
                 nameView.setTextColor(
-                    itemView.context.getColorStateList(
-                        if (active) com.google.android.material.R.attr.colorPrimary
-                        else com.google.android.material.R.attr.colorOnSurface
-                    )?.defaultColor
-                        ?: nameView.currentTextColor
+                    MaterialColors.getColor(itemView.context, colorAttr, nameView.currentTextColor)
                 )
             }
         }
