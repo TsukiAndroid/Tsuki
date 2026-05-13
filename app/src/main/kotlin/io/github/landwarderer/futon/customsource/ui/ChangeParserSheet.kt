@@ -11,6 +11,7 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.R as materialR
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.color.MaterialColors
 import dagger.hilt.android.AndroidEntryPoint
@@ -193,9 +194,9 @@ class ChangeParserSheet : BottomSheetDialogFragment() {
                     else android.graphics.Typeface.NORMAL,
                 )
                 val colorAttr = if (active)
-                    com.google.android.material.R.attr.colorPrimary
+                    materialR.attr.colorPrimary
                 else
-                    com.google.android.material.R.attr.colorOnSurface
+                    materialR.attr.colorOnSurface
                 nameView.setTextColor(
                     MaterialColors.getColor(itemView.context, colorAttr, nameView.currentTextColor)
                 )
