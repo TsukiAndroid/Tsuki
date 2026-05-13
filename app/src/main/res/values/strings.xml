@@ -1085,7 +1085,7 @@
     <string name="export_template_failed">Export failed</string>
     <!-- Change Parser feature -->
     <string name="change_parser">Change Parser</string>
-    <string name="change_parser_subtitle">Tap a parser to switch this source to it. Use the toggle to enable or disable a parser globally.</string>
+    <string name="change_parser_subtitle">Select a parser for this source. The active parser is shown with a checkmark.</string>
     <string name="section_builtin_parsers">Built-in Parsers</string>
     <string name="section_imported_parsers">Imported Parsers</string>
     <string name="no_imported_parsers">No imported parsers yet — go to Settings → Parsers to import a .json template.</string>

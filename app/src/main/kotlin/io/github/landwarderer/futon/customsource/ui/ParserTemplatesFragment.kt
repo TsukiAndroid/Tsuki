@@ -3,14 +3,19 @@ package io.github.landwarderer.futon.customsource.ui
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.FileProvider
+import androidx.core.view.MenuProvider
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -27,9 +32,13 @@ import io.github.landwarderer.futon.settings.SettingsActivity
 import java.io.File
 
 /**
- * Settings screen — "Parsers" subsection inside Manga Sources.
+ * Settings screen — "Parsers" subsection inside Manage Sources.
  *
  * Shows all imported [ParserTemplate]s with their name, version, and type.
+ * An info icon in the toolbar opens a dialog explaining what parser templates
+ * are and what JSON fields they support (replaces the old always-visible card
+ * that was blocking scroll).
+ *
  * From here the user can:
  *  - import a new template via [ImportParserSheet]
  *  - export an existing template to the Android share sheet
@@ -54,6 +63,20 @@ class ParserTemplatesFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         (activity as? SettingsActivity)?.setSectionTitle(getString(R.string.parser_templates))
+
+        // Info icon in the toolbar — replaces the old blocking info card at the bottom
+        requireActivity().addMenuProvider(object : MenuProvider {
+            override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
+                menuInflater.inflate(R.menu.menu_parser_templates, menu)
+            }
+            override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
+                if (menuItem.itemId == R.id.action_parser_info) {
+                    showAboutDialog()
+                    return true
+                }
+                return false
+            }
+        }, viewLifecycleOwner, Lifecycle.State.RESUMED)
 
         recyclerView = view.findViewById<RecyclerView>(R.id.recycler_parser_templates).apply {
             layoutManager = LinearLayoutManager(requireContext())
@@ -97,15 +120,30 @@ class ParserTemplatesFragment : Fragment() {
         emptyView = null
     }
 
+    // ── Private helpers ────────────────────────────────────────────────────────
+
     private fun render(templates: List<ParserTemplate>) {
         emptyView?.isVisible = templates.isEmpty()
         recyclerView?.isVisible = templates.isNotEmpty()
         recyclerView?.adapter = ParserTemplatesAdapter(
             templates = templates,
-            onDelete = ::confirmDelete,
+            onDelete  = ::confirmDelete,
             onAddSite = ::showAddSiteDialog,
-            onExport = ::exportTemplate,
+            onExport  = ::exportTemplate,
         )
+    }
+
+    /** Shows the "What are parser templates?" explanation as a dismissible dialog. */
+    private fun showAboutDialog() {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.parser_template_what_title)
+            .setMessage(
+                "${getString(R.string.parser_template_what_body)}\n\n" +
+                    "${getString(R.string.parser_template_example_title)}\n" +
+                    getString(R.string.parser_template_example)
+            )
+            .setPositiveButton(android.R.string.ok, null)
+            .show()
     }
 
     private fun confirmDelete(template: ParserTemplate) {
@@ -168,13 +206,8 @@ class ParserTemplatesFragment : Fragment() {
     }
 
     /**
-     * Writes the template's raw JSON to a temporary file in the app cache directory
-     * and opens the Android share sheet so the user can send it anywhere they like
-     * (Files, Discord, e-mail, etc.).
-     *
-     * The file is named `<sanitised-template-name>.json` and is served via
-     * [FileProvider] so the receiving app gets read-only URI access without any
-     * extra permissions.
+     * Writes the template's raw JSON to a temporary file and opens the Android
+     * share sheet so the user can send it anywhere they like.
      */
     private fun exportTemplate(template: ParserTemplate) {
         val ctx = requireContext()
@@ -183,7 +216,7 @@ class ParserTemplatesFragment : Fragment() {
                 .replace(Regex("[^A-Za-z0-9._-]"), "_")
                 .take(64)
                 .ifEmpty { "template" }
-            val outDir = File(ctx.cacheDir, "template_exports").apply { mkdirs() }
+            val outDir  = File(ctx.cacheDir, "template_exports").apply { mkdirs() }
             val outFile = File(outDir, "$safeName.json")
             outFile.writeText(template.rawJson)
 
@@ -192,7 +225,6 @@ class ParserTemplatesFragment : Fragment() {
                 "${ctx.packageName}.files",
                 outFile,
             )
-
             val shareIntent = Intent(Intent.ACTION_SEND).apply {
                 type = "application/json"
                 putExtra(Intent.EXTRA_STREAM, uri)
@@ -205,11 +237,13 @@ class ParserTemplatesFragment : Fragment() {
         }
     }
 
+    // ── Adapter ───────────────────────────────────────────────────────────────
+
     private class ParserTemplatesAdapter(
         private val templates: List<ParserTemplate>,
-        private val onDelete: (ParserTemplate) -> Unit,
+        private val onDelete:  (ParserTemplate) -> Unit,
         private val onAddSite: (ParserTemplate) -> Unit,
-        private val onExport: (ParserTemplate) -> Unit,
+        private val onExport:  (ParserTemplate) -> Unit,
     ) : RecyclerView.Adapter<ParserTemplatesAdapter.VH>() {
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
@@ -225,17 +259,17 @@ class ParserTemplatesFragment : Fragment() {
         override fun getItemCount(): Int = templates.size
 
         class VH(view: View) : RecyclerView.ViewHolder(view) {
-            private val nameView:    TextView       = view.findViewById(R.id.text_template_name)
-            private val metaView:    TextView       = view.findViewById(R.id.text_template_meta)
-            private val addSiteBtn:  MaterialButton = view.findViewById(R.id.btn_add_site_template)
-            private val exportBtn:   MaterialButton = view.findViewById(R.id.btn_export_template)
-            private val deleteBtn:   MaterialButton = view.findViewById(R.id.btn_delete_template)
+            private val nameView:   TextView       = view.findViewById(R.id.text_template_name)
+            private val metaView:   TextView       = view.findViewById(R.id.text_template_meta)
+            private val addSiteBtn: MaterialButton = view.findViewById(R.id.btn_add_site_template)
+            private val exportBtn:  MaterialButton = view.findViewById(R.id.btn_export_template)
+            private val deleteBtn:  MaterialButton = view.findViewById(R.id.btn_delete_template)
 
             fun bind(
                 template: ParserTemplate,
-                onDelete: (ParserTemplate) -> Unit,
+                onDelete:  (ParserTemplate) -> Unit,
                 onAddSite: (ParserTemplate) -> Unit,
-                onExport: (ParserTemplate) -> Unit,
+                onExport:  (ParserTemplate) -> Unit,
             ) {
                 nameView.text = template.name
                 metaView.text = itemView.context.getString(

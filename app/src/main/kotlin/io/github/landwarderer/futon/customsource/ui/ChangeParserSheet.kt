@@ -4,26 +4,27 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
+import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
-import com.google.android.material.materialswitch.MaterialSwitch
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.landwarderer.futon.R
 import io.github.landwarderer.futon.customsource.domain.CustomSourceType
 import io.github.landwarderer.futon.customsource.domain.ParserTemplate
 
 /**
- * Bottom sheet that lets the user change the parser assigned to a custom source
- * and enable or disable individual parsers (both built-in types and imported templates).
+ * Bottom sheet that lets the user change which parser a custom source uses.
  *
- * **Selection** — tapping a parser row updates the source immediately and dismisses the sheet.
- * **Toggle** — flipping the switch enables or disables that parser without changing the source.
+ * Shows two sections — "Built-in Parsers" and "Imported Parsers".
+ * The currently active parser is highlighted with a check icon.
+ * Tapping any row immediately updates the source and dismisses the sheet.
  *
- * Shown from [RemoteListFragment] via the overflow menu item "Change Parser".
+ * Shown from [RemoteListFragment] via the "Change Parser" overflow menu item.
  */
 @AndroidEntryPoint
 class ChangeParserSheet : BottomSheetDialogFragment() {
@@ -44,56 +45,54 @@ class ChangeParserSheet : BottomSheetDialogFragment() {
         recycler.layoutManager = LinearLayoutManager(requireContext())
         recycler.setHasFixedSize(false)
 
-        // Current parser of this source — highlighted in the list
-        val currentSource = viewModel.findById(sourceId)
-        val currentType = currentSource?.type
-        val currentTemplateName = currentSource?.parserSourceName
+        val currentSource    = viewModel.findById(sourceId)
+        val currentType      = currentSource?.type
+        val currentTemplate  = currentSource?.parserSourceName
 
-        // Build the flat list of items to display
         val items = buildItems(viewModel.parserTemplates.value)
 
         recycler.adapter = ParserPickerAdapter(
-            items = items,
-            currentType = currentType,
-            currentTemplateName = currentTemplateName,
+            items           = items,
+            currentType     = currentType,
+            currentTemplate = currentTemplate,
             onBuiltinSelected = { type ->
                 viewModel.changeParser(sourceId, type, null)
-                val msg = getString(R.string.parser_changed, type.label)
-                Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    requireContext(),
+                    getString(R.string.parser_changed, type.label),
+                    Toast.LENGTH_SHORT,
+                ).show()
                 dismiss()
             },
             onTemplateSelected = { template ->
                 viewModel.changeParser(sourceId, CustomSourceType.CUSTOM_TEMPLATE, template.name)
-                val msg = getString(R.string.parser_changed, template.name)
-                Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    requireContext(),
+                    getString(R.string.parser_changed, template.name),
+                    Toast.LENGTH_SHORT,
+                ).show()
                 dismiss()
             },
-            onBuiltinToggled = { type, enabled ->
-                viewModel.setBuiltinParserEnabled(type, enabled)
-                val msg = if (enabled) getString(R.string.parser_enabled, type.label)
-                          else getString(R.string.parser_disabled, type.label)
-                Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
-            },
-            onTemplateToggled = { template, enabled ->
-                viewModel.setTemplateEnabled(template.id, enabled)
-                val msg = if (enabled) getString(R.string.parser_enabled, template.name)
-                          else getString(R.string.parser_disabled, template.name)
-                Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
-            },
-            isBuiltinEnabled = { type -> viewModel.isBuiltinParserEnabled(type) },
         )
+    }
+
+    // ── Item model ────────────────────────────────────────────────────────────
+
+    private sealed class PickerItem {
+        data class Header(val title: String) : PickerItem()
+        data class BuiltIn(val type: CustomSourceType) : PickerItem()
+        data class Imported(val template: ParserTemplate) : PickerItem()
+        data class EmptyHint(val message: String) : PickerItem()
     }
 
     private fun buildItems(templates: List<ParserTemplate>): List<PickerItem> {
         val items = mutableListOf<PickerItem>()
 
-        // Section: Built-in Parsers
         items.add(PickerItem.Header(getString(R.string.section_builtin_parsers)))
         CustomSourceType.entries
             .filter { it != CustomSourceType.WEBVIEW && it != CustomSourceType.KOTATSU_PARSER }
             .forEach { items.add(PickerItem.BuiltIn(it)) }
 
-        // Section: Imported Parsers
         items.add(PickerItem.Header(getString(R.string.section_imported_parsers)))
         if (templates.isEmpty()) {
             items.add(PickerItem.EmptyHint(getString(R.string.no_imported_parsers)))
@@ -104,47 +103,35 @@ class ChangeParserSheet : BottomSheetDialogFragment() {
         return items
     }
 
-    // ── Data model ────────────────────────────────────────────────────────────
-
-    sealed class PickerItem {
-        data class Header(val title: String) : PickerItem()
-        data class BuiltIn(val type: CustomSourceType) : PickerItem()
-        data class Imported(val template: ParserTemplate) : PickerItem()
-        data class EmptyHint(val message: String) : PickerItem()
-    }
-
     // ── Adapter ───────────────────────────────────────────────────────────────
 
     private class ParserPickerAdapter(
         private val items: List<PickerItem>,
         private val currentType: CustomSourceType?,
-        private val currentTemplateName: String?,
+        private val currentTemplate: String?,
         private val onBuiltinSelected: (CustomSourceType) -> Unit,
         private val onTemplateSelected: (ParserTemplate) -> Unit,
-        private val onBuiltinToggled: (CustomSourceType, Boolean) -> Unit,
-        private val onTemplateToggled: (ParserTemplate, Boolean) -> Unit,
-        private val isBuiltinEnabled: (CustomSourceType) -> Boolean,
     ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
         companion object {
-            private const val TYPE_HEADER = 0
-            private const val TYPE_PARSER = 1
-            private const val TYPE_HINT   = 2
+            private const val VIEW_HEADER = 0
+            private const val VIEW_PARSER = 1
+            private const val VIEW_HINT   = 2
         }
 
         override fun getItemViewType(position: Int) = when (items[position]) {
-            is PickerItem.Header    -> TYPE_HEADER
-            is PickerItem.EmptyHint -> TYPE_HINT
-            else                    -> TYPE_PARSER
+            is PickerItem.Header    -> VIEW_HEADER
+            is PickerItem.EmptyHint -> VIEW_HINT
+            else                    -> VIEW_PARSER
         }
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
             val inflater = LayoutInflater.from(parent.context)
             return when (viewType) {
-                TYPE_HEADER -> HeaderVH(
+                VIEW_HEADER -> HeaderVH(
                     inflater.inflate(R.layout.item_parser_section_header, parent, false)
                 )
-                TYPE_HINT -> HintVH(
+                VIEW_HINT -> HintVH(
                     inflater.inflate(R.layout.item_parser_section_header, parent, false)
                 )
                 else -> ParserVH(
@@ -155,77 +142,62 @@ class ChangeParserSheet : BottomSheetDialogFragment() {
 
         override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
             when (val item = items[position]) {
-                is PickerItem.Header -> (holder as HeaderVH).bind(item)
-                is PickerItem.EmptyHint -> (holder as HintVH).bind(item)
-                is PickerItem.BuiltIn -> (holder as ParserVH).bindBuiltIn(
-                    item, isCurrentBuiltIn = currentType == item.type
-                )
-                is PickerItem.Imported -> (holder as ParserVH).bindImported(
-                    item, isCurrentTemplate = currentType == CustomSourceType.CUSTOM_TEMPLATE
-                        && currentTemplateName == item.template.name
-                )
+                is PickerItem.Header    -> (holder as HeaderVH).bind(item.title)
+                is PickerItem.EmptyHint -> (holder as HintVH).bind(item.message)
+                is PickerItem.BuiltIn   -> (holder as ParserVH).bindBuiltIn(item)
+                is PickerItem.Imported  -> (holder as ParserVH).bindImported(item)
             }
         }
 
         override fun getItemCount() = items.size
 
-        inner class HeaderVH(view: View) : RecyclerView.ViewHolder(view) {
-            private val title: TextView = view.findViewById(R.id.text_section_header)
-            fun bind(item: PickerItem.Header) { title.text = item.title }
+        class HeaderVH(view: View) : RecyclerView.ViewHolder(view) {
+            private val text: TextView = view.findViewById(R.id.text_section_header)
+            fun bind(title: String) { text.text = title }
         }
 
-        inner class HintVH(view: View) : RecyclerView.ViewHolder(view) {
+        class HintVH(view: View) : RecyclerView.ViewHolder(view) {
             private val text: TextView = view.findViewById(R.id.text_section_header)
-            fun bind(item: PickerItem.EmptyHint) {
-                text.alpha = 0.6f
+            fun bind(message: String) {
+                text.alpha = 0.55f
                 text.textSize = 13f
-                text.text = item.message
+                text.text = message
             }
         }
 
         inner class ParserVH(view: View) : RecyclerView.ViewHolder(view) {
-            private val nameView: TextView = view.findViewById(R.id.text_parser_name)
-            private val toggle: MaterialSwitch = view.findViewById(R.id.switch_parser_enabled)
+            private val nameView: TextView  = view.findViewById(R.id.text_parser_name)
+            private val checkIcon: ImageView = view.findViewById(R.id.icon_selected)
 
-            fun bindBuiltIn(item: PickerItem.BuiltIn, isCurrentBuiltIn: Boolean) {
-                val enabled = isBuiltinEnabled(item.type)
+            fun bindBuiltIn(item: PickerItem.BuiltIn) {
+                val isActive = currentType == item.type
                 nameView.text = item.type.label
-                nameView.alpha = if (enabled) 1f else 0.45f
-                // Bold if this is the currently active parser for the source
-                nameView.setTypeface(
-                    null,
-                    if (isCurrentBuiltIn) android.graphics.Typeface.BOLD
-                    else android.graphics.Typeface.NORMAL,
-                )
-
-                toggle.setOnCheckedChangeListener(null)
-                toggle.isChecked = enabled
-                toggle.setOnCheckedChangeListener { _, checked ->
-                    nameView.alpha = if (checked) 1f else 0.45f
-                    onBuiltinToggled(item.type, checked)
-                }
-
+                applyActiveStyle(isActive)
                 itemView.setOnClickListener { onBuiltinSelected(item.type) }
             }
 
-            fun bindImported(item: PickerItem.Imported, isCurrentTemplate: Boolean) {
-                val enabled = item.template.isEnabled
+            fun bindImported(item: PickerItem.Imported) {
+                val isActive = currentType == CustomSourceType.CUSTOM_TEMPLATE
+                    && currentTemplate == item.template.name
                 nameView.text = item.template.name
-                nameView.alpha = if (enabled) 1f else 0.45f
+                applyActiveStyle(isActive)
+                itemView.setOnClickListener { onTemplateSelected(item.template) }
+            }
+
+            private fun applyActiveStyle(active: Boolean) {
+                checkIcon.isVisible = active
                 nameView.setTypeface(
                     null,
-                    if (isCurrentTemplate) android.graphics.Typeface.BOLD
+                    if (active) android.graphics.Typeface.BOLD
                     else android.graphics.Typeface.NORMAL,
                 )
-
-                toggle.setOnCheckedChangeListener(null)
-                toggle.isChecked = enabled
-                toggle.setOnCheckedChangeListener { _, checked ->
-                    nameView.alpha = if (checked) 1f else 0.45f
-                    onTemplateToggled(item.template, checked)
-                }
-
-                itemView.setOnClickListener { onTemplateSelected(item.template) }
+                nameView.setTextColor(
+                    itemView.context.getColorStateList(
+                        if (active) com.google.android.material.R.attr.colorPrimary
+                        else com.google.android.material.R.attr.colorOnSurface
+                    )?.defaultColor
+                        ?: nameView.currentTextColor
+                )
             }
         }
     }

@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- Template list -->
+    <!-- Template list — full height, padding at the bottom clears the FAB -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler_parser_templates"
         android:layout_width="match_parent"
@@ -13,7 +13,7 @@
         android:clipToPadding="false"
         android:paddingHorizontal="12dp"
         android:paddingTop="8dp"
-        android:paddingBottom="96dp" />
+        android:paddingBottom="80dp" />
 
     <!-- Empty state -->
     <LinearLayout
@@ -44,63 +44,7 @@
 
     </LinearLayout>
 
-    <!-- Guide card — always visible -->
-    <com.google.android.material.card.MaterialCardView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        android:layout_marginStart="12dp"
-        android:layout_marginEnd="12dp"
-        android:layout_marginBottom="80dp"
-        app:cardBackgroundColor="?attr/colorSurfaceContainerLow"
-        app:cardCornerRadius="12dp"
-        app:cardElevation="0dp"
-        app:strokeColor="?attr/colorOutlineVariant"
-        app:strokeWidth="1dp">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="16dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="6dp"
-                android:text="@string/parser_template_what_title"
-                android:textAppearance="?attr/textAppearanceLabelLarge"
-                android:textColor="?attr/colorOnSurface" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="10dp"
-                android:text="@string/parser_template_what_body"
-                android:textAppearance="?attr/textAppearanceBodySmall"
-                android:textColor="?attr/colorOnSurfaceVariant" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="6dp"
-                android:text="@string/parser_template_example_title"
-                android:textAppearance="?attr/textAppearanceLabelMedium"
-                android:textColor="?attr/colorOnSurface" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:fontFamily="monospace"
-                android:text="@string/parser_template_example"
-                android:textAppearance="?attr/textAppearanceBodySmall"
-                android:textColor="?attr/colorOnSurfaceVariant" />
-
-        </LinearLayout>
-
-    </com.google.android.material.card.MaterialCardView>
-
-    <!-- FAB -->
+    <!-- Import FAB -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btn_import_parser_fab"
         style="@style/Widget.Material3.Button"

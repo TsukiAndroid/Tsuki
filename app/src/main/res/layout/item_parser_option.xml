@@ -8,31 +8,24 @@
     android:minHeight="56dp"
     android:orientation="horizontal"
     android:paddingHorizontal="24dp"
-    android:paddingVertical="10dp">
+    android:paddingVertical="12dp">
 
-    <LinearLayout
-        android:id="@+id/layout_parser_info"
+    <TextView
+        android:id="@+id/text_parser_name"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:orientation="vertical">
+        android:textAppearance="?attr/textAppearanceBodyLarge"
+        android:textColor="?attr/colorOnSurface"
+        tools:text="WordPress Madara" />
 
-        <TextView
-            android:id="@+id/text_parser_name"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textAppearance="?attr/textAppearanceBodyLarge"
-            android:textColor="?attr/colorOnSurface"
-            tools:text="WordPress Madara" />
-
-    </LinearLayout>
-
-    <com.google.android.material.materialswitch.MaterialSwitch
-        android:id="@+id/switch_parser_enabled"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:focusable="false"
-        android:showText="false"
-        android:thumbTextPadding="0dp" />
+    <ImageView
+        android:id="@+id/icon_selected"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:src="@drawable/ic_check"
+        android:tint="?attr/colorPrimary"
+        android:visibility="gone"
+        tools:visibility="visible" />
 
 </LinearLayout>
