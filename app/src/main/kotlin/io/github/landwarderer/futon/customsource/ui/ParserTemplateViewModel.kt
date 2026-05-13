@@ -30,6 +30,31 @@ class ParserTemplateViewModel @Inject constructor(
     private val _addSiteState = MutableStateFlow<AddSiteState>(AddSiteState.Idle)
     val addSiteState: StateFlow<AddSiteState> = _addSiteState.asStateFlow()
 
+    // ── Parser enable / disable ───────────────────────────────────────────────
+
+    /**
+     * Enable or disable an imported parser [template].
+     * Disabled templates are hidden from the parser picker and skipped during
+     * auto-detection; they remain in the list so the user can re-enable them.
+     */
+    fun setTemplateEnabled(id: Long, enabled: Boolean) {
+        repository.setEnabled(id, enabled)
+    }
+
+    /**
+     * Enable or disable a built-in parser [type] in the parser picker.
+     * Persists to SharedPreferences; takes effect immediately in all pickers.
+     */
+    fun setBuiltinParserEnabled(type: CustomSourceType, enabled: Boolean) {
+        customSourcesRepository.setBuiltinParserEnabled(type, enabled)
+    }
+
+    /** Returns whether [type] is currently enabled in the parser picker. */
+    fun isBuiltinParserEnabled(type: CustomSourceType): Boolean =
+        customSourcesRepository.isBuiltinParserEnabled(type)
+
+    // ── Template import ───────────────────────────────────────────────────────
+
     /**
      * Validates [jsonContent] and, if valid, saves the template.
      * Emits [ImportState.Success] or [ImportState.Error] accordingly.
@@ -65,12 +90,11 @@ class ParserTemplateViewModel @Inject constructor(
         }
     }
 
+    // ── Add site for template ─────────────────────────────────────────────────
+
     /**
      * Creates a [CustomSource] of type [CustomSourceType.CUSTOM_TEMPLATE] backed
      * by [template], pointing at [siteUrl].
-     *
-     * Emits [AddSiteState.Success] on success or [AddSiteState.Error] if the URL
-     * is invalid or the site is already in the user's sources.
      */
     fun addSourceForTemplate(template: ParserTemplate, siteUrl: String, siteName: String) {
         viewModelScope.launch {
@@ -143,7 +167,6 @@ class ParserTemplateViewModel @Inject constructor(
     sealed class AddSiteState {
         object Idle : AddSiteState()
         data class Error(val message: String) : AddSiteState()
-        /** [siteName] is the display name of the newly created source. */
         data class Success(val siteName: String, val templateName: String) : AddSiteState()
     }
 }
