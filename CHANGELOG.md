@@ -1,3 +1,11 @@
+## Alpha 1.485 (Build [#142](https://github.com/Space4414/Tsuki/actions/runs/25796703038))
+
+_2026-05-13 11:38 UTC_
+
+- feat: add domain-based auto-detection (Strategy 0) for CUSTOM_TEMPLATE sources (1267a4b)
+- Add KotatsuParserFallbackRepository for stale upstream-parser safety net (34e8fc3)
+
+
 ## Alpha 1.483 (Build [#141](https://github.com/Space4414/Tsuki/actions/runs/25795132385))
 
 _2026-05-13 11:05 UTC_
