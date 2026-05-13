@@ -1,3 +1,11 @@
+## Alpha 1.463 (Build [#129](https://github.com/Space4414/Tsuki/actions/runs/25772582575))
+
+_2026-05-13 01:31 UTC_
+
+- feat: Export Template button on ParserTemplatesFragment (806aa43)
+- feat: endpoint probe fallback in template auto-detect (faea5cd)
+
+
 ## Alpha 1.461 (Build [#128](https://github.com/Space4414/Tsuki/actions/runs/25771700647))
 
 _2026-05-13 01:05 UTC_
