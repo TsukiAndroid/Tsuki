@@ -1,3 +1,10 @@
+## Alpha 1.461 (Build [#128](https://github.com/Space4414/Tsuki/actions/runs/25771700647))
+
+_2026-05-13 01:05 UTC_
+
+- feat: endpoint probe fallback in template auto-detect (faea5cd)
+
+
 ## Alpha 1.458 (Build [#126](https://github.com/Space4414/Tsuki/actions/runs/25769197680))
 
 _2026-05-12 23:54 UTC_
