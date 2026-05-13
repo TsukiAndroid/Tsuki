@@ -1,3 +1,11 @@
+## Alpha 1.483 (Build [#141](https://github.com/Space4414/Tsuki/actions/runs/25795132385))
+
+_2026-05-13 11:05 UTC_
+
+- Add KotatsuParserFallbackRepository for stale upstream-parser safety net (34e8fc3)
+- fix(custom-sources): fix Madara detection for renamed themes and comix.to parser routing (9511b6c)
+
+
 ## Alpha 1.481 (Build [#140](https://github.com/Space4414/Tsuki/actions/runs/25794288818))
 
 _2026-05-13 10:47 UTC_
