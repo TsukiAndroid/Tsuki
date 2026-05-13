@@ -1,3 +1,11 @@
+## Alpha 1.471 (Build [#133](https://github.com/Space4414/Tsuki/actions/runs/25776318372))
+
+_2026-05-13 03:24 UTC_
+
+- feat: Change Parser sheet + sectioned parser picker in Add/Edit sheets (b9c2802)
+- Update generate-parser.js (bca7f1e)
+
+
 ## Alpha 1.469 (Build [#132](https://github.com/Space4414/Tsuki/actions/runs/25774595469))
 
 _2026-05-13 02:31 UTC_
