@@ -155,10 +155,17 @@ interface MangaRepository {
                                                         templateParser
                                                 }
 
-                                                return ParserMangaRepository(
-                                                        parser = finalParser,
-                                                        cache = contentCache,
-                                                        mirrorSwitcher = mirrorSwitcher,
+                                                // Wrap in a fallback so that if the upstream parser's
+                                                // selectors are stale (getList returns empty),
+                                                // CmsTypeDetector auto-detects the real CMS type
+                                                // and a CustomMangaRepository retries transparently.
+                                                return KotatsuParserFallbackRepository(
+                                                        primary = ParserMangaRepository(
+                                                                parser = finalParser,
+                                                                cache = contentCache,
+                                                                mirrorSwitcher = mirrorSwitcher,
+                                                        ),
+                                                        customSource = source,
                                                 )
                                         }
                                 }
