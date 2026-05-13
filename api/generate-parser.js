@@ -27,7 +27,7 @@ You MUST return a JSON object with these REQUIRED fields:
 - "version": always "1.0" (REQUIRED)
 - "author": "Tsuki Parser Generator" (REQUIRED)
 - "domain": "${parsedUrl.hostname}" (REQUIRED)
-- "sourceType": pick EXACTLY one from this list based on the site's CMS:
+- "type": pick EXACTLY one from this list based on the site's CMS:
   MANGADEX_COMPATIBLE, MADARA, MANGATHEMESIA, MANGASTREAM, GENKAN, FOOLSLIDE2,
   MANGANELO, ZEROSCANS_API, LHTRANSLATION, MANGASEE, GUYA, MANGAFIRE, MANGAPARK,
   COMIXTO, COMICK_API, BATO, NINEMANGA, MANGAHOST, MANGAREADER, MANGAFOX,
