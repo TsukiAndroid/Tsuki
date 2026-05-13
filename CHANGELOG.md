@@ -1,3 +1,15 @@
+## Alpha 1.479 (Build [#139](https://github.com/Space4414/Tsuki/actions/runs/25783085266))
+
+_2026-05-13 06:45 UTC_
+
+- fix: use appcompatR.attr.colorPrimary and getThemeColor extension (4e57810)
+- fix: use materialR import alias for non-transitive R class compatibility (6fd4620)
+- fix: resolve colorPrimary/colorOnSurface via MaterialColors.getColor() (e0f187a)
+- feat: add enable/disable toggles to Parsers settings screen (52a0c96)
+- fix: remove toggles from ChangeParserSheet; fix Parsers screen scroll (91788b6)
+- Update generate-parser.js (ca55c0d)
+
+
 ## Alpha 1.473 (Build [#134](https://github.com/Space4414/Tsuki/actions/runs/25781067772))
 
 _2026-05-13 05:51 UTC_
