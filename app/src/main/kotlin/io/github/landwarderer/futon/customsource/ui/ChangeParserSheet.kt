@@ -11,11 +11,12 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.appcompat.R as appcompatR
 import com.google.android.material.R as materialR
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
-import com.google.android.material.color.MaterialColors
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.landwarderer.futon.R
+import io.github.landwarderer.futon.core.util.ext.getThemeColor
 import io.github.landwarderer.futon.customsource.domain.CustomSourceType
 import io.github.landwarderer.futon.customsource.domain.ParserTemplate
 
@@ -193,13 +194,11 @@ class ChangeParserSheet : BottomSheetDialogFragment() {
                     if (active) android.graphics.Typeface.BOLD
                     else android.graphics.Typeface.NORMAL,
                 )
-                val colorAttr = if (active)
-                    materialR.attr.colorPrimary
+                val color = if (active)
+                    itemView.context.getThemeColor(appcompatR.attr.colorPrimary, nameView.currentTextColor)
                 else
-                    materialR.attr.colorOnSurface
-                nameView.setTextColor(
-                    MaterialColors.getColor(itemView.context, colorAttr, nameView.currentTextColor)
-                )
+                    itemView.context.getThemeColor(materialR.attr.colorOnSurface, nameView.currentTextColor)
+                nameView.setTextColor(color)
             }
         }
     }
