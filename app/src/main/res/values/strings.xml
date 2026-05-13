@@ -1079,4 +1079,8 @@
     <string name="add_site_for_template_hint">Site URL (e.g. https://example.com)</string>
     <string name="add_site_success">"%1$s" added using template "%2$s"</string>
     <string name="add_site_error_invalid_url">Please enter a valid URL (e.g. https://example.com)</string>
+    <string name="export_parser_template">Export template</string>
+    <string name="export_template_cd">Export</string>
+    <string name="export_template_subject">Parser template: %s</string>
+    <string name="export_template_failed">Export failed</string>
 </resources>

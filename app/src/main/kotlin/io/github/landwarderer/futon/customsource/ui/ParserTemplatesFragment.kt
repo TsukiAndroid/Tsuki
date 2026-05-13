@@ -1,11 +1,13 @@
 package io.github.landwarderer.futon.customsource.ui
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import android.widget.Toast
+import androidx.core.content.FileProvider
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -22,6 +24,7 @@ import kotlinx.coroutines.launch
 import io.github.landwarderer.futon.R
 import io.github.landwarderer.futon.customsource.domain.ParserTemplate
 import io.github.landwarderer.futon.settings.SettingsActivity
+import java.io.File
 
 /**
  * Settings screen — "Parsers" subsection inside Manga Sources.
@@ -29,6 +32,7 @@ import io.github.landwarderer.futon.settings.SettingsActivity
  * Shows all imported [ParserTemplate]s with their name, version, and type.
  * From here the user can:
  *  - import a new template via [ImportParserSheet]
+ *  - export an existing template to the Android share sheet
  *  - delete an existing template
  *  - add a manga site that uses a specific template via the "Add Site" button
  */
@@ -100,6 +104,7 @@ class ParserTemplatesFragment : Fragment() {
             templates = templates,
             onDelete = ::confirmDelete,
             onAddSite = ::showAddSiteDialog,
+            onExport = ::exportTemplate,
         )
     }
 
@@ -162,10 +167,49 @@ class ParserTemplatesFragment : Fragment() {
         dialog.show()
     }
 
+    /**
+     * Writes the template's raw JSON to a temporary file in the app cache directory
+     * and opens the Android share sheet so the user can send it anywhere they like
+     * (Files, Discord, e-mail, etc.).
+     *
+     * The file is named `<sanitised-template-name>.json` and is served via
+     * [FileProvider] so the receiving app gets read-only URI access without any
+     * extra permissions.
+     */
+    private fun exportTemplate(template: ParserTemplate) {
+        val ctx = requireContext()
+        runCatching {
+            val safeName = template.name
+                .replace(Regex("[^A-Za-z0-9._-]"), "_")
+                .take(64)
+                .ifEmpty { "template" }
+            val outDir = File(ctx.cacheDir, "template_exports").apply { mkdirs() }
+            val outFile = File(outDir, "$safeName.json")
+            outFile.writeText(template.rawJson)
+
+            val uri = FileProvider.getUriForFile(
+                ctx,
+                "${ctx.packageName}.files",
+                outFile,
+            )
+
+            val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                type = "application/json"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                putExtra(Intent.EXTRA_SUBJECT, getString(R.string.export_template_subject, template.name))
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            startActivity(Intent.createChooser(shareIntent, getString(R.string.export_parser_template)))
+        }.onFailure {
+            Toast.makeText(ctx, R.string.export_template_failed, Toast.LENGTH_SHORT).show()
+        }
+    }
+
     private class ParserTemplatesAdapter(
         private val templates: List<ParserTemplate>,
         private val onDelete: (ParserTemplate) -> Unit,
         private val onAddSite: (ParserTemplate) -> Unit,
+        private val onExport: (ParserTemplate) -> Unit,
     ) : RecyclerView.Adapter<ParserTemplatesAdapter.VH>() {
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
@@ -175,21 +219,23 @@ class ParserTemplatesFragment : Fragment() {
         }
 
         override fun onBindViewHolder(holder: VH, position: Int) {
-            holder.bind(templates[position], onDelete, onAddSite)
+            holder.bind(templates[position], onDelete, onAddSite, onExport)
         }
 
         override fun getItemCount(): Int = templates.size
 
         class VH(view: View) : RecyclerView.ViewHolder(view) {
-            private val nameView:   TextView       = view.findViewById(R.id.text_template_name)
-            private val metaView:   TextView       = view.findViewById(R.id.text_template_meta)
-            private val addSiteBtn: MaterialButton = view.findViewById(R.id.btn_add_site_template)
-            private val deleteBtn:  MaterialButton = view.findViewById(R.id.btn_delete_template)
+            private val nameView:    TextView       = view.findViewById(R.id.text_template_name)
+            private val metaView:    TextView       = view.findViewById(R.id.text_template_meta)
+            private val addSiteBtn:  MaterialButton = view.findViewById(R.id.btn_add_site_template)
+            private val exportBtn:   MaterialButton = view.findViewById(R.id.btn_export_template)
+            private val deleteBtn:   MaterialButton = view.findViewById(R.id.btn_delete_template)
 
             fun bind(
                 template: ParserTemplate,
                 onDelete: (ParserTemplate) -> Unit,
                 onAddSite: (ParserTemplate) -> Unit,
+                onExport: (ParserTemplate) -> Unit,
             ) {
                 nameView.text = template.name
                 metaView.text = itemView.context.getString(
@@ -198,7 +244,8 @@ class ParserTemplatesFragment : Fragment() {
                     template.type,
                 )
                 addSiteBtn.setOnClickListener { onAddSite(template) }
-                deleteBtn.setOnClickListener { onDelete(template) }
+                exportBtn.setOnClickListener  { onExport(template) }
+                deleteBtn.setOnClickListener  { onDelete(template) }
             }
         }
     }
