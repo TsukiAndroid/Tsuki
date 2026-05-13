@@ -1,3 +1,11 @@
+## Alpha 1.465 (Build [#130](https://github.com/Space4414/Tsuki/actions/runs/25773288908))
+
+_2026-05-13 01:52 UTC_
+
+- Update generate-parser.js (ee4fc76)
+- feat: Export Template button on ParserTemplatesFragment (806aa43)
+
+
 ## Alpha 1.463 (Build [#129](https://github.com/Space4414/Tsuki/actions/runs/25772582575))
 
 _2026-05-13 01:31 UTC_
