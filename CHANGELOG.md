@@ -1,3 +1,11 @@
+## Alpha 1.469 (Build [#132](https://github.com/Space4414/Tsuki/actions/runs/25774595469))
+
+_2026-05-13 02:31 UTC_
+
+- Update generate-parser.js (bca7f1e)
+- Update generate-parser.js (400f6de)
+
+
 ## Alpha 1.467 (Build [#131](https://github.com/Space4414/Tsuki/actions/runs/25774018339))
 
 _2026-05-13 02:13 UTC_
