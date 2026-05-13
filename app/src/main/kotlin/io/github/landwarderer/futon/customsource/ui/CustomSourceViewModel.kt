@@ -294,9 +294,10 @@ class CustomSourceViewModel @Inject constructor(
     /**
      * Runs the three-stage detection pipeline on [normalizedUrl]:
      *  1. [KotatsuParserMatcher] — built-in parser domain cache (highest priority)
-     *  2. Template matching — checks imported [ParserTemplate]s using two strategies:
-     *       a. `fingerprints` — HTML substrings matched against the homepage (one fetch shared)
-     *       b. `endpointProbes` — API paths probed individually (fallback for API-only sites)
+     *  2. Template matching — checks imported [ParserTemplate]s using three strategies:
+     *       a. `domains` — instant exact-domain match (zero network requests, highest priority)
+     *       b. `fingerprints` — HTML substrings matched against the homepage (one fetch shared)
+     *       c. `endpointProbes` — API paths probed individually (fallback for API-only sites)
      *     Only *enabled* templates are checked so disabled ones are truly skipped.
      *  3. [CmsTypeDetector] — generic HTML fingerprinting (49 built-in CMS checks)
      *
@@ -327,22 +328,31 @@ class CustomSourceViewModel @Inject constructor(
     }
 
     /**
-     * Returns the name of the first imported [ParserTemplate] whose optional
-     * `fingerprints` JSON array (list of HTML substrings) all appear in the
-     * site's homepage HTML or via endpoint probes, or null if no template matches.
+     * Returns the name of the first imported [ParserTemplate] whose detection
+     * criteria match this site, or null if no template matches.
      *
-     * Two detection strategies are supported per template (checked in order):
+     * Three detection strategies are supported per template, checked in priority order.
+     * Each template uses at most one strategy — whichever field is present first wins.
+     *
+     * **0. Domain match** — instant exact check, zero network requests (highest priority).
+     * Declare the hostnames this template covers in the `domains` JSON array.
+     * `www.` is stripped before comparing so `example.com` matches both variants.
+     * ```json
+     * { "domains": ["example.com", "mirror.example.com"] }
+     * ```
+     * If `domains` is present, fingerprints and endpoint probes are NOT checked for
+     * that template — the template either matches the domain or it doesn't.
      *
      * **1. HTML fingerprints** — substrings that must all appear in the homepage HTML.
-     * The homepage is fetched at most once, shared across all fingerprint-bearing templates.
+     * The homepage is fetched at most once and shared across all fingerprint-bearing templates.
+     * Best for templates that cover a CMS family (e.g. any WordPress Madara site).
      * ```json
      * { "fingerprints": ["wp-manga", "my-special-class"] }
      * ```
+     * If `fingerprints` is present (and `domains` is absent), endpoint probes are NOT checked.
      *
-     * **2. Endpoint probes** — API paths probed with a real HTTP request; used as a
-     * fallback when a template has no `fingerprints` (or as the primary strategy for
-     * API-driven sites where the homepage carries no CMS markers). Each probe must
-     * return a response containing the expected substring.
+     * **2. Endpoint probes** — one HTTP request per probe; used as a fallback for
+     * API-driven sites whose homepage carries no CMS markers. All probes must pass.
      * ```json
      * { "endpointProbes": [
      *     { "path": "/api/comics",    "contains": "\"slug\""     },
@@ -350,7 +360,6 @@ class CustomSourceViewModel @Inject constructor(
      * ] }
      * ```
      * `path` may be a full URL or a root-relative path (prefixed with [url]).
-     * All probes must pass for the template to match.
      *
      * Returns null immediately when [templates] is empty (zero network requests made).
      */
@@ -359,6 +368,11 @@ class CustomSourceViewModel @Inject constructor(
         templates: List<ParserTemplate>,
     ): String? {
         if (templates.isEmpty()) return null
+
+        // Extract host once for Strategy 0 domain matching (no network call needed).
+        val host = runCatching {
+            URI(url).host?.lowercase()?.removePrefix("www.")
+        }.getOrNull()
 
         // Lazy homepage fetch — shared across all fingerprint checks so the site
         // is probed at most once even when multiple templates declare fingerprints.
@@ -374,6 +388,21 @@ class CustomSourceViewModel @Inject constructor(
 
         for (template in templates) {
             val root = runCatching { JSONObject(template.rawJson) }.getOrNull() ?: continue
+
+            // Strategy 0: exact domain match — instant, zero network requests.
+            // Strips "www." from both sides before comparing so a template declaring
+            // "example.com" matches https://www.example.com and vice-versa.
+            val domainsArr = root.optJSONArray("domains")
+            if (domainsArr != null && domainsArr.length() > 0) {
+                if (host != null) {
+                    val domains = (0 until domainsArr.length())
+                        .map { domainsArr.getString(it).lowercase().removePrefix("www.") }
+                    if (host in domains) return template.name
+                }
+                // domains declared but this host is not in the list — skip template entirely;
+                // do NOT fall through to fingerprints or probes.
+                continue
+            }
 
             // Strategy 1: HTML fingerprints (homepage markers, no extra requests)
             val fpArr = root.optJSONArray("fingerprints")
