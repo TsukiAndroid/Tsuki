@@ -18,7 +18,34 @@ export default async function handler(req, res) {
 
   const siteName = parsedUrl.hostname.replace('www.', '');
 
-  const prompt = `You are a manga parser expert. Generate a Tsuki manga reader parser template JSON for this site: ${url}\n\nThe site domain is: ${siteName}\n\nBased on your knowledge of manga sites and their common CMS families (Madara/WordPress, MangaDex API, ComicK API, MangaThemesia, MangaStream, Guya, MangaSee, MangaFire, Manganelo, ZeroScans, FoolSlide2, Genkan, etc.), generate the most accurate parser template possible.\n\nReturn ONLY a valid JSON object, no explanation, no markdown backticks, just raw JSON.`;
+  const prompt = `You are a manga parser expert for the Tsuki Android app. Analyze this manga site and generate a parser template JSON: ${url}
+
+Domain: ${siteName}
+
+You MUST return a JSON object with these REQUIRED fields:
+- "name": the site's display name (REQUIRED)
+- "version": always "1.0" (REQUIRED)
+- "author": "Tsuki Parser Generator" (REQUIRED)
+- "domain": "${parsedUrl.hostname}" (REQUIRED)
+- "sourceType": pick EXACTLY one from this list based on the site's CMS:
+  MANGADEX_COMPATIBLE, MADARA, MANGATHEMESIA, MANGASTREAM, GENKAN, FOOLSLIDE2,
+  MANGANELO, ZEROSCANS_API, LHTRANSLATION, MANGASEE, GUYA, MANGAFIRE, MANGAPARK,
+  COMIXTO, COMICK_API, BATO, NINEMANGA, MANGAHOST, MANGAREADER, MANGAFOX,
+  TCBSCANS, MANGANATO, READERFRONT, KISSMANGA, CUBARI, MANGAPILL, MANGAHUB,
+  MANGAHERE, MANGALIB, MANGAGO, MANGAFREAK, MANGAOWL, NETTRUYEN, TRUYENQQ,
+  MANGAKATANA, ZEISTMANGA, KEYOAPP, HEANCMS, WPCOMICS, MMRCMS, MADTHEME,
+  MANGABOX, LILIANA, IKEN, SCAN, PIZZAREADER, FMREADER, GATTSU, ANIMEBOOTSTRAP,
+  WEBVIEW, KOTATSU_PARSER, CUSTOM_TEMPLATE
+- "mangaList": { "endpoint": "/path", "method": "GET or POST", "pagination": "page or ajax or offset", "pageParam": "page" }
+- "mangaDetail": { "titleSelector": "css selector", "coverSelector": "css selector", "descriptionSelector": "css selector", "authorSelector": "css selector", "statusSelector": "css selector" }
+- "chapterList": { "endpoint": "/path or ajax endpoint", "method": "GET or POST", "action": "ajax action or null", "dateSelector": "css selector", "titleSelector": "css selector", "urlSelector": "css selector" }
+- "pageList": { "imageSelector": "css selector", "type": "html or js_array or api" }
+- "search": { "endpoint": "/search or ajax", "param": "s or q or keyword" }
+- "genres": { "endpoint": "/genre/", "selector": "css selector" }
+- "headers": { "Referer": "${parsedUrl.origin}" }
+- "notes": "any quirks about this site"
+
+Return ONLY raw JSON, no markdown, no backticks, no explanation.`;
 
   try {
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`, {
@@ -45,4 +72,4 @@ export default async function handler(req, res) {
   } catch (err) {
     return res.status(500).json({ error: err.message || 'Failed to generate parser' });
   }
-                                 }
+      }
