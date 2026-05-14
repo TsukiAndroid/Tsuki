@@ -1,3 +1,11 @@
+## Alpha 1.536 (Build [#178](https://github.com/Space4414/Tsuki/actions/runs/25876069805))
+
+_2026-05-14 17:52 UTC_
+
+- ci: add org.gradle.java.installations.fromEnv=JAVA_HOME to gradle.properties (5453da0)
+- ci: regenerate gradle-daemon-jvm.properties via updateDaemonJvm before every build (3b92ab3)
+
+
 ## Alpha 1.532 (Build [#176](https://github.com/Space4414/Tsuki/actions/runs/25874914749))
 
 _2026-05-14 17:28 UTC_
