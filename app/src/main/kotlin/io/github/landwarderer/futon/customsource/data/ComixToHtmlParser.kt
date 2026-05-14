@@ -313,7 +313,7 @@ package io.github.landwarderer.futon.customsource.data
        * Resolves an image element's URL by checking every lazy-load attribute in order.
        * Returns [fallback] if no valid URL is found.
        */
-      private fun resolveImageUrl(img: Element?, fallback: String): String {
+      private fun resolveImageUrl(img: Element?, fallback: String? = null): String {
           if (img == null) return fallback
           return listOf(
               img.attr("data-src"),
