@@ -132,6 +132,16 @@ class CustomSourcesSettingsFragment : Fragment() {
                         importLauncher.launch(arrayOf("application/json", "*/*"))
                         true
                     }
+                    R.id.action_browse_library -> {
+                        KotatsuParserBrowserSheet.newInstance()
+                            .show(childFragmentManager, KotatsuParserBrowserSheet.TAG)
+                        true
+                    }
+                    R.id.action_health_check -> {
+                        ParserHealthCheckSheet.newInstance()
+                            .show(childFragmentManager, ParserHealthCheckSheet.TAG)
+                        true
+                    }
                     else -> false
                 }
             }

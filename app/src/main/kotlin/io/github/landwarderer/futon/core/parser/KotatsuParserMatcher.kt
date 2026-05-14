@@ -562,6 +562,58 @@ class KotatsuParserMatcher @Inject constructor(
         null
     }
 
+    // ── Library browser API ───────────────────────────────────────────────────
+
+    /**
+     * Info about a single parser from the kotatsu-parsers-redo library,
+     * ready for display in the parser-browser UI.
+     */
+    data class KotatsuLibraryParser(
+        val source: MangaParserSource,
+        /** Human-readable name, e.g. "MangaDex" derived from "MANGADEX". */
+        val displayName: String,
+        /** The parser's default domain, e.g. "mangadex.org" (no www. prefix). */
+        val domain: String,
+        /** Two-letter language tag, upper-cased, e.g. "EN". Empty string when not set. */
+        val languageTag: String,
+    )
+
+    /** All non-broken library parsers with display info.  Built lazily once. */
+    private val libraryParsers: List<KotatsuLibraryParser> by lazy { buildLibraryParsersList() }
+
+    /**
+     * Returns all non-broken parsers from the kotatsu-parsers-redo library,
+     * sorted alphabetically by display name.
+     *
+     * This method instantiates every parser to discover its domain — it is
+     * intentionally expensive and must be called from a background thread.
+     * The result is cached after the first call.
+     */
+    fun getAllLibraryParsers(): List<KotatsuLibraryParser> = libraryParsers
+
+    private fun buildLibraryParsersList(): List<KotatsuLibraryParser> {
+        return MangaParserSource.entries
+            .filter { !it.isBroken }
+            .mapNotNull { source ->
+                runCatching {
+                    val parser = loaderContext.newParserInstance(source)
+                    val domain = parser.domain.lowercase().removePrefix("www.")
+                    val display = source.name
+                        .split('_')
+                        .joinToString(" ") { w ->
+                            w.lowercase().replaceFirstChar { it.uppercase() }
+                        }
+                    KotatsuLibraryParser(
+                        source      = source,
+                        displayName = display,
+                        domain      = domain,
+                        languageTag = source.locale.take(2).uppercase(),
+                    )
+                }.getOrNull()
+            }
+            .sortedBy { it.displayName }
+    }
+
     companion object {
         private const val USER_AGENT = "Mozilla/5.0 (Android 14; Mobile) Tsuki/1.0"
 

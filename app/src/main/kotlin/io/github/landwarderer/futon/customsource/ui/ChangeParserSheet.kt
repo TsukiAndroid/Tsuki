@@ -79,6 +79,11 @@ class ChangeParserSheet : BottomSheetDialogFragment() {
                 ).show()
                 dismiss()
             },
+            onBrowseLibrary = {
+                dismiss()
+                KotatsuParserBrowserSheet.newInstanceForChange(sourceId)
+                    .show(parentFragmentManager, KotatsuParserBrowserSheet.TAG)
+            },
         )
     }
 
@@ -91,6 +96,8 @@ class ChangeParserSheet : BottomSheetDialogFragment() {
         data class BuiltIn(val type: CustomSourceType) : PickerItem()
         data class Imported(val template: ParserTemplate) : PickerItem()
         data class EmptyHint(val message: String) : PickerItem()
+        /** Tappable row that opens the full Kotatsu library browser sheet. */
+        object BrowseLibrary : PickerItem()
     }
 
     private fun buildItems(
@@ -127,6 +134,11 @@ class ChangeParserSheet : BottomSheetDialogFragment() {
             templates.forEach { items.add(PickerItem.Imported(it)) }
         }
 
+        // "Browse Kotatsu Library" action row — opens the full 800+ parser browser
+        // so the user can switch to any kotatsu-parsers-redo parser.
+        items.add(PickerItem.Header(getString(R.string.section_kotatsu_library)))
+        items.add(PickerItem.BrowseLibrary)
+
         return items
     }
 
@@ -138,6 +150,7 @@ class ChangeParserSheet : BottomSheetDialogFragment() {
         private val currentTemplate: String?,
         private val onBuiltinSelected: (CustomSourceType) -> Unit,
         private val onTemplateSelected: (ParserTemplate) -> Unit,
+        private val onBrowseLibrary: () -> Unit,
     ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
         companion object {
@@ -174,11 +187,12 @@ class ChangeParserSheet : BottomSheetDialogFragment() {
 
         override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
             when (val item = items[position]) {
-                is PickerItem.CurrentInfo -> (holder as CurrentInfoVH).bind(item.label)
-                is PickerItem.Header      -> (holder as HeaderVH).bind(item.title)
-                is PickerItem.EmptyHint   -> (holder as HintVH).bind(item.message)
-                is PickerItem.BuiltIn     -> (holder as ParserVH).bindBuiltIn(item)
-                is PickerItem.Imported    -> (holder as ParserVH).bindImported(item)
+                is PickerItem.CurrentInfo  -> (holder as CurrentInfoVH).bind(item.label)
+                is PickerItem.Header       -> (holder as HeaderVH).bind(item.title)
+                is PickerItem.EmptyHint    -> (holder as HintVH).bind(item.message)
+                is PickerItem.BuiltIn      -> (holder as ParserVH).bindBuiltIn(item)
+                is PickerItem.Imported     -> (holder as ParserVH).bindImported(item)
+                is PickerItem.BrowseLibrary -> (holder as ParserVH).bindBrowseLibrary()
             }
         }
 
@@ -238,6 +252,18 @@ class ChangeParserSheet : BottomSheetDialogFragment() {
                 itemView.setOnClickListener { onTemplateSelected(item.template) }
             }
 
+            fun bindBrowseLibrary() {
+                nameView.text = itemView.context.getString(R.string.browse_kotatsu_library_action)
+                checkIcon.isVisible = false
+                nameView.setTypeface(null, android.graphics.Typeface.NORMAL)
+                val color = itemView.context.getThemeColor(
+                    com.google.android.material.R.attr.colorPrimary,
+                    nameView.currentTextColor,
+                )
+                nameView.setTextColor(color)
+                itemView.setOnClickListener { onBrowseLibrary() }
+            }
+
             private fun applyActiveStyle(active: Boolean) {
                 checkIcon.isVisible = active
                 nameView.setTypeface(
@@ -263,3 +289,4 @@ class ChangeParserSheet : BottomSheetDialogFragment() {
         }
     }
 }
+

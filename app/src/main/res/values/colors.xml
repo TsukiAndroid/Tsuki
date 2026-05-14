@@ -36,6 +36,11 @@
         <!-- Alias used by parsers library layout resources -->
         <color name="kotatsu_outline">#73777F</color>
 
+        <!-- Parser health check status colors -->
+        <color name="health_ok">#2E7D32</color>
+        <color name="health_slow">#E65100</color>
+        <color name="health_error">#C62828</color>
+
         <!-- Structured Glass Aesthetic -->
         <!-- 50% dark — lets background artwork bleed through (adapts to any bg color) -->
         <color name="glass_search_fill">#80000000</color>

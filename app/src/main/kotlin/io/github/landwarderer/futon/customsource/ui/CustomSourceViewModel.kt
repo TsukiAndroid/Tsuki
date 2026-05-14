@@ -11,7 +11,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import io.github.landwarderer.futon.core.parser.KotatsuParserMatcher
+import io.github.landwarderer.futon.core.parser.KotatsuParserMatcher.KotatsuLibraryParser
 import io.github.landwarderer.futon.core.parser.MangaRepository
+import org.koitharu.kotatsu.parsers.model.MangaParserSource
 import io.github.landwarderer.futon.customsource.data.CmsTypeDetector
 import io.github.landwarderer.futon.customsource.data.CustomSourcesRepository
 import io.github.landwarderer.futon.customsource.data.ParserTemplateRepository
@@ -40,6 +42,25 @@ class CustomSourceViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow<UiState>(UiState.Idle)
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
+
+    // ── Kotatsu library parsers ───────────────────────────────────────────────
+
+    private val _kotatsuLibraryParsers = MutableStateFlow<List<KotatsuLibraryParser>>(emptyList())
+    val kotatsuLibraryParsers: StateFlow<List<KotatsuLibraryParser>> = _kotatsuLibraryParsers.asStateFlow()
+
+    // ── Health check results ──────────────────────────────────────────────────
+
+    /** Health status of a single custom source. */
+    data class HealthStatus(
+        val status: Status,
+        val httpCode: Int? = null,
+        val latencyMs: Long? = null,
+    ) {
+        enum class Status { PENDING, CHECKING, OK, SLOW, REDIRECT, ERROR }
+    }
+
+    private val _healthResults = MutableStateFlow<Map<Long, HealthStatus>>(emptyMap())
+    val healthResults: StateFlow<Map<Long, HealthStatus>> = _healthResults.asStateFlow()
 
     /** Look up a saved source by its id (used to pre-fill the edit sheet). */
     fun findById(id: Long): CustomSource? = repository.findById(id)
@@ -297,6 +318,113 @@ class CustomSourceViewModel @Inject constructor(
     fun exportSourcesJson(): String = repository.exportJson()
 
     fun importSourcesJson(json: String): Int = repository.importJson(json)
+
+    /**
+     * Triggers a background load of all kotatsu-parsers-redo library parsers.
+     * Safe to call multiple times — no-op after the first load completes.
+     */
+    fun loadKotatsuLibraryParsers() {
+        if (_kotatsuLibraryParsers.value.isNotEmpty()) return
+        viewModelScope.launch(Dispatchers.Default) {
+            _kotatsuLibraryParsers.value = kotatsuParserMatcher.getAllLibraryParsers()
+        }
+    }
+
+    /**
+     * Adds a kotatsu-parsers-redo parser as a new custom source.
+     *
+     * If [mirrorUrl] points to a different domain than the parser's default,
+     * [MangaRepository.Factory] will automatically wrap the parser in a
+     * [DomainOverrideLoaderContext] so requests go to the mirror instead.
+     *
+     * If [mirrorUrl] is blank / null, the parser's default domain is used.
+     */
+    fun addKotatsuLibrarySource(
+        source: MangaParserSource,
+        mirrorUrl: String?,
+        name: String = "",
+        description: String = "",
+    ) {
+        viewModelScope.launch {
+            val urlRaw = mirrorUrl?.trim()?.takeIf { it.isNotBlank() }
+            val normalized: String? = if (urlRaw != null) {
+                normalizeUrl(urlRaw)
+            } else {
+                _kotatsuLibraryParsers.value.find { it.source == source }
+                    ?.domain?.let { "https://$it" }
+            }
+            if (normalized == null) {
+                _uiState.value = UiState.Error("Please enter a valid URL (e.g. https://example.com)")
+                return@launch
+            }
+            val existing = repository.findByUrl(normalized)
+            if (existing != null) {
+                _uiState.value = UiState.Error(
+                    "Already added as \"${existing.displayName}\". Edit it from the list instead."
+                )
+                return@launch
+            }
+            val fallbackDisplay = source.name
+                .split('_')
+                .joinToString(" ") { w -> w.lowercase().replaceFirstChar { it.uppercase() } }
+            val displayName = name.trim().ifBlank {
+                _kotatsuLibraryParsers.value.find { it.source == source }?.displayName
+                    ?: fallbackDisplay
+            }
+            val newSource = CustomSource(
+                id               = CustomSourcesRepository.generateId(),
+                name             = displayName,
+                baseUrl          = normalized,
+                type             = CustomSourceType.KOTATSU_PARSER,
+                parserSourceName = source.name,
+                description      = description.trim().takeIf { it.isNotEmpty() },
+            )
+            repository.add(newSource)
+            _uiState.value = UiState.SourceAdded(newSource)
+            fetchAndStoreFavicon(newSource)
+        }
+    }
+
+    /**
+     * Pings every current custom source concurrently and streams results
+     * through [healthResults].  Each source transitions: PENDING → CHECKING → result.
+     */
+    fun runHealthCheckAll() {
+        val current = repository.sources.value
+        _healthResults.value = current.associate { it.id to HealthStatus(HealthStatus.Status.PENDING) }
+        viewModelScope.launch {
+            current.forEach { source ->
+                _healthResults.value = _healthResults.value +
+                    (source.id to HealthStatus(HealthStatus.Status.CHECKING))
+                val result = withContext(Dispatchers.IO) { pingSource(source.cleanBaseUrl) }
+                _healthResults.value = _healthResults.value + (source.id to result)
+            }
+        }
+    }
+
+    private fun pingSource(url: String): HealthStatus = runCatching {
+        val start = System.currentTimeMillis()
+        val probeClient = httpClient.newBuilder()
+            .connectTimeout(8, TimeUnit.SECONDS)
+            .readTimeout(8, TimeUnit.SECONDS)
+            .followRedirects(false)
+            .build()
+        val req = Request.Builder()
+            .url(url.trimEnd('/'))
+            .head()
+            .header("User-Agent", "Tsuki/1.0 (Android)")
+            .build()
+        probeClient.newCall(req).execute().use { resp ->
+            val latency = System.currentTimeMillis() - start
+            val status = when {
+                resp.code in 200..299 && latency < 3_000 -> HealthStatus.Status.OK
+                resp.code in 200..299                    -> HealthStatus.Status.SLOW
+                resp.code in 300..399                    -> HealthStatus.Status.REDIRECT
+                else                                     -> HealthStatus.Status.ERROR
+            }
+            HealthStatus(status, resp.code, latency)
+        }
+    }.getOrElse { HealthStatus(HealthStatus.Status.ERROR) }
 
     // ── Private helpers ────────────────────────────────────────────────────────
 

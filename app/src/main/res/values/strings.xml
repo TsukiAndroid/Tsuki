@@ -1083,6 +1083,38 @@
     <string name="export_template_cd">Export</string>
     <string name="export_template_subject">Parser template: %s</string>
     <string name="export_template_failed">Export failed</string>
+    <!-- Kotatsu Library Browser -->
+    <string name="kotatsu_library_title">Kotatsu Parser Library</string>
+    <string name="kotatsu_library_subtitle">Browse all built-in parsers. Tap one to add it as a source, or point it at your own mirror URL.</string>
+    <string name="kotatsu_library_title_change">Switch to Library Parser</string>
+    <string name="kotatsu_library_subtitle_change">Pick a built-in parser to use for this source. The source\'s URL will remain the same.</string>
+    <string name="search_parsers_hint">Search parsers (name, domain, language…)</string>
+    <string name="no_parsers_found">No parsers match your search</string>
+    <string name="add_library_parser_title">Add "%s" parser</string>
+    <string name="change_to_library_parser_title">Use "%s"?</string>
+    <string name="change_to_library_parser_body">This parser\'s default domain is %s.\n\nThe current source URL will stay the same — it will be used as an override domain if it differs from the parser\'s default.</string>
+    <string name="library_parser_default_domain">Default domain: %s</string>
+    <string name="library_mirror_url_hint">URL (use default or enter mirror)</string>
+    <string name="library_source_added">"%s" added as a source</string>
+    <string name="browse_kotatsu_library_action">Browse Kotatsu Parser Library…</string>
+    <string name="apply_label">Apply</string>
+    <!-- Parser management menu -->
+    <string name="action_browse_library">Browse Library</string>
+    <string name="action_health_check">Check Sources</string>
+    <!-- Section headers -->
+    <string name="section_kotatsu_library">Kotatsu Library</string>
+    <!-- Health check -->
+    <string name="health_check_title">Source Health Check</string>
+    <string name="health_check_all_label">Check All</string>
+    <string name="health_recheck_label">Re-check All</string>
+    <string name="health_checking_label">Checking…</string>
+    <string name="health_summary">%1$d reachable · %2$d failed · %3$d total</string>
+    <string name="health_status_ok">Reachable</string>
+    <string name="health_status_slow">Slow (&gt; 3s)</string>
+    <string name="health_status_redirect">Redirect</string>
+    <string name="health_status_error">Unreachable</string>
+    <string name="health_status_checking">Checking…</string>
+    <string name="health_status_pending">—</string>
     <!-- Change Parser feature -->
     <string name="change_parser">Change Parser</string>
     <string name="change_parser_subtitle">Select a parser for this source. The active parser is shown with a checkmark.</string>

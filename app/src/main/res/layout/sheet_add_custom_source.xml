@@ -93,6 +93,15 @@
             android:maxLines="3" />
     </com.google.android.material.textfield.TextInputLayout>
 
+    <!-- "Browse Kotatsu Library" shortcut -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_browse_library"
+        style="@style/Widget.Material3.Button.TonalButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp"
+        android:text="@string/browse_kotatsu_library_action" />
+
     <!-- Buttons -->
     <LinearLayout
         android:layout_width="match_parent"

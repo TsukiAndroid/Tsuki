@@ -4,6 +4,18 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
+        android:id="@+id/action_browse_library"
+        android:icon="@drawable/ic_search"
+        android:title="@string/action_browse_library"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/action_health_check"
+        android:icon="@drawable/ic_alert_outline"
+        android:title="@string/action_health_check"
+        app:showAsAction="ifRoom" />
+
+    <item
         android:id="@+id/action_export_sources"
         android:icon="@drawable/ic_save"
         android:title="@string/action_export_sources"

@@ -116,6 +116,14 @@ class AddCustomSourceSheet : BottomSheetDialogFragment() {
 
         btnCancel.setOnClickListener { dismiss() }
 
+        // "Browse Kotatsu Library" shortcut — opens the full library browser
+        // where the user can pick any library parser and optionally enter a mirror URL.
+        view.findViewById<MaterialButton>(R.id.btn_browse_library)?.setOnClickListener {
+            dismiss()
+            KotatsuParserBrowserSheet.newInstance()
+                .show(parentFragmentManager, KotatsuParserBrowserSheet.TAG)
+        }
+
         lifecycleScope.launch {
             viewModel.uiState.collect { state ->
                 val detecting = state is CustomSourceViewModel.UiState.Detecting
