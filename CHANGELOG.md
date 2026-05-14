@@ -1,3 +1,11 @@
+## Alpha 1.493 (Build [#146](https://github.com/Space4414/Tsuki/actions/runs/25837996569))
+
+_2026-05-14 02:26 UTC_
+
+- feat(customsource): remote template sync from Space4414/tsuki-parsers (bb7a800)
+- fix: root-cause all custom-parser "Nothing found" failures (df12a49)
+
+
 ## Alpha 1.491 (Build [#145](https://github.com/Space4414/Tsuki/actions/runs/25835779560))
 
 _2026-05-14 01:14 UTC_
