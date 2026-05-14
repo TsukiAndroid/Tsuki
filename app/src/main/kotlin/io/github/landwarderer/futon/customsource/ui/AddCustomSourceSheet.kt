@@ -216,8 +216,14 @@ class AddCustomSourceSheet : BottomSheetDialogFragment() {
         val list = mutableListOf<ParserEntry>()
         list.add(ParserEntry.AutoDetect)
         list.add(ParserEntry.SectionHeader("── Built-in Parsers ──"))
+        // Exclude broken parsers (BATO / MANGAPARK are @Broken upstream)
         CustomSourceType.entries
-            .filter { it != CustomSourceType.KOTATSU_PARSER && it != CustomSourceType.CUSTOM_TEMPLATE }
+            .filter {
+                it != CustomSourceType.KOTATSU_PARSER &&
+                    it != CustomSourceType.CUSTOM_TEMPLATE &&
+                    it != CustomSourceType.BATO &&
+                    it != CustomSourceType.MANGAPARK
+            }
             .forEach { list.add(ParserEntry.BuiltIn(it)) }
         if (templates.isNotEmpty()) {
             list.add(ParserEntry.SectionHeader("── Imported Parsers ──"))
