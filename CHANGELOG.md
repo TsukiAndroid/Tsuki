@@ -1,3 +1,11 @@
+## Alpha 1.489 (Build [#144](https://github.com/Space4414/Tsuki/actions/runs/25834937086))
+
+_2026-05-14 00:47 UTC_
+
+- Update generate-parser.js (1565d4f)
+- fix: flawless parser system — 4 bugs resolved (6c12b7c)
+
+
 ## Alpha 1.487 (Build [#143](https://github.com/Space4414/Tsuki/actions/runs/25797813493))
 
 _2026-05-13 12:02 UTC_
