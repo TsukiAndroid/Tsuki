@@ -1,3 +1,11 @@
+## Alpha 1.501 (Build [#150](https://github.com/Space4414/Tsuki/actions/runs/25847761671))
+
+_2026-05-14 07:28 UTC_
+
+- Delete parser-template directory (a548c99)
+- feat: template fallback fires only when CmsTypeDetector returns WEBVIEW (8fc3c07)
+
+
 ## Alpha 1.499 (Build [#149](https://github.com/Space4414/Tsuki/actions/runs/25845705844))
 
 _2026-05-14 06:32 UTC_
