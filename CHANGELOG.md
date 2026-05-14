@@ -1,3 +1,12 @@
+## Alpha 1.538 (Build [#179](https://github.com/Space4414/Tsuki/actions/runs/25877035495))
+
+_2026-05-14 18:11 UTC_
+
+- chore: ignore gradle/gradle-daemon-jvm.properties (728f088)
+- ci: add org.gradle.java.installations.fromEnv=JAVA_HOME to gradle.properties (5453da0)
+- ci: regenerate gradle-daemon-jvm.properties via updateDaemonJvm before every build (3b92ab3)
+
+
 ## Alpha 1.536 (Build [#178](https://github.com/Space4414/Tsuki/actions/runs/25876069805))
 
 _2026-05-14 17:52 UTC_
