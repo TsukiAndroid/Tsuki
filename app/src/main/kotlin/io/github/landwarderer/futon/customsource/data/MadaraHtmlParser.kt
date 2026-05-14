@@ -48,7 +48,27 @@ class MadaraHtmlParser(
     }
 
     fun getGenres(): Set<MangaTag> {
-        val doc = runCatching { fetchDocument("$baseUrl/manga/") }.getOrNull() ?: return emptySet()
+        // Try all common Madara content-type slugs to find a page with genre checkboxes.
+        val slugsToTry = listOf("manga", "manhwa", "manhua", "webtoon", "comic")
+        var doc: org.jsoup.nodes.Document? = null
+        for (slug in slugsToTry) {
+            val candidate = runCatching { fetchDocument("$baseUrl/$slug/") }.getOrNull()
+            if (candidate != null && candidate.select(
+                    ".checkbox-manga-genre .checkbox, .manga-genres .checkbox, " +
+                    ".c-checkbox-list .checkbox, a[href*=manga-genre/], a[href*=/genre/]"
+                ).isNotEmpty()) {
+                doc = candidate
+                break
+            }
+        }
+        // Fall back to the first page that loaded even if no genre widgets found
+        if (doc == null) {
+            for (slug in slugsToTry) {
+                doc = runCatching { fetchDocument("$baseUrl/$slug/") }.getOrNull()
+                if (doc != null) break
+            }
+        }
+        doc ?: return emptySet()
         val tags = mutableSetOf<MangaTag>()
         // Primary: checkbox genre inputs (data-value or value) + their labels
         doc.select(".checkbox-manga-genre .checkbox, .manga-genres .checkbox, .c-checkbox-list .checkbox").forEach { el ->
@@ -152,8 +172,22 @@ class MadaraHtmlParser(
         val ajaxResult = runCatching { fetchListAjax(page, ajaxOrder.first, ajaxOrder.second) }.getOrNull()
         if (!ajaxResult.isNullOrEmpty()) return ajaxResult
 
-        val htmlUrl = "$baseUrl/manga/?m_orderby=$orderParam&paged=${page + 1}"
-        return runCatching { parseMangaListPage(fetchDocument(htmlUrl)) }.getOrElse { emptyList() }
+        // Different Madara deployments use different URL slugs for the comic listing.
+        // Try every common slug so manhwa sites (manhwa/), manhua sites (manhua/),
+        // and generic WordPress manga sites (comic/, webtoon/) all work without
+        // needing site-specific configuration.
+        val paged = page + 1
+        val slugsToTry = listOf("manga", "manhwa", "manhua", "webtoon", "comic")
+        for (slug in slugsToTry) {
+            val result = runCatching {
+                parseMangaListPage(fetchDocument("$baseUrl/$slug/?m_orderby=$orderParam&paged=$paged"))
+            }.getOrNull()
+            if (!result.isNullOrEmpty()) return result
+        }
+        // Last resort: WordPress root URL with orderby param
+        return runCatching {
+            parseMangaListPage(fetchDocument("$baseUrl/?m_orderby=$orderParam&paged=$paged"))
+        }.getOrElse { emptyList() }
     }
 
     private fun searchManga(query: String, offset: Int): List<Manga> {
@@ -203,8 +237,11 @@ class MadaraHtmlParser(
     private fun parseMangaListPage(doc: Document): List<Manga> = parseMangaListItems(doc)
 
     private fun parseMangaListItems(doc: Document): List<Manga> {
+        // Selector cascade: standard Madara → older Madara → generic manga CMSes
         val items = doc.select("div.page-item-detail, div.c-tabs-item__content")
             .ifEmpty { doc.select(".c-image-inner").map { it.parent() ?: it } }
+            .ifEmpty { doc.select(".manga-item, .comics-item, li.manga-item, .bs, .bsx") }
+            .ifEmpty { doc.select("article.manga, div.manga-entry, .item-thumb") }
         return items.mapNotNull { parseMangaItem(it) }
     }
 

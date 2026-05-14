@@ -104,37 +104,45 @@ class ComicKApiParser(
             SortOrder.NEWEST     -> "created_at"
             else                 -> "uploaded"
         }
-        val json = getJson("$apiBase/v1.0/comic/?limit=$PAGE_SIZE&page=$page&sort=$sort&tachiyomi=true")
-        return parseComicList(json)
+        // api.comick.io returns a raw JSON array for the browse endpoint — use getJsonArray.
+        val arr = getJsonArray("$apiBase/v1.0/comic/?limit=$PAGE_SIZE&page=$page&sort=$sort&tachiyomi=true")
+        return parseComicList(arr)
     }
 
     private fun searchComics(query: String, offset: Int): List<Manga> {
         val encoded = java.net.URLEncoder.encode(query, "UTF-8")
         val page = offset / PAGE_SIZE + 1
-        val json = getJson("$apiBase/v1.0/comic/?q=$encoded&limit=$PAGE_SIZE&page=$page&tachiyomi=true")
-        return parseComicList(json)
+        val arr = getJsonArray("$apiBase/v1.0/comic/?q=$encoded&limit=$PAGE_SIZE&page=$page&tachiyomi=true")
+        return parseComicList(arr)
     }
 
-    private fun parseComicList(json: JSONObject): List<Manga> {
-        val data = when {
-            json.has("results") -> json.optJSONArray("results")
-            json.has("data")    -> json.optJSONArray("data")
-            else                -> null
-        } ?: JSONArray().also { /* root might be an array wrapper */ }
-
+    /**
+     * Parses a JSON array of comic objects returned by the ComicK browse/search API.
+     *
+     * Each item has:
+     *   hid   — unique identifier used for API sub-requests
+     *   slug  — URL slug used in the web UI
+     *   title — display title
+     *   md_covers — JSONArray of cover objects with "b2key" or "gpurl" fields
+     */
+    private fun parseComicList(data: JSONArray): List<Manga> {
         val result = mutableListOf<Manga>()
         for (i in 0 until data.length()) {
             val comic = data.optJSONObject(i) ?: continue
             val hid  = comic.optString("hid").takeIf { it.isNotEmpty() } ?: continue
             val slug = comic.optString("slug", hid)
             val title = comic.optString("title").takeIf { it.isNotEmpty() } ?: continue
-            val coverKey = comic.optString("md_covers")
-                .takeIf { it.isNotEmpty() }
-                ?: comic.optString("cover_url")
+            // md_covers is a JSONArray — get the first cover's b2key or gpurl.
+            // Do NOT call optString("md_covers") — that would return the array's toString.
+            val mdCovers = comic.optJSONArray("md_covers")
+            val coverKey = mdCovers?.optJSONObject(0)?.let { cover ->
+                cover.optString("gpurl").takeIf { it.isNotEmpty() }
+                    ?: cover.optString("b2key").takeIf { it.isNotEmpty() }
+            } ?: comic.optString("cover_url").takeIf { it.isNotEmpty() }
             val coverUrl = when {
-                coverKey == null || coverKey.isEmpty() -> ""
-                coverKey.startsWith("http")            -> coverKey
-                else                                   -> "https://meo.comick.pictures/$coverKey"
+                coverKey == null            -> ""
+                coverKey.startsWith("http") -> coverKey
+                else                        -> "https://meo.comick.pictures/$coverKey"
             }
             val contentRating = when (comic.optString("content_rating")) {
                 "erotica", "pornographic" -> ContentRating.ADULT
@@ -197,6 +205,38 @@ class ComicKApiParser(
             page++
         }
         return chapters.sortedBy { it.number }
+    }
+
+    /**
+     * Fetches a URL and parses the response as a JSON array.
+     *
+     * The ComicK browse/search endpoints return a top-level JSON array [].
+     * Some server versions may wrap it in an object; both formats are handled:
+     *  - [] directly       → parsed as JSONArray
+     *  - {"data":[...]}    → inner array extracted
+     *  - {"result":[...]}  → inner array extracted
+     */
+    private fun getJsonArray(url: String): JSONArray {
+        val req = Request.Builder()
+            .url(url)
+            .header("User-Agent", USER_AGENT)
+            .header("Accept", "application/json")
+            .header("Referer", "https://comick.io/")
+            .get().build()
+        val body = httpClient.newCall(req).execute().use { it.body?.string() ?: "[]" }
+        val trimmed = body.trimStart()
+        return when (trimmed.firstOrNull()) {
+            '[' -> JSONArray(body)
+            '{' -> {
+                val obj = JSONObject(body)
+                obj.optJSONArray("data")
+                    ?: obj.optJSONArray("result")
+                    ?: obj.optJSONArray("results")
+                    ?: obj.optJSONArray("items")
+                    ?: JSONArray()
+            }
+            else -> JSONArray()
+        }
     }
 
     private fun getJson(url: String): JSONObject {
