@@ -219,7 +219,7 @@ package io.github.landwarderer.futon.customsource.data
        * Resolve best image URL from an img element by probing every known WP
        * lazy-load attribute in order of reliability.
        */
-      private fun resolveImageUrl(img: Element?, fallback: String): String {
+      private fun resolveImageUrl(img: Element?, fallback: String? = null): String {
           if (img == null) return fallback
           val srcsetFirst = listOf(img.attr("data-srcset"), img.attr("srcset"))
               .firstOrNull { it.isNotEmpty() }
@@ -229,7 +229,7 @@ package io.github.landwarderer.futon.customsource.data
               img.attr("data-lazy-src"),
               img.attr("data-original"),
               img.attr("data-url"),
-              srcsetFirst,
+              srcsetFirst ?: "",
               img.attr("src"),
           ).firstOrNull { !it.isNullOrEmpty() && !it.contains("data:image") && !it.contains("placeholder") }
               ?.fixProtocol() ?: fallback
