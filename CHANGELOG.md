@@ -1,3 +1,10 @@
+## Alpha 1.499 (Build [#149](https://github.com/Space4414/Tsuki/actions/runs/25845705844))
+
+_2026-05-14 06:32 UTC_
+
+- feat: template fallback fires only when CmsTypeDetector returns WEBVIEW (8fc3c07)
+
+
 ## Alpha 1.495 (Build [#147](https://github.com/Space4414/Tsuki/actions/runs/25843953905))
 
 _2026-05-14 05:41 UTC_
