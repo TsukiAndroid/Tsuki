@@ -308,7 +308,7 @@ package io.github.landwarderer.futon.customsource.data
        * Tries every lazy-load attribute in priority order so the real
        * cover is returned even when multiple WP image plugins are active.
        */
-      private fun resolveImageUrl(img: Element?, fallback: String): String {
+      private fun resolveImageUrl(img: Element?, fallback: String? = null): String {
           if (img == null) return fallback
           // srcset: take the first (smallest) URL, which is usually the thumbnail
           val srcsetFirst = listOf(img.attr("data-srcset"), img.attr("srcset"))
@@ -319,7 +319,7 @@ package io.github.landwarderer.futon.customsource.data
               img.attr("data-lazy-src"),
               img.attr("data-original"),
               img.attr("data-url"),
-              srcsetFirst,
+              srcsetFirst ?: "",
               img.attr("src"),
           ).firstOrNull { !it.isNullOrEmpty() && !it.contains("data:image") && !it.contains("placeholder") }
               ?.fixProtocol() ?: fallback
