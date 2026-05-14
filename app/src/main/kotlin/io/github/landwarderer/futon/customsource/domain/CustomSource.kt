@@ -87,6 +87,9 @@ enum class CustomSourceType(val label: String) {
     /**
      * MangaPark v3/v4 — uses Next.js with all data in a __NEXT_DATA__ JSON
      * blob, making it more reliable than pure HTML scraping.
+     *
+     * @deprecated MangaPark is marked @Broken in kotatsu-parsers-redo; kept for backward
+     * compatibility with existing persisted sources only — not shown in the add-source picker.
      */
     MANGAPARK("MangaPark / Next.js"),
 
@@ -107,6 +110,9 @@ enum class CustomSourceType(val label: String) {
     /**
      * Bato.to (Batocomic / Comiko) — huge community manga host.
      * Uses server-side HTML with embedded JSON for chapter pages.
+     *
+     * @deprecated Bato.to is marked @Broken in kotatsu-parsers-redo; kept for backward
+     * compatibility with existing persisted sources only — not shown in the add-source picker.
      */
     BATO("Bato.to"),
 
