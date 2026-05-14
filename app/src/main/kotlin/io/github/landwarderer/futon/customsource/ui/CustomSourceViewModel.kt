@@ -97,7 +97,10 @@ class CustomSourceViewModel @Inject constructor(
      *  1. Check [KotatsuParserMatcher] — if the domain matches a built-in parser,
      *     save as [CustomSourceType.KOTATSU_PARSER] so the factory routes it to
      *     [ParserMangaRepository] giving full inbuilt-source quality.
-     *  2. Fall back to [CmsTypeDetector] HTML fingerprinting.
+     *  2. Fall back to [CmsTypeDetector] HTML fingerprinting (36 built-in CMS types).
+     *  3. If the site is still unrecognised, try matching enabled JSON templates
+     *     ([CustomSourceType.CUSTOM_TEMPLATE]). Templates only fire as a last resort
+     *     so built-in parsers always take priority over JSON templates.
      *
      * Emits [UiState.Detecting] while the probe is in flight.
      */
@@ -300,12 +303,17 @@ class CustomSourceViewModel @Inject constructor(
     /**
      * Runs the three-stage detection pipeline on [normalizedUrl]:
      *  1. [KotatsuParserMatcher] — built-in parser domain cache (highest priority)
-     *  2. Template matching — checks imported [ParserTemplate]s using three strategies:
-     *       a. `domains` — instant exact-domain match (zero network requests, highest priority)
-     *       b. `fingerprints` — HTML substrings matched against the homepage (one fetch shared)
+     *  2. [CmsTypeDetector] — generic HTML fingerprinting (36 built-in CMS checks)
+     *  3. Template matching — fires only when the built-in detector would return WEBVIEW.
+     *     Checks imported [ParserTemplate]s using three strategies (in priority order):
+     *       a. `domains` — instant exact-domain match (zero network requests)
+     *       b. `fingerprints` — HTML substrings matched against the homepage (one shared fetch)
      *       c. `endpointProbes` — API paths probed individually (fallback for API-only sites)
      *     Only *enabled* templates are checked so disabled ones are truly skipped.
-     *  3. [CmsTypeDetector] — generic HTML fingerprinting (49 built-in CMS checks)
+     *
+     * Priority rationale: built-in types (MADARA, MANGATHEMESIA, etc.) use fully-featured
+     * standalone parsers and are more robust than JSON templates for sites they already cover.
+     * Templates are reserved for sites the built-in detector cannot classify.
      *
      * Also performs a lightweight reachability probe; [Triple.third] is false
      * if the site returned an error or timed out entirely.
@@ -319,17 +327,22 @@ class CustomSourceViewModel @Inject constructor(
             return Triple(CustomSourceType.KOTATSU_PARSER, matchedParser.name, true)
         }
 
-        // Step 1.5: check if any *enabled* imported template's fingerprints match this site.
-        val templateMatch = runCatching {
-            matchTemplateFingerprints(normalizedUrl, ParserTemplateRepository.peekEnabled())
-        }.getOrNull()
-        if (templateMatch != null) {
-            return Triple(CustomSourceType.CUSTOM_TEMPLATE, templateMatch, true)
-        }
-
-        // Step 2: HTML fingerprinting — capture reachability from the result
+        // Step 2: HTML fingerprinting — built-in CMS detection takes priority over templates.
         val cms = runCatching { CmsTypeDetector.detect(normalizedUrl) }.getOrElse { null }
         val reachable = cms != null
+
+        // Step 3: Template fallback — only fires when the built-in detector gives up (WEBVIEW).
+        // This ensures MADARA, MANGATHEMESIA, and every other recognised CMS type always
+        // routes to the more-robust standalone parser instead of a JSON template.
+        if (cms == null || cms == CustomSourceType.WEBVIEW) {
+            val templateMatch = runCatching {
+                matchTemplateFingerprints(normalizedUrl, ParserTemplateRepository.peekEnabled())
+            }.getOrNull()
+            if (templateMatch != null) {
+                return Triple(CustomSourceType.CUSTOM_TEMPLATE, templateMatch, reachable)
+            }
+        }
+
         return Triple(cms ?: CustomSourceType.WEBVIEW, null, reachable)
     }
 
