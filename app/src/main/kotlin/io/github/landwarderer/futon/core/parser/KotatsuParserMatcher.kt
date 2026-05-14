@@ -126,11 +126,7 @@ class KotatsuParserMatcher @Inject constructor(
             "FOOLSLIDE2", "FOOLSLIDE_TEMPLATE", "FOOLSLIDE2_TEMPLATE",
         ),
         // MangaPark v5 REST API.
-        "mangapark" to listOf(
-            "MANGAPARK", "MANGAPARK3", "MANGAPARK4", "MANGAPARK5", "MANGAPARK_V5",
-        ),
-
-        // ── HTML/JS-based ─────────────────────────────────────────────────────
+           // ── HTML/JS-based ─────────────────────────────────────────────────────
 
         // Guya — fan-TL reader (also used as Cubari base).
         "guya" to listOf("GUYA", "GUYA_MOE", "CUBARI"),
@@ -232,8 +228,6 @@ class KotatsuParserMatcher @Inject constructor(
         if (probeTachidesk(baseUrl))     return fingerprintTemplates["tachidesk"]
         if (probeGenkan(baseUrl))        return fingerprintTemplates["genkan"]
         if (probeFoolSlide2(baseUrl))    return fingerprintTemplates["foolslide2"]
-        if (probeMangaPark(baseUrl))     return fingerprintTemplates["mangapark"]
-
         // ── HTML / JS catalogue-style sites (fetch homepage) ─────────────────
         // Fetch once, share across remaining probes to avoid hammering the server.
         val html = httpGetHtml(baseUrl)
@@ -402,19 +396,6 @@ class KotatsuParserMatcher @Inject constructor(
      * `GET /api/v5/search/comic?limit=1` → JSON with `"data": { "items": [...] }`.
      * Older v3/v4 used a different path; secondary probe covers those.
      */
-    private fun probeMangaPark(base: String): Boolean = runCatching {
-        // v5 API
-        val body5 = httpGet("$base/api/v5/search/comic?limit=1")
-        if (body5 != null) {
-            val json = JSONObject(body5)
-            if (json.has("data")) return@runCatching true
-        }
-        // v3/v4 GraphQL hint: the homepage HTML contains "__NEXT_DATA__" and
-        // a specific "mangapark" brand string.
-        val html = httpGetHtml(base) ?: return@runCatching false
-        html.contains("__NEXT_DATA__") &&
-            html.contains("mangapark", ignoreCase = true)
-    }.getOrElse { false }
 
     // ── Guya / fan-TL reader ──────────────────────────────────────────────────
 
