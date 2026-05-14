@@ -1,3 +1,15 @@
+## Alpha 1.509 (Build [#156](https://github.com/Space4414/Tsuki/actions/runs/25857266237))
+
+_2026-05-14 11:21 UTC_
+
+- fix(detector): structure-based detection for all API parsers (8c2a528)
+- fix: use appcompatR alias for colorPrimary in ChangeParserSheet (269ca5d)
+- fix: resolve 4 Kotlin compile errors in Session 2 UI files (f3ccb57)
+- fix: use materialR alias instead of FQCN for colorPrimary in ChangeParserSheet (6909e6a)
+- feat: live URL detection, language filter, parser management & bulk enable/disable (8ad70aa)
+- feat: Kotatsu library browser, mirror support & health check (95b5ba2)
+
+
 ## Alpha 1.507 (Build [#155](https://github.com/Space4414/Tsuki/actions/runs/25854666866))
 
 _2026-05-14 10:19 UTC_
