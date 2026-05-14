@@ -1,3 +1,15 @@
+## Alpha 1.507 (Build [#155](https://github.com/Space4414/Tsuki/actions/runs/25854666866))
+
+_2026-05-14 10:19 UTC_
+
+- fix: use appcompatR alias for colorPrimary in ChangeParserSheet (269ca5d)
+- fix: resolve 4 Kotlin compile errors in Session 2 UI files (f3ccb57)
+- fix: use materialR alias instead of FQCN for colorPrimary in ChangeParserSheet (6909e6a)
+- feat: live URL detection, language filter, parser management & bulk enable/disable (8ad70aa)
+- feat: Kotatsu library browser, mirror support & health check (95b5ba2)
+- Delete parser-template directory (a548c99)
+
+
 ## Alpha 1.501 (Build [#150](https://github.com/Space4414/Tsuki/actions/runs/25847761671))
 
 _2026-05-14 07:28 UTC_
