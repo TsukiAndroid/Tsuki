@@ -1,3 +1,15 @@
+## Alpha 1.532 (Build [#176](https://github.com/Space4414/Tsuki/actions/runs/25874914749))
+
+_2026-05-14 17:28 UTC_
+
+- fix(ci): remove gradle-daemon-jvm.properties with stale Oracle foojay.io URLs (3d8410d)
+- fix(ci): disable Gradle JDK auto-provisioning via foojay.io (use pre-installed JAVA_HOME) (11ee905)
+- fix(parsers): remove broken BATO/MangaPark from built-in picker; update CmsTypeDetector (efd2d82)
+- fix(parsers): remove broken BATO/MangaPark from built-in picker; update CmsTypeDetector (c1ce598)
+- fix(parsers): remove broken BATO/MangaPark from built-in picker; update CmsTypeDetector (494423d)
+- fix(parsers): remove broken BATO/MangaPark from built-in picker; add universal parsers to library browser (65b6637)
+
+
 ## Alpha 1.526 (Build [#171](https://github.com/Space4414/Tsuki/actions/runs/25874067670))
 
 _2026-05-14 17:11 UTC_
