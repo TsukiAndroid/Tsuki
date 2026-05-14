@@ -1,3 +1,24 @@
+## Alpha 1.524 (Build [#170](https://github.com/Space4414/Tsuki/actions/runs/25858262893))
+
+_2026-05-14 11:49 UTC_
+
+- fix(compile): 3 String? compile errors in resolveImageUrl/fixProtocol (6aa3c8c)
+- fix(compile): 3 String? compile errors in resolveImageUrl/fixProtocol (f058455)
+- fix(compile): 3 String? compile errors in resolveImageUrl/fixProtocol (375184f)
+- fix(compile): 3 String? compile errors in resolveImageUrl/fixProtocol (c49bee5)
+- fix(compile): nullable String? fallback in resolveImageUrl (15439d4)
+- fix(compile): nullable String? fallback in resolveImageUrl (528dca9)
+- fix(compile): nullable String? fallback in resolveImageUrl (0928c25)
+- fix(compile): nullable String? fallback in resolveImageUrl (322f889)
+- docs: comprehensive agent handoff summary in replit.md (19b1f98)
+- fix(mangastream): browser UA + full lazy-img attr cascade (2443787)
+- fix(themesia): browser UA + full lazy-img attr cascade (319e41b)
+- fix(madara): resolve cover images through all WP lazy-load attributes (4ad7124)
+- fix(images): force browser UA for custom source cover images (5dbb11f)
+- fix(comixto): foolproof selector cascade + nuclear fallback (bdf74a0)
+- fix(detector): structure-based detection for all API parsers (8c2a528)
+
+
 ## Alpha 1.509 (Build [#156](https://github.com/Space4414/Tsuki/actions/runs/25857266237))
 
 _2026-05-14 11:21 UTC_
