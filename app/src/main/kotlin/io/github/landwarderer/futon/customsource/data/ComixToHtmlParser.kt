@@ -314,7 +314,7 @@ package io.github.landwarderer.futon.customsource.data
        * Returns [fallback] if no valid URL is found.
        */
       private fun resolveImageUrl(img: Element?, fallback: String? = null): String {
-          if (img == null) return fallback
+          if (img == null) return fallback.orEmpty()
           return listOf(
               img.attr("data-src"),
               img.attr("data-lazy-src"),
@@ -323,7 +323,7 @@ package io.github.landwarderer.futon.customsource.data
               img.attr("data-bg"),
               img.attr("src"),
           ).firstOrNull { it.isNotEmpty() && !it.contains("data:image") && !it.contains("blank") }
-              ?.fixProtocol() ?: fallback
+              ?.fixProtocol() ?: fallback.orEmpty()
       }
 
       private fun fetchDocument(url: String): Document {
@@ -361,10 +361,10 @@ package io.github.landwarderer.futon.customsource.data
           )
       }
 
-      private fun String?.fixProtocol(): String = when {
-          this == null -> ""
-          startsWith("//") -> "https:$this"
-          else -> this
+      private fun String?.fixProtocol(): String {
+          if (this == null) return ""
+          if (startsWith("//")) return "https:$this"
+          return this
       }
 
       companion object {
