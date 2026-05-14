@@ -55,6 +55,24 @@ class ParserTemplateRepository @Inject constructor(
 
     fun findById(id: Long): ParserTemplate? = _templates.value.find { it.id == id }
 
+    /** Returns the template whose name matches [name] (case-insensitive), or null. */
+    fun findByName(name: String): ParserTemplate? =
+        _templates.value.find { it.name.equals(name, ignoreCase = true) }
+
+    /**
+     * Replaces an existing template with [template] (matched by [ParserTemplate.id]).
+     *
+     * Used by [RemoteTemplateSync] to apply version updates while preserving the
+     * template's [ParserTemplate.importedAt] timestamp and enabled state.  If no
+     * template with the given id exists this is a no-op (use [add] instead).
+     */
+    fun upsert(template: ParserTemplate) {
+        val updated = _templates.value.map { if (it.id == template.id) template else it }
+        if (updated == _templates.value) return // nothing changed
+        saveAll(updated)
+        _templates.value = updated
+    }
+
     /** Flip the enabled flag of a template. No-op if the id is not found. */
     fun setEnabled(id: Long, enabled: Boolean) {
         val template = findById(id) ?: return

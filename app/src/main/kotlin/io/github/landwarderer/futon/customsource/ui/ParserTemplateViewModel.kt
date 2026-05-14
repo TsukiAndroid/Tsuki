@@ -11,6 +11,7 @@ import kotlinx.coroutines.launch
 import io.github.landwarderer.futon.customsource.data.CustomSourcesRepository
 import io.github.landwarderer.futon.customsource.data.ParserTemplateRepository
 import io.github.landwarderer.futon.customsource.data.ParserTemplateValidator
+import io.github.landwarderer.futon.customsource.data.RemoteTemplateSync
 import io.github.landwarderer.futon.customsource.domain.CustomSource
 import io.github.landwarderer.futon.customsource.domain.CustomSourceType
 import io.github.landwarderer.futon.customsource.domain.ParserTemplate
@@ -128,6 +129,32 @@ class ParserTemplateViewModel @Inject constructor(
         viewModelScope.launch { repository.remove(id) }
     }
 
+    // ── Remote sync ───────────────────────────────────────────────────────────
+
+    private val _syncState = MutableStateFlow<SyncState>(SyncState.Idle)
+    val syncState: StateFlow<SyncState> = _syncState.asStateFlow()
+
+    /**
+     * Fetches the [Space4414/tsuki-parsers](https://github.com/Space4414/tsuki-parsers)
+     * index and upserts any new or updated templates.  Emits [SyncState.Running] while
+     * in progress, then [SyncState.Success] or [SyncState.Error] when done.
+     */
+    fun syncFromRemote() {
+        if (_syncState.value is SyncState.Running) return
+        viewModelScope.launch {
+            _syncState.value = SyncState.Running
+            _syncState.value = when (val result = RemoteTemplateSync.syncNow(repository)) {
+                is RemoteTemplateSync.SyncResult.Success     -> SyncState.Success(result.added, result.updated)
+                is RemoteTemplateSync.SyncResult.NetworkError -> SyncState.Error("Network unavailable — check your connection and try again.")
+                is RemoteTemplateSync.SyncResult.ParseError   -> SyncState.Error("Could not read the remote template index. Please try again later.")
+            }
+        }
+    }
+
+    fun resetSyncState() {
+        _syncState.value = SyncState.Idle
+    }
+
     fun resetState() {
         _importState.value = ImportState.Idle
     }
@@ -168,5 +195,12 @@ class ParserTemplateViewModel @Inject constructor(
         object Idle : AddSiteState()
         data class Error(val message: String) : AddSiteState()
         data class Success(val siteName: String, val templateName: String) : AddSiteState()
+    }
+
+    sealed class SyncState {
+        object Idle    : SyncState()
+        object Running : SyncState()
+        data class Success(val added: Int, val updated: Int) : SyncState()
+        data class Error(val message: String) : SyncState()
     }
 }

@@ -71,8 +71,11 @@ class ParserTemplatesFragment : Fragment() {
                 menuInflater.inflate(R.menu.menu_parser_templates, menu)
             }
             override fun onMenuItemSelected(item: MenuItem): Boolean {
-                if (item.itemId == R.id.action_parser_info) { showAboutDialog(); return true }
-                return false
+                return when (item.itemId) {
+                    R.id.action_parser_info  -> { showAboutDialog(); true }
+                    R.id.action_sync_parsers -> { viewModel.syncFromRemote(); true }
+                    else -> false
+                }
             }
         }, viewLifecycleOwner, Lifecycle.State.RESUMED)
 
@@ -99,6 +102,35 @@ class ParserTemplatesFragment : Fragment() {
                         Toast.LENGTH_SHORT,
                     ).show()
                     viewModel.resetAddSiteState()
+                }
+            }
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.syncState.collectLatest { state ->
+                when (state) {
+                    is ParserTemplateViewModel.SyncState.Running -> {
+                        Toast.makeText(requireContext(), "Syncing parser templates from GitHub…", Toast.LENGTH_SHORT).show()
+                    }
+                    is ParserTemplateViewModel.SyncState.Success -> {
+                        val msg = when {
+                            state.added == 0 && state.updated == 0 ->
+                                "Already up to date — no new templates."
+                            state.added > 0 && state.updated > 0 ->
+                                "Sync complete: ${state.added} added, ${state.updated} updated."
+                            state.added > 0 ->
+                                "Sync complete: ${state.added} new template${if (state.added > 1) "s" else ""} added."
+                            else ->
+                                "Sync complete: ${state.updated} template${if (state.updated > 1) "s" else ""} updated."
+                        }
+                        Toast.makeText(requireContext(), msg, Toast.LENGTH_LONG).show()
+                        viewModel.resetSyncState()
+                    }
+                    is ParserTemplateViewModel.SyncState.Error -> {
+                        Toast.makeText(requireContext(), state.message, Toast.LENGTH_LONG).show()
+                        viewModel.resetSyncState()
+                    }
+                    is ParserTemplateViewModel.SyncState.Idle -> { /* nothing */ }
                 }
             }
         }

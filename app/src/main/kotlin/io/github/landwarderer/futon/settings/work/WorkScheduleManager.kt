@@ -19,6 +19,7 @@ class WorkScheduleManager @Inject constructor(
         private val trackerScheduler: TrackWorker.Scheduler,
         private val appUpdateScheduler: AppUpdateWorker.Scheduler,
         private val syncHealthScheduler: SyncHealthWorker.Scheduler,
+        private val remoteTemplateSyncScheduler: io.github.landwarderer.futon.customsource.work.RemoteTemplateSyncWorker.Scheduler,
 ) : SharedPreferences.OnSharedPreferenceChangeListener {
 
         override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
@@ -54,6 +55,7 @@ class WorkScheduleManager @Inject constructor(
                         updateWorkerImpl(suggestionScheduler, settings.isSuggestionsEnabled, false)
                         updateWorkerImpl(appUpdateScheduler, true, false)
                         updateWorkerImpl(syncHealthScheduler, true, false)
+                        updateWorkerImpl(remoteTemplateSyncScheduler, true, false)
                 }
         }
 

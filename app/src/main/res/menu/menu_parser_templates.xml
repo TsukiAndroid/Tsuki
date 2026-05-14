@@ -3,6 +3,13 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
+        android:id="@+id/action_sync_parsers"
+        android:icon="@drawable/ic_sync"
+        android:orderInCategory="5"
+        android:title="Sync from GitHub"
+        app:showAsAction="always" />
+
+    <item
         android:id="@+id/action_parser_info"
         android:icon="@drawable/ic_info_outline"
         android:orderInCategory="10"
