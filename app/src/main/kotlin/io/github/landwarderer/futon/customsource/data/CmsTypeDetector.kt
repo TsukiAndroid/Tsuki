@@ -96,8 +96,9 @@ package io.github.landwarderer.futon.customsource.data
               return CustomSourceType.GUYA
           }
 
-          if (html.contains("__NEXT_DATA__") && (html.contains("mangapark") || html.contains("/browse"))) {
-              return CustomSourceType.MANGAPARK
+          // MangaPark is broken upstream (@Broken in kotatsu-parsers-redo); fall back to WebView
+          if (html.contains("__NEXT_DATA__") && html.contains("mangapark")) {
+              return CustomSourceType.WEBVIEW
           }
 
           if (html.contains("ts_reader.run") || html.contains(".bsx") || html.contains("mangathemesia")) {
@@ -157,7 +158,7 @@ package io.github.landwarderer.futon.customsource.data
           if (html.contains("bato.to", ignoreCase = true) || html.contains("batocomic", ignoreCase = true) ||
               html.contains("comiko", ignoreCase = true) ||
               (html.contains("item-text") && html.contains("browse?sort="))) {
-              return CustomSourceType.BATO
+              return CustomSourceType.WEBVIEW  // Bato.to @Broken upstream
           }
 
           if (html.contains("ninemanga", ignoreCase = true) || html.contains("detail_list") ||
