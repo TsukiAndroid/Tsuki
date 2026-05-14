@@ -18,34 +18,72 @@ export default async function handler(req, res) {
 
   const siteName = parsedUrl.hostname.replace('www.', '');
 
-  const prompt = `You are a manga parser expert for the Tsuki Android app. Analyze this manga site and generate a parser template JSON: ${url}
+  const prompt = `You are an expert web scraper and HTML analyst. Your task is to generate a JSON parser file for the Tsuki Android manga reader app. The parser tells the app how to scrape the manga website at: ${url}
 
-Domain: ${siteName}
+The app uses Jsoup (Java HTML parser) — all selectors must be valid CSS selectors. No XPath, no JavaScript.
 
-You MUST return a JSON object with these REQUIRED fields:
-- "name": the site's display name (REQUIRED)
-- "version": always "1.0" (REQUIRED)
-- "author": "Tsuki Parser Generator" (REQUIRED)
-- "domain": "${parsedUrl.hostname}" (REQUIRED)
-- "type" (NOT "sourceType", the key must be exactly "type"): Analyze the site's CMS and pick the best match from this list if it fits:
-  MANGADEX_COMPATIBLE, MADARA, MANGATHEMESIA, MANGASTREAM, GENKAN, FOOLSLIDE2,
-  MANGANELO, ZEROSCANS_API, LHTRANSLATION, MANGASEE, GUYA, MANGAFIRE, MANGAPARK,
-  COMIXTO, COMICK_API, BATO, NINEMANGA, MANGAHOST, MANGAREADER, MANGAFOX,
-  TCBSCANS, MANGANATO, READERFRONT, KISSMANGA, CUBARI, MANGAPILL, MANGAHUB,
-  MANGAHERE, MANGALIB, MANGAGO, MANGAFREAK, MANGAOWL, NETTRUYEN, TRUYENQQ,
-  MANGAKATANA, ZEISTMANGA, KEYOAPP, HEANCMS, WPCOMICS, MMRCMS, MADTHEME,
-  MANGABOX, LILIANA, IKEN, SCAN, PIZZAREADER, FMREADER, GATTSU, ANIMEBOOTSTRAP.
-  If the site does not match any of these, use CUSTOM_TEMPLATE instead.
-- "mangaList": { "endpoint": "/path", "method": "GET or POST", "pagination": "page or ajax or offset", "pageParam": "page" }
-- "mangaDetail": { "titleSelector": "css selector", "coverSelector": "css selector", "descriptionSelector": "css selector", "authorSelector": "css selector", "statusSelector": "css selector" }
-- "chapterList": { "endpoint": "/path or ajax endpoint", "method": "GET or POST", "action": "ajax action or null", "dateSelector": "css selector", "titleSelector": "css selector", "urlSelector": "css selector" }
-- "pageList": { "imageSelector": "css selector", "type": "html or js_array or api" }
-- "search": { "endpoint": "/search or ajax", "param": "s or q or keyword" }
-- "genres": { "endpoint": "/genre/", "selector": "css selector" }
-- "headers": { "Referer": "${parsedUrl.origin}" }
-- "notes": "any quirks about this site"
+Analyze the website carefully based on its domain (${siteName}) and your knowledge of manga site CMS families. Then fill in every field of this JSON structure:
 
-Return ONLY raw JSON, no markdown, no backticks, no explanation.`;
+Rules:
+- All CSS selectors must be valid Jsoup/CSS selectors
+- Prefer specific selectors that work across multiple pages (avoid IDs that change per manga)
+- Every img cover/page: check for data-src, data-lazy-src, and src — just give the selector for the img element itself
+- If a field does not apply to this site, use "" (empty string) — do not remove the key
+- The finished JSON must be valid — no trailing commas, no JavaScript comments
+- For "type" (NOT "sourceType"): analyze the site's CMS and pick the best match from this list if it fits: MANGADEX_COMPATIBLE, MADARA, MANGATHEMESIA, MANGASTREAM, GENKAN, FOOLSLIDE2, MANGANELO, ZEROSCANS_API, LHTRANSLATION, MANGASEE, GUYA, MANGAFIRE, MANGAPARK, COMIXTO, COMICK_API, BATO, NINEMANGA, MANGAHOST, MANGAREADER, MANGAFOX, TCBSCANS, MANGANATO, READERFRONT, KISSMANGA, CUBARI, MANGAPILL, MANGAHUB, MANGAHERE, MANGALIB, MANGAGO, MANGAFREAK, MANGAOWL, NETTRUYEN, TRUYENQQ, MANGAKATANA, ZEISTMANGA, KEYOAPP, HEANCMS, WPCOMICS, MMRCMS, MADTHEME, MANGABOX, LILIANA, IKEN, SCAN, PIZZAREADER, FMREADER, GATTSU, ANIMEBOOTSTRAP. If the site does not match any of these, use CUSTOM_TEMPLATE instead.
+
+Common selector patterns by CMS for reference:
+- WordPress Madara: itemSelector=div.page-item-detail, titleSelector=.post-title a, coverSelector=img.img-responsive, chapterList.selector=li.wp-manga-chapter
+- MangaThemesia: itemSelector=div.bs, titleSelector=.bsx a, chapterList.selector=li.eps-item
+- MangaStream: itemSelector=div.bsx, titleSelector=div.tt, chapterList.selector=li.chapter-li
+- Genkan: itemSelector=.list-item, titleSelector=.list-item__title a, chapterList.selector=.volume-chapters li
+- FoolSlide2: itemSelector=.group, titleSelector=.title a, chapterList.selector=.element
+
+WordPress AJAX detection: Some sites (Madara, MangaThemesia) load chapter lists via AJAX POST to admin-ajax.php. If this applies, set chapterList.action to the action name (usually manga_get_chapters) and chapterList.endpoint to /wp-admin/admin-ajax.php. Otherwise leave both as "".
+
+Return ONLY this exact JSON structure filled in, no markdown fences, no explanation:
+
+{
+  "name": "${siteName}",
+  "version": "1.0",
+  "type": "[pick from list above or CUSTOM_TEMPLATE]",
+
+  "mangaList": {
+    "method": "GET",
+    "endpoint": "[path to manga list]",
+    "pageParam": "[page query param]",
+    "pagination": "[page or offset]",
+    "itemSelector": "[CSS selector for one manga card]",
+    "titleSelector": "[CSS selector for title inside card]",
+    "coverSelector": "[CSS selector for img inside card]",
+    "linkSelector": "[CSS selector for a href inside card]",
+    "searchEndpoint": "[path for search]",
+    "searchParam": "[search query param]"
+  },
+
+  "mangaDetail": {
+    "titleSelector": "[CSS selector for manga title on detail page]",
+    "coverSelector": "[CSS selector for img cover on detail page]",
+    "descriptionSelector": "[CSS selector for synopsis]"
+  },
+
+  "chapterList": {
+    "selector": "[CSS selector for each chapter row]",
+    "titleSelector": "[CSS selector for chapter name inside row]",
+    "linkSelector": "[CSS selector for a href inside row]",
+    "action": "[WP AJAX action name or empty string]",
+    "endpoint": "[WP AJAX endpoint or empty string]"
+  },
+
+  "pageList": {
+    "imageSelector": "[CSS selector for img page images in reader]"
+  },
+
+  "genres": {
+    "endpoint": "[path to genres page or empty string]",
+    "selector": "[CSS selector for each genre item or empty string]"
+  }
+}`;
 
   try {
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`, {
