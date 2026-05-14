@@ -233,7 +233,7 @@ class KotatsuParserBrowserSheet : BottomSheetDialogFragment() {
     }
 
     private fun buildFilterChip(tag: String, label: String, checked: Boolean): Chip {
-        return Chip(requireContext(), null, com.google.android.material.R.attr.filterChipStyle).apply {
+        return Chip(requireContext(), null, 0).apply {
             text = label
             isCheckable = true
             isChecked = checked
@@ -490,7 +490,8 @@ class KotatsuParserBrowserSheet : BottomSheetDialogFragment() {
                     addBtn.text = ctx.getString(R.string.manage_label)
                     val primaryColor = MaterialColors.getColor(
                         addBtn,
-                        com.google.android.material.R.attr.colorPrimary
+                        androidx.appcompat.R.attr.colorPrimary,
+                        0,
                     )
                     addBtn.strokeColor = android.content.res.ColorStateList.valueOf(primaryColor)
                     addBtn.setTextColor(primaryColor)

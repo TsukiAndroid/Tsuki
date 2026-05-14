@@ -355,7 +355,7 @@ class CustomSourceViewModel @Inject constructor(
     fun updateSourceUrl(sourceId: Long, newUrl: String) {
         viewModelScope.launch(Dispatchers.IO) {
             val source = repository.sources.value.find { it.id == sourceId } ?: return@launch
-            val normalized = runCatching { normalizeUrl(newUrl) }.getOrElse { newUrl.trim() }
+            val normalized = runCatching { normalizeUrl(newUrl) }.getOrNull() ?: newUrl.trim()
             if (normalized.isNotBlank()) {
                 repository.update(source.copy(baseUrl = normalized))
             }
