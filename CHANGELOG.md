@@ -1,3 +1,11 @@
+## Alpha 1.491 (Build [#145](https://github.com/Space4414/Tsuki/actions/runs/25835779560))
+
+_2026-05-14 01:14 UTC_
+
+- fix: root-cause all custom-parser "Nothing found" failures (df12a49)
+- Update generate-parser.js (1565d4f)
+
+
 ## Alpha 1.489 (Build [#144](https://github.com/Space4414/Tsuki/actions/runs/25834937086))
 
 _2026-05-14 00:47 UTC_
