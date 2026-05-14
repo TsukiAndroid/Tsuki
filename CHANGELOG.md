@@ -1,3 +1,11 @@
+## Alpha 1.495 (Build [#147](https://github.com/Space4414/Tsuki/actions/runs/25843953905))
+
+_2026-05-14 05:41 UTC_
+
+- ci: add scheduled kotatsu-parsers-redo auto-bump workflow (97301a8)
+- feat(customsource): remote template sync from Space4414/tsuki-parsers (bb7a800)
+
+
 ## Alpha 1.493 (Build [#146](https://github.com/Space4414/Tsuki/actions/runs/25837996569))
 
 _2026-05-14 02:26 UTC_
