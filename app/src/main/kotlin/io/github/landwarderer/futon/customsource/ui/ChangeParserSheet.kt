@@ -257,7 +257,7 @@ class ChangeParserSheet : BottomSheetDialogFragment() {
                 checkIcon.isVisible = false
                 nameView.setTypeface(null, android.graphics.Typeface.NORMAL)
                 val color = itemView.context.getThemeColor(
-                    materialR.attr.colorPrimary,
+                    appcompatR.attr.colorPrimary,
                     nameView.currentTextColor,
                 )
                 nameView.setTextColor(color)
