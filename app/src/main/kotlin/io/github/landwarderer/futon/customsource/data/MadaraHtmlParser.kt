@@ -309,7 +309,7 @@ package io.github.landwarderer.futon.customsource.data
        * cover is returned even when multiple WP image plugins are active.
        */
       private fun resolveImageUrl(img: Element?, fallback: String? = null): String {
-          if (img == null) return fallback
+          if (img == null) return fallback.orEmpty()
           // srcset: take the first (smallest) URL, which is usually the thumbnail
           val srcsetFirst = listOf(img.attr("data-srcset"), img.attr("srcset"))
               .firstOrNull { it.isNotEmpty() }
@@ -322,7 +322,7 @@ package io.github.landwarderer.futon.customsource.data
               srcsetFirst ?: "",
               img.attr("src"),
           ).firstOrNull { !it.isNullOrEmpty() && !it.contains("data:image") && !it.contains("placeholder") }
-              ?.fixProtocol() ?: fallback
+              ?.fixProtocol() ?: fallback.orEmpty()
       }
 
       private fun fetchDocument(url: String): Document {
@@ -361,10 +361,10 @@ package io.github.landwarderer.futon.customsource.data
           )
       }
 
-      private fun String?.fixProtocol(): String = when {
-          this == null -> ""
-          startsWith("//") -> "https:$this"
-          else -> this
+      private fun String?.fixProtocol(): String {
+          if (this == null) return ""
+          if (startsWith("//")) return "https:$this"
+          return this
       }
 
       companion object {
