@@ -614,6 +614,24 @@ class KotatsuParserMatcher @Inject constructor(
             .sortedBy { it.displayName }
     }
 
+    /**
+     * Instant (no network, no blocking) domain lookup using the already-built
+     * [domainCache].  Returns the matching [KotatsuLibraryParser] if the URL's
+     * host is in the library, otherwise null.
+     *
+     * Safe to call on the main thread after [getAllLibraryParsers] has been
+     * called once on a background thread.  If the caches are not yet initialised
+     * this will trigger initialisation on the calling thread — keep that in mind
+     * when calling from the UI layer before the background load completes.
+     */
+    fun quickMatchDomain(url: String): KotatsuLibraryParser? {
+        val host = runCatching {
+            java.net.URI(url).host?.lowercase()?.removePrefix("www.") ?: ""
+        }.getOrElse { "" }.ifEmpty { return null }
+        val source = domainCache[host] ?: domainCache["www.$host"] ?: return null
+        return libraryParsers.find { it.source == source }
+    }
+
     companion object {
         private const val USER_AGENT = "Mozilla/5.0 (Android 14; Mobile) Tsuki/1.0"
 

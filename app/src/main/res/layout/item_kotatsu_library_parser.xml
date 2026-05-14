@@ -19,7 +19,7 @@
         android:textColor="?attr/colorOnPrimary"
         android:textSize="10sp" />
 
-    <!-- Name + domain column -->
+    <!-- Name + domain + status column -->
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
@@ -45,9 +45,36 @@
             android:textColor="?attr/colorOnSurfaceVariant"
             android:maxLines="1"
             android:ellipsize="end" />
+
+        <!-- Status row: shown only when parser is already added as a source -->
+        <LinearLayout
+            android:id="@+id/layout_added_status"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="3dp"
+            android:visibility="gone">
+
+            <View
+                android:id="@+id/dot_status"
+                android:layout_width="6dp"
+                android:layout_height="6dp"
+                android:background="@drawable/bg_lang_badge"
+                android:layout_marginEnd="4dp" />
+
+            <TextView
+                android:id="@+id/text_added_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?attr/textAppearanceLabelSmall"
+                android:textColor="?attr/colorOnSurfaceVariant" />
+
+        </LinearLayout>
+
     </LinearLayout>
 
-    <!-- Add button -->
+    <!-- Action button — text and style change based on added/manage state -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btn_lib_add"
         style="@style/Widget.Material3.Button.TonalButton"

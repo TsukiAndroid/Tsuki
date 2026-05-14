@@ -1097,6 +1097,32 @@
     <string name="library_mirror_url_hint">URL (use default or enter mirror)</string>
     <string name="library_source_added">"%s" added as a source</string>
     <string name="browse_kotatsu_library_action">Browse Kotatsu Parser Library…</string>
+    <!-- URL auto-detection chip -->
+    <string name="url_matched_parser">✓ Matched: %1$s (%2$s · %3$s)</string>
+    <!-- Library browser bulk actions -->
+    <string name="enable_all_kotatsu">Enable All</string>
+    <string name="disable_all_kotatsu">Disable All</string>
+    <string name="parser_stats_chip">%1$d parsers · %2$d added</string>
+    <string name="parser_stats_chip_loading">Loading parsers…</string>
+    <!-- Manage added parser dialog -->
+    <string name="manage_parser_title">Manage "%s"</string>
+    <string name="manage_parser_added_as">Added as: %s</string>
+    <string name="manage_option_enable">Enable source</string>
+    <string name="manage_option_disable">Disable source</string>
+    <string name="manage_option_edit_url">Edit mirror URL</string>
+    <string name="manage_option_remove">Remove source</string>
+    <string name="manage_remove_confirm">Remove "%s"? This cannot be undone.</string>
+    <string name="manage_edit_url_title">Edit URL for "%s"</string>
+    <string name="source_enabled_toast">"%s" enabled</string>
+    <string name="source_disabled_toast">"%s" disabled</string>
+    <string name="source_removed_toast">"%s" removed</string>
+    <!-- Added status labels in list item -->
+    <string name="added_enabled_label">Added · Enabled</string>
+    <string name="added_disabled_label">Added · Disabled</string>
+    <string name="manage_label">Manage</string>
+    <!-- Language filter "All" chip -->
+    <string name="lang_all">All</string>
+    <string name="lang_other">Other</string>
     <string name="apply_label">Apply</string>
     <!-- Parser management menu -->
     <string name="action_browse_library">Browse Library</string>

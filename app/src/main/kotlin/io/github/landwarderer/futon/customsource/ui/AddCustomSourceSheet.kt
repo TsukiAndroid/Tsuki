@@ -1,6 +1,8 @@
 package io.github.landwarderer.futon.customsource.ui
 
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -12,6 +14,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.chip.Chip
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
@@ -59,6 +62,7 @@ class AddCustomSourceSheet : BottomSheetDialogFragment() {
         val typeDropdown = view.findViewById<MaterialAutoCompleteTextView>(R.id.dropdown_source_type)
         val btnAdd       = view.findViewById<MaterialButton>(R.id.btn_add_source)
         val btnCancel    = view.findViewById<MaterialButton>(R.id.btn_cancel)
+        val matchChip    = view.findViewById<Chip>(R.id.chip_url_match)
 
         // Build the entries list including both built-in parsers and imported templates.
         // Templates are fetched at open-time from the singleton repository.
@@ -89,6 +93,35 @@ class AddCustomSourceSheet : BottomSheetDialogFragment() {
         typeDropdown.setAdapter(adapter)
         typeDropdown.setText(ParserEntry.AutoDetect.displayLabel, false)
         urlLayout.hint = getString(R.string.url_hint_auto_detect)
+
+        // Ensure library parsers are ready for instant domain matching as the user types.
+        viewModel.loadKotatsuLibraryParsers()
+
+        // Live URL → parser detection chip: appears instantly when the entered domain
+        // matches a known kotatsu-parsers-redo library parser (no network call).
+        urlInput.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) = Unit
+            override fun afterTextChanged(s: Editable?) {
+                val url = s?.toString().orEmpty()
+                val matched = viewModel.quickMatchUrl(url)
+                if (matched != null) {
+                    matchChip?.isVisible = true
+                    matchChip?.text = getString(
+                        R.string.url_matched_parser,
+                        matched.displayName,
+                        matched.domain,
+                        matched.languageTag.ifEmpty { "??" }.uppercase(),
+                    )
+                    // Auto-fill the name field if the user hasn't typed one yet
+                    if (nameInput.text.isNullOrBlank()) {
+                        nameInput.setText(matched.displayName)
+                    }
+                } else {
+                    matchChip?.isVisible = false
+                }
+            }
+        })
 
         typeDropdown.setOnItemClickListener { _, _, position, _ ->
             val entry = entries[position]

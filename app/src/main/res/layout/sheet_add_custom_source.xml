@@ -93,6 +93,19 @@
             android:maxLines="3" />
     </com.google.android.material.textfield.TextInputLayout>
 
+    <!-- Live match chip: appears instantly when the entered URL's domain
+         matches a known kotatsu-parsers-redo library parser. -->
+    <com.google.android.material.chip.Chip
+        android:id="@+id/chip_url_match"
+        style="@style/Widget.Material3.Chip.Suggestion"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="4dp"
+        android:layout_marginBottom="8dp"
+        android:clickable="false"
+        android:focusable="false"
+        android:visibility="gone" />
+
     <!-- "Browse Kotatsu Library" shortcut -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btn_browse_library"

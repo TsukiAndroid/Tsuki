@@ -14,30 +14,51 @@
         android:layout_marginBottom="12dp"
         android:background="?attr/colorOutlineVariant" />
 
-    <!-- Title row -->
+    <!-- Header row: title + stats chip -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
         android:paddingHorizontal="20dp"
-        android:paddingBottom="8dp">
+        android:paddingBottom="2dp">
 
-        <TextView
-            android:id="@+id/text_library_title"
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/text_library_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/kotatsu_library_title"
+                android:textAppearance="?attr/textAppearanceTitleLarge"
+                android:textColor="?attr/colorOnSurface" />
+
+            <TextView
+                android:id="@+id/text_library_subtitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="@string/kotatsu_library_subtitle"
+                android:textAppearance="?attr/textAppearanceBodySmall"
+                android:textColor="?attr/colorOnSurfaceVariant" />
+        </LinearLayout>
+
+        <!-- Stats chip: "842 parsers · 3 added" -->
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chip_parser_stats"
+            style="@style/Widget.Material3.Chip.Assist"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/kotatsu_library_title"
-            android:textAppearance="?attr/textAppearanceTitleLarge"
-            android:textColor="?attr/colorOnSurface" />
+            android:layout_marginStart="8dp"
+            android:clickable="false"
+            android:focusable="false"
+            android:visibility="gone"
+            app:chipMinHeight="28dp" />
 
-        <TextView
-            android:id="@+id/text_library_subtitle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="@string/kotatsu_library_subtitle"
-            android:textAppearance="?attr/textAppearanceBodyMedium"
-            android:textColor="?attr/colorOnSurfaceVariant" />
     </LinearLayout>
 
     <!-- Search bar -->
@@ -45,12 +66,13 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="16dp"
-        android:layout_marginBottom="8dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="4dp"
         android:hint="@string/search_parsers_hint"
         app:boxBackgroundMode="outline"
         app:endIconMode="clear_text"
         app:startIconDrawable="@drawable/ic_search"
-        style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+        style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/input_library_search"
@@ -60,6 +82,25 @@
             android:inputType="text"
             android:maxLines="1" />
     </com.google.android.material.textfield.TextInputLayout>
+
+    <!-- Language filter chips -->
+    <HorizontalScrollView
+        android:id="@+id/scroll_language_filter"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:scrollbars="none"
+        android:paddingHorizontal="12dp"
+        android:paddingBottom="4dp"
+        android:visibility="gone">
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/chip_group_language"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:singleSelection="true"
+            app:selectionRequired="true" />
+
+    </HorizontalScrollView>
 
     <!-- Loading indicator -->
     <ProgressBar
@@ -90,7 +131,43 @@
         android:layout_height="0dp"
         android:layout_weight="1"
         android:clipToPadding="false"
-        android:paddingBottom="32dp"
+        android:paddingBottom="8dp"
         android:visibility="gone" />
+
+    <!-- Divider above bulk actions -->
+    <View
+        android:id="@+id/divider_bulk_actions"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="?attr/colorOutlineVariant"
+        android:visibility="gone" />
+
+    <!-- Bulk enable / disable bar — only shown when ≥1 kotatsu source is added -->
+    <LinearLayout
+        android:id="@+id/layout_bulk_actions"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="end"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="8dp"
+        android:visibility="gone">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_disable_all_sources"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:text="@string/disable_all_kotatsu" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_enable_all_sources"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/enable_all_kotatsu" />
+
+    </LinearLayout>
 
 </LinearLayout>

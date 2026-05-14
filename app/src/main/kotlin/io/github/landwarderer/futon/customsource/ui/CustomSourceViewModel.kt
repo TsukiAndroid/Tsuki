@@ -320,6 +320,49 @@ class CustomSourceViewModel @Inject constructor(
     fun importSourcesJson(json: String): Int = repository.importJson(json)
 
     /**
+     * Instant (no network) URL → library-parser lookup.
+     * Searches the in-memory [kotatsuLibraryParsers] list by exact host comparison.
+     * Returns null if the library list is not yet loaded or no parser matches.
+     *
+     * Designed for live "as-you-type" feedback: always main-thread safe and O(n).
+     */
+    fun quickMatchUrl(url: String): KotatsuLibraryParser? {
+        if (url.length < 8) return null
+        val host = runCatching {
+            URI(url).host?.lowercase()?.removePrefix("www.") ?: ""
+        }.getOrElse { "" }.ifEmpty { return null }
+        return _kotatsuLibraryParsers.value.find { p ->
+            p.domain == host || p.domain.removePrefix("www.") == host
+        }
+    }
+
+    /**
+     * Bulk-enables or bulk-disables every custom source whose type is
+     * [CustomSourceType.KOTATSU_PARSER].
+     */
+    fun setAllKotatsuSourcesEnabled(enabled: Boolean) {
+        viewModelScope.launch(Dispatchers.IO) {
+            repository.sources.value
+                .filter { it.type == CustomSourceType.KOTATSU_PARSER && it.isEnabled != enabled }
+                .forEach { repository.update(it.copy(isEnabled = enabled)) }
+        }
+    }
+
+    /**
+     * Updates the base URL for an existing source.
+     * Normalises the URL before persisting; silently no-ops on bad input.
+     */
+    fun updateSourceUrl(sourceId: Long, newUrl: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val source = repository.sources.value.find { it.id == sourceId } ?: return@launch
+            val normalized = runCatching { normalizeUrl(newUrl) }.getOrElse { newUrl.trim() }
+            if (normalized.isNotBlank()) {
+                repository.update(source.copy(baseUrl = normalized))
+            }
+        }
+    }
+
+    /**
      * Triggers a background load of all kotatsu-parsers-redo library parsers.
      * Safe to call multiple times — no-op after the first load completes.
      */
