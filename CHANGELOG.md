@@ -1,3 +1,18 @@
+## Alpha 1.526 (Build [#171](https://github.com/Space4414/Tsuki/actions/runs/25874067670))
+
+_2026-05-14 17:11 UTC_
+
+- fix(parsers): remove broken BATO/MangaPark from built-in picker; add universal parsers to library browser (65b6637)
+- fix(compile): 3 String? compile errors in resolveImageUrl/fixProtocol (6aa3c8c)
+- fix(compile): 3 String? compile errors in resolveImageUrl/fixProtocol (f058455)
+- fix(compile): 3 String? compile errors in resolveImageUrl/fixProtocol (375184f)
+- fix(compile): 3 String? compile errors in resolveImageUrl/fixProtocol (c49bee5)
+- fix(compile): nullable String? fallback in resolveImageUrl (15439d4)
+- fix(compile): nullable String? fallback in resolveImageUrl (528dca9)
+- fix(compile): nullable String? fallback in resolveImageUrl (0928c25)
+- fix(compile): nullable String? fallback in resolveImageUrl (322f889)
+
+
 ## Alpha 1.524 (Build [#170](https://github.com/Space4414/Tsuki/actions/runs/25858262893))
 
 _2026-05-14 11:49 UTC_
