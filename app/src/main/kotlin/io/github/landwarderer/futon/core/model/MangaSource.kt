@@ -16,6 +16,8 @@ import io.github.landwarderer.futon.customsource.domain.CustomMangaSource
 import io.github.landwarderer.futon.core.util.ext.getDisplayName
 import io.github.landwarderer.futon.core.util.ext.toLocale
 import io.github.landwarderer.futon.core.util.ext.toLocaleOrNull
+import io.github.landwarderer.futon.extensions.data.ExtensionMangaSource
+import io.github.landwarderer.futon.extensions.data.ExtensionRepository
 import io.github.landwarderer.futon.mihon.model.MihonMangaSource
 import io.github.landwarderer.futon.mihon.parsers.model.ContentType as MihonContentType
 import org.koitharu.kotatsu.parsers.model.ContentType
@@ -53,6 +55,12 @@ fun MangaSource(name: String?): MangaSource {
                 val id = CustomMangaSource.extractId(name)
                 val cs = id?.let { CustomSourcesRepository.peekById(it) }
                 if (cs != null) return CustomMangaSource(cs)
+                return AnonymousMangaSource(name)
+        }
+        if (name.startsWith(ExtensionMangaSource.NAME_PREFIX)) {
+                val id = ExtensionMangaSource.extractId(name)
+                val ext = id?.let { ExtensionRepository.peekById(it) }
+                if (ext != null) return ExtensionMangaSource(ext)
                 return AnonymousMangaSource(name)
         }
         MangaParserSource.entries.forEach {
@@ -140,6 +148,7 @@ fun MangaSource.getTitle(context: Context): String = when (val source = unwrap()
         is ExternalMangaSource -> source.resolveName(context)
         is MihonMangaSource -> source.displayName
         is CustomMangaSource -> source.displayTitle
+        is ExtensionMangaSource -> source.displayTitle
         else -> context.getString(R.string.unknown)
 }
 

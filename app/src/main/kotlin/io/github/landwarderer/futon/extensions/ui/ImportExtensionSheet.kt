@@ -34,6 +34,8 @@ class ImportExtensionSheet : BottomSheetDialogFragment() {
 
     private var selectedFileName: TextView? = null
     private var selectedFileContent: String? = null
+    private var autoDetectedType: ExtensionType? = null
+    private var typeSpinner: AutoCompleteTextView? = null
 
     private lateinit var pickFileLauncher: ActivityResultLauncher<Array<String>>
 
@@ -51,6 +53,15 @@ class ImportExtensionSheet : BottomSheetDialogFragment() {
                 val displayName = uri.lastPathSegment?.substringAfterLast('/') ?: "extension"
                 selectedFileContent = content
                 selectedFileName?.text = displayName
+                autoDetectedType = when {
+                    displayName.endsWith(".dart", ignoreCase = true) -> ExtensionType.DART
+                    displayName.endsWith(".js", ignoreCase = true) -> ExtensionType.JS
+                    else -> null
+                }
+                autoDetectedType?.let { type ->
+                    val label = if (type == ExtensionType.DART) "Dart (.dart)" else "JavaScript (.js)"
+                    typeSpinner?.setText(label, false)
+                }
             } catch (_: Exception) {
                 Toast.makeText(requireContext(), getString(R.string.ext_install_error), Toast.LENGTH_LONG).show()
             }
@@ -73,6 +84,7 @@ class ImportExtensionSheet : BottomSheetDialogFragment() {
         val editVersion = view.findViewById<TextInputEditText>(R.id.edit_ext_version)
         val editAuthor = view.findViewById<TextInputEditText>(R.id.edit_ext_author)
         val spinnerType = view.findViewById<AutoCompleteTextView>(R.id.spinner_ext_type)
+        typeSpinner = spinnerType
         val btnPick = view.findViewById<MaterialButton>(R.id.btn_pick_ext_file)
         val btnImport = view.findViewById<MaterialButton>(R.id.btn_import_ext)
         val btnCancel = view.findViewById<MaterialButton>(R.id.btn_cancel_ext)
@@ -84,7 +96,15 @@ class ImportExtensionSheet : BottomSheetDialogFragment() {
         spinnerType?.setText(typeLabels[0], false)
 
         btnPick?.setOnClickListener {
-            pickFileLauncher.launch(arrayOf("application/javascript", "text/javascript", "text/x-dart", "*/*"))
+            pickFileLauncher.launch(arrayOf(
+                "application/javascript",
+                "text/javascript",
+                "text/x-javascript",
+                "text/plain",
+                "text/x-dart",
+                "application/dart",
+                "*/*",
+            ))
         }
 
         btnImport?.setOnClickListener {
@@ -127,6 +147,7 @@ class ImportExtensionSheet : BottomSheetDialogFragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         selectedFileName = null
+        typeSpinner = null
     }
 
     companion object {

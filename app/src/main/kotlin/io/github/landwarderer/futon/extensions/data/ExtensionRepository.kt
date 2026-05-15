@@ -28,6 +28,7 @@ class ExtensionRepository @Inject constructor(
 
     init {
         _extensions.value = loadAll()
+        INSTANCE = this
     }
 
     @Synchronized
@@ -120,5 +121,11 @@ class ExtensionRepository @Inject constructor(
 
     companion object {
         private const val KEY_EXTENSIONS = "installed_extensions"
+
+        @Volatile
+        private var INSTANCE: ExtensionRepository? = null
+
+        fun peekById(id: String): Extension? = INSTANCE?.findById(id)
+        fun peekAll(): List<Extension> = INSTANCE?.getAll().orEmpty()
     }
 }
