@@ -123,6 +123,100 @@ class ExtensionsViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Creates a brand-new extension with auto-generated template source code.
+     *
+     * Called from [CreateExtensionActivity] when the user fills in the form and
+     * taps "Create".
+     */
+    fun createExtension(
+        name: String,
+        lang: String,
+        baseUrl: String,
+        apiUrl: String,
+        iconUrl: String,
+        notes: String,
+        scriptLanguage: ExtensionType,
+        sourceType: String,
+        contentTarget: String,
+    ) {
+        viewModelScope.launch {
+            val sourceCode = generateTemplate(scriptLanguage, name, baseUrl)
+            val extension = Extension(
+                id = UUID.randomUUID().toString(),
+                name = name,
+                version = "1.0.0",
+                author = "",
+                description = "",
+                baseUrl = baseUrl,
+                apiUrl = apiUrl,
+                language = lang.ifBlank { "en" },
+                iconUrl = iconUrl,
+                notes = notes,
+                type = scriptLanguage,
+                sourceType = sourceType,
+                contentTarget = contentTarget,
+                sourceCode = sourceCode,
+                packageName = "",
+                templateName = "",
+                isEnabled = true,
+                installedAt = System.currentTimeMillis(),
+            )
+            extensionRepository.save(extension)
+        }
+    }
+
+    private fun generateTemplate(type: ExtensionType, name: String, baseUrl: String): String =
+        when (type) {
+            ExtensionType.JS -> """
+// $name — JavaScript extension
+// Base URL: $baseUrl
+
+function getMangaList(offset, query) {
+  // TODO: fetch and return manga list
+  // Expected: '{"items":[{"url":"/manga/xyz","title":"Title","cover":"https://..."}]}'
+  return JSON.stringify({ items: [] });
+}
+
+function getMangaDetails(url) {
+  // TODO: fetch and return manga details + chapters
+  // Expected: '{"url":"...","title":"...","cover":"...","description":"...","chapters":[...]}'
+  return JSON.stringify({ url: url, title: "", chapters: [] });
+}
+
+function getChapterPages(url) {
+  // TODO: fetch and return page URLs
+  // Expected: '{"pages":[{"index":0,"url":"https://img.example.com/1.jpg"}]}'
+  return JSON.stringify({ pages: [] });
+}
+""".trimIndent()
+
+            ExtensionType.DART -> """
+// $name — Dart extension
+// Base URL: $baseUrl
+
+// Returns JSON string: '{"items":[{"url":"...","title":"...","cover":"..."}]}'
+String getMangaList(int offset, String? query) {
+  // TODO: fetch and return manga list
+  return '{"items":[]}';
+}
+
+// Returns JSON string: '{"url":"...","title":"...","chapters":[...]}'
+String getMangaDetails(String url) {
+  // TODO: fetch and return manga details + chapters
+  return '{"url":"${'$'}url","title":"","chapters":[]}';
+}
+
+// Returns JSON string: '{"pages":[{"index":0,"url":"https://img.example.com/1.jpg"}]}'
+String getChapterPages(String url) {
+  // TODO: fetch and return chapter page URLs
+  return '{"pages":[]}';
+}
+""".trimIndent()
+
+            else -> ""
+        }
+
     fun installFromAvailable(available: AvailableExtension) {
         viewModelScope.launch {
             _isLoading.value = true

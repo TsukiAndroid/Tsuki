@@ -6,21 +6,25 @@ package io.github.landwarderer.futon.extensions.domain
  * This data model is completely separate from [CustomSource] and the Mihon bridge.
  * It is persisted via [ExtensionRepository] (SharedPreferences + JSON).
  *
- * @param id          Stable UUID for this installation.
- * @param name        Human-readable name shown in the UI.
- * @param version     SemVer string, e.g. "1.2.3".
- * @param author      Extension author / publisher name.
- * @param description Short one-line description.
- * @param baseUrl     Root URL the extension targets, e.g. "https://mangadex.org".
- * @param language    BCP-47 language tag the extension primarily serves, e.g. "en".
- * @param iconUrl     Optional URL for a square icon image.
- * @param type        Runtime format – see [ExtensionType].
- * @param sourceCode  Raw source code for [ExtensionType.JS] and [ExtensionType.DART]
- *                    extensions; empty string for the other two types.
- * @param packageName APK package name for [ExtensionType.MIHON_APK]; empty otherwise.
- * @param templateName Name of the [ParserTemplate] for [ExtensionType.JSON_TEMPLATE]; empty otherwise.
- * @param isEnabled   Whether the extension appears in the Explore source list.
- * @param installedAt Unix-millis timestamp of installation.
+ * @param id            Stable UUID for this installation.
+ * @param name          Human-readable name shown in the UI.
+ * @param version       SemVer string, e.g. "1.2.3".
+ * @param author        Extension author / publisher name.
+ * @param description   Short one-line description.
+ * @param baseUrl       Root URL the extension targets, e.g. "https://mangadex.org".
+ * @param apiUrl        Optional separate API endpoint URL.
+ * @param language      BCP-47 language tag the extension primarily serves, e.g. "en".
+ * @param iconUrl       Optional URL for a square icon image.
+ * @param notes         Free-text notes about the extension.
+ * @param type          Runtime format – see [ExtensionType].
+ * @param sourceType    Source multiplicity: "single", "multi", or "torrent".
+ * @param contentTarget Content category: "Manga", "Anime", or "Novel".
+ * @param sourceCode    Raw source code for [ExtensionType.JS] and [ExtensionType.DART]
+ *                      extensions; empty string for the other two types.
+ * @param packageName   APK package name for [ExtensionType.MIHON_APK]; empty otherwise.
+ * @param templateName  Name of the [ParserTemplate] for [ExtensionType.JSON_TEMPLATE]; empty otherwise.
+ * @param isEnabled     Whether the extension appears in the Explore source list.
+ * @param installedAt   Unix-millis timestamp of installation.
  */
 data class Extension(
     val id: String,
@@ -29,9 +33,13 @@ data class Extension(
     val author: String,
     val description: String,
     val baseUrl: String,
+    val apiUrl: String = "",
     val language: String,
     val iconUrl: String,
+    val notes: String = "",
     val type: ExtensionType,
+    val sourceType: String = "single",
+    val contentTarget: String = "Manga",
     val sourceCode: String,
     val packageName: String,
     val templateName: String,

@@ -11,6 +11,10 @@
                 app:showAsAction="ifRoom|collapseActionView" />
 
         <item
+                android:id="@+id/action_create_extension"
+                android:title="@string/ext_create_extension" />
+
+        <item
                 android:id="@+id/action_manage_repos"
                 android:title="@string/ext_repos"
                 android:titleCondensed="@string/ext_repos_short" />

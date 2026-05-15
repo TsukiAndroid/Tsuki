@@ -1,5 +1,6 @@
 package io.github.landwarderer.futon.extensions.ui
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuInflater
@@ -124,11 +125,21 @@ class ExtensionsActivity : BaseActivity<ActivityExtensionsBinding>() {
         }
 
         override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
-            if (menuItem.itemId == R.id.action_manage_repos) {
-                startActivity(android.content.Intent(this@ExtensionsActivity, ExtensionRepoActivity::class.java))
-                return true
+            return when (menuItem.itemId) {
+                R.id.action_create_extension -> {
+                    startActivity(
+                        Intent(this@ExtensionsActivity, CreateExtensionActivity::class.java),
+                    )
+                    true
+                }
+                R.id.action_manage_repos -> {
+                    startActivity(
+                        Intent(this@ExtensionsActivity, ExtensionRepoActivity::class.java),
+                    )
+                    true
+                }
+                else -> false
             }
-            return false
         }
 
         override fun onMenuItemActionExpand(item: MenuItem) = true

@@ -83,9 +83,13 @@ class ExtensionRepository @Inject constructor(
         author = optString("author", ""),
         description = optString("description", ""),
         baseUrl = optString("baseUrl", ""),
+        apiUrl = optString("apiUrl", ""),
         language = optString("language", "en"),
         iconUrl = optString("iconUrl", ""),
+        notes = optString("notes", ""),
         type = runCatching { ExtensionType.valueOf(getString("type")) }.getOrDefault(ExtensionType.JS),
+        sourceType = optString("sourceType", "single"),
+        contentTarget = optString("contentTarget", "Manga"),
         sourceCode = optString("sourceCode", ""),
         packageName = optString("packageName", ""),
         templateName = optString("templateName", ""),
@@ -100,9 +104,13 @@ class ExtensionRepository @Inject constructor(
         put("author", author)
         put("description", description)
         put("baseUrl", baseUrl)
+        put("apiUrl", apiUrl)
         put("language", language)
         put("iconUrl", iconUrl)
+        put("notes", notes)
         put("type", type.name)
+        put("sourceType", sourceType)
+        put("contentTarget", contentTarget)
         put("sourceCode", sourceCode)
         put("packageName", packageName)
         put("templateName", templateName)

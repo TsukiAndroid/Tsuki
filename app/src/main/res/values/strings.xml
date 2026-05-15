@@ -1192,4 +1192,22 @@
     <string name="ext_no_file">No file selected</string>
     <string name="ext_import_btn">Import</string>
 
+    <string name="ext_create_extension">Create Extension</string>
+    <string name="ext_choose_language">Choose extension language</string>
+    <string name="ext_lang_hint">Lang</string>
+    <string name="ext_api_url_hint">ApiUrl (optional)</string>
+    <string name="ext_icon_url_hint">iconUrl</string>
+    <string name="ext_notes_hint">notes</string>
+    <string name="ext_source_type">Type</string>
+    <string name="ext_content_target">Target</string>
+    <string name="ext_source_type_single">single</string>
+    <string name="ext_source_type_multi">multi</string>
+    <string name="ext_source_type_torrent">torrent</string>
+    <string name="ext_target_manga">Manga</string>
+    <string name="ext_target_anime">Anime</string>
+    <string name="ext_target_novel">Novel</string>
+    <string name="ext_language_dart">Dart</string>
+    <string name="ext_language_js">JavaScript</string>
+    <string name="ext_create_btn">Create</string>
+    <string name="ext_create_success">"%s" extension created</string>
   </resources>

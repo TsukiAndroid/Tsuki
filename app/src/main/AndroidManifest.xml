@@ -318,6 +318,10 @@
                         android:label="@string/ext_repos"
                         android:exported="false" />
                 <activity
+                        android:name="io.github.landwarderer.futon.extensions.ui.CreateExtensionActivity"
+                        android:label="@string/ext_create_extension"
+                        android:exported="false" />
+                <activity
                         android:name="io.github.landwarderer.futon.scrobbling.kitsu.ui.KitsuAuthActivity"
                         android:exported="false"
                         android:label="@string/kitsu"
