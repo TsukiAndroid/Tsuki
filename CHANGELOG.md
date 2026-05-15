@@ -1,3 +1,15 @@
+## Alpha 1.562 (Build [#199](https://github.com/Space4414/Tsuki/actions/runs/25904827592))
+
+_2026-05-15 06:55 UTC_
+
+- fix: qualify OkHttpClient injection in ExtensionRepoService with @BaseHttpClient (8f05352)
+- fix: remove deprecated isNsfw param from Manga constructor calls (b4ce000)
+- fix: resolve all Kotlin compile errors (1134d17)
+- fix: add missing ext_* strings referenced by layouts (3e2dc3e)
+- fix: remove d4rt compile dep (loaded via reflection; not on maven central) (554c23f)
+- feat: add multi-language extension system (abe25dc)
+
+
 ## Alpha 1.553 (Build [#191](https://github.com/Space4414/Tsuki/actions/runs/25901403323))
 
 _2026-05-15 05:08 UTC_
