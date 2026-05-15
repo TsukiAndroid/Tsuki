@@ -1,6 +1,7 @@
 package io.github.landwarderer.futon.extensions.data
 
 import android.content.SharedPreferences
+import io.github.landwarderer.futon.core.network.BaseHttpClient
 import io.github.landwarderer.futon.extensions.domain.ExtensionType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -64,7 +65,7 @@ data class AvailableExtension(
  */
 @Singleton
 class ExtensionRepoService @Inject constructor(
-    private val okHttpClient: OkHttpClient,
+    @BaseHttpClient private val okHttpClient: OkHttpClient,
     @Named("extensions_prefs") private val prefs: SharedPreferences,
 ) {
 
