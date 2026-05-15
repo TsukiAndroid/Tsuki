@@ -155,24 +155,56 @@ package io.github.landwarderer.futon.customsource.data
       }
 
       fun getPages(chapter: MangaChapter): List<MangaPage> {
-          val doc = fetchDocument(chapter.url)
-          val images = doc.select(
-              "div.page-break img, div.reading-content img, .wp-manga-chapter-img img, " +
-              "#reader img, [class*=reader] img, [class*=chapter-image] img"
-          )
-          return images.mapIndexedNotNull { index, img ->
-              val url = resolveImageUrl(img, "")
-              if (url.isEmpty()) null
-              else MangaPage(
-                  id = (chapter.id * 1000L + index),
-                  url = url,
-                  preview = null,
-                  source = customSource,
-              )
-          }
-      }
+            val doc = fetchDocument(chapter.url)
+            val images = doc.select(
+                "div.page-break img, div.reading-content img, .wp-manga-chapter-img img, " +
+                "#reader img, [class*=reader] img, [class*=chapter-image] img"
+            )
+            val domPages = images.mapIndexedNotNull { index, img ->
+                val url = resolveImageUrl(img, "")
+                if (url.isEmpty()) null
+                else MangaPage(
+                    id = (chapter.id * 1000L + index),
+                    url = url,
+                    preview = null,
+                    source = customSource,
+                )
+            }
+            if (domPages.isNotEmpty()) return domPages
+            // Mangomic-core reader (manhwaread.com): images are NOT in the DOM.
+            // They live in a JS variable:
+            //   var chapterData = {"data":"<base64_json>","base":"https://cdn/postId"}
+            // Decoded entry: {"src":"chapterId\/mr_001.jpg","w":800,"h":5000}
+            // Full URL = base + "/" + src  (backslash-escaped slashes are un-escaped)
+            return parseChapterDataScript(doc, chapter)
+        }
 
-      // ── List fetching ─────────────────────────────────────────────────────────
+        private fun parseChapterDataScript(doc: Document, chapter: MangaChapter): List<MangaPage> {
+            val script = doc.select("script:not([src])").asSequence()
+                .map { it.data() }
+                .firstOrNull { it.contains("chapterData") } ?: return emptyList()
+            return runCatching {
+                val baseRe = Regex(""""base"\s*:\s*"([^"]+)"""")
+                val dataRe = Regex(""""data"\s*:\s*"([^"]+)"""")
+                val srcRe  = Regex(""""src"\s*:\s*"([^"]+)"""")
+                val base = baseRe.find(script)?.groupValues?.getOrNull(1)?.trimEnd('/') ?: ""
+                val data = dataRe.find(script)?.groupValues?.getOrNull(1)
+                    ?: return@runCatching emptyList()
+                val decoded = String(java.util.Base64.getDecoder().decode(data))
+                srcRe.findAll(decoded).mapIndexed { i, mr ->
+                    val rawSrc = mr.groupValues[1].replace("\\/", "/")
+                    val url = if (base.isNotEmpty()) "$base/$rawSrc" else rawSrc
+                    MangaPage(
+                        id = chapter.id * 1000L + i,
+                        url = url,
+                        preview = null,
+                        source = customSource,
+                    )
+                }.toList()
+            }.getOrElse { emptyList() }
+        }
+
+        // ── List fetching ─────────────────────────────────────────────────────────
 
       private fun latestManga(offset: Int, order: SortOrder?): List<Manga> {
           val page = offset / PAGE_SIZE
