@@ -1179,5 +1179,15 @@
     <string name="ext_type_dart">Dart</string>
     <string name="ext_type_mihon">Mihon APK</string>
     <string name="ext_type_template">JSON Template</string>
+    <string name="ext_import_local">Import from file</string>
+    <string name="ext_refresh_repos">Refresh repos</string>
+    <string name="ext_name">Extension name</string>
+    <string name="ext_type">Type</string>
+    <string name="ext_base_url">Base URL</string>
+    <string name="ext_version_hint">Version (e.g. 1.0.0)</string>
+    <string name="ext_author">Author</string>
+    <string name="ext_pick_file">Pick file (.js / .dart / .apk / .json)</string>
+    <string name="ext_no_file">No file selected</string>
+    <string name="ext_import_btn">Import</string>
 
   </resources>
