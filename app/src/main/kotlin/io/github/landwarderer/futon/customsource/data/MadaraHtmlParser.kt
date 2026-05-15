@@ -158,7 +158,7 @@ package io.github.landwarderer.futon.customsource.data
           val doc = fetchDocument(chapter.url)
           val images = doc.select(
               "div.page-break img, div.reading-content img, .wp-manga-chapter-img img, " +
-              "[class*=reader] img, [class*=chapter-image] img"
+              "#reader img, [class*=reader] img, [class*=chapter-image] img"
           )
           return images.mapIndexedNotNull { index, img ->
               val url = resolveImageUrl(img, "")
@@ -212,16 +212,27 @@ package io.github.landwarderer.futon.customsource.data
       }
 
       private fun browseByGenre(genreKey: String, offset: Int, order: SortOrder?): List<Manga> {
-          val page = offset / PAGE_SIZE + 1
-          val orderParam = when (order) {
-              SortOrder.POPULARITY -> "trending"
-              SortOrder.RATING -> "rating"
-              SortOrder.NEWEST -> "new-manga"
-              else -> "latest"
-          }
-          val url = "$baseUrl/manga/?genre=$genreKey&m_orderby=$orderParam&paged=$page"
-          return runCatching { parseMangaListPage(fetchDocument(url)) }.getOrElse { emptyList() }
-      }
+            val page = offset / PAGE_SIZE + 1
+            val orderParam = when (order) {
+                SortOrder.POPULARITY -> "trending"
+                SortOrder.RATING -> "rating"
+                SortOrder.NEWEST -> "new-manga"
+                else -> "latest"
+            }
+            // Madara forks differ on the content-type base slug: /manhwa/, /manga/, /manhua/, etc.
+            // Try each candidate so genre filtering works across all variants (manhwaread uses /manhwa/).
+            val slugsToTry = listOf("manhwa", "manga", "manhwa-list", "manhua", "webtoon", "comic", "")
+            for (slug in slugsToTry) {
+                val base = if (slug.isEmpty()) baseUrl else "$baseUrl/$slug"
+                val url = "$base/?genre=$genreKey&m_orderby=$orderParam&paged=$page"
+                val result = runCatching { parseMangaListPage(fetchDocument(url)) }.getOrNull()
+                if (!result.isNullOrEmpty()) return result
+            }
+            // Some forks use a direct genre path: /genre/SLUG/
+            return runCatching {
+                parseMangaListPage(fetchDocument("$baseUrl/genre/$genreKey/?m_orderby=$orderParam&paged=$page"))
+            }.getOrElse { emptyList() }
+        }
 
       private fun fetchListAjax(page: Int, orderby: String, metaKey: String): List<Manga> {
           val bodyBuilder = FormBody.Builder()
@@ -269,6 +280,17 @@ package io.github.landwarderer.futon.customsource.data
       // ── Chapter fetching ──────────────────────────────────────────────────────
 
       private fun loadChapterList(doc: Document, pageUrl: String): List<MangaChapter> {
+            // Strategy 0: Mangomic / custom Madara forks inline chapters as <a data-id> elements
+            // directly inside a .chapters-list container — no AJAX endpoint exists on these sites.
+            // Check this FIRST to avoid a wasted network round-trip on every detail page.
+            val directAnchors = doc.select(
+                ".chapters-list a.chapter-item, .chapters-list a[data-id], " +
+                ".chapter-list a.chapter-item, .chapter-list a[data-id]"
+            )
+            if (directAnchors.isNotEmpty()) {
+                return directAnchors.mapIndexedNotNull { i, a -> chapterFromAnchor(a, i) }
+            }
+
             // Strategy 1: Modern Madara 2.x+ — POST to /ajax/chapters/ (no postId needed).
             // Sites published after ~2022 (e.g. manhwaread.com) use this endpoint.
             val newEndpoint = runCatching { fetchChaptersNewEndpoint(pageUrl) }.getOrNull()
@@ -355,6 +377,30 @@ package io.github.landwarderer.futon.customsource.data
               source = customSource,
           )
       }
+
+
+        /** Parses a chapter where the element itself is the anchor (mangomic-core / custom Madara forks). */
+        private fun chapterFromAnchor(anchor: Element, fallbackIndex: Int): MangaChapter? {
+            val url = anchor.absUrl("href").takeIf { it.isNotEmpty() } ?: return null
+            val rawTitle = (
+                anchor.selectFirst(".chapter-item__name")?.text()?.trim()?.takeIf { it.isNotEmpty() }
+                    ?: anchor.selectFirst("span")?.text()?.trim()?.takeIf { it.isNotEmpty() }
+                    ?: anchor.ownText().trim().takeIf { it.isNotEmpty() }
+            ) ?: "Chapter ${fallbackIndex + 1}"
+            val number = CHAPTER_NUMBER_RE.find(rawTitle)?.groupValues?.getOrNull(1)
+                ?.toFloatOrNull() ?: (fallbackIndex + 1).toFloat()
+            return MangaChapter(
+                id = url.hashCode().toLong(),
+                title = rawTitle,
+                number = number,
+                volume = 0,
+                url = url,
+                scanlator = null,
+                uploadDate = 0L,
+                branch = null,
+                source = customSource,
+            )
+        }
 
       // ── Helpers ───────────────────────────────────────────────────────────────
 
