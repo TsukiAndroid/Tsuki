@@ -1,3 +1,10 @@
+## Alpha 1.553 (Build [#191](https://github.com/Space4414/Tsuki/actions/runs/25901403323))
+
+_2026-05-15 05:08 UTC_
+
+- fix(madara): parse chapterData JS for manhwaread page images; add manga-item__link selector (2b84a22)
+
+
 ## Alpha 1.545 (Build [#184](https://github.com/Space4414/Tsuki/actions/runs/25896139154))
 
 _2026-05-15 02:00 UTC_
