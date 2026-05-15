@@ -53,21 +53,34 @@ package io.github.landwarderer.futon.customsource.data
       }
 
       fun getGenres(): Set<MangaTag> {
-          val slugsToTry = listOf("manga", "manhwa", "manhua", "webtoon", "comic")
+          // Candidate URLs tried in priority order. Genre-specific paths first,
+          // then common content-type slugs, then the site root (homepage sidebars
+          // often carry genre checkboxes in Madara themes).
+          val candidateUrls = listOf(
+              "$baseUrl/genre/",
+              "$baseUrl/manga-genre/",
+              "$baseUrl/manhwa/",
+              "$baseUrl/manga/",
+              "$baseUrl/manhwa-list/",
+              "$baseUrl/manhua/",
+              "$baseUrl/webtoon/",
+              "$baseUrl/comic/",
+              baseUrl,
+          )
+          val genreCheckboxSel = ".checkbox-manga-genre .checkbox, .manga-genres .checkbox, " +
+              ".c-checkbox-list .checkbox, a[href*=manga-genre/], a[href*=/genre/], " +
+              "a.genre, a[href*=genre], .genre-item a, .cat-item a[href*=genre]"
           var doc: Document? = null
-          for (slug in slugsToTry) {
-              val candidate = runCatching { fetchDocument("$baseUrl/$slug/") }.getOrNull()
-              if (candidate != null && candidate.select(
-                      ".checkbox-manga-genre .checkbox, .manga-genres .checkbox, " +
-                      ".c-checkbox-list .checkbox, a[href*=manga-genre/], a[href*=/genre/]"
-                  ).isNotEmpty()) {
+          for (url in candidateUrls) {
+              val candidate = runCatching { fetchDocument(url) }.getOrNull() ?: continue
+              if (candidate.select(genreCheckboxSel).isNotEmpty()) {
                   doc = candidate
                   break
               }
           }
           if (doc == null) {
-              for (slug in slugsToTry) {
-                  doc = runCatching { fetchDocument("$baseUrl/$slug/") }.getOrNull()
+              for (url in candidateUrls) {
+                  doc = runCatching { fetchDocument(url) }.getOrNull()
                   if (doc != null) break
               }
           }
