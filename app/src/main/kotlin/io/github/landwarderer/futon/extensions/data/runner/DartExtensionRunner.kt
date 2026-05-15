@@ -30,6 +30,7 @@ import javax.inject.Singleton
  *
  * // Returns JSON string: '{"pages":[{"index":0,"url":"…"}]}'
  * String getChapterPages(String url) { … }
+ *
  * ```
  *
  * D4rt is loaded reflectively so the app continues to function even if the dependency
@@ -155,7 +156,6 @@ class DartExtensionRunner @Inject constructor() : ExtensionRunner {
             authors = emptySet(),
             source = ExtensionMangaSource(extension),
             chapters = null,
-            isNsfw = false,
         )
     }
 }

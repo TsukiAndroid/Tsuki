@@ -142,7 +142,6 @@ class JsExtensionRunner @Inject constructor() : ExtensionRunner {
             authors = emptySet(),
             source = ExtensionMangaSource(extension),
             chapters = null,
-            isNsfw = false,
         )
     }
 
