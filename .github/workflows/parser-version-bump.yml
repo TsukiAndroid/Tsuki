@@ -1,0 +1,56 @@
+name: Bump Kotatsu Parsers Version
+
+on:
+  schedule:
+    - cron: '0 3 * * *'   # Daily 03:00 UTC
+  workflow_dispatch:        # Manual trigger
+
+jobs:
+  bump-parsers:
+    name: Check and bump kotatsu-parsers-redo
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout devel
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: devel
+
+      - name: Get latest clquwu/kotatsu-parsers-redo commit
+        id: latest
+        run: |
+          LATEST_FULL=$(curl -fsSL \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.sha" \
+            https://api.github.com/repos/clquwu/kotatsu-parsers-redo/commits/master)
+          # JitPack resolves 10-char SHAs; truncate to match libs.versions.toml format
+          LATEST_SHORT=${LATEST_FULL:0:10}
+          echo "sha=${LATEST_SHORT}" >> "$GITHUB_OUTPUT"
+          echo "Latest kotatsu-parsers-redo: ${LATEST_SHORT}"
+
+      - name: Get current pinned version
+        id: current
+        run: |
+          CURRENT=$(grep '^parsers' gradle/libs.versions.toml | sed 's/parsers = "//;s/"//')
+          echo "sha=${CURRENT}" >> "$GITHUB_OUTPUT"
+          echo "Current version: ${CURRENT}"
+
+      - name: Bump if changed
+        if: steps.latest.outputs.sha != steps.current.outputs.sha
+        run: |
+          OLD="${{ steps.current.outputs.sha }}"
+          NEW="${{ steps.latest.outputs.sha }}"
+          sed -i "s/parsers = \"${OLD}\"/parsers = \"${NEW}\"/" gradle/libs.versions.toml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add gradle/libs.versions.toml
+          git commit -m "chore(deps): bump kotatsu-parsers-redo ${OLD} → ${NEW} [auto]"
+          git push origin devel
+          echo "Pushed bump commit — build-alpha.yml will build the new APK automatically."
+
+      - name: Already up-to-date
+        if: steps.latest.outputs.sha == steps.current.outputs.sha
+        run: echo "kotatsu-parsers-redo already at ${{ steps.latest.outputs.sha }}"
