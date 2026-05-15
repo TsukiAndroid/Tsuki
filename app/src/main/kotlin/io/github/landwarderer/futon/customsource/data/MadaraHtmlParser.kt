@@ -113,8 +113,15 @@ package io.github.landwarderer.futon.customsource.data
           val coverImg = doc.selectFirst("div.summary_image img, div.tab-summary img")
           val coverUrl = resolveImageUrl(coverImg, manga.coverUrl)
 
-          val description = doc.selectFirst("div.summary__content, div.description-summary")
-              ?.select("p")?.joinToString("\n") { it.text() }?.trim()
+          val description = doc.selectFirst(
+                "div.summary__content, div.description-summary, " +
+                ".post-content_item .summary-content, #editdescription, " +
+                ".comic_content, div.manga-about, div.description, " +
+                ".desc, .entry-content"
+            )?.let { el ->
+                el.select("p").joinToString("\n") { it.text() }.trim()
+                    .ifEmpty { el.ownText().trim().ifEmpty { el.text().trim() } }
+            }?.takeIf { it.isNotBlank() }
 
           val statusText = doc.select("div.post-status .summary-content").getOrNull(1)
               ?.text()?.lowercase()?.trim()
@@ -262,19 +269,54 @@ package io.github.landwarderer.futon.customsource.data
       // ── Chapter fetching ──────────────────────────────────────────────────────
 
       private fun loadChapterList(doc: Document, pageUrl: String): List<MangaChapter> {
-          val postId = doc.selectFirst(
-              "input#manga-chapters-holder, .rating-post-id, [id=manga-chapters-holder]"
-          )?.attr("data-id")
+            // Strategy 1: Modern Madara 2.x+ — POST to /ajax/chapters/ (no postId needed).
+            // Sites published after ~2022 (e.g. manhwaread.com) use this endpoint.
+            val newEndpoint = runCatching { fetchChaptersNewEndpoint(pageUrl) }.getOrNull()
+            if (!newEndpoint.isNullOrEmpty()) return newEndpoint
 
-          if (!postId.isNullOrEmpty()) {
-              val ajax = runCatching { fetchChaptersAjax(postId, pageUrl) }.getOrNull()
-              if (!ajax.isNullOrEmpty()) return ajax
-          }
+            // Strategy 2: Classic Madara — hidden input carries the postId, AJAX to admin-ajax.php.
+            val postId = doc.selectFirst(
+                "input#manga-chapters-holder, .rating-post-id, [id=manga-chapters-holder], " +
+                "[class*=chapters-holder][data-id]"
+            )?.attr("data-id")
 
-          return doc.select("li.wp-manga-chapter")
-              .mapIndexedNotNull { i, el -> chapterFromElement(el, i) }
-              .reversed()
-      }
+            if (!postId.isNullOrEmpty()) {
+                val ajax = runCatching { fetchChaptersAjax(postId, pageUrl) }.getOrNull()
+                if (!ajax.isNullOrEmpty()) return ajax
+            }
+
+            // Strategy 3: Chapters already embedded in the DOM.
+            val inline = doc.select("li.wp-manga-chapter")
+                .mapIndexedNotNull { i, el -> chapterFromElement(el, i) }
+            if (inline.isNotEmpty()) return inline.reversed()
+
+            // Strategy 4: Alternate containers used by some Madara forks.
+            return doc.select(
+                ".listing-chapters_wrap li, .eph-num, .version-chap li, " +
+                "ul.row-content-chapter li, #chapterlist li"
+            ).mapIndexedNotNull { i, el -> chapterFromElement(el, i) }.reversed()
+        }
+
+        /** Modern Madara 2.x chapter endpoint — does not require the post ID. */
+        private fun fetchChaptersNewEndpoint(mangaUrl: String): List<MangaChapter> {
+            val url = mangaUrl.trimEnd('/') + "/ajax/chapters/"
+            val request = Request.Builder()
+                .url(url)
+                .post(FormBody.Builder().build())
+                .header("User-Agent", USER_AGENT)
+                .header("Referer", mangaUrl)
+                .header("X-Requested-With", "XMLHttpRequest")
+                .build()
+            val resp = runCatching { ajaxClient.newCall(request).execute() }.getOrNull()
+                ?: return emptyList()
+            if (!resp.isSuccessful) { resp.close(); return emptyList() }
+            val html = resp.use { it.body?.string() } ?: return emptyList()
+            if (html.isBlank() || html.trim() == "0") return emptyList()
+            return Jsoup.parse(html, mangaUrl)
+                .select("li.wp-manga-chapter")
+                .mapIndexedNotNull { i, el -> chapterFromElement(el, i) }
+                .reversed()
+        }
 
       private fun fetchChaptersAjax(postId: String, referer: String): List<MangaChapter> {
           val body = FormBody.Builder()
