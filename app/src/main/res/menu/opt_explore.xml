@@ -21,4 +21,9 @@
                 android:title="@string/import_parser_template"
                 android:titleCondensed="@string/import_parser_short" />
 
+        <item
+                android:id="@+id/action_manage_extensions"
+                android:title="@string/ext_extensions"
+                android:titleCondensed="@string/ext_extensions_short" />
+
 </menu>

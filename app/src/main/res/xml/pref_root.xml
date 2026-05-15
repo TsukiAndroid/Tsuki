@@ -58,6 +58,13 @@
         android:summary="@string/perf_performance_summary" />
 
     <PreferenceScreen
+        android:fragment="io.github.landwarderer.futon.settings.extensions.ExtensionsSettingsFragment"
+        android:icon="@drawable/ic_plug_large"
+        android:key="extensions"
+        android:title="@string/ext_extensions"
+        android:summary="@string/ext_extensions_settings_summary" />
+
+    <PreferenceScreen
         android:fragment="io.github.landwarderer.futon.settings.about.AboutSettingsFragment"
         android:icon="@drawable/ic_info_outline"
         android:key="about"

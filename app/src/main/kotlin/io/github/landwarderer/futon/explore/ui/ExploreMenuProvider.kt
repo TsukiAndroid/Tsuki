@@ -9,7 +9,6 @@ import io.github.landwarderer.futon.R
 import io.github.landwarderer.futon.core.nav.AppRouter
 import io.github.landwarderer.futon.customsource.ui.AddCustomSourceSheet
 import io.github.landwarderer.futon.customsource.ui.ImportParserSheet
-
 class ExploreMenuProvider(
         private val router: AppRouter,
         private val fragmentManager: FragmentManager,
@@ -41,6 +40,11 @@ class ExploreMenuProvider(
                         R.id.action_import_parser -> {
                                 ImportParserSheet.newInstance()
                                         .show(fragmentManager, ImportParserSheet.TAG)
+                                true
+                        }
+
+                        R.id.action_manage_extensions -> {
+                                router.openExtensions()
                                 true
                         }
 

@@ -18,6 +18,8 @@ import io.github.landwarderer.futon.core.model.isNsfw
 import io.github.landwarderer.futon.core.parser.external.ExternalMangaSource
 import io.github.landwarderer.futon.customsource.data.CustomSourcesRepository
 import io.github.landwarderer.futon.customsource.domain.CustomMangaSource
+import io.github.landwarderer.futon.extensions.data.ExtensionMangaSource
+import io.github.landwarderer.futon.extensions.data.ExtensionRepository
 import io.github.landwarderer.futon.core.prefs.AppSettings
 import io.github.landwarderer.futon.core.prefs.observeAsFlow
 import io.github.landwarderer.futon.core.ui.util.ReversibleHandle
@@ -53,6 +55,7 @@ class MangaSourcesRepository @Inject constructor(
     private val settings: AppSettings,
     private val mihonExtensionManager: MihonExtensionManager,
     private val customSourcesRepository: CustomSourcesRepository,
+    private val extensionRepository: ExtensionRepository,
 ) {
 
         private val isNewSourcesAssimilated = AtomicBoolean(false)
@@ -409,7 +412,8 @@ class MangaSourcesRepository @Inject constructor(
                         mihonExtensionManager.installedExtensions,
                         mihonExtensionManager.failedExtensions,
                         customSourcesRepository.sources,
-                ) { _, _, _, _ ->
+                        extensionRepository.extensions,
+                ) { _, _, _, _, _ ->
                         getExternalSources()
                 }.distinctUntilChanged()
                         .conflate()
@@ -426,8 +430,13 @@ class MangaSourcesRepository @Inject constructor(
                 }
                 val mihon = mihonExtensionManager.getMihonMangaSources()
                 val custom = getCustomSources()
-                return external + mihon + custom
+                val extensions = getExtensionSources()
+                return external + mihon + custom + extensions
         }
+
+        /** Enabled multi-language extensions surfaced as first-class [MangaSource]s. */
+        fun getExtensionSources(): List<MangaSource> =
+                extensionRepository.getEnabled().map { ExtensionMangaSource(it) }
 
         /** User-defined sources surfaced as first-class [MangaSource]s. Only enabled sources are included. */
         fun getCustomSources(): List<MangaSource> =

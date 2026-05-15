@@ -16,6 +16,13 @@ import io.github.landwarderer.futon.customsource.data.CustomSourcesRepository
 import io.github.landwarderer.futon.customsource.domain.CustomMangaSource
 import io.github.landwarderer.futon.customsource.domain.CustomSourceType
 import io.github.landwarderer.futon.local.data.LocalMangaRepository
+import io.github.landwarderer.futon.extensions.data.ExtensionMangaRepository
+import io.github.landwarderer.futon.extensions.data.ExtensionMangaSource
+import io.github.landwarderer.futon.extensions.data.ExtensionRepository
+import io.github.landwarderer.futon.extensions.data.runner.DartExtensionRunner
+import io.github.landwarderer.futon.extensions.data.runner.JsExtensionRunner
+import io.github.landwarderer.futon.extensions.data.runner.JsonTemplateExtensionRunner
+import io.github.landwarderer.futon.extensions.data.runner.MihonBridgeExtensionRunner
 import io.github.landwarderer.futon.mihon.MihonExtensionManager
 import io.github.landwarderer.futon.mihon.MihonMangaRepository
 import io.github.landwarderer.futon.mihon.model.MihonMangaSource
@@ -69,6 +76,11 @@ interface MangaRepository {
                 private val mirrorSwitcher: MirrorSwitcher,
                 private val mihonExtensionManager: MihonExtensionManager,
                 @Suppress("unused") customSourcesRepository: CustomSourcesRepository,
+                private val extensionRepository: ExtensionRepository,
+                private val jsExtensionRunner: JsExtensionRunner,
+                private val dartExtensionRunner: DartExtensionRunner,
+                private val mihonBridgeExtensionRunner: MihonBridgeExtensionRunner,
+                private val jsonTemplateExtensionRunner: JsonTemplateExtensionRunner,
         ) {
 
                 private val cache = ArrayMap<MangaSource, WeakReference<MangaRepository>>()
@@ -136,6 +148,20 @@ interface MangaRepository {
                                 source = source,
                                 cache = contentCache,
                         )
+
+                        is ExtensionMangaSource -> {
+                                val extension = extensionRepository.findById(source.extension.id)
+                                        ?: return EmptyMangaRepository(source)
+                                ExtensionMangaRepository(
+                                        source = source,
+                                        extension = extension,
+                                        jsRunner = jsExtensionRunner,
+                                        dartRunner = dartExtensionRunner,
+                                        mihonBridgeRunner = mihonBridgeExtensionRunner,
+                                        jsonTemplateRunner = jsonTemplateExtensionRunner,
+                                        cache = contentCache,
+                                )
+                        }
 
                         is CustomMangaSource -> {
                                 // If the source was auto-matched to a Kotatsu parser, route it to

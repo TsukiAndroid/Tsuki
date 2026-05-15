@@ -1154,4 +1154,30 @@
       <string name="crash_report_subtitle">The app has crashed. You can copy the log below and report it.</string>
       <string name="crash_log_copy">Copy Log</string>
       <string name="crash_log_copied">Crash log copied to clipboard</string>
+
+    <!-- Extensions system -->
+    <string name="ext_extensions">Extensions</string>
+    <string name="ext_extensions_short">Extensions</string>
+    <string name="ext_extensions_summary">Manage JS, Dart, Mihon APK and JSON template extensions</string>
+    <string name="ext_extensions_settings_summary">Install and manage multi-language source extensions</string>
+    <string name="ext_repos">Extension repos</string>
+    <string name="ext_repos_short">Repos</string>
+    <string name="ext_repos_summary">Manage remote extension repositories</string>
+    <string name="ext_add_repo">Add repository</string>
+    <string name="ext_add_repo_desc">Enter the repository index URL</string>
+    <string name="ext_repo_name_hint">Repository name</string>
+    <string name="ext_repo_url_hint">Index URL (https://…/index.json)</string>
+    <string name="ext_import_extension">Import extension file</string>
+    <string name="ext_import_desc">Import a .js, .dart, .apk or .json extension file</string>
+    <string name="ext_no_extensions">No extensions installed</string>
+    <string name="ext_no_repos">No repositories added</string>
+    <string name="ext_delete_confirm">Delete extension?</string>
+    <string name="ext_installing">Installing extension…</string>
+    <string name="ext_install_error">Failed to install extension</string>
+    <string name="ext_remove_repo_confirm">Remove repository?</string>
+    <string name="ext_type_js">JS</string>
+    <string name="ext_type_dart">Dart</string>
+    <string name="ext_type_mihon">Mihon APK</string>
+    <string name="ext_type_template">JSON Template</string>
+
   </resources>

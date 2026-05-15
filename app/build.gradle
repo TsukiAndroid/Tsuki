@@ -256,6 +256,7 @@ dependencies {
         implementation libs.androidx.work.runtime
         implementation libs.guava
     implementation libs.quickjs.kt
+    implementation libs.d4rt
 
     // Foldable/Window layout
     implementation libs.androidx.window

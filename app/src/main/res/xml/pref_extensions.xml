@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <Preference
+        android:icon="@drawable/ic_plug_large"
+        android:key="pref_extensions_manager"
+        android:title="@string/ext_extensions"
+        android:summary="@string/ext_extensions_summary" />
+
+    <Preference
+        android:icon="@drawable/ic_manga_source"
+        android:key="pref_extension_repos"
+        android:title="@string/ext_repos"
+        android:summary="@string/ext_repos_summary" />
+
+</PreferenceScreen>

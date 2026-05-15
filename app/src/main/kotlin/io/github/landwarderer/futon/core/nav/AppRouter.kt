@@ -91,6 +91,8 @@ import io.github.landwarderer.futon.settings.override.OverrideConfigActivity
 import io.github.landwarderer.futon.settings.reader.ReaderTapGridConfigActivity
 import io.github.landwarderer.futon.settings.sources.auth.SourceAuthActivity
 import io.github.landwarderer.futon.settings.sources.catalog.SourcesCatalogActivity
+import io.github.landwarderer.futon.extensions.ui.ExtensionRepoActivity
+import io.github.landwarderer.futon.extensions.ui.ExtensionsActivity
 import io.github.landwarderer.futon.settings.sources.extension.ExtensionDownloaderActivity
 import io.github.landwarderer.futon.settings.storage.MangaDirectorySelectDialog
 import io.github.landwarderer.futon.settings.storage.directories.MangaDirectoriesActivity
@@ -209,6 +211,10 @@ class AppRouter private constructor(
     fun openSourcesCatalog() = startActivity(SourcesCatalogActivity::class.java)
 
     fun openExtensionDownloader() = startActivity(ExtensionDownloaderActivity::class.java)
+
+    fun openExtensions() = startActivity(ExtensionsActivity::class.java)
+
+    fun openExtensionRepo() = startActivity(ExtensionRepoActivity::class.java)
 
     fun openDownloads() = startActivity(DownloadsActivity::class.java)
 
