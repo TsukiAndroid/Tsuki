@@ -1,5 +1,6 @@
 package io.github.landwarderer.futon.extensions.ui.adapter
 
+import android.content.Intent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -7,11 +8,13 @@ import android.widget.CompoundButton
 import android.widget.ImageButton
 import android.widget.Switch
 import android.widget.TextView
+import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
 import io.github.landwarderer.futon.R
 import io.github.landwarderer.futon.extensions.data.AvailableExtension
 import io.github.landwarderer.futon.extensions.domain.Extension
 import io.github.landwarderer.futon.extensions.domain.ExtensionType
+import io.github.landwarderer.futon.extensions.ui.ExtensionEditorActivity
 
 /**
  * Displays installed extensions and available (remote repo) extensions in a single list.
@@ -97,17 +100,30 @@ class ExtensionsAdapter(
         private val meta: TextView? = view.findViewById(R.id.text_ext_meta)
         private val typeLabel: TextView? = view.findViewById(R.id.text_ext_type)
         private val toggle: Switch? = view.findViewById(R.id.switch_ext_enabled)
+        private val btnEditCode: ImageButton? = view.findViewById(R.id.btn_ext_edit_code)
         private val btnDelete: ImageButton? = view.findViewById(R.id.btn_ext_delete)
 
         fun bind(ext: Extension) {
             name?.text = ext.name
             meta?.text = buildMeta(ext.version, ext.author, ext.baseUrl)
             typeLabel?.text = ext.type.label()
+
             toggle?.setOnCheckedChangeListener(null)
             toggle?.isChecked = ext.isEnabled
             toggle?.setOnCheckedChangeListener { _: CompoundButton, checked: Boolean ->
                 onEnableToggle(ext.id, checked)
             }
+
+            val isEditable = ext.type == ExtensionType.JS || ext.type == ExtensionType.DART
+            btnEditCode?.isVisible = isEditable
+            btnEditCode?.setOnClickListener {
+                val ctx = it.context
+                ctx.startActivity(
+                    Intent(ctx, ExtensionEditorActivity::class.java)
+                        .putExtra(ExtensionEditorActivity.EXTRA_EXTENSION_ID, ext.id),
+                )
+            }
+
             btnDelete?.setOnClickListener { onDelete(ext.id) }
         }
     }

@@ -69,6 +69,16 @@
         tools:checked="true" />
 
     <ImageButton
+        android:id="@+id/btn_ext_edit_code"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/ext_editor_edit_code"
+        android:src="@drawable/ic_edit"
+        android:visibility="gone"
+        tools:visibility="visible" />
+
+    <ImageButton
         android:id="@+id/btn_ext_delete"
         android:layout_width="40dp"
         android:layout_height="40dp"
