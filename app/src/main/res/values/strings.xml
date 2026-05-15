@@ -1150,4 +1150,8 @@
     <string name="parser_changed">Parser changed to %s</string>
     <string name="parser_enabled">%s enabled</string>
     <string name="parser_disabled">%s disabled</string>
-</resources>
+    <string name="crash_report_title">App Crash Report</string>
+      <string name="crash_report_subtitle">The app has crashed. You can copy the log below and report it.</string>
+      <string name="crash_log_copy">Copy Log</string>
+      <string name="crash_log_copied">Crash log copied to clipboard</string>
+  </resources>
