@@ -76,6 +76,12 @@
                                 android:name="android.app.default_searchable"
                                 android:value="io.github.landwarderer.futon.search.ui.multi.MultiSearchActivity" />
                 </activity>
+                  <activity
+                          android:name="io.github.landwarderer.futon.core.CrashReportActivity"
+                          android:excludeFromRecents="true"
+                          android:exported="false"
+                          android:theme="@style/Theme.Tsuki"
+                          android:label="@string/crash_report_title" />
                 <activity
                         android:name="io.github.landwarderer.futon.details.ui.DetailsActivity"
                         android:exported="true">
