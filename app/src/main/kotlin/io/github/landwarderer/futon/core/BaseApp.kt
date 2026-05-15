@@ -29,6 +29,9 @@ import java.security.Security
 import javax.inject.Inject
 import javax.inject.Provider
 
+// Crash handler import inserted at build time
+import io.github.landwarderer.futon.core.CrashHandler
+
 @HiltAndroidApp
 open class BaseApp : Application(), Configuration.Provider {
 
@@ -73,6 +76,7 @@ open class BaseApp : Application(), Configuration.Provider {
 
 	override fun onCreate() {
 		super.onCreate()
+		CrashHandler.install(this)
 		PlatformRegistry.applicationContext = this // TODO replace with OkHttp.initialize
 		AppCompatDelegate.setDefaultNightMode(settings.theme)
 		// Initialize Sentry only if user has opted in
