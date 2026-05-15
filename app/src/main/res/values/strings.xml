@@ -1214,4 +1214,25 @@
     <string name="ext_editor_title_plain">Extension Editor</string>
     <string name="ext_editor_edit_code">Edit code</string>
     <string name="ext_editor_saved">Changes saved</string>
+
+    <!-- Test Console -->
+    <string name="ext_test_console">Test Console</string>
+    <string name="ext_test_run">Run</string>
+    <string name="ext_test_fn_list">List</string>
+    <string name="ext_test_fn_details">Details</string>
+    <string name="ext_test_fn_pages">Pages</string>
+    <string name="ext_test_arg_hint_list">Offset (0, 20, 40…) — leave blank for 0</string>
+    <string name="ext_test_arg_hint_url">Manga or chapter URL (e.g. /manga/slug)</string>
+    <string name="ext_test_output_hint">Output will appear here after you tap Run…</string>
+    <string name="ext_test_running">Running…</string>
+    <string name="ext_test_error_prefix">ERROR: %s</string>
+
+    <!-- Guide dialog -->
+    <string name="ext_guide_title">JS Extension Guide</string>
+    <string name="ext_guide_ok">Got it</string>
+    <string name="ext_guide_body">Your JS extension must implement three functions that each return a JSON string:\n\n
+① getMangaList(offset, query)\nReturns a page of manga.\nReturn: \'{\"items\":[{\"url\":\"/manga/slug\",\"title\":\"My Manga\",\"cover\":\"https://…\"}]}\'\n\n
+② getMangaDetails(url)\nReturns full details + chapter list for one manga.\nReturn: \'{\"title\":\"…\",\"cover\":\"…\",\"description\":\"…\",\"chapters\":[{\"url\":\"/ch/1\",\"title\":\"Ch.1\",\"number\":1}]}\'\n\n
+③ getChapterPages(url)\nReturns the image URLs for a chapter.\nReturn: \'{\"pages\":[{\"index\":0,\"url\":\"https://img.example.com/1.jpg\"}]}\'\n\n
+Tips:\n• Use fetch() to load HTML or JSON from the site.\n• The baseUrl you set when creating the extension is available as the manifest.baseUrl constant in the starter template.\n• Use the Test Console (▶ button) to run each function and see the output instantly without browsing.</string>
   </resources>

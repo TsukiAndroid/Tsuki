@@ -4,8 +4,10 @@ import android.os.Bundle
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
+import android.view.View
 import android.widget.Toast
 import androidx.activity.viewModels
+import androidx.appcompat.app.AlertDialog
 import androidx.core.view.MenuProvider
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
@@ -22,18 +24,24 @@ import kotlinx.coroutines.launch
 /**
  * Full-screen in-app code editor for JS and Dart extensions.
  *
- * Opens with the extension's current source code pre-filled in a monospaced
- * editable field. The "Save" toolbar action persists changes back through
- * [ExtensionEditorViewModel].
+ * The toolbar has three actions:
+ *  - Save  — persists the current code via [ExtensionEditorViewModel.saveCode].
+ *  - Test  — toggles the Test Console panel at the bottom of the screen.
+ *  - Guide — shows a dialog explaining the JS extension contract.
  *
- * Only reachable for [ExtensionType.JS] and [ExtensionType.DART] extensions;
- * other types do not have editable source code.
+ * The Test Console lets the user pick one of the three required functions
+ * (getMangaList / getMangaDetails / getChapterPages), supply an optional
+ * argument, then run the current editor code against QuickJS and see the
+ * JSON output or error message immediately — no install or device required.
+ *
+ * Only reachable for [ExtensionType.JS] and [ExtensionType.DART] extensions.
  */
 @AndroidEntryPoint
 class ExtensionEditorActivity : BaseActivity<ActivityExtensionEditorBinding>() {
 
     private val viewModel by viewModels<ExtensionEditorViewModel>()
     private var extensionId: String = ""
+    private var testConsoleVisible = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,7 +57,11 @@ class ExtensionEditorActivity : BaseActivity<ActivityExtensionEditorBinding>() {
         viewModel.load(extensionId)
 
         addMenuProvider(EditorMenuProvider())
+        setupTestConsole()
+        observeViewModel()
+    }
 
+    private fun observeViewModel() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 launch {
@@ -74,8 +86,93 @@ class ExtensionEditorActivity : BaseActivity<ActivityExtensionEditorBinding>() {
                         }
                     }
                 }
+                launch {
+                    viewModel.testState.collect { state ->
+                        when (state) {
+                            is TestState.Idle -> {
+                                viewBinding.textTestOutput.text =
+                                    getString(R.string.ext_test_output_hint)
+                                viewBinding.textTestOutput.setTextColor(
+                                    getColorAttr(com.google.android.material.R.attr.colorOnSurfaceVariant)
+                                )
+                                viewBinding.btnRunTest.isEnabled = true
+                            }
+                            is TestState.Running -> {
+                                viewBinding.textTestOutput.text =
+                                    getString(R.string.ext_test_running)
+                                viewBinding.textTestOutput.setTextColor(
+                                    getColorAttr(com.google.android.material.R.attr.colorOnSurfaceVariant)
+                                )
+                                viewBinding.btnRunTest.isEnabled = false
+                            }
+                            is TestState.Success -> {
+                                viewBinding.textTestOutput.text = state.output
+                                viewBinding.textTestOutput.setTextColor(
+                                    getColorAttr(com.google.android.material.R.attr.colorOnSurface)
+                                )
+                                viewBinding.btnRunTest.isEnabled = true
+                            }
+                            is TestState.Failure -> {
+                                viewBinding.textTestOutput.text =
+                                    getString(R.string.ext_test_error_prefix, state.message)
+                                viewBinding.textTestOutput.setTextColor(
+                                    getColorAttr(com.google.android.material.R.attr.colorError)
+                                )
+                                viewBinding.btnRunTest.isEnabled = true
+                            }
+                        }
+                    }
+                }
             }
         }
+    }
+
+    private fun setupTestConsole() {
+        // Update the argument hint when the function chip selection changes
+        viewBinding.chipGroupFunction.setOnCheckedStateChangeListener { _, checkedIds ->
+            val hint = when {
+                checkedIds.contains(R.id.chip_list) ->
+                    getString(R.string.ext_test_arg_hint_list)
+                else ->
+                    getString(R.string.ext_test_arg_hint_url)
+            }
+            viewBinding.layoutTestArg.hint = hint
+        }
+
+        viewBinding.btnRunTest.setOnClickListener {
+            val code = viewBinding.editCode.text?.toString() ?: return@setOnClickListener
+            val fnName = when (viewBinding.chipGroupFunction.checkedChipId) {
+                R.id.chip_details -> "getMangaDetails"
+                R.id.chip_pages   -> "getChapterPages"
+                else              -> "getMangaList"
+            }
+            val arg = viewBinding.editTestArg.text?.toString().orEmpty()
+            viewModel.runTest(code, fnName, arg)
+        }
+    }
+
+    private fun toggleTestConsole() {
+        testConsoleVisible = !testConsoleVisible
+        val vis = if (testConsoleVisible) View.VISIBLE else View.GONE
+        viewBinding.testPanel.visibility = vis
+        viewBinding.testDivider.visibility = vis
+        if (!testConsoleVisible) viewModel.clearTestState()
+    }
+
+    private fun showGuideDialog() {
+        AlertDialog.Builder(this)
+            .setTitle(getString(R.string.ext_guide_title))
+            .setMessage(getString(R.string.ext_guide_body))
+            .setPositiveButton(getString(R.string.ext_guide_ok), null)
+            .show()
+    }
+
+    /** Resolves a theme colour attribute to an ARGB int. */
+    private fun getColorAttr(attr: Int): Int {
+        val ta = obtainStyledAttributes(intArrayOf(attr))
+        val color = ta.getColor(0, 0)
+        ta.recycle()
+        return color
     }
 
     override fun onApplyWindowInsets(v: android.view.View, insets: WindowInsetsCompat): WindowInsetsCompat {
@@ -94,6 +191,14 @@ class ExtensionEditorActivity : BaseActivity<ActivityExtensionEditorBinding>() {
                 R.id.action_save_code -> {
                     val code = viewBinding.editCode.text?.toString() ?: ""
                     viewModel.saveCode(extensionId, code)
+                    true
+                }
+                R.id.action_toggle_test_console -> {
+                    toggleTestConsole()
+                    true
+                }
+                R.id.action_show_guide -> {
+                    showGuideDialog()
                     true
                 }
                 else -> false

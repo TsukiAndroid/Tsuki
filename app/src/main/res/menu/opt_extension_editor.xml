@@ -1,12 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu
-        xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:app="http://schemas.android.com/apk/res-auto">
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
-        <item
-                android:id="@+id/action_save_code"
-                android:icon="@drawable/ic_save"
-                android:title="@string/save"
-                app:showAsAction="always" />
+    <item
+        android:id="@+id/action_save_code"
+        android:icon="@drawable/ic_save"
+        android:title="@string/save"
+        app:showAsAction="always" />
+
+    <item
+        android:id="@+id/action_toggle_test_console"
+        android:icon="@drawable/ic_play"
+        android:title="@string/ext_test_console"
+        app:showAsAction="always" />
+
+    <item
+        android:id="@+id/action_show_guide"
+        android:icon="@drawable/ic_info_outline"
+        android:title="@string/ext_guide_title"
+        app:showAsAction="never" />
 
 </menu>
