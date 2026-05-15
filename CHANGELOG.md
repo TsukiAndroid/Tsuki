@@ -1,3 +1,11 @@
+## Alpha 1.566 (Build [#201](https://github.com/Space4414/Tsuki/actions/runs/25919401398))
+
+_2026-05-15 13:06 UTC_
+
+- feat(extensions): add in-app code editor (fb35249)
+- feat(extensions): implement Create Extension screen (70b4806)
+
+
 ## Alpha 1.564 (Build [#200](https://github.com/Space4414/Tsuki/actions/runs/25913528615))
 
 _2026-05-15 10:40 UTC_
