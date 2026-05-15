@@ -1,3 +1,10 @@
+## Alpha 1.545 (Build [#184](https://github.com/Space4414/Tsuki/actions/runs/25896139154))
+
+_2026-05-15 02:00 UTC_
+
+- fix(madara): add Strategy 0 for inline chapters, fix genre browse URL, add #reader img (3f9e44f)
+
+
 ## Alpha 1.540 (Build [#180](https://github.com/Space4414/Tsuki/actions/runs/25893757138))
 
 _2026-05-15 00:39 UTC_
