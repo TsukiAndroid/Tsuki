@@ -1210,6 +1210,13 @@
     <string name="ext_language_js">JavaScript</string>
     <string name="ext_create_btn">Create</string>
     <string name="ext_create_success">"%s" extension created</string>
+
+    <!-- Auto-Detect Parser -->
+    <string name="ext_auto_detect_btn">Auto-Detect Parser</string>
+    <string name="ext_detecting">Detecting…</string>
+    <string name="ext_detect_cms_label">Detected: %s</string>
+    <string name="ext_detect_will_use">A tailored JS skeleton will be used when you tap Create.</string>
+    <string name="ext_detect_dismiss">Dismiss</string>
     <string name="ext_editor_title">Edit: %s</string>
     <string name="ext_editor_title_plain">Extension Editor</string>
     <string name="ext_editor_edit_code">Edit code</string>
