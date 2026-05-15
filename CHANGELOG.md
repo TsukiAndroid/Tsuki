@@ -1,3 +1,13 @@
+## Alpha 1.574 (Build [#206](https://github.com/Space4414/Tsuki/actions/runs/25930912439))
+
+_2026-05-15 17:08 UTC_
+
+- fix: make resolveListUrl a suspend fun (QuickJs.evaluate is suspend) (4aeee18)
+- feat: JS extension v2 (HTML-first) + manhwaread.com parser (f59482a)
+- fix(editor): remove unresolved Material R.attr.colorError reference (8fe2395)
+- feat(editor): add Test Console + Guide to extension code editor (8682934)
+
+
 ## Alpha 1.571 (Build [#204](https://github.com/Space4414/Tsuki/actions/runs/25929621322))
 
 _2026-05-15 16:40 UTC_
