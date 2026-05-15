@@ -100,18 +100,16 @@ class JsExtensionRunner @Inject constructor(
      * obtain the browse/search URL. Falls back to [Extension.baseUrl] on any
      * error or when the function is not defined.
      */
-    private fun resolveListUrl(extension: Extension, offset: Int, queryArg: String): String {
+    private suspend fun resolveListUrl(extension: Extension, offset: Int, queryArg: String): String {
         val script = "${extension.sourceCode}\n" +
             "(typeof getMangaListUrl === 'function') " +
             "? getMangaListUrl($offset, $queryArg) : null;"
         return runCatching {
-            var result: String? = null
             QuickJs.create(jobDispatcher = Dispatchers.Default).use { qjs ->
                 qjs.maxStackSize = 512L * 1024L
                 qjs.memoryLimit = 32L shl 20
-                result = qjs.evaluate<Any?>(script)?.toString()
-            }
-            result?.trim('"')?.takeIf { it.startsWith("http") }
+                qjs.evaluate<Any?>(script)?.toString()
+            }?.trim('"')?.takeIf { it.startsWith("http") }
         }.getOrNull() ?: extension.baseUrl
     }
 
