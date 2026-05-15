@@ -1,3 +1,11 @@
+## Alpha 1.540 (Build [#180](https://github.com/Space4414/Tsuki/actions/runs/25893757138))
+
+_2026-05-15 00:39 UTC_
+
+- fix(madara): add /ajax/chapters/ endpoint, wider description+genre selectors (864439c)
+- chore: ignore gradle/gradle-daemon-jvm.properties (728f088)
+
+
 ## Alpha 1.538 (Build [#179](https://github.com/Space4414/Tsuki/actions/runs/25877035495))
 
 _2026-05-14 18:11 UTC_
