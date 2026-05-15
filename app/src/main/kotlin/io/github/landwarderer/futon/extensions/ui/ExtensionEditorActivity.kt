@@ -92,32 +92,20 @@ class ExtensionEditorActivity : BaseActivity<ActivityExtensionEditorBinding>() {
                             is TestState.Idle -> {
                                 viewBinding.textTestOutput.text =
                                     getString(R.string.ext_test_output_hint)
-                                viewBinding.textTestOutput.setTextColor(
-                                    getColorAttr(com.google.android.material.R.attr.colorOnSurfaceVariant)
-                                )
                                 viewBinding.btnRunTest.isEnabled = true
                             }
                             is TestState.Running -> {
                                 viewBinding.textTestOutput.text =
                                     getString(R.string.ext_test_running)
-                                viewBinding.textTestOutput.setTextColor(
-                                    getColorAttr(com.google.android.material.R.attr.colorOnSurfaceVariant)
-                                )
                                 viewBinding.btnRunTest.isEnabled = false
                             }
                             is TestState.Success -> {
                                 viewBinding.textTestOutput.text = state.output
-                                viewBinding.textTestOutput.setTextColor(
-                                    getColorAttr(com.google.android.material.R.attr.colorOnSurface)
-                                )
                                 viewBinding.btnRunTest.isEnabled = true
                             }
                             is TestState.Failure -> {
                                 viewBinding.textTestOutput.text =
                                     getString(R.string.ext_test_error_prefix, state.message)
-                                viewBinding.textTestOutput.setTextColor(
-                                    getColorAttr(com.google.android.material.R.attr.colorError)
-                                )
                                 viewBinding.btnRunTest.isEnabled = true
                             }
                         }
@@ -165,14 +153,6 @@ class ExtensionEditorActivity : BaseActivity<ActivityExtensionEditorBinding>() {
             .setMessage(getString(R.string.ext_guide_body))
             .setPositiveButton(getString(R.string.ext_guide_ok), null)
             .show()
-    }
-
-    /** Resolves a theme colour attribute to an ARGB int. */
-    private fun getColorAttr(attr: Int): Int {
-        val ta = obtainStyledAttributes(intArrayOf(attr))
-        val color = ta.getColor(0, 0)
-        ta.recycle()
-        return color
     }
 
     override fun onApplyWindowInsets(v: android.view.View, insets: WindowInsetsCompat): WindowInsetsCompat {
