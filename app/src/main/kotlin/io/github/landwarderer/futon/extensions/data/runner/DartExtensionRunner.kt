@@ -1,9 +1,9 @@
 package io.github.landwarderer.futon.extensions.data.runner
 
+import io.github.landwarderer.futon.extensions.data.ExtensionMangaSource
 import io.github.landwarderer.futon.extensions.domain.Extension
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import okhttp3.OkHttpClient
 import org.json.JSONObject
 import org.koitharu.kotatsu.parsers.model.ContentRating
 import org.koitharu.kotatsu.parsers.model.Manga
@@ -32,17 +32,12 @@ import javax.inject.Singleton
  * String getChapterPages(String url) { … }
  * ```
  *
- * The runner injects a `tsukiFetch(url, method, headers, body)` top-level function
- * bound to OkHttp so extensions can make HTTP requests.
- *
  * D4rt is loaded reflectively so the app continues to function even if the dependency
  * is not yet available on the device's classpath; Dart extension items in the UI will
  * show a "Dart engine unavailable" error instead of crashing.
  */
 @Singleton
-class DartExtensionRunner @Inject constructor(
-    private val okHttpClient: OkHttpClient,
-) : ExtensionRunner {
+class DartExtensionRunner @Inject constructor() : ExtensionRunner {
 
     override suspend fun getList(
         extension: Extension,
@@ -55,21 +50,22 @@ class DartExtensionRunner @Inject constructor(
             extension = extension,
             call = "getMangaList($offset, ${if (query != null) "\"${query.replace("\"", "\\\"")}\"" else "null"})",
         ) ?: return@withContext emptyList()
-        parseMangaList(json, extension.baseUrl)
+        parseMangaList(json, extension.baseUrl, extension)
     }
 
-    override suspend fun getDetails(extension: Extension, manga: Manga): Manga = withContext(Dispatchers.IO) {
-        val url = manga.url.replace("\"", "\\\"")
-        val json = evalDart(extension = extension, call = "getMangaDetails(\"$url\")")
-        parseDetails(json, manga, extension.baseUrl)
-    }
+    override suspend fun getDetails(extension: Extension, manga: Manga): Manga =
+        withContext(Dispatchers.IO) {
+            val url = manga.url.replace("\"", "\\\"")
+            val json = evalDart(extension = extension, call = "getMangaDetails(\"$url\")")
+            parseDetails(json, manga)
+        }
 
     override suspend fun getPages(extension: Extension, chapter: MangaChapter): List<MangaPage> =
         withContext(Dispatchers.IO) {
             val url = chapter.url.replace("\"", "\\\"")
             val json = evalDart(extension = extension, call = "getChapterPages(\"$url\")")
                 ?: return@withContext emptyList()
-            parsePages(json)
+            parsePages(json, extension)
         }
 
     /**
@@ -79,9 +75,7 @@ class DartExtensionRunner @Inject constructor(
      */
     private suspend fun evalDart(extension: Extension, call: String): String? {
         return runCatching {
-            val httpBridge = buildHttpBridge()
-            val fullSource = "$httpBridge\n${extension.sourceCode}\nvoid main() { print($call); }"
-
+            val fullSource = "${extension.sourceCode}\nvoid main() { print($call); }"
             val interpreterClass = Class.forName("com.github.kodjodevf.d4rt.D4rtInterpreter")
             val interpreter = interpreterClass.getDeclaredConstructor().newInstance()
             val executeMethod = interpreterClass.getMethod("execute", String::class.java)
@@ -90,8 +84,7 @@ class DartExtensionRunner @Inject constructor(
             when (e) {
                 is ClassNotFoundException ->
                     throw UnsupportedOperationException(
-                        "Dart extensions require D4rt which is not available on this device. " +
-                            "Please check that the d4rt dependency is correctly installed.",
+                        "Dart extensions require D4rt which is not available on this device.",
                         e,
                     )
                 else ->
@@ -103,29 +96,19 @@ class DartExtensionRunner @Inject constructor(
         }
     }
 
-    /**
-     * Builds a Dart function `tsukiFetch` that delegates to OkHttp synchronously.
-     *
-     * The bridge is prepended to the extension source before evaluation so extensions
-     * can call `tsukiFetch(url)` / `tsukiFetch(url, method, headers, body)` normally.
-     */
-    private fun buildHttpBridge(): String = """
-        String tsukiFetch(String url, [String method = 'GET', String? headers, String? body]) {
-            // Implemented by the Kotlin D4rt bridge via native bindings.
-            // This stub is replaced at runtime with an OkHttp-backed implementation.
-            return '{"status":0,"body":"","error":"Bridge not installed"}';
-        }
-    """.trimIndent()
-
-    private fun parseMangaList(json: String, baseUrl: String): List<Manga> = runCatching {
+    private fun parseMangaList(
+        json: String,
+        baseUrl: String,
+        extension: Extension,
+    ): List<Manga> = runCatching {
         val root = JSONObject(json)
         val items = root.optJSONArray("items") ?: return emptyList()
         (0 until items.length()).mapNotNull { i ->
-            runCatching { items.getJSONObject(i).toMangaStub(baseUrl) }.getOrNull()
+            runCatching { items.getJSONObject(i).toMangaStub(baseUrl, extension) }.getOrNull()
         }
     }.getOrDefault(emptyList())
 
-    private fun parseDetails(json: String?, manga: Manga, baseUrl: String): Manga {
+    private fun parseDetails(json: String?, manga: Manga): Manga {
         if (json.isNullOrEmpty()) return manga
         return runCatching {
             val obj = JSONObject(json)
@@ -137,23 +120,24 @@ class DartExtensionRunner @Inject constructor(
         }.getOrDefault(manga)
     }
 
-    private fun parsePages(json: String): List<MangaPage> = runCatching {
+    private fun parsePages(json: String, extension: Extension): List<MangaPage> = runCatching {
         val root = JSONObject(json)
         val pages = root.optJSONArray("pages") ?: return emptyList()
+        val source = ExtensionMangaSource(extension)
         (0 until pages.length()).mapNotNull { i ->
             runCatching {
                 val obj = pages.getJSONObject(i)
                 MangaPage(
                     id = obj.optInt("index", i).toLong(),
                     url = obj.getString("url"),
-                    preview = "",
-                    source = null,
+                    preview = null,
+                    source = source,
                 )
             }.getOrNull()
         }
     }.getOrDefault(emptyList())
 
-    private fun JSONObject.toMangaStub(baseUrl: String): Manga {
+    private fun JSONObject.toMangaStub(baseUrl: String, extension: Extension): Manga {
         val url = optString("url", "")
         return Manga(
             id = url.hashCode().toLong() and 0x7FFFFFFF,
@@ -169,7 +153,7 @@ class DartExtensionRunner @Inject constructor(
             tags = emptySet(),
             state = null,
             authors = emptySet(),
-            source = org.koitharu.kotatsu.parsers.model.MangaSource.STUB,
+            source = ExtensionMangaSource(extension),
             chapters = null,
             isNsfw = false,
         )

@@ -1174,6 +1174,8 @@
     <string name="ext_delete_confirm">Delete extension?</string>
     <string name="ext_installing">Installing extension…</string>
     <string name="ext_install_error">Failed to install extension</string>
+    <string name="ext_name_hint">Enter an extension name</string>
+    <string name="ext_install_success">"%s" installed</string>
     <string name="ext_remove_repo_confirm">Remove repository?</string>
     <string name="ext_type_js">JS</string>
     <string name="ext_type_dart">Dart</string>

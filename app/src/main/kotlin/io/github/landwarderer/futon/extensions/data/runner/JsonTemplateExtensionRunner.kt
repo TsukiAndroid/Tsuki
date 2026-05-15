@@ -58,9 +58,9 @@ class JsonTemplateExtensionRunner @Inject constructor() : ExtensionRunner {
         val syntheticSource = CustomMangaSource(
             CustomSource(
                 id = extension.id.hashCode().toLong(),
-                displayName = extension.name,
+                name = extension.name,
                 baseUrl = extension.baseUrl,
-                type = CustomSourceType.TEMPLATE,
+                type = CustomSourceType.CUSTOM_TEMPLATE,
                 parserSourceName = extension.templateName,
             ),
         )

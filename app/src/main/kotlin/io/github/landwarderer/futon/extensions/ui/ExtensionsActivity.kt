@@ -11,14 +11,16 @@ import androidx.core.view.MenuProvider
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
 import androidx.core.view.updatePadding
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.landwarderer.futon.R
 import io.github.landwarderer.futon.core.ui.BaseActivity
-import io.github.landwarderer.futon.core.util.ext.observe
-import io.github.landwarderer.futon.core.util.ext.observeEvent
 import io.github.landwarderer.futon.databinding.ActivityExtensionsBinding
 import io.github.landwarderer.futon.extensions.ui.adapter.ExtensionsAdapter
+import kotlinx.coroutines.launch
 
 /**
  * Displays installed extensions and extensions available from repos.
@@ -62,24 +64,33 @@ class ExtensionsActivity : BaseActivity<ActivityExtensionsBinding>() {
 
         addMenuProvider(ExtensionsMenuProvider())
 
-        observe(viewModel.installedExtensions) { installed ->
-            adapter?.setInstalled(installed)
-            viewBinding.emptyState.isVisible = installed.isEmpty() &&
-                (adapter?.itemCount ?: 0) == 0
-        }
-
-        observe(viewModel.availableExtensions) { available ->
-            adapter?.setAvailable(available)
-        }
-
-        observe(viewModel.isLoading) { loading ->
-            viewBinding.progressBar.isVisible = loading
-        }
-
-        observe(viewModel.errorMessage) { msg ->
-            if (!msg.isNullOrEmpty()) {
-                Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
-                viewModel.clearError()
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                launch {
+                    viewModel.installedExtensions.collect { installed ->
+                        adapter?.setInstalled(installed)
+                        viewBinding.emptyState.isVisible = installed.isEmpty() &&
+                            (adapter?.itemCount ?: 0) == 0
+                    }
+                }
+                launch {
+                    viewModel.availableExtensions.collect { available ->
+                        adapter?.setAvailable(available)
+                    }
+                }
+                launch {
+                    viewModel.isLoading.collect { loading ->
+                        viewBinding.progressBar.isVisible = loading
+                    }
+                }
+                launch {
+                    viewModel.errorMessage.collect { msg ->
+                        if (!msg.isNullOrEmpty()) {
+                            Toast.makeText(this@ExtensionsActivity, msg, Toast.LENGTH_LONG).show()
+                            viewModel.clearError()
+                        }
+                    }
+                }
             }
         }
 

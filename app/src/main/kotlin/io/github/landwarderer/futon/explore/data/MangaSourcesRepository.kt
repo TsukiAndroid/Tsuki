@@ -55,7 +55,7 @@ class MangaSourcesRepository @Inject constructor(
     private val settings: AppSettings,
     private val mihonExtensionManager: MihonExtensionManager,
     private val customSourcesRepository: CustomSourcesRepository,
-    private val extensionRepository: ExtensionRepository,
+    private val extensionRepository: ExtensionRepository? = null,
 ) {
 
         private val isNewSourcesAssimilated = AtomicBoolean(false)
@@ -412,7 +412,7 @@ class MangaSourcesRepository @Inject constructor(
                         mihonExtensionManager.installedExtensions,
                         mihonExtensionManager.failedExtensions,
                         customSourcesRepository.sources,
-                        extensionRepository.extensions,
+                        extensionRepository?.extensions ?: kotlinx.coroutines.flow.MutableStateFlow(emptyList()),
                 ) { _, _, _, _, _ ->
                         getExternalSources()
                 }.distinctUntilChanged()
@@ -436,7 +436,7 @@ class MangaSourcesRepository @Inject constructor(
 
         /** Enabled multi-language extensions surfaced as first-class [MangaSource]s. */
         fun getExtensionSources(): List<MangaSource> =
-                extensionRepository.getEnabled().map { ExtensionMangaSource(it) }
+                extensionRepository?.getEnabled()?.map { ExtensionMangaSource(it) } ?: emptyList()
 
         /** User-defined sources surfaced as first-class [MangaSource]s. Only enabled sources are included. */
         fun getCustomSources(): List<MangaSource> =

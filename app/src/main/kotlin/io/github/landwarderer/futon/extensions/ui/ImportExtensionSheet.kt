@@ -52,7 +52,7 @@ class ImportExtensionSheet : BottomSheetDialogFragment() {
                 selectedFileContent = content
                 selectedFileName?.text = displayName
             } catch (_: Exception) {
-                Toast.makeText(requireContext(), getString(R.string.ext_import_failed), Toast.LENGTH_LONG).show()
+                Toast.makeText(requireContext(), getString(R.string.ext_install_error), Toast.LENGTH_LONG).show()
             }
         }
     }
@@ -94,12 +94,12 @@ class ImportExtensionSheet : BottomSheetDialogFragment() {
 
             if (content == null) {
                 errorView?.isVisible = true
-                errorView?.text = getString(R.string.ext_no_file_selected)
+                errorView?.text = getString(R.string.ext_no_file)
                 return@setOnClickListener
             }
             if (name.isNullOrEmpty()) {
                 errorView?.isVisible = true
-                errorView?.text = getString(R.string.ext_name_required)
+                errorView?.text = getString(R.string.ext_name_hint)
                 return@setOnClickListener
             }
             errorView?.isVisible = false
@@ -117,7 +117,7 @@ class ImportExtensionSheet : BottomSheetDialogFragment() {
                 type = type,
                 sourceCode = content,
             )
-            Toast.makeText(requireContext(), getString(R.string.ext_installed, name), Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), getString(R.string.ext_install_success, name), Toast.LENGTH_SHORT).show()
             dismiss()
         }
 
