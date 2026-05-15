@@ -269,7 +269,7 @@ package io.github.landwarderer.futon.customsource.data
       }
 
       private fun parseMangaItem(el: Element): Manga? {
-          val anchor = el.selectFirst(".post-title a, h3.h5 a, h3 a, h5 a") ?: return null
+          val anchor = el.selectFirst(".post-title a, h3.h5 a, h3 a, h5 a, a.manga-item__link") ?: return null
           val title = anchor.text().trim().takeIf { it.isNotEmpty() } ?: return null
           val pageUrl = anchor.absUrl("href").takeIf { it.isNotEmpty() } ?: return null
           val coverImg = el.selectFirst("img")
