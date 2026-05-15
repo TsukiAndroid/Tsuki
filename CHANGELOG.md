@@ -1,3 +1,12 @@
+## Alpha 1.571 (Build [#204](https://github.com/Space4414/Tsuki/actions/runs/25929621322))
+
+_2026-05-15 16:40 UTC_
+
+- fix(editor): remove unresolved Material R.attr.colorError reference (8fe2395)
+- feat(editor): add Test Console + Guide to extension code editor (8682934)
+- fix(extensions): resolve ExtensionMangaSource deserialization + improve .js import (0ef6cc8)
+
+
 ## Alpha 1.568 (Build [#202](https://github.com/Space4414/Tsuki/actions/runs/25924673836))
 
 _2026-05-15 14:56 UTC_
