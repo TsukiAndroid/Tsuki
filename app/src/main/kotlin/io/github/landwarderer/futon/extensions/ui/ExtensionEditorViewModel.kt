@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dokar.quickjs.QuickJs
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.github.landwarderer.futon.core.network.MangaHttpClient
 import io.github.landwarderer.futon.extensions.data.ExtensionRepository
 import io.github.landwarderer.futon.extensions.domain.Extension
 import kotlinx.coroutines.Dispatchers
@@ -12,6 +13,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import org.json.JSONObject
 import javax.inject.Inject
 
 sealed interface TestState {
@@ -24,6 +28,7 @@ sealed interface TestState {
 @HiltViewModel
 class ExtensionEditorViewModel @Inject constructor(
     private val extensionRepository: ExtensionRepository,
+    @MangaHttpClient private val okHttpClient: OkHttpClient,
 ) : ViewModel() {
 
     private val _extension = MutableStateFlow<Extension?>(null)
@@ -52,41 +57,25 @@ class ExtensionEditorViewModel @Inject constructor(
     }
 
     /**
-     * Runs the given [functionName] from [sourceCode] inside a disposable QuickJS
-     * sandbox and emits the result (or error) via [testState].
+     * Runs the given [functionName] from [sourceCode].
      *
-     * @param functionName  One of "getMangaList", "getMangaDetails", "getChapterPages"
-     * @param arg           Raw user input: offset number for List, URL string for others.
+     * The runner first resolves the target URL (using `getMangaListUrl` for List,
+     * or using [arg] directly for Details/Pages), fetches the page HTML via OkHttp,
+     * then calls the pure-parse JS function with the HTML.
+     *
+     * @param functionName  "getMangaList" | "getMangaDetails" | "getChapterPages"
+     * @param arg           Offset for List (numeric string), full URL for Details/Pages.
      */
     fun runTest(sourceCode: String, functionName: String, arg: String) {
         _testState.value = TestState.Running
         viewModelScope.launch {
-            val safeArg = arg.trim()
-            val call = when (functionName) {
-                "getMangaList" -> {
-                    val offset = safeArg.toIntOrNull() ?: 0
-                    "getMangaList($offset, null);"
-                }
-                "getMangaDetails" -> {
-                    val escaped = safeArg.replace("\\", "\\\\").replace("\"", "\\\"")
-                    "getMangaDetails(\"$escaped\");"
-                }
-                "getChapterPages" -> {
-                    val escaped = safeArg.replace("\\", "\\\\").replace("\"", "\\\"")
-                    "getChapterPages(\"$escaped\");"
-                }
-                else -> "undefined;"
-            }
-            val script = "$sourceCode\n$call"
-            _testState.value = withContext(Dispatchers.Default) {
+            _testState.value = withContext(Dispatchers.IO) {
                 runCatching {
-                    QuickJs.create(jobDispatcher = Dispatchers.Default).use { qjs ->
-                        qjs.maxStackSize = 1L shl 20
-                        qjs.memoryLimit = 64L shl 20
-                        val raw = qjs.evaluate<Any?>(script)?.toString() ?: "null"
-                        // Pretty-print JSON if possible, otherwise return raw
-                        val pretty = tryPrettyPrintJson(raw)
-                        TestState.Success(pretty)
+                    when (functionName) {
+                        "getMangaList" -> runListTest(sourceCode, arg)
+                        "getMangaDetails" -> runDetailsTest(sourceCode, arg)
+                        "getChapterPages" -> runPagesTest(sourceCode, arg)
+                        else -> TestState.Failure("Unknown function: $functionName")
                     }
                 }.getOrElse { e ->
                     TestState.Failure(e.message ?: "Unknown error")
@@ -98,6 +87,91 @@ class ExtensionEditorViewModel @Inject constructor(
     fun clearTestState() {
         _testState.value = TestState.Idle
     }
+
+    // ─── Per-function test runners ───────────────────────────────────────────
+
+    private suspend fun runListTest(sourceCode: String, arg: String): TestState {
+        val offset = arg.trim().toIntOrNull() ?: 0
+
+        // 1. Resolve URL via JS (getMangaListUrl)
+        val urlScript = "$sourceCode\n" +
+            "(typeof getMangaListUrl === 'function') ? getMangaListUrl($offset, null) : null;"
+        val resolvedUrl = evalJs(urlScript)?.trim('"')
+        if (resolvedUrl.isNullOrEmpty()) {
+            return TestState.Failure("getMangaListUrl returned nothing. " +
+                "Make sure your extension defines getMangaListUrl(offset, query).")
+        }
+        if (!resolvedUrl.startsWith("http")) {
+            return TestState.Failure("getMangaListUrl returned an invalid URL: $resolvedUrl")
+        }
+
+        // 2. Fetch HTML
+        val html = fetchHtml(resolvedUrl)
+            ?: return TestState.Failure("HTTP GET failed for: $resolvedUrl")
+
+        // 3. Parse with JS
+        val htmlArg = JSONObject.quote(html)
+        val parseScript = "$sourceCode\ngetMangaList($htmlArg, $offset, null);"
+        val raw = evalJs(parseScript) ?: return TestState.Failure("getMangaList returned null")
+        return TestState.Success("[URL] $resolvedUrl\n\n" + tryPrettyPrintJson(raw))
+    }
+
+    private suspend fun runDetailsTest(sourceCode: String, arg: String): TestState {
+        val url = arg.trim()
+        if (!url.startsWith("http")) {
+            return TestState.Failure("Please enter a full URL (starting with https://).")
+        }
+        val html = fetchHtml(url)
+            ?: return TestState.Failure("HTTP GET failed for: $url")
+
+        val htmlArg = JSONObject.quote(html)
+        val escaped = url.replace("\\", "\\\\").replace("\"", "\\\"")
+        val script = "$sourceCode\ngetMangaDetails($htmlArg, \"$escaped\");"
+        val raw = evalJs(script) ?: return TestState.Failure("getMangaDetails returned null")
+        return TestState.Success(tryPrettyPrintJson(raw))
+    }
+
+    private suspend fun runPagesTest(sourceCode: String, arg: String): TestState {
+        val url = arg.trim()
+        if (!url.startsWith("http")) {
+            return TestState.Failure("Please enter a full chapter URL (starting with https://).")
+        }
+        val html = fetchHtml(url)
+            ?: return TestState.Failure("HTTP GET failed for: $url")
+
+        val htmlArg = JSONObject.quote(html)
+        val escaped = url.replace("\\", "\\\\").replace("\"", "\\\"")
+        val script = "$sourceCode\ngetChapterPages($htmlArg, \"$escaped\");"
+        val raw = evalJs(script) ?: return TestState.Failure("getChapterPages returned null")
+        return TestState.Success(tryPrettyPrintJson(raw))
+    }
+
+    // ─── Helpers ─────────────────────────────────────────────────────────────
+
+    private fun fetchHtml(url: String): String? = runCatching {
+        val request = Request.Builder()
+            .url(url)
+            .header(
+                "User-Agent",
+                "Mozilla/5.0 (Linux; Android 12; Pixel 6) AppleWebKit/537.36 " +
+                    "(KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
+            )
+            .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
+            .header("Accept-Language", "en-US,en;q=0.5")
+            .build()
+        okHttpClient.newCall(request).execute().use { response ->
+            if (!response.isSuccessful) null else response.body?.string()
+        }
+    }.getOrNull()
+
+    private suspend fun evalJs(script: String): String? =
+        withContext(Dispatchers.Default) {
+            QuickJs.create(jobDispatcher = Dispatchers.Default).use { qjs ->
+                qjs.maxStackSize = 1L shl 20
+                qjs.memoryLimit = 64L shl 20
+                qjs.evaluate<Any?>(script)?.toString()
+            }
+        }
 
     private fun tryPrettyPrintJson(raw: String): String = runCatching {
         val trimmed = raw.trim()

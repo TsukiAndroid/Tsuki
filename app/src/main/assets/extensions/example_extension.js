@@ -1,60 +1,96 @@
 /**
  * Tsuki JS Extension — example skeleton
  *
+ * ## Contract (Tsuki JS Extension v2 — HTML-first)
+ *
+ * The Kotlin runner handles all HTTP. Your JS only parses pre-fetched HTML.
+ *
  * Required exports:
- *   - manifest  : object  — extension metadata
- *   - getList   : async (filter) => Manga[]
- *   - getManga  : async (mangaId) => Manga
- *   - getChapters: async (mangaId) => Chapter[]
- *   - getPages  : async (chapterId) => string[]
+ *
+ *   getMangaListUrl(offset, query)
+ *     → string  — URL the runner will GET for the browse/search page.
+ *       offset is an integer (0, 20, 40, …), query is a string or null.
+ *
+ *   getMangaList(html, offset, query)
+ *     → '{"items":[{"title":"…","url":"https://…","cover":"https://…"}]}'
+ *       Parses the fetched HTML and returns a JSON string.
+ *
+ *   getMangaDetails(html, url)
+ *     → '{"title":"…","cover":"…","status":"ongoing","description":"…",
+ *          "genres":["Action","Drama"],
+ *          "chapters":[{"url":"…","title":"Ch.1","number":1,"uploadDate":0}]}'
+ *
+ *   getChapterPages(html, url)
+ *     → '{"pages":[{"index":0,"url":"https://cdn.example.com/001.jpg"}]}'
  */
 
-const manifest = {
-    name: "Example Source",
-    author: "Tsuki Team",
-    version: "1.0.0",
-    baseUrl: "https://example.com",
-    language: "en",
-    nsfw: false,
-};
+var BASE_URL = "https://example.com";
+var PAGE_SIZE = 20;
 
-async function getList(filter) {
-    const query = filter.query ?? "";
-    const url = `${manifest.baseUrl}/search?q=${encodeURIComponent(query)}`;
-    const html = await fetch(url).then(r => r.text());
-    return parseMangaList(html);
+// ─── URL resolver ─────────────────────────────────────────────────────────────
+
+function getMangaListUrl(offset, query) {
+    var page = Math.floor((offset || 0) / PAGE_SIZE) + 1;
+    if (query && query.trim().length > 0) {
+        return BASE_URL + "/search?q=" + encodeURIComponent(query.trim()) + "&page=" + page;
+    }
+    return BASE_URL + "/manga?page=" + page;
 }
 
-async function getManga(mangaId) {
-    const url = `${manifest.baseUrl}/manga/${mangaId}`;
-    const html = await fetch(url).then(r => r.text());
-    return parseMangaDetails(html, mangaId);
+// ─── List page parser ─────────────────────────────────────────────────────────
+
+function getMangaList(html, offset, query) {
+    // TODO: parse manga cards from html
+    // Each item: { title: string, url: string (absolute), cover: string }
+    var items = [];
+    return JSON.stringify({ items: items });
 }
 
-async function getChapters(mangaId) {
-    const url = `${manifest.baseUrl}/manga/${mangaId}/chapters`;
-    const html = await fetch(url).then(r => r.text());
-    return parseChapterList(html, mangaId);
+// ─── Detail page parser ───────────────────────────────────────────────────────
+
+function getMangaDetails(html, url) {
+    // TODO: parse title, cover, status, description, genres, chapters
+    var chapters = [
+        // { url: "https://…/chapter-1/", title: "Chapter 1", number: 1, uploadDate: 0 }
+    ];
+    return JSON.stringify({
+        title: "",
+        cover: "",
+        status: "ongoing",
+        description: "",
+        genres: [],
+        chapters: chapters
+    });
 }
 
-async function getPages(chapterId) {
-    const url = `${manifest.baseUrl}/chapter/${chapterId}`;
-    const html = await fetch(url).then(r => r.text());
-    return parsePageUrls(html);
+// ─── Chapter page parser ──────────────────────────────────────────────────────
+
+function getChapterPages(html, url) {
+    // TODO: extract image URLs from html
+    var pages = [
+        // { index: 0, url: "https://cdn.example.com/001.jpg" }
+    ];
+    return JSON.stringify({ pages: pages });
 }
 
-function parseMangaList(html) {
-    return [];
+// ─── Helper utilities (copy as needed) ───────────────────────────────────────
+
+function decodeHtml(str) {
+    if (!str) return "";
+    return str
+        .replace(/&amp;/g, "&")
+        .replace(/&lt;/g, "<")
+        .replace(/&gt;/g, ">")
+        .replace(/&quot;/g, '"')
+        .replace(/&#039;/g, "'");
 }
 
-function parseMangaDetails(html, id) {
-    return { id, title: "Unknown", coverUrl: null, description: null, tags: [], state: null, author: null };
+function stripTags(str) {
+    if (!str) return "";
+    return str.replace(/<[^>]+>/g, "").trim();
 }
 
-function parseChapterList(html, mangaId) {
-    return [];
-}
-
-function parsePageUrls(html) {
-    return [];
+function extractFirst(html, pattern) {
+    var m = html.match(pattern);
+    return m ? (m[1] || "") : "";
 }
