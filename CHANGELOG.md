@@ -1,3 +1,11 @@
+## Alpha 1.568 (Build [#202](https://github.com/Space4414/Tsuki/actions/runs/25924673836))
+
+_2026-05-15 14:56 UTC_
+
+- fix(extensions): resolve ExtensionMangaSource deserialization + improve .js import (0ef6cc8)
+- feat(extensions): add in-app code editor (fb35249)
+
+
 ## Alpha 1.566 (Build [#201](https://github.com/Space4414/Tsuki/actions/runs/25919401398))
 
 _2026-05-15 13:06 UTC_
