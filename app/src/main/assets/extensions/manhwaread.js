@@ -19,99 +19,89 @@
 var BASE_URL = "https://manhwaread.com";
 var PAGE_SIZE = 20;
 
-// ─── URL resolver (called by Kotlin runner to know what to fetch) ─────────────
+// ─── URL resolver ────────────────────────────────────────────────────────────
 
 function getMangaListUrl(offset, query) {
     var page = Math.floor((offset || 0) / PAGE_SIZE) + 1;
     if (query && query.trim().length > 0) {
         var encoded = encodeURIComponent(query.trim());
-        return page > 1
-            ? BASE_URL + "/manhwa/?s=" + encoded + "&paged=" + page
-            : BASE_URL + "/manhwa/?s=" + encoded;
+        if (page > 1) return BASE_URL + "/?s=" + encoded + "&post_type=wp-manga&paged=" + page;
+        return BASE_URL + "/?s=" + encoded + "&post_type=wp-manga";
     }
-    return page > 1
-        ? BASE_URL + "/manhwa/page/" + page + "/"
-        : BASE_URL + "/manhwa/";
+    if (page > 1) return BASE_URL + "/manhwa/page/" + page + "/";
+    return BASE_URL + "/manhwa/";
 }
 
-// ─── Parsing helpers ──────────────────────────────────────────────────────────
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function decodeHtml(str) {
     if (!str) return "";
     return str
-        .replace(/&amp;/g, "&")
-        .replace(/&lt;/g, "<")
-        .replace(/&gt;/g, ">")
-        .replace(/&quot;/g, '"')
-        .replace(/&#039;/g, "'")
-        .replace(/&apos;/g, "'")
+        .replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
+        .replace(/&quot;/g, '"').replace(/&#039;/g, "'").replace(/&apos;/g, "'")
         .replace(/&#(\d+);/g, function(_, n) { return String.fromCharCode(parseInt(n, 10)); });
 }
 
-function stripTags(str) {
-    if (!str) return "";
-    return str.replace(/<[^>]+>/g, "").trim();
-}
+function stripTags(str) { return str ? str.replace(/<[^>]+>/g, "").trim() : ""; }
 
-function extractFirst(html, re) {
-    var m = html.match(re);
-    return m ? (m[1] || "") : "";
-}
-
-function extractAll(html, re) {
-    var results = [];
-    var m;
-    var g = new RegExp(re.source, "g" + (re.flags || "").replace("g", ""));
-    while ((m = g.exec(html)) !== null) {
-        results.push(m[1] || "");
-    }
-    return results;
-}
+function extractFirst(html, re) { var m = html.match(re); return m ? (m[1] || "") : ""; }
 
 // ─── getMangaList ─────────────────────────────────────────────────────────────
 
 function getMangaList(html, offset, query) {
     var items = [];
-
-    // Each manga card: look for anchor tags with class manga-item__link
-    // Pattern: href="URL" class="manga-item__link" or vice-versa
-    var linkRe = /href="(\/manhwa\/[^"]+)"\s[^>]*class="[^"]*manga-item__link[^"]*"|class="[^"]*manga-item__link[^"]*"\s[^>]*href="(\/manhwa\/[^"]+)"/g;
     var seenUrls = {};
-    var m;
 
+    // Strategy 1: Madara/WP manga theme card elements
+    var cardMatches = html.match(/<div[^>]+class="[^"]*(?:c-image-hover|tab-thumb|manga-thumb|comic-item)[^"]*"[\s\S]*?<a[^>]+href="([^"]+)"[^>]*>[\s\S]*?<img[^>]+(?:src|data-src|data-lazy-src)="([^"]+)"[^>]*>/gi) || [];
+    cardMatches.forEach(function(block) {
+        var urlM = block.match(/href="([^"]+)"/i);
+        var imgM = block.match(/(?:data-lazy-src|data-src|src)="(https?:\/\/[^"]+\.(?:jpg|jpeg|png|webp)[^"]*)"/i);
+        var titleM = block.match(/(?:alt|title)="([^"]{3,120})"/i);
+        if (!urlM) return;
+        var url = urlM[1];
+        if (seenUrls[url] || url === BASE_URL || url === BASE_URL + "/") return;
+        seenUrls[url] = true;
+        var title = titleM ? decodeHtml(titleM[1].trim()) : "";
+        var cover = imgM ? imgM[1] : "";
+        if (title.length > 1) items.push({ title: title, url: url, cover: cover });
+    });
+
+    if (items.length > 0) return JSON.stringify({ items: items });
+
+    // Strategy 2: .manga-item__link anchors
+    var linkRe = /href="(\/(?:manhwa|manga|comic)\/[^"]+)"[^>]*class="[^"]*manga-item__link[^"]*"|class="[^"]*manga-item__link[^"]*"[^>]*href="(\/(?:manhwa|manga|comic)\/[^"]+)"/g;
+    var m;
     while ((m = linkRe.exec(html)) !== null) {
         var href = m[1] || m[2] || "";
         if (!href || seenUrls[href]) continue;
         seenUrls[href] = true;
+        var fullUrl = BASE_URL + href;
+        var pos = m.index;
+        var around = html.slice(pos, pos + 600);
+        var t = extractFirst(around, /class="[^"]*(?:manga-title|post-title)[^"]*"[^>]*>([^<]{2,120})</) ||
+                extractFirst(around, /alt="([^"]{2,120})"/) ||
+                extractFirst(around, /<h[1-6][^>]*>([^<]{2,120})<\/h[1-6]>/i);
+        if (!t || t.length < 2) continue;
+        var cover = extractFirst(around, /(?:data-lazy-src|data-src|src)="(https?:\/\/[^"]+\.(?:jpg|jpeg|png|webp)[^"]*)"/i);
+        items.push({ title: decodeHtml(t.trim()), url: fullUrl, cover: cover });
+    }
 
-        var url = BASE_URL + href;
+    if (items.length > 0) return JSON.stringify({ items: items });
 
-        // Extract title from the anchor text (look ahead a bit in HTML)
-        var anchorStart = m.index;
-        var anchorEnd = html.indexOf("</a>", anchorStart);
-        if (anchorEnd === -1) anchorEnd = anchorStart + 500;
-        var anchorHtml = html.substring(anchorStart, anchorEnd + 4);
-
-        var title = decodeHtml(stripTags(anchorHtml
-            .replace(/<img[^>]+>/g, "")
-            .replace(/<[^>]+>/g, " ")
-        ).trim());
-
-        // Cover image: search backwards from this anchor for the nearest manga-item block
-        var blockStart = html.lastIndexOf('class="manga-item', anchorStart);
-        if (blockStart === -1) blockStart = Math.max(0, anchorStart - 2000);
-        var blockEnd = Math.min(html.length, anchorEnd + 200);
-        var block = html.substring(blockStart, blockEnd);
-
-        var imgMatch = block.match(/class="[^"]*manga-item__img-inner[^"]*"[^>]*src="([^"]+)"/);
-        if (!imgMatch) {
-            imgMatch = block.match(/src="([^"]*mancover\.xyz[^"]+)"/);
-        }
-        var cover = imgMatch ? imgMatch[1] : "";
-
-        if (title.length > 0) {
-            items.push({ title: title, url: url, cover: cover });
-        }
+    // Strategy 3: broad anchor heuristic for any /manhwa/ or /manga/ link with image
+    var anchorRe = /<a[^>]+href="((?:https?:\/\/[^"]*manhwaread[^\/]*|)\/(?:manhwa|manga)\/[^"#?]+)"[^>]*>/gi;
+    while ((m = anchorRe.exec(html)) !== null) {
+        var href2 = m[1];
+        if (!href2 || seenUrls[href2]) continue;
+        seenUrls[href2] = true;
+        var fullUrl2 = href2.startsWith("http") ? href2 : BASE_URL + href2;
+        var around2 = html.slice(m.index, m.index + 800);
+        var title2 = extractFirst(around2, /(?:title|alt)="([^"]{2,120})"/) ||
+                     extractFirst(around2, /<h[1-6][^>]*>([^<]{2,120})<\/h[1-6]>/i);
+        if (!title2 || title2.length < 2) continue;
+        var cover2 = extractFirst(around2, /(?:data-lazy-src|data-src|src)="(https?:\/\/[^"]+\.(?:jpg|jpeg|png|webp)[^"]*)"/i);
+        items.push({ title: decodeHtml(title2.trim()), url: fullUrl2, cover: cover2 });
     }
 
     return JSON.stringify({ items: items });
@@ -120,107 +110,98 @@ function getMangaList(html, offset, query) {
 // ─── getMangaDetails ──────────────────────────────────────────────────────────
 
 function getMangaDetails(html, url) {
-    // Title: <h1 class="… text-primary …">Title</h1>
-    var title = decodeHtml(stripTags(
-        extractFirst(html, /<h1[^>]*class="[^"]*text-primary[^"]*"[^>]*>([\s\S]*?)<\/h1>/)
-    ));
+    var title = extractFirst(html, /<h1[^>]*class="[^"]*(?:manga-title|post-title|entry-title)[^"]*"[^>]*>([\s\S]*?)<\/h1>/i) ||
+                extractFirst(html, /<h1[^>]*>([\s\S]{2,120}?)<\/h1>/i) ||
+                extractFirst(html, /property="og:title"[^>]*content="([^"]+)"/i);
+    title = decodeHtml(stripTags(title).trim());
 
-    // Cover: first mancover.xyz image inside the summary section
-    var summaryIdx = html.indexOf('id="mangaSummary"');
-    var summaryEnd = html.indexOf('class="manga-titles"', summaryIdx);
-    var summaryBlock = summaryIdx !== -1
-        ? html.substring(summaryIdx, summaryEnd !== -1 ? summaryEnd + 500 : summaryIdx + 3000)
-        : html;
-    var cover = extractFirst(summaryBlock, /src="(https:\/\/mancover\.xyz\/[^"]+)"/);
+    var cover = extractFirst(html, /class="[^"]*(?:summary_image|manga-poster|detail-img)[^"]*"[\s\S]{0,200}?<img[^>]+(?:data-lazy-src|data-src|src)="([^"]+)"/i) ||
+                extractFirst(html, /property="og:image"[^>]*content="([^"]+)"/i);
 
-    // Status: data-status="ongoing|completed|…"
-    var status = extractFirst(html, /data-status="([^"]+)"/).toLowerCase();
+    var statusRaw = extractFirst(html, /(?:Status)[\s\S]*?<span[^>]*>([^<]+)<\/span>/i) || "ongoing";
+    var statusLow = statusRaw.toLowerCase();
+    var status = /complet|finished/.test(statusLow) ? "completed" :
+                 /hiatus|hold/.test(statusLow) ? "hiatus" :
+                 /cancel|drop/.test(statusLow) ? "dropped" : "ongoing";
 
-    // Description: meta description tag
-    var description = decodeHtml(
-        extractFirst(html, /<meta[^>]+name="description"[^>]+content="([^"]+)"/) ||
-        extractFirst(html, /<meta[^>]+content="([^"]+)"[^>]+name="description"/)
-    );
+    var description = extractFirst(html, /<div[^>]+class="[^"]*(?:summary__content|description-summary|manga-description)[^"]*"[^>]*>([\s\S]{10,2000}?)<\/div>/i);
+    description = decodeHtml(stripTags(description).trim());
 
-    // Genres
     var genres = [];
-    var genreRe = /href="\/genre\/[^"]+"[^>]*>([^<]+)</g;
+    var gRe = /<a[^>]+rel="tag"[^>]*>([^<]+)<\/a>/gi;
     var gm;
-    while ((gm = genreRe.exec(html)) !== null) {
-        var g = gm[1].trim();
-        if (g && genres.indexOf(g) === -1) genres.push(g);
+    while ((gm = gRe.exec(html)) !== null) {
+        var g = decodeHtml(gm[1].trim());
+        if (g && g.length > 1 && g.length < 40) genres.push(g);
     }
 
-    // Chapters: <a href="/manhwa/slug/chapter-N/" class="chapter-item" …>
-    //   <span class="… chapter-item__name …">Chapter 01</span>
-    //   <span class="… chapter-item__date …">21/02/2026</span>
+    // Chapter list — Madara theme: li.wp-manga-chapter
     var chapters = [];
-    var chRe = /<a[^>]+href="(\/manhwa\/[^"]+)"[^>]*class="[^"]*chapter-item[^"]*"[\s\S]*?<span[^>]*class="[^"]*chapter-item__name[^"]*"[^>]*>([\s\S]*?)<\/span>[\s\S]*?<span[^>]*class="[^"]*chapter-item__date[^"]*"[^>]*>([\s\S]*?)<\/span>/g;
+    var chapRe = /<li[^>]+class="[^"]*wp-manga-chapter[^"]*"[^>]*>[\s\S]*?<a[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi;
     var cm;
-    while ((cm = chRe.exec(html)) !== null) {
-        var chUrl = BASE_URL + cm[1];
-        var chName = stripTags(cm[2]).trim();
-        var chDate = stripTags(cm[3]).trim();
-        var numMatch = chName.match(/(\d+(?:\.\d+)?)/);
-        var number = numMatch ? parseFloat(numMatch[1]) : 0;
-        var uploadDate = parseDateDDMMYYYY(chDate);
-        chapters.push({ url: chUrl, title: chName, number: number, uploadDate: uploadDate });
+    while ((cm = chapRe.exec(html)) !== null) {
+        var chapUrl = cm[1].trim();
+        var chapTitle = decodeHtml(stripTags(cm[2]).trim());
+        if (chapUrl && chapTitle) chapters.push({ url: chapUrl, title: chapTitle, date: "" });
     }
 
-    return JSON.stringify({
-        title: title,
-        cover: cover,
-        status: status,
-        description: description,
-        genres: genres,
-        chapters: chapters
-    });
+    if (chapters.length === 0) {
+        var chapRe2 = /<a[^>]+href="([^"]+\/chapter[^"]+)"[^>]*>([^<]{2,80})<\/a>/gi;
+        while ((cm = chapRe2.exec(html)) !== null) {
+            chapters.push({ url: cm[1].trim(), title: decodeHtml(cm[2].trim()), date: "" });
+        }
+    }
+
+    return JSON.stringify({ title: title, cover: cover, status: status, description: description, genres: genres, chapters: chapters });
 }
 
-function parseDateDDMMYYYY(str) {
-    if (!str) return 0;
-    var parts = str.split("/");
-    if (parts.length !== 3) return 0;
-    var d = parseInt(parts[0], 10);
-    var mo = parseInt(parts[1], 10) - 1;
-    var y = parseInt(parts[2], 10);
-    if (isNaN(d) || isNaN(mo) || isNaN(y)) return 0;
-    return new Date(y, mo, d).getTime();
-}
-
-// ─── getChapterPages ──────────────────────────────────────────────────────────
+// ─── getChapterPages ─────────────────────────────────────────────────────────
 
 function getChapterPages(html, url) {
-    // The chapter reader embeds a JS variable:
-    //   var chapterData = {"data":"<base64>","base":"https://manread.xyz/12369"}
-    //
-    // Decoded data: [{src:"126384/mr_001.jpg", w:800, h:5000}, …]
-    // Full image URL: base + "/" + src  (unescape "\/" → "/")
+    var pages = [];
+    var seenImgs = {};
 
-    var dataMatch = html.match(/var chapterData\s*=\s*(\{[^;]+\})/);
-    if (!dataMatch) {
-        return JSON.stringify({ pages: [], error: "chapterData variable not found" });
+    // Strategy A: mangomic chapterData base64 encoding
+    var dataM = html.match(/var\s+chapterData\s*=\s*(\{[\s\S]{10,8000}?\});/);
+    if (dataM) {
+        try {
+            var cd = JSON.parse(dataM[1]);
+            if (cd && cd.base && cd.data) {
+                var decoded = JSON.parse(atob(cd.data));
+                decoded.forEach(function(item, i) {
+                    var src = (item.src || item.url || item.img || "").replace(/\\\/\//g, "/");
+                    if (src) pages.push({ index: i, url: cd.base + "/" + src });
+                });
+            }
+        } catch(e) {}
     }
+    if (pages.length > 0) return JSON.stringify({ pages: pages });
 
-    var chapterData;
-    try {
-        chapterData = JSON.parse(dataMatch[1]);
-    } catch (e) {
-        return JSON.stringify({ pages: [], error: "JSON.parse(chapterData) failed: " + e.message });
+    // Strategy B: chapter_preloaded_images JSON array
+    var preloadM = html.match(/chapter_preloaded_images\s*=\s*(\[[\s\S]{10,20000}?\])/);
+    if (preloadM) {
+        try {
+            var arr = JSON.parse(preloadM[1]);
+            arr.forEach(function(item, i) {
+                var src = item.src || item.url || item.img || "";
+                if (src) pages.push({ index: i, url: src });
+            });
+        } catch(e) {}
     }
+    if (pages.length > 0) return JSON.stringify({ pages: pages });
 
-    var base = chapterData.base || "";
-    var pageList;
-    try {
-        pageList = JSON.parse(atob(chapterData.data));
-    } catch (e) {
-        return JSON.stringify({ pages: [], error: "atob/parse failed: " + e.message });
+    // Strategy C: reading-content img tags (Madara/WP theme)
+    var containerM = html.match(/<div[^>]+class="[^"]*(?:reading-content|chapter-content|page-break|reading-detail)[^"]*"[^>]*>([\s\S]{50,100000}?)<\/div>/i);
+    var searchHtml = containerM ? containerM[1] : html;
+    var imgRe = /(?:data-lazy-src|data-src|src)="(https?:\/\/[^"]+\.(?:jpg|jpeg|png|webp)(?:\?[^"]*)?)"/gi;
+    var im;
+    while ((im = imgRe.exec(searchHtml)) !== null) {
+        var imgUrl = im[1];
+        if (!imgUrl || seenImgs[imgUrl]) continue;
+        if (/logo|banner|avatar|icon|button/i.test(imgUrl)) continue;
+        seenImgs[imgUrl] = true;
+        pages.push({ index: pages.length, url: imgUrl });
     }
-
-    var pages = pageList.map(function(p, i) {
-        var src = (p.src || "").replace(/\\\//g, "/");
-        return { index: i, url: base + "/" + src };
-    });
 
     return JSON.stringify({ pages: pages });
 }
