@@ -91,7 +91,7 @@ class IntelligentBrowserClient(
         view: WebView?,
         request: WebResourceRequest?,
     ): WebResourceResponse? {
-        if (request == null) return super.shouldInterceptRequest(view, request)
+        if (request == null) return super.shouldInterceptRequest(view, null as WebResourceRequest?)
         val url = request.url.toString()
 
         // Check custom blocked/whitelisted domains
