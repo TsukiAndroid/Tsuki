@@ -1,3 +1,15 @@
+## Alpha 1.579 (Build [#210](https://github.com/Space4414/Tsuki/actions/runs/25948073229))
+
+_2026-05-16 00:38 UTC_
+
+- fix(browser): resolve overload ambiguity in IntelligentBrowserClient.shouldInterceptRequest (e10ff74)
+- fix(resources): replace ?attr/progressBarStyleSmall with ?android:attr/progressBarStyleSmall (3776581)
+- feat(browser): Intelligent WebView — AI parser learning, ad-blocker, privacy, QoL & settings (4d2e8ce)
+- feat: auto-detect parser button on Create Extension screen (e2277f3)
+- fix: make resolveListUrl a suspend fun (QuickJs.evaluate is suspend) (4aeee18)
+- feat: JS extension v2 (HTML-first) + manhwaread.com parser (f59482a)
+
+
 ## Alpha 1.574 (Build [#206](https://github.com/Space4414/Tsuki/actions/runs/25930912439))
 
 _2026-05-15 17:08 UTC_
