@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <!-- ── General ──────────────────────────────────────────────────────── -->
+    <PreferenceCategory android:title="@string/webview_category_general">
+
+        <SwitchPreferenceCompat
+            android:key="wv_js"
+            android:title="@string/webview_js_title"
+            android:summary="@string/webview_js_summary"
+            android:defaultValue="true" />
+
+        <SwitchPreferenceCompat
+            android:key="wv_desktop"
+            android:title="@string/webview_desktop_mode"
+            android:summary="@string/webview_desktop_mode_summary"
+            android:defaultValue="false" />
+
+    </PreferenceCategory>
+
+    <!-- ── AI Parser Learning ────────────────────────────────────────────── -->
+    <PreferenceCategory android:title="@string/webview_category_ai_learning">
+
+        <SwitchPreferenceCompat
+            android:key="wv_ai_learning"
+            android:title="@string/webview_ai_learning_title"
+            android:summary="@string/webview_ai_learning_summary"
+            android:defaultValue="true" />
+
+        <EditTextPreference
+            android:key="wv_gemini_key"
+            android:title="@string/webview_gemini_key_title"
+            android:dialogTitle="@string/webview_gemini_key_title"
+            android:inputType="textPassword" />
+
+        <SwitchPreferenceCompat
+            android:key="wv_learning_banner"
+            android:title="@string/webview_learning_banner_title"
+            android:summary="@string/webview_learning_banner_summary"
+            android:defaultValue="true" />
+
+        <Preference
+            android:key="wv_clear_learning_cache"
+            android:title="@string/webview_clear_learning_cache"
+            android:summary="@string/webview_clear_learning_cache_summary" />
+
+    </PreferenceCategory>
+
+    <!-- ── Ad Blocker ────────────────────────────────────────────────────── -->
+    <PreferenceCategory android:title="@string/webview_category_adblock">
+
+        <SwitchPreferenceCompat
+            android:key="wv_adblock"
+            android:title="@string/webview_adblock_title"
+            android:summary="@string/webview_adblock_summary"
+            android:defaultValue="true" />
+
+        <Preference
+            android:key="wv_blocked_count"
+            android:title="@string/webview_blocked_count_title"
+            android:summary="@string/webview_blocked_count_d" />
+
+        <Preference
+            android:key="wv_reset_blocked_count"
+            android:title="@string/webview_reset_blocked_count" />
+
+    </PreferenceCategory>
+
+    <!-- ── Privacy ───────────────────────────────────────────────────────── -->
+    <PreferenceCategory android:title="@string/webview_category_privacy">
+
+        <SwitchPreferenceCompat
+            android:key="wv_doh"
+            android:title="@string/webview_doh_title"
+            android:summary="@string/webview_doh_summary"
+            android:defaultValue="false" />
+
+    </PreferenceCategory>
+
+    <!-- ── Reader Integration ────────────────────────────────────────────── -->
+    <PreferenceCategory android:title="@string/webview_category_reader">
+
+        <SwitchPreferenceCompat
+            android:key="wv_auto_chapter"
+            android:title="@string/webview_auto_chapter_title"
+            android:summary="@string/webview_auto_chapter_summary"
+            android:defaultValue="true" />
+
+        <SwitchPreferenceCompat
+            android:key="wv_auto_detail"
+            android:title="@string/webview_auto_detail_title"
+            android:summary="@string/webview_auto_detail_summary"
+            android:defaultValue="true" />
+
+        <SwitchPreferenceCompat
+            android:key="wv_reader_prompt"
+            android:title="@string/webview_reader_prompt_title"
+            android:summary="@string/webview_reader_prompt_summary"
+            android:defaultValue="true" />
+
+        <SwitchPreferenceCompat
+            android:key="wv_library_prompt"
+            android:title="@string/webview_library_prompt_title"
+            android:summary="@string/webview_library_prompt_summary"
+            android:defaultValue="true" />
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

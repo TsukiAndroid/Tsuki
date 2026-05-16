@@ -65,6 +65,13 @@
         android:summary="@string/ext_extensions_settings_summary" />
 
     <PreferenceScreen
+        android:fragment="io.github.landwarderer.futon.settings.webview.WebViewSettingsFragment"
+        android:icon="@drawable/ic_web"
+        android:key="webview_settings"
+        android:title="@string/webview_settings"
+        android:summary="@string/webview_settings_summary" />
+
+    <PreferenceScreen
         android:fragment="io.github.landwarderer.futon.settings.about.AboutSettingsFragment"
         android:icon="@drawable/ic_info_outline"
         android:key="about"

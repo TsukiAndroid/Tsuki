@@ -1,12 +1,54 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu
-	xmlns:android="http://schemas.android.com/apk/res/android"
-	xmlns:app="http://schemas.android.com/apk/res-auto">
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto">
 
-	<item
-		android:id="@+id/action_browser"
-		android:icon="@drawable/ic_open_external"
-		android:title="@string/open_in_browser"
-		app:showAsAction="ifRoom" />
+    <item
+            android:id="@+id/action_browser"
+            android:icon="@drawable/ic_open_external"
+            android:title="@string/open_in_browser"
+            app:showAsAction="ifRoom" />
+
+    <item
+            android:id="@+id/action_adblock_toggle"
+            android:icon="@drawable/ic_eye"
+            android:title="@string/webview_adblock_title"
+            app:showAsAction="never" />
+
+    <item
+            android:id="@+id/action_js_toggle"
+            android:icon="@drawable/ic_script"
+            android:title="@string/webview_js_title"
+            app:showAsAction="never" />
+
+    <item
+            android:id="@+id/action_desktop_mode"
+            android:icon="@drawable/ic_images"
+            android:title="@string/webview_desktop_mode"
+            app:showAsAction="never" />
+
+    <item
+            android:id="@+id/action_add_as_source"
+            android:icon="@drawable/ic_add"
+            android:title="@string/webview_add_as_source"
+            app:showAsAction="never" />
+
+    <item
+            android:id="@+id/action_webview_settings"
+            android:icon="@drawable/ic_settings"
+            android:title="@string/webview_settings"
+            app:showAsAction="never" />
+
+    <item
+            android:id="@+id/action_share"
+            android:icon="@drawable/ic_bookmark"
+            android:title="@string/share"
+            app:showAsAction="never" />
+
+    <item
+            android:id="@+id/action_download_images"
+            android:icon="@drawable/ic_download"
+            android:title="@string/webview_download_images"
+            app:showAsAction="never" />
 
 </menu>

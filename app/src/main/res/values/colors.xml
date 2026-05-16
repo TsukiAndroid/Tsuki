@@ -58,4 +58,7 @@
         <color name="chip_teal_fill">#332DD4BF</color>
         <color name="glass_scrim">#66000000</color>
         <color name="glass_teal_glow">#4D2DD4BF</color>
+
+        <!-- Intelligent WebView -->
+        <color name="tsuki_learning_banner_bg">#CC1A237E</color>
 </resources>

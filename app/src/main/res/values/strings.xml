@@ -1234,6 +1234,93 @@
     <string name="ext_test_running">Running…</string>
     <string name="ext_test_error_prefix">ERROR: %s</string>
 
+    <!-- ── Intelligent WebView ──────────────────────────────────────────────── -->
+    <string name="webview_settings">WebView Browser</string>
+    <string name="webview_settings_summary">AI parsing, ad blocker, privacy &amp; reader integration</string>
+
+    <!-- Categories -->
+    <string name="webview_category_general">General</string>
+    <string name="webview_category_ai_learning">AI Parser Learning</string>
+    <string name="webview_category_adblock">Ad Blocker</string>
+    <string name="webview_category_privacy">Privacy &amp; Security</string>
+    <string name="webview_category_reader">Reader Integration</string>
+
+    <!-- General -->
+    <string name="webview_js_title">JavaScript</string>
+    <string name="webview_js_summary">Enable JavaScript on all sites (recommended)</string>
+    <string name="webview_desktop_mode">Desktop mode</string>
+    <string name="webview_desktop_mode_summary">Use a desktop browser user agent and viewport</string>
+
+    <!-- AI Parser Learning -->
+    <string name="webview_ai_learning_title">AI Parser Learning</string>
+    <string name="webview_ai_learning_summary">Automatically generate a custom parser as you browse manga sites</string>
+    <string name="webview_gemini_key_title">Gemini API Key</string>
+    <string name="webview_gemini_key_hint">Tap to enter your Gemini API key</string>
+    <string name="webview_gemini_key_set">API key saved — AI parsing enabled</string>
+    <string name="webview_learning_banner_title">Show Learning Progress Banner</string>
+    <string name="webview_learning_banner_summary">Show a banner at the bottom of the browser while learning a site</string>
+    <string name="webview_clear_learning_cache">Clear Learning Cache</string>
+    <string name="webview_clear_learning_cache_summary">Remove all captured page data from the current session</string>
+    <string name="webview_learning_cache_cleared">Learning cache cleared</string>
+
+    <!-- Learning banner messages -->
+    <string name="webview_learning_msg_0">🌙 Learning… Visit a manga list page</string>
+    <string name="webview_learning_msg_1">🌙 Learning… Open any manga</string>
+    <string name="webview_learning_msg_2">🌙 Learning… Read a chapter</string>
+    <string name="webview_learning_msg_ready">🌙 Almost done… Open one more chapter</string>
+    <string name="webview_learning_generating">🌙 Generating parser…</string>
+    <string name="webview_parser_ready">🌙 Parser ready! Tap to create source</string>
+    <string name="webview_checklist_list">List</string>
+    <string name="webview_checklist_detail">Detail</string>
+    <string name="webview_checklist_chapter">Chapter</string>
+
+    <!-- Parser creation sheet -->
+    <string name="webview_parser_sheet_title">Create Source from Learned Parser</string>
+    <string name="webview_parser_add_source">Add as Source</string>
+    <string name="webview_parser_edit_first">Edit Before Saving</string>
+    <string name="webview_parser_dismiss">Dismiss</string>
+    <string name="webview_source_added">Source added successfully</string>
+    <string name="webview_source_add_failed">Failed to add source</string>
+
+    <!-- Ad Blocker -->
+    <string name="webview_adblock_title">Ad Blocker</string>
+    <string name="webview_adblock_summary">Block ads, tracking scripts and popups (default: on)</string>
+    <string name="webview_blocked_count_title">Blocked this session</string>
+    <string name="webview_blocked_count_d">%d requests blocked</string>
+    <string name="webview_reset_blocked_count">Reset counter</string>
+
+    <!-- Privacy -->
+    <string name="webview_doh_title">DNS over HTTPS in WebView</string>
+    <string name="webview_doh_summary">Bypass ISP-level blocks on manga sites using encrypted DNS</string>
+
+    <!-- Reader integration -->
+    <string name="webview_auto_chapter_title">Auto-detect Chapter Pages</string>
+    <string name="webview_auto_chapter_summary">Detect when you are reading a chapter and offer to open it in the native reader</string>
+    <string name="webview_auto_detail_title">Auto-detect Manga Detail Pages</string>
+    <string name="webview_auto_detail_summary">Detect manga detail pages and offer to add them to your library</string>
+    <string name="webview_reader_prompt_title">Show \'Open in Reader\' Button</string>
+    <string name="webview_reader_prompt_summary">Show a floating button to open the current chapter in the native reader</string>
+    <string name="webview_library_prompt_title">Show \'Add to Library\' Button</string>
+    <string name="webview_library_prompt_summary">Show a floating button to add the current manga to your library</string>
+
+    <!-- FAB labels -->
+    <string name="webview_open_in_reader">Open in Reader</string>
+    <string name="webview_add_to_library">Add to Library</string>
+    <string name="webview_add_as_source">Add Site as Source</string>
+    <string name="webview_download_images">Download Page Images</string>
+
+    <!-- Snackbar / toast messages -->
+    <string name="webview_chapter_detected">Chapter detected — open in Tsuki Reader?</string>
+    <string name="webview_detail_detected">Manga page detected — add to library?</string>
+    <string name="webview_reader_opened">Opening in reader…</string>
+    <string name="webview_no_images_found">No manga images found on this page</string>
+    <string name="webview_adblock_toggled_on">Ad blocker: ON</string>
+    <string name="webview_adblock_toggled_off">Ad blocker: OFF</string>
+    <string name="webview_js_toggled_on">JavaScript: ON</string>
+    <string name="webview_js_toggled_off">JavaScript: OFF</string>
+    <string name="webview_desktop_on">Desktop mode: ON</string>
+    <string name="webview_desktop_off">Desktop mode: OFF</string>
+
     <!-- Guide dialog -->
     <string name="ext_guide_title">JS Extension Guide</string>
     <string name="ext_guide_ok">Got it</string>
