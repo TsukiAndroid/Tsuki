@@ -17,6 +17,7 @@ import io.github.landwarderer.futon.core.util.ext.processLifecycleScope
 import io.github.landwarderer.futon.local.data.LocalStorageChanges
 import io.github.landwarderer.futon.local.data.index.LocalMangaIndex
 import io.github.landwarderer.futon.local.domain.model.LocalManga
+import io.github.landwarderer.futon.extensions.data.BuiltinExtensionSeeder
 import io.github.landwarderer.futon.mihon.MihonExtensionManager
 import io.github.landwarderer.futon.settings.work.WorkScheduleManager
 import io.github.landwarderer.futon.tracker.work.TrackerNotificationHelper
@@ -34,6 +35,9 @@ import io.github.landwarderer.futon.core.CrashHandler
 
 @HiltAndroidApp
 open class BaseApp : Application(), Configuration.Provider {
+
+	@Inject
+	lateinit var builtinExtensionSeeder: BuiltinExtensionSeeder
 
 	@Inject
 	lateinit var mihonExtensionManager: MihonExtensionManager
@@ -95,6 +99,7 @@ open class BaseApp : Application(), Configuration.Provider {
 		}
 		workScheduleManager.init()
 		notificationHelper.updateChannels()
+		processLifecycleScope.launch(Dispatchers.IO) { builtinExtensionSeeder.seedIfNeeded() }
 	}
 
 	override fun attachBaseContext(base: Context) {
