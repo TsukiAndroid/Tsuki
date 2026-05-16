@@ -1,3 +1,12 @@
+## Alpha 1.598 (Build [#225](https://github.com/Space4414/Tsuki/actions/runs/25966612134))
+
+_2026-05-16 16:10 UTC_
+
+- feat: add BuiltinExtensionSeeder — re-seeds bundled JS extensions on every APK version update (276ddae)
+- feat: expand JS extension guide with full 4-function contract, QuickJS tips, and tutorial text (2a8b80e)
+- feat: call BuiltinExtensionSeeder.seedIfNeeded() on app startup to fix stale cached extension code (e97232b)
+
+
 ## Alpha 1.592 (Build [#220](https://github.com/Space4414/Tsuki/actions/runs/25954689204))
 
 _2026-05-16 06:12 UTC_
