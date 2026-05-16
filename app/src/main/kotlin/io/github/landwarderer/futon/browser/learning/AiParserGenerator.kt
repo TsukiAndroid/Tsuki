@@ -197,18 +197,15 @@ package io.github.landwarderer.futon.browser.learning
           """.trimIndent())
 
           session.mangaListPage?.let {
-              sb.appendLine("
-═══ MANGA LIST PAGE HTML (url: ${it.url}) ═══")
+              sb.appendLine("\n═══ MANGA LIST PAGE HTML (url: ${it.url}) ═══")
               sb.appendLine(it.html.take(HTML_BUDGET_PER_PAGE))
           }
           session.mangaDetailPage?.let {
-              sb.appendLine("
-═══ MANGA DETAIL PAGE HTML (url: ${it.url}) ═══")
+              sb.appendLine("\n═══ MANGA DETAIL PAGE HTML (url: ${it.url}) ═══")
               sb.appendLine(it.html.take(HTML_BUDGET_PER_PAGE))
           }
           session.chapterReaderPage?.let {
-              sb.appendLine("
-═══ CHAPTER READER PAGE HTML (url: ${it.url}) ═══")
+              sb.appendLine("\n═══ CHAPTER READER PAGE HTML (url: ${it.url}) ═══")
               sb.appendLine(it.html.take(HTML_BUDGET_PER_PAGE))
           }
 
