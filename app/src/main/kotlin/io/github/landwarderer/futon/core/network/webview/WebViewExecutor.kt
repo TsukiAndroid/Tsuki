@@ -102,7 +102,7 @@ class WebViewExecutor @Inject constructor(
                                     println("DEBUG: Content found via polling. Returning immediately.")
                                     resumeOnce(content)
                                 } else {
-                                    handler.postDelayed(this, 1000)
+                                    handler.postDelayed(this, 300)
                                 }
                             }
                         }
@@ -141,7 +141,7 @@ class WebViewExecutor @Inject constructor(
                         webView.loadUrl(baseUrl, headers)
                     }
 
-                    handler.postDelayed(contentPoller, 1000)
+                    handler.postDelayed(contentPoller, 300)
 
                     handler.postDelayed({
                         if (!hasResumed) {
