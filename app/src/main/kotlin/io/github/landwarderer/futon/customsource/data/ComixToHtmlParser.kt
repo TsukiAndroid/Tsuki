@@ -95,7 +95,7 @@ package io.github.landwarderer.futon.customsource.data
                     ".manga-cover img, .series-cover img, .thumb img, " +
                     ".info-image img, [class*=cover] img, [class*=thumb] img"
                 )
-                val coverUrl = resolveImageUrl(coverImg, manga.coverUrl)
+                val coverUrl = resolveImageUrl(coverImg, manga.coverUrl ?: "")
 
                 val descEl = doc.selectFirst(
                     ".detail-content p, .story-summary p, .summary-content, " +
