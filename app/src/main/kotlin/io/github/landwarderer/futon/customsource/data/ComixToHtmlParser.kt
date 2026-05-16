@@ -314,7 +314,6 @@ package io.github.landwarderer.futon.customsource.data
         /**
          * Fetches a URL with full browser-like headers so the server does not
          * block the request as a bot. Sends Accept, Accept-Language,
-         * Accept-Encoding, Sec-Fetch headers, and Referer.
          */
         private fun fetchDocument(url: String): Document {
             val req = Request.Builder()
