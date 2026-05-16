@@ -69,8 +69,8 @@ package io.github.landwarderer.futon.customsource.data
   object CmsTypeDetector {
 
       private val KNOWN_DOMAIN_TYPES: Map<String, CustomSourceType> = mapOf(
-          "manhwaread.com"   to CustomSourceType.MADARA,
-          "manhwaread.net"   to CustomSourceType.MADARA,
+          "manhwaread.com"   to CustomSourceType.WEBVIEW,
+          "manhwaread.net"   to CustomSourceType.WEBVIEW,
           "comix.to"         to CustomSourceType.COMIXTO,
       )
 
