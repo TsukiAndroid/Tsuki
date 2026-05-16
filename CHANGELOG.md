@@ -1,3 +1,18 @@
+## Alpha 1.590 (Build [#219](https://github.com/Space4414/Tsuki/actions/runs/25954093763))
+
+_2026-05-16 05:40 UTC_
+
+- fix(compile): handle nullable coverUrl String? in resolveImageUrl call (1775dce)
+- fix: correct multiline string syntax in buildGeminiPrompt appendLine calls (9ab0d7f)
+- fix: rewrite manhwaread.js with multi-strategy parsing — strategy A (chapterData), B (preloaded), C (img tags) (2c6b38f)
+- perf: enable GZipInterceptor for all HTTP requests to reduce data transfer latency (0e0b1ab)
+- fix: map manhwaread.com/net to WEBVIEW — site WAF blocks OkHttp-based MADARA requests (875edce)
+- perf: reduce WebView content polling interval from 1000ms to 300ms (dade2e5)
+- fix: add full browser headers to ComixToHtmlParser to prevent WAF blocking (38c5a9b)
+- feat: dramatically improve Gemini prompt with CMS identification + precise selector extraction (039316b)
+- fix(browser): addCurrentSiteToLibrary now runs CMS auto-detection (dacc0a2)
+
+
 ## Alpha 1.581 (Build [#211](https://github.com/Space4414/Tsuki/actions/runs/25952752526))
 
 _2026-05-16 04:29 UTC_
