@@ -25,6 +25,7 @@ import io.github.landwarderer.futon.core.util.ext.getDisplayMessage
 import io.github.landwarderer.futon.core.util.ext.printStackTraceDebug
 import io.github.landwarderer.futon.customsource.data.CustomSourcesRepository
 import io.github.landwarderer.futon.customsource.domain.CustomMangaSource
+import io.github.landwarderer.futon.customsource.data.CmsTypeDetector
 import io.github.landwarderer.futon.customsource.domain.CustomSource
 import io.github.landwarderer.futon.customsource.domain.CustomSourceType
 import kotlinx.coroutines.Dispatchers
@@ -252,23 +253,61 @@ class BrowserActivity : BaseBrowserActivity() {
             "${uri.scheme}://${uri.host}"
         }.getOrDefault(currentUrl)
 
-        if (customSourcesRepository.findByUrl(baseUrl) != null) {
-            Snackbar.make(viewBinding.webView, "Source already in library", Snackbar.LENGTH_SHORT).show()
-            return
-        }
-
         val title = viewBinding.webView.title?.takeIf { it.isNotBlank() }
             ?: baseUrl.removePrefix("https://").removePrefix("www.")
 
-        val source = CustomSource(
-            id = CustomSourcesRepository.generateId(),
-            name = title,
-            baseUrl = baseUrl,
-            type = CustomSourceType.WEBVIEW,
-        )
-        customSourcesRepository.add(source)
-        viewBinding.fabAddToLibrary.hide()
-        Snackbar.make(viewBinding.webView, R.string.webview_source_added, Snackbar.LENGTH_SHORT).show()
+        // Check if already added
+        val existing = customSourcesRepository.findByUrl(baseUrl)
+        if (existing != null && existing.type != CustomSourceType.WEBVIEW) {
+            // Already a proper parseable source — nothing to do
+            Snackbar.make(
+                viewBinding.webView,
+                getString(R.string.webview_source_already_added, existing.type.label),
+                Snackbar.LENGTH_SHORT,
+            ).show()
+            return
+        }
+
+        // Show detecting state on the FAB
+        viewBinding.fabAddToLibrary.text = getString(R.string.webview_detecting)
+        viewBinding.fabAddToLibrary.isEnabled = false
+
+        lifecycleScope.launch {
+            // Run CMS fingerprinting in background (makes network calls)
+            val detectedType = withContext(Dispatchers.IO) {
+                runCatching { CmsTypeDetector.detect(baseUrl) }
+                    .getOrElse { CustomSourceType.WEBVIEW }
+            }
+
+            if (existing != null && existing.type == CustomSourceType.WEBVIEW) {
+                // Upgrade the previously-saved WEBVIEW shell to its real parser type
+                customSourcesRepository.update(existing.copy(type = detectedType))
+                Snackbar.make(
+                    viewBinding.webView,
+                    getString(R.string.webview_source_upgraded, detectedType.label),
+                    Snackbar.LENGTH_LONG,
+                ).show()
+            } else {
+                // Add brand-new source with the real detected type
+                val source = CustomSource(
+                    id = CustomSourcesRepository.generateId(),
+                    name = title,
+                    baseUrl = baseUrl,
+                    type = detectedType,
+                )
+                customSourcesRepository.add(source)
+                val msg = if (detectedType == CustomSourceType.WEBVIEW)
+                    getString(R.string.webview_source_added)
+                else
+                    getString(R.string.webview_source_added_as, detectedType.label)
+                Snackbar.make(viewBinding.webView, msg, Snackbar.LENGTH_LONG).show()
+            }
+
+            viewBinding.fabAddToLibrary.hide()
+            // Restore FAB for future use
+            viewBinding.fabAddToLibrary.text = getString(R.string.webview_add_to_library)
+            viewBinding.fabAddToLibrary.isEnabled = true
+        }
     }
 
     // ── Title / URL changes ────────────────────────────────────────────────────

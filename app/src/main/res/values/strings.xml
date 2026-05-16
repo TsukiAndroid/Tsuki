@@ -1309,6 +1309,12 @@
     <string name="webview_add_as_source">Add Site as Source</string>
     <string name="webview_download_images">Download Page Images</string>
 
+    <!-- Source detection / adding -->
+    <string name="webview_detecting">Detecting…</string>
+    <string name="webview_source_added_as">Added as %s</string>
+    <string name="webview_source_upgraded">Source upgraded to %s</string>
+    <string name="webview_source_already_added">Already in library as %s</string>
+
     <!-- Snackbar / toast messages -->
     <string name="webview_chapter_detected">Chapter detected — open in Tsuki Reader?</string>
     <string name="webview_detail_detected">Manga page detected — add to library?</string>
