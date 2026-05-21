@@ -1734,6 +1734,12 @@
     <meta-data android:name="io.sentry.attach-view-hierarchy" android:value="true" />
     <meta-data android:name="io.sentry.traces.sample-rate" android:value="0.2" />
 
-</application>
+
+          <activity
+              android:name=".customsource.ui.UniversalSourceActivity"
+              android:exported="false"
+              android:label="@string/universal_source_title"
+              android:windowSoftInputMode="adjustResize" />
+    </application>
 
 </manifest>
