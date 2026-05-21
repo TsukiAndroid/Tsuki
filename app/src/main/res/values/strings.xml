@@ -1331,4 +1331,41 @@
     <string name="ext_guide_title">JS Extension Guide</string>
     <string name="ext_guide_ok">Got it</string>
     <string name="ext_guide_body">Your JavaScript parser runs inside QuickJS (not a browser). Kotlin fetches the HTML; your JS only needs to parse it. No DOM, no fetch — just strings, regex, and JSON.\n\nYou must export these 4 functions:\n\n1. getMangaListUrl(offset, query)\n   Returns a URL string for the browse or search page.\n   offset is 0, 20, 40… (page size * page index); query is a string or null.\n\n2. getMangaList(html, offset, query)\n   Receives the fetched HTML. Returns JSON:\n   {\"items\":[{\"title\":\"…\",\"url\":\"https://…\",\"cover\":\"https://…\"}]}\n\n3. getMangaDetails(html, url)\n   Receives the manga detail page HTML. Returns JSON:\n   {\"title\":\"…\",\"cover\":\"…\",\"status\":\"ongoing\",\"description\":\"…\",\"genres\":[\"Action\"],\"chapters\":[{\"url\":\"…\",\"title\":\"Ch.1\",\"number\":1,\"uploadDate\":0}]}\n\n4. getChapterPages(html, url)\n   Receives the chapter reader page HTML. Returns JSON:\n   {\"pages\":[{\"index\":0,\"url\":\"https://cdn.example.com/001.jpg\"}]}\n\nTips:\n- Use var/function, not const/let/arrow functions (QuickJS v2 compat).\n- Only ASCII in source code. No Unicode arrows or emoji.\n- Test each function from the Test Console toolbar button.\n- The Guide button shows the example_extension.js skeleton.\n- Common patterns: regex on HTML strings, JSON.parse for API responses.\n- atob() is available for base64 chapter image data.\n- encodeURIComponent() works for search queries.</string>
-  </resources>
+  
+      <!-- Universal Source Wizard -->
+      <string name="universal_source_title">Universal Source (Beta)</string>
+      <string name="universal_source_action">Universal Source (Beta)…</string>
+      <string name="universal_source_beta_notice">Beta: Fill in the CSS selectors for your target site. The app handles all scraping automatically — no coding required.</string>
+      <string name="universal_source_created">Source &#8220;%s&#8221; created successfully.</string>
+      <string name="section_site_info">Site Info</string>
+      <string name="section_browse_search">Browse &amp; Search</string>
+      <string name="section_manga_list">Manga List Page</string>
+      <string name="section_manga_list_subtitle">CSS selectors that find each manga card on the browse/search page.</string>
+      <string name="section_manga_detail">Manga Detail Page</string>
+      <string name="section_manga_detail_subtitle">CSS selectors that find info on a manga&#8217;s own page.</string>
+      <string name="section_chapter_reader">Chapter Reader</string>
+      <string name="section_chapter_reader_subtitle">CSS selector that finds page images inside a chapter.</string>
+      <string name="field_site_name">Site name *</string>
+      <string name="field_base_url">Base URL *</string>
+      <string name="field_base_url_helper">e.g. https://mangasite.com</string>
+      <string name="field_list_path">Browse path</string>
+      <string name="field_list_path_helper">e.g. /manga/   (leave blank to use /)</string>
+      <string name="field_search_path">Search path</string>
+      <string name="field_search_path_helper">e.g. /?s=   (leave blank to disable search)</string>
+      <string name="field_card_selector">Manga card selector</string>
+      <string name="field_card_selector_helper">e.g. div.manga-item  or  article.card</string>
+      <string name="field_title_selector">Title selector (within card)</string>
+      <string name="field_title_selector_helper">e.g. h3.title a  or  .manga-title</string>
+      <string name="field_cover_selector">Cover image selector (within card)</string>
+      <string name="field_cover_selector_helper">e.g. img  or  .cover img</string>
+      <string name="field_detail_title">Title selector</string>
+      <string name="field_detail_title_helper">e.g. h1.manga-title</string>
+      <string name="field_description">Description selector (optional)</string>
+      <string name="field_description_helper">e.g. div.description  or  .summary-content</string>
+      <string name="field_chapter_selector">Chapter row selector</string>
+      <string name="field_chapter_selector_helper">e.g. li.chapter-item  or  ul.chapter-list li</string>
+      <string name="field_page_image">Page image selector *</string>
+      <string name="field_page_image_helper">e.g. div.reading-content img  or  img.wp-manga-chapter-img</string>
+      <string name="btn_create_source">Create Source</string>
+  
+</resources>
