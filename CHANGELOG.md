@@ -1,3 +1,18 @@
+## Alpha 1.605 (Build [#231](https://github.com/Space4414/Tsuki/actions/runs/26235981575))
+
+_2026-05-21 15:33 UTC_
+
+- feat(universal-parser): add 'Universal Source (Beta)' button in Add Source sheet (e26c3f1)
+- feat(universal-parser): register UniversalSourceActivity in manifest (aeb734e)
+- feat(universal-parser): add all string resources for Universal Source wizard (8a68509)
+- feat(universal-parser): add UniversalSourceViewModel (5288dfa)
+- feat(universal-parser): add form layout for Universal Source wizard (1f603da)
+- feat(universal-parser): add UniversalSourceActivity — form-based parser creator (5e54bc5)
+- feat: add BuiltinExtensionSeeder — re-seeds bundled JS extensions on every APK version update (276ddae)
+- feat: expand JS extension guide with full 4-function contract, QuickJS tips, and tutorial text (2a8b80e)
+- feat: call BuiltinExtensionSeeder.seedIfNeeded() on app startup to fix stale cached extension code (e97232b)
+
+
 ## Alpha 1.598 (Build [#225](https://github.com/Space4414/Tsuki/actions/runs/25966612134))
 
 _2026-05-16 16:10 UTC_
