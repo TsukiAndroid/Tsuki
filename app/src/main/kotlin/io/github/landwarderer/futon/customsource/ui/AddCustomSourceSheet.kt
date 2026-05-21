@@ -150,7 +150,13 @@ class AddCustomSourceSheet : BottomSheetDialogFragment() {
 
         btnCancel.setOnClickListener { dismiss() }
 
-        // "Browse Kotatsu Library" shortcut — opens the full library browser
+        // "Universal Source" wizard — no-code form-based source creator
+          view.findViewById<MaterialButton>(R.id.btn_universal_source)?.setOnClickListener {
+              dismiss()
+              startActivity(Intent(requireContext(), UniversalSourceActivity::class.java))
+          }
+
+          // "Browse Kotatsu Library" shortcut — opens the full library browser
         // where the user can pick any library parser and optionally enter a mirror URL.
         view.findViewById<MaterialButton>(R.id.btn_browse_library)?.setOnClickListener {
             dismiss()
