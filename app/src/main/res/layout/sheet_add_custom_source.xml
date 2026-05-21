@@ -106,7 +106,17 @@
         android:focusable="false"
         android:visibility="gone" />
 
-    <!-- "Browse Kotatsu Library" shortcut -->
+
+      <!-- Universal Source wizard — form-based source creator (no coding required) -->
+      <com.google.android.material.button.MaterialButton
+          android:id="@+id/btn_universal_source"
+          style="@style/Widget.Material3.Button.TonalButton"
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:layout_marginBottom="8dp"
+          android:text="@string/universal_source_action" />
+
+      <!-- "Browse Kotatsu Library" shortcut -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btn_browse_library"
         style="@style/Widget.Material3.Button.TonalButton"
