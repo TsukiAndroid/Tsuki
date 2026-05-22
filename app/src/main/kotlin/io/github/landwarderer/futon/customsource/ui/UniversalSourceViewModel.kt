@@ -193,6 +193,7 @@ package io.github.landwarderer.futon.customsource.ui
           val mangaDetail = JSONObject()
           if (detailTitle.isNotEmpty()) mangaDetail.put("titleSelector",       detailTitle)
           if (description.isNotEmpty()) mangaDetail.put("descriptionSelector", description)
+          if (coverSelector.isNotEmpty()) mangaDetail.put("coverSelector",     coverSelector)
           root.put("mangaDetail", mangaDetail)
 
           val chapterList = JSONObject()
