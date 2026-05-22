@@ -1,3 +1,10 @@
+## Alpha 1.609 (Build [#234](https://github.com/Space4414/Tsuki/actions/runs/26272248498))
+
+_2026-05-22 06:30 UTC_
+
+- feat(universal-parser): add SiteAutoDetector — auto-detects CSS selectors from a pasted URL (ebe9379)
+
+
 ## Alpha 1.605 (Build [#231](https://github.com/Space4414/Tsuki/actions/runs/26235981575))
 
 _2026-05-21 15:33 UTC_
