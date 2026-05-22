@@ -1368,4 +1368,13 @@
       <string name="field_page_image_helper">e.g. div.reading-content img  or  img.wp-manga-chapter-img</string>
       <string name="btn_create_source">Create Source</string>
   
-</resources>
+
+      <!-- Universal Source auto-detect -->
+      <string name="universal_source_auto_detect_btn">Auto-detect selectors</string>
+      <string name="universal_source_auto_detecting">Analyzing website\u2026</string>
+      <string name="universal_source_auto_detect_done">\u2713 Selectors detected — review fields below, then tap Create.</string>
+      <string name="universal_source_create_btn">Create Source</string>
+      <string name="section_chapter_reader">Chapter Reader</string>
+      <string name="section_chapter_reader_subtitle">CSS selector that finds page images inside a chapter.</string>
+
+  </resources>
