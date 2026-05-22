@@ -1,3 +1,20 @@
+## Alpha 1.620 (Build [#244](https://github.com/Space4414/Tsuki/actions/runs/26273137442))
+
+_2026-05-22 06:53 UTC_
+
+- fix(universal-parser): replace invalid progressBarStyleHorizontal attr with android widget style (05c6a39)
+- fix(universal-parser): remove duplicate section_chapter_reader string causing merge resource failure (9180ffe)
+- feat(universal-parser): add confidence hint string resources (e9366e8)
+- feat(universal-parser): show per-field confidence indicators after auto-detection (be9096d)
+- feat(universal-parser): add Confidence enum and per-field confidence scoring to SiteAutoDetector (fff1fca)
+- feat(universal-parser): add strings for auto-detect button and status (9fd4e30)
+- feat(universal-parser): add auto-detect wand icon drawable (3d7e88f)
+- feat(universal-parser): add auto-detect button, progress bar, and status card to Universal Source layout (f5729e3)
+- feat(universal-parser): wire auto-detect UI in UniversalSourceActivity (203789d)
+- feat(universal-parser): add auto-detect coroutine to UniversalSourceViewModel (03583e1)
+- feat(universal-parser): add SiteAutoDetector — auto-detects CSS selectors from a pasted URL (ebe9379)
+
+
 ## Alpha 1.609 (Build [#234](https://github.com/Space4414/Tsuki/actions/runs/26272248498))
 
 _2026-05-22 06:30 UTC_
