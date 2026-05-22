@@ -21,13 +21,25 @@ package io.github.landwarderer.futon.customsource.data
    *  2. Follow the first manga card link → MANGA_DETAIL
    *  3. Follow the first chapter link → CHAPTER_READER
    *  4. Feed collected pages to [AiParserGenerator] heuristics
-   *  5. Map the resulting JSON back to individual form fields
+   *  5. Map the resulting JSON back to individual form fields with [Confidence] scores
    */
   class SiteAutoDetector {
 
       /**
+       * How confident the heuristic is about a detected selector.
+       *
+       *  HIGH   — matched a specific class/ID selector (contains "." or "#") or came
+       *           from a targeted known-CMS pattern; very likely correct.
+       *  MEDIUM — matched a generic tag-only selector (e.g. "img", "a", "h1") via a
+       *           fallback rule; probably works but should be reviewed.
+       *  LOW    — field could not be detected; the user must fill it in manually.
+       */
+      enum class Confidence { HIGH, MEDIUM, LOW }
+
+      /**
        * All fields that can be auto-populated in [UniversalSourceActivity].
        * Empty strings mean "could not detect" — the user fills them in manually.
+       * [fieldConfidence] maps field keys (matching property names) to [Confidence].
        */
       data class DetectedFields(
           val siteName: String = "",
@@ -40,6 +52,8 @@ package io.github.landwarderer.futon.customsource.data
           val description: String = "",
           val chapterSelector: String = "",
           val pageImageSelector: String = "",
+          /** Key = property name, value = confidence level for that field. */
+          val fieldConfidence: Map<String, Confidence> = emptyMap(),
       )
 
       suspend fun detect(baseUrl: String): DetectedFields = withContext(Dispatchers.IO) {
@@ -78,7 +92,7 @@ package io.github.landwarderer.futon.customsource.data
           val generator = AiParserGenerator()
           val json = generator.generate(session, null)
 
-          // ── Step 5: Map JSON → DetectedFields ────────────────────────────────
+          // ── Step 5: Map JSON → DetectedFields with confidence ─────────────────
           mapJsonToFields(json, domain)
       }
 
@@ -107,7 +121,6 @@ package io.github.landwarderer.futon.customsource.data
           doc: org.jsoup.nodes.Document,
           baseUrl: String,
       ): String? {
-          // Try common manga card selectors first
           val cardSelectors = listOf(
               ".manga-card a[href]", ".book-item a[href]", ".manga-item a[href]",
               ".c-image-hover a[href]", ".post-title a[href]", "article.manga a[href]",
@@ -118,7 +131,6 @@ package io.github.landwarderer.futon.customsource.data
                   ?.takeIf { it.startsWith("http") } ?: continue
               if (looksLikeDetailUrl(href)) return href
           }
-          // Fallback: any same-origin link with depth ≥ 2 path segments
           return doc.select("a[href]").firstNotNullOfOrNull { el ->
               val href = el.absUrl("href").takeIf { it.startsWith(baseUrl) } ?: return@firstNotNullOfOrNull null
               if (looksLikeDetailUrl(href)) href else null
@@ -159,7 +171,6 @@ package io.github.landwarderer.futon.customsource.data
 
           val listPath = mangaList?.optString("endpoint", "") ?: ""
 
-          // Reconstruct search path from searchEndpoint + searchParam
           val searchEndpoint = mangaList?.optString("searchEndpoint", "") ?: ""
           val searchParam    = mangaList?.optString("searchParam", "s") ?: "s"
           val searchPath = if (searchEndpoint.isNotEmpty()) "$searchEndpoint?$searchParam=" else ""
@@ -170,17 +181,51 @@ package io.github.landwarderer.futon.customsource.data
                   .replaceFirstChar { it.uppercaseChar() }
           }
 
+          val cardSelector     = mangaList?.optString("itemSelector", "") ?: ""
+          val titleSelector    = mangaList?.optString("titleSelector", "") ?: ""
+          val coverSelector    = mangaList?.optString("coverSelector", "") ?: ""
+          val detailTitle      = mangaDetail?.optString("titleSelector", "") ?: ""
+          val description      = mangaDetail?.optString("descriptionSelector", "") ?: ""
+          val chapterSelector  = chapterList?.optString("selector", "") ?: ""
+          val pageImageSelector = pageList?.optString("imageSelector", "") ?: ""
+
+          // ── Confidence scoring ────────────────────────────────────────────────
+          // HIGH  → selector contains a class or ID (specific signal)
+          // MEDIUM → non-empty but only a bare tag (generic fallback)
+          // LOW   → empty (not detected)
+          fun score(selector: String): Confidence = when {
+              selector.isEmpty()                   -> Confidence.LOW
+              selector.contains('.') ||
+              selector.contains('#') ||
+              selector.contains('[')               -> Confidence.HIGH
+              else                                 -> Confidence.MEDIUM
+          }
+
+          val confidence = mapOf(
+              "cardSelector"      to score(cardSelector),
+              "titleSelector"     to score(titleSelector),
+              "coverSelector"     to score(coverSelector),
+              "detailTitle"       to score(detailTitle),
+              "description"       to score(description),
+              "chapterSelector"   to score(chapterSelector),
+              "pageImageSelector" to score(pageImageSelector),
+              // Paths are always at least MEDIUM if non-empty (we derive them from URL structure)
+              "listPath"          to if (listPath.isNotEmpty()) Confidence.MEDIUM else Confidence.LOW,
+              "searchPath"        to if (searchPath.isNotEmpty()) Confidence.MEDIUM else Confidence.LOW,
+          )
+
           return DetectedFields(
-              siteName         = siteName,
-              listPath         = listPath.ifEmpty { "/" },
-              searchPath       = searchPath,
-              cardSelector     = mangaList?.optString("itemSelector", "") ?: "",
-              titleSelector    = mangaList?.optString("titleSelector", "") ?: "",
-              coverSelector    = mangaList?.optString("coverSelector", "") ?: "",
-              detailTitle      = mangaDetail?.optString("titleSelector", "") ?: "",
-              description      = mangaDetail?.optString("descriptionSelector", "") ?: "",
-              chapterSelector  = chapterList?.optString("selector", "") ?: "",
-              pageImageSelector = pageList?.optString("imageSelector", "") ?: "",
+              siteName          = siteName,
+              listPath          = listPath.ifEmpty { "/" },
+              searchPath        = searchPath,
+              cardSelector      = cardSelector,
+              titleSelector     = titleSelector,
+              coverSelector     = coverSelector,
+              detailTitle       = detailTitle,
+              description       = description,
+              chapterSelector   = chapterSelector,
+              pageImageSelector = pageImageSelector,
+              fieldConfidence   = confidence,
           )
       }
 
