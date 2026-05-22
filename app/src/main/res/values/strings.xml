@@ -1374,8 +1374,6 @@
       <string name="universal_source_auto_detecting">Analyzing website\u2026</string>
       <string name="universal_source_auto_detect_done">\u2713 Selectors detected — review fields below, then tap Create.</string>
       <string name="universal_source_create_btn">Create Source</string>
-      <string name="section_chapter_reader">Chapter Reader</string>
-      <string name="section_chapter_reader_subtitle">CSS selector that finds page images inside a chapter.</string>
 
   
       <!-- Auto-detect confidence hints (shown as helper text under each CSS selector field) -->
