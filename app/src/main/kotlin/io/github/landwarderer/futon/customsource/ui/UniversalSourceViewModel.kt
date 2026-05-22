@@ -1,31 +1,38 @@
 package io.github.landwarderer.futon.customsource.ui
 
   import androidx.lifecycle.ViewModel
+  import androidx.lifecycle.viewModelScope
   import dagger.hilt.android.lifecycle.HiltViewModel
   import io.github.landwarderer.futon.customsource.data.CustomSourcesRepository
   import io.github.landwarderer.futon.customsource.data.ParserTemplateRepository
+  import io.github.landwarderer.futon.customsource.data.SiteAutoDetector
   import io.github.landwarderer.futon.customsource.domain.CustomSource
   import io.github.landwarderer.futon.customsource.domain.CustomSourceType
   import io.github.landwarderer.futon.customsource.domain.ParserTemplate
   import kotlinx.coroutines.flow.MutableStateFlow
   import kotlinx.coroutines.flow.StateFlow
   import kotlinx.coroutines.flow.asStateFlow
+  import kotlinx.coroutines.launch
   import org.json.JSONObject
   import javax.inject.Inject
 
   /**
    * ViewModel for [UniversalSourceActivity].
    *
-   * Converts 11 form fields into a valid [ParserTemplate] JSON, saves the
-   * template, then registers a [CustomSource] with type
-   * [CustomSourceType.CUSTOM_TEMPLATE]. The existing [TemplateHtmlParser]
-   * handles all actual scraping — this class only wires the data layer.
+   * Auto-detect: [autoDetect] fetches the target site's HTML via [SiteAutoDetector]
+   * and emits pre-filled form values as [AutoDetectState.Done].
+   *
+   * Create: [create] converts 11 form fields into a [ParserTemplate] JSON, saves
+   * it, and registers a [CustomSource] with type [CustomSourceType.CUSTOM_TEMPLATE].
+   * The existing [TemplateHtmlParser] handles all actual scraping.
    */
   @HiltViewModel
   class UniversalSourceViewModel @Inject constructor(
       private val parserTemplateRepository: ParserTemplateRepository,
       private val customSourcesRepository: CustomSourcesRepository,
   ) : ViewModel() {
+
+      // ── Create result ─────────────────────────────────────────────────────────
 
       sealed interface Result {
           object Idle : Result
@@ -39,6 +46,50 @@ package io.github.landwarderer.futon.customsource.ui
       fun resetResult() {
           _result.value = Result.Idle
       }
+
+      // ── Auto-detect state ─────────────────────────────────────────────────────
+
+      sealed interface AutoDetectState {
+          object Idle : AutoDetectState
+          object Loading : AutoDetectState
+          data class Done(val fields: SiteAutoDetector.DetectedFields) : AutoDetectState
+          data class Error(val message: String) : AutoDetectState
+      }
+
+      private val _autoDetectState = MutableStateFlow<AutoDetectState>(AutoDetectState.Idle)
+      val autoDetectState: StateFlow<AutoDetectState> = _autoDetectState.asStateFlow()
+
+      /**
+       * Fetches [url]'s HTML, runs CSS-selector heuristics, and emits
+       * [AutoDetectState.Done] with pre-filled form values on success.
+       */
+      fun autoDetect(url: String) {
+          val trimUrl = url.trim()
+          if (trimUrl.isEmpty() ||
+              (!trimUrl.startsWith("http://") && !trimUrl.startsWith("https://"))
+          ) {
+              _autoDetectState.value = AutoDetectState.Error(
+                  "Enter the site URL (starting with https://) before auto-detecting."
+              )
+              return
+          }
+          viewModelScope.launch {
+              _autoDetectState.value = AutoDetectState.Loading
+              runCatching { SiteAutoDetector().detect(trimUrl) }
+                  .onSuccess { fields -> _autoDetectState.value = AutoDetectState.Done(fields) }
+                  .onFailure { e ->
+                      _autoDetectState.value = AutoDetectState.Error(
+                          e.message ?: "Detection failed — please fill in selectors manually."
+                      )
+                  }
+          }
+      }
+
+      fun resetAutoDetect() {
+          _autoDetectState.value = AutoDetectState.Idle
+      }
+
+      // ── Create source ─────────────────────────────────────────────────────────
 
       fun create(
           name: String,
