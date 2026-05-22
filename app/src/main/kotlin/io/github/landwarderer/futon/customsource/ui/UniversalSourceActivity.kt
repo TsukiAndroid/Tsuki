@@ -1,19 +1,23 @@
 package io.github.landwarderer.futon.customsource.ui
 
+  import android.content.res.ColorStateList
   import android.os.Bundle
   import android.util.TypedValue
   import android.view.View
   import android.widget.Toast
   import androidx.activity.viewModels
   import androidx.appcompat.app.AppCompatActivity
+  import androidx.core.content.ContextCompat
   import androidx.lifecycle.Lifecycle
   import androidx.lifecycle.lifecycleScope
   import androidx.lifecycle.repeatOnLifecycle
   import com.google.android.material.R as MaterialR
+  import com.google.android.material.textfield.TextInputLayout
   import dagger.hilt.android.AndroidEntryPoint
   import kotlinx.coroutines.launch
   import io.github.landwarderer.futon.R
   import io.github.landwarderer.futon.customsource.data.SiteAutoDetector
+  import io.github.landwarderer.futon.customsource.data.SiteAutoDetector.Confidence
   import io.github.landwarderer.futon.databinding.ActivityUniversalSourceBinding
 
   /**
@@ -21,7 +25,8 @@ package io.github.landwarderer.futon.customsource.ui
    *
    * The user can either:
    *  A) Paste the site URL and tap "Auto-detect selectors" — the app fetches
-   *     the site HTML and pre-fills all CSS-selector fields automatically.
+   *     the site HTML and pre-fills all CSS-selector fields automatically,
+   *     showing a per-field confidence indicator (High / Best guess / Not found).
    *  B) Fill in the fields manually.
    *
    * Tapping Create calls the ViewModel which builds a [ParserTemplate] JSON,
@@ -46,7 +51,6 @@ package io.github.landwarderer.futon.customsource.ui
           binding.btnAutoDetect.setOnClickListener {
               viewModel.autoDetect(binding.editBaseUrl.text?.toString().orEmpty())
           }
-
           binding.btnCreate.setOnClickListener { submitForm() }
 
           lifecycleScope.launch {
@@ -57,10 +61,7 @@ package io.github.landwarderer.futon.customsource.ui
           }
       }
 
-      override fun onSupportNavigateUp(): Boolean {
-          finish()
-          return true
-      }
+      override fun onSupportNavigateUp(): Boolean { finish(); return true }
 
       // ── Observers ─────────────────────────────────────────────────────────────
 
@@ -103,6 +104,7 @@ package io.github.landwarderer.futon.customsource.ui
                       binding.btnAutoDetect.isEnabled = true
                       binding.btnAutoDetect.text = getString(R.string.universal_source_auto_detect_btn)
                       applyDetectedFields(state.fields)
+                      applyConfidenceHints(state.fields)
                       showStatusCard(getString(R.string.universal_source_auto_detect_done), isError = false)
                       viewModel.resetAutoDetect()
                   }
@@ -117,7 +119,7 @@ package io.github.landwarderer.futon.customsource.ui
           }
       }
 
-      // ── Helpers ───────────────────────────────────────────────────────────────
+      // ── Field population ──────────────────────────────────────────────────────
 
       private fun applyDetectedFields(fields: SiteAutoDetector.DetectedFields) {
           if (fields.siteName.isNotEmpty() && binding.editName.text.isNullOrBlank()) {
@@ -134,6 +136,66 @@ package io.github.landwarderer.futon.customsource.ui
           if (fields.pageImageSelector.isNotEmpty()) binding.editPageImage.setText(fields.pageImageSelector)
       }
 
+      // ── Confidence hints ──────────────────────────────────────────────────────
+
+      /**
+       * Applies a coloured helper-text badge under each selector field to show
+       * how reliable the auto-detected value is.
+       *
+       *  ✓ High confidence  → green  (specific class/ID selector found)
+       *  ⚠ Best guess       → amber  (generic tag-only selector; review recommended)
+       *  (blank)             → no badge (field was not detected)
+       */
+      private fun applyConfidenceHints(fields: SiteAutoDetector.DetectedFields) {
+          data class FieldSpec(
+              val layout: TextInputLayout,
+              val key: String,
+              val originalHelper: String,
+          )
+
+          val specs = listOf(
+              FieldSpec(binding.layoutCardSelector,    "cardSelector",      getString(R.string.field_card_selector_helper)),
+              FieldSpec(binding.layoutTitleSelector,   "titleSelector",     getString(R.string.field_title_selector_helper)),
+              FieldSpec(binding.layoutCoverSelector,   "coverSelector",     getString(R.string.field_cover_selector_helper)),
+              FieldSpec(binding.layoutDetailTitle,     "detailTitle",       getString(R.string.field_detail_title_helper)),
+              FieldSpec(binding.layoutDescription,     "description",       getString(R.string.field_description_helper)),
+              FieldSpec(binding.layoutChapterSelector, "chapterSelector",   getString(R.string.field_chapter_selector_helper)),
+              FieldSpec(binding.layoutPageImage,       "pageImageSelector", getString(R.string.field_page_image_helper)),
+              FieldSpec(binding.layoutListPath,        "listPath",          getString(R.string.field_list_path_helper)),
+              FieldSpec(binding.layoutSearchPath,      "searchPath",        getString(R.string.field_search_path_helper)),
+          )
+
+          for (spec in specs) {
+              val confidence = fields.fieldConfidence[spec.key] ?: Confidence.LOW
+              when (confidence) {
+                  Confidence.HIGH -> {
+                      spec.layout.helperText = getString(R.string.confidence_high)
+                      spec.layout.setHelperTextColor(
+                          ColorStateList.valueOf(resolveColor(MaterialR.attr.colorTertiary))
+                      )
+                  }
+                  Confidence.MEDIUM -> {
+                      spec.layout.helperText = getString(R.string.confidence_medium)
+                      spec.layout.setHelperTextColor(
+                          ColorStateList.valueOf(resolveColor(com.google.android.material.R.attr.colorSecondary))
+                      )
+                  }
+                  Confidence.LOW -> {
+                      spec.layout.helperText = spec.originalHelper
+                      spec.layout.setHelperTextColor(null)
+                  }
+              }
+          }
+      }
+
+      private fun resolveColor(attr: Int): Int {
+          val tv = TypedValue()
+          theme.resolveAttribute(attr, tv, true)
+          return tv.data
+      }
+
+      // ── Status card ───────────────────────────────────────────────────────────
+
       private fun showStatusCard(message: String, isError: Boolean) {
           binding.autoDetectStatusText.text = message
           val colorAttr = if (isError) MaterialR.attr.colorErrorContainer
@@ -143,6 +205,8 @@ package io.github.landwarderer.futon.customsource.ui
           binding.autoDetectStatusCard.setCardBackgroundColor(tv.data)
           binding.autoDetectStatusCard.visibility = View.VISIBLE
       }
+
+      // ── Submit ────────────────────────────────────────────────────────────────
 
       private fun submitForm() {
           binding.layoutName.error      = null
