@@ -1377,4 +1377,9 @@
       <string name="section_chapter_reader">Chapter Reader</string>
       <string name="section_chapter_reader_subtitle">CSS selector that finds page images inside a chapter.</string>
 
+  
+      <!-- Auto-detect confidence hints (shown as helper text under each CSS selector field) -->
+      <string name="confidence_high">✓ High confidence</string>
+      <string name="confidence_medium">⚠ Best guess — verify this selector</string>
+
   </resources>
