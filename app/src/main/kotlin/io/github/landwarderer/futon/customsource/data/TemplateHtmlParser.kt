@@ -162,7 +162,7 @@ class TemplateHtmlParser(
     private fun extractDetailTitle(
         doc: Document,
         selector: String,
-        fallback: String,
+        fallback: String?,
         pageUrl: String,
     ): String {
         // Try the configured selector — but validate it looks like a manga title,
@@ -192,14 +192,14 @@ class TemplateHtmlParser(
             if (!t.isNullOrEmpty() && t != sourceName) return t
         }
 
-        return fallback
+        return fallback.orEmpty()
     }
 
     private fun extractDetailCover(
         doc: Document,
         selector: String?,
         pageUrl: String,
-        fallbackUrl: String,
+        fallbackUrl: String?,
     ): String {
         // Configured selector
         if (selector != null) {
@@ -226,7 +226,7 @@ class TemplateHtmlParser(
             ?.trim()?.resolveUrl(pageUrl)
         if (!ogImage.isNullOrEmpty() && ogImage.startsWith("http")) return ogImage
 
-        return fallbackUrl
+        return fallbackUrl.orEmpty()
     }
 
     // ── Private: list fetching ─────────────────────────────────────────────────
