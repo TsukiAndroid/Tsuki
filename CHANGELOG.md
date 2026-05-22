@@ -1,3 +1,13 @@
+## Alpha 1.626 (Build [#248](https://github.com/Space4414/Tsuki/actions/runs/26302628258))
+
+_2026-05-22 17:34 UTC_
+
+- fix(template-parser): fix type mismatch String? vs String in extractDetailTitle/Cover params (520b565)
+- fix(universal-source): include coverSelector in mangaDetail JSON so detail page cover resolves correctly (4868c29)
+- fix(template-parser): resolve relative image URLs, fix title extraction (skip "Read" buttons), og:title/og:image fallbacks, WordPress AJAX chapter fallback, auto-detect genres (539d6bf)
+- feat(universal-parser): complete rewrite of SiteAutoDetector — structural DOM analysis, WordPress archive discovery from nav menu, search form detection, Tailwind-aware semantic selector builder, multi-CMS pattern library (49cedb9)
+
+
 ## Alpha 1.622 (Build [#245](https://github.com/Space4414/Tsuki/actions/runs/26287284566))
 
 _2026-05-22 12:18 UTC_
