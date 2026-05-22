@@ -1,3 +1,15 @@
+## Alpha 1.622 (Build [#245](https://github.com/Space4414/Tsuki/actions/runs/26287284566))
+
+_2026-05-22 12:18 UTC_
+
+- feat(universal-parser): complete rewrite of SiteAutoDetector — structural DOM analysis, WordPress archive discovery from nav menu, search form detection, Tailwind-aware semantic selector builder, multi-CMS pattern library (49cedb9)
+- fix(universal-parser): replace invalid progressBarStyleHorizontal attr with android widget style (05c6a39)
+- fix(universal-parser): remove duplicate section_chapter_reader string causing merge resource failure (9180ffe)
+- feat(universal-parser): add confidence hint string resources (e9366e8)
+- feat(universal-parser): show per-field confidence indicators after auto-detection (be9096d)
+- feat(universal-parser): add Confidence enum and per-field confidence scoring to SiteAutoDetector (fff1fca)
+
+
 ## Alpha 1.620 (Build [#244](https://github.com/Space4414/Tsuki/actions/runs/26273137442))
 
 _2026-05-22 06:53 UTC_
