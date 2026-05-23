@@ -10,6 +10,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import io.github.landwarderer.futon.customsource.domain.CustomSource
 import io.github.landwarderer.futon.customsource.domain.CustomSourceType
+import android.util.Log
 import java.util.concurrent.atomic.AtomicLong
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -99,11 +100,21 @@ class CustomSourcesRepository @Inject constructor(
     // ── Persistence ───────────────────────────────────────────────────────────
 
     private fun loadAll(): List<CustomSource> {
-        val json = prefs.getString(KEY_SOURCES, null) ?: return emptyList()
+        val json = prefs.getString(KEY_SOURCES, null)
+        if (json == null) {
+            Log.d("USB-CSR", "loadAll: no saved sources")
+            return emptyList()
+        }
         return try {
             val array = JSONArray(json)
-            (0 until array.length()).map { i -> array.getJSONObject(i).toCustomSource() }
+            val loaded = (0 until array.length()).map { i -> array.getJSONObject(i).toCustomSource() }
+            Log.d("USB-CSR", "loadAll: restored ${loaded.size} source(s)")
+            loaded.forEach { s ->
+                Log.d("USB-CSR", "  source[${s.id}] name=${s.name} type=${s.type.name} parserSourceName=${s.parserSourceName}")
+            }
+            loaded
         } catch (e: Exception) {
+            Log.e("USB-CSR", "loadAll: JSON parse failed", e)
             emptyList()
         }
     }
@@ -111,6 +122,10 @@ class CustomSourcesRepository @Inject constructor(
     private fun saveAll(sources: List<CustomSource>) {
         val array = JSONArray(sources.map { it.toJson() })
         prefs.edit().putString(KEY_SOURCES, array.toString()).apply()
+        Log.d("USB-CSR", "saveAll: persisted ${sources.size} source(s)")
+        sources.filter { it.type.name == "CUSTOM_TEMPLATE" }.forEach { s ->
+            Log.d("USB-CSR", "  CUSTOM_TEMPLATE[${s.id}] name=${s.name} parserSourceName=${s.parserSourceName}")
+        }
     }
 
     private fun JSONObject.toCustomSource() = CustomSource(

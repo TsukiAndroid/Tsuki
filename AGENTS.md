@@ -514,3 +514,120 @@ Build #251 (`8ca6fd3`) is the last successful build from Session 2 (this session
   5. asurascans.com — MangaThemesia variant (Layer 1)
   6. Unknown site — Layer 2 (Gemini) → Layer 3 (heuristic) → Layer 4 (pre-filled guess)
   
+
+  ---
+
+  ## USB Fix Session — Part 3 (May 2026)
+
+  ### Bug: USB-created sources show "Nothing Found" after app restart
+
+  **Symptom**: CUSTOM_TEMPLATE sources (created by USB for unknown/generic CMS sites)
+  work perfectly on first use within the same app session, but after the app is
+  closed and reopened the source shows "Nothing found" on every manga list load.
+  MADARA / MANGATHEMESIA and other proven-parser types are NOT affected (they
+  never consult ParserTemplateRepository).
+
+  ### Root Cause Analysis
+
+  #### Root Cause 7 — TemplateHtmlParser.template is `by lazy` (PRIMARY BUG)
+
+  File: `TemplateHtmlParser.kt`
+
+  ```kotlin
+  // BROKEN — evaluates exactly once, caches result forever
+  private val template: JSONObject? by lazy {
+      val name = customSource.source.parserSourceName ?: return@lazy null
+      val raw = ParserTemplateRepository.peekByName(name)?.rawJson ?: return@lazy null
+      runCatching { JSONObject(raw) }.getOrNull()
+  }
+  ```
+
+  **Why it fails on restart:**
+  1. App restarts — Hilt begins initialising singletons lazily
+  2. The source list screen loads and calls `getList()` on a CUSTOM_TEMPLATE source
+  3. `getList()` → `mangaListSection` → `template` (lazy evaluated for the first time)
+  4. `ParserTemplateRepository.INSTANCE` is **null** at this moment (Hilt hasn't
+     injected ParserTemplateRepository into anything yet — the USB ViewModel is
+     not on screen)
+  5. `peekByName(name)` returns null → lazy caches `null` → **permanently null**
+  6. Every subsequent call to `getList()`, `getDetails()`, `getPages()` returns
+     empty list silently (via the `runCatching { }.getOrElse { emptyList() }`
+     wrapper in CustomMangaRepository)
+
+  **On first use (same session):** USB opens UniversalSourceViewModel which injects
+  ParserTemplateRepository → INSTANCE is set → by the time getList() is called,
+  peekByName() works → lazy caches the correct JSONObject → source works.
+
+  **Fix:** Change `by lazy` to a plain `get()` property. The lookup is O(n) over
+  a tiny in-memory list with no I/O, so performance is not a concern.
+
+  ```kotlin
+  // FIXED — re-evaluates on every access, finds template once INSTANCE is set
+  private val template: JSONObject?
+      get() {
+          val name = customSource.source.parserSourceName ?: return null
+          val raw  = ParserTemplateRepository.peekByName(name)?.rawJson ?: return null
+          return runCatching { JSONObject(raw) }.getOrNull()
+      }
+  ```
+
+  #### Root Cause 8 — No diagnostic logging (SECONDARY, causes silent failures)
+
+  Without logging it is impossible to tell whether:
+  - The template was correctly written to disk after USB creates a source
+  - The template was correctly loaded from disk on restart
+  - `parserSourceName` round-trips correctly through CustomSourcesRepository JSON
+  - `ParserTemplateRepository.INSTANCE` was set before `peekByName` was called
+
+  **Fix:** Added `android.util.Log` calls at every critical persistence checkpoint:
+  - `ParserTemplateRepository.loadAll()` — logs count + names of loaded templates
+  - `ParserTemplateRepository.saveAll()` — logs count + names, then immediately
+    reads back from SharedPreferences to verify the write landed
+  - `CustomSourcesRepository.loadAll()` — logs every source with its type and
+    `parserSourceName`
+  - `CustomSourcesRepository.saveAll()` — logs all CUSTOM_TEMPLATE sources with
+    their `parserSourceName`
+  - `TemplateHtmlParser.template` getter — logs a W-level warning if peekByName
+    returns null, including INSTANCE state and template count
+
+  Also added `ParserTemplateRepository.instanceIsReady(): Boolean` companion method
+  so the W-level log in TemplateHtmlParser can report whether INSTANCE is set.
+
+  ### Why MADARA/MANGATHEMESIA are unaffected
+
+  Proven parsers (MadaraHtmlParser, MangaThemesiaHtmlParser, etc.) never consult
+  ParserTemplateRepository. They use hardcoded selectors for their CMS family.
+  CustomMangaRepository routes them directly:
+  ```kotlin
+  CustomSourceType.MADARA -> runCatching { madaraParser.getList(...) }.getOrElse { emptyList() }
+  ```
+  No lazy template lookup, no INSTANCE dependency — they work identically on first
+  use and after restart.
+
+  ### Files changed in Part 3
+
+  | File | Change |
+  |------|--------|
+  | TemplateHtmlParser.kt | `by lazy` → `get()` on `template` property (PRIMARY FIX) |
+  | ParserTemplateRepository.kt | Added `instanceIsReady()` + Log in `loadAll`/`saveAll` |
+  | CustomSourcesRepository.kt | Added Log in `loadAll`/`saveAll` for CUSTOM_TEMPLATE sources |
+
+  ### Logcat tags to watch
+
+  | Tag | Purpose |
+  |-----|---------|
+  | `USB-PTR` | ParserTemplateRepository load/save events |
+  | `USB-CSR` | CustomSourcesRepository load/save events |
+  | `USB-Template` | TemplateHtmlParser.template getter warnings |
+
+  ### Test procedure
+
+  1. Create a USB source for a site that resolves to CUSTOM_TEMPLATE (any unknown CMS)
+  2. Open the source — confirm manga list loads  
+  3. Close and reopen the app
+  4. Open the same source — it must load the same manga list (previously: "Nothing found")
+  5. Check Logcat for `USB-PTR`, `USB-CSR`, `USB-Template` tags to confirm:
+     - `saveAll` logged the template after creation
+     - `loadAll` logged it back after restart
+     - `USB-Template` W tag is **never emitted** (means template was found)
+  

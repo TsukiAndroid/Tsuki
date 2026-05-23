@@ -46,11 +46,32 @@ class TemplateHtmlParser(
 
     private val baseUrl get() = customSource.source.cleanBaseUrl
 
-    private val template: JSONObject? by lazy {
-        val name = customSource.source.parserSourceName ?: return@lazy null
-        val raw = ParserTemplateRepository.peekByName(name)?.rawJson ?: return@lazy null
-        runCatching { JSONObject(raw) }.getOrNull()
-    }
+    /**
+     * Resolves the [ParserTemplate] for this source on every access -- intentionally
+     * NOT cached with `by lazy`.
+     *
+     * Rationale: `by lazy` evaluates exactly once. On app restart, Hilt may not have
+     * initialised [ParserTemplateRepository] yet when the source list first calls
+     * [getList]. In that window [ParserTemplateRepository.INSTANCE] is null, so
+     * [peekByName] returns null, and the cached value stays null forever -- every
+     * subsequent call returns empty list even though the template is safely on disk.
+     *
+     * Using a plain getter means we re-query the in-memory list on every call.
+     * The lookup is O(n) over a tiny list and involves no I/O.
+     */
+    private val template: JSONObject?
+        get() {
+            val name = customSource.source.parserSourceName ?: return null
+            val raw  = ParserTemplateRepository.peekByName(name)?.rawJson
+            if (raw == null) {
+                android.util.Log.w(
+                    "USB-Template",
+                    "peekByName('$name') returned null -- INSTANCE=${if (ParserTemplateRepository.instanceIsReady()) \"ready\" else \"NOT SET\"}, templateCount=${ParserTemplateRepository.peekAll().size}",
+                )
+                return null
+            }
+            return runCatching { JSONObject(raw) }.getOrNull()
+        }
 
     private val mangaListSection   get() = template?.optJSONObject("mangaList")
     private val mangaDetailSection get() = template?.optJSONObject("mangaDetail")

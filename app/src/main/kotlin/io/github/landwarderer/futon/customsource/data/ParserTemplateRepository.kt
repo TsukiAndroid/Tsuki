@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import org.json.JSONArray
 import org.json.JSONObject
 import io.github.landwarderer.futon.customsource.domain.ParserTemplate
+import android.util.Log
 import java.util.concurrent.atomic.AtomicLong
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -84,11 +85,18 @@ class ParserTemplateRepository @Inject constructor(
     }
 
     private fun loadAll(): List<ParserTemplate> {
-        val json = prefs.getString(KEY_TEMPLATES, null) ?: return emptyList()
+        val json = prefs.getString(KEY_TEMPLATES, null)
+        if (json == null) {
+            Log.d("USB-PTR", "loadAll: no saved templates (first launch or cleared data)")
+            return emptyList()
+        }
         return try {
             val array = JSONArray(json)
-            (0 until array.length()).map { i -> array.getJSONObject(i).toParserTemplate() }
-        } catch (_: Exception) {
+            val loaded = (0 until array.length()).map { i -> array.getJSONObject(i).toParserTemplate() }
+            Log.d("USB-PTR", "loadAll: restored ${loaded.size} template(s): ${loaded.map { it.name }}")
+            loaded
+        } catch (e: Exception) {
+            Log.e("USB-PTR", "loadAll: JSON parse failed, returning empty", e)
             emptyList()
         }
     }
@@ -96,6 +104,11 @@ class ParserTemplateRepository @Inject constructor(
     private fun saveAll(templates: List<ParserTemplate>) {
         val array = JSONArray(templates.map { it.toJson() })
         prefs.edit().putString(KEY_TEMPLATES, array.toString()).apply()
+        Log.d("USB-PTR", "saveAll: persisted ${templates.size} template(s): ${templates.map { it.name }}")
+        // Verify the write landed
+        val verify = prefs.getString(KEY_TEMPLATES, null)
+        if (verify == null) Log.e("USB-PTR", "saveAll: WRITE FAILED — prefs returned null immediately after apply()")
+        else Log.d("USB-PTR", "saveAll: write verified OK (${verify.length} bytes)")
     }
 
     private fun JSONObject.toParserTemplate() = ParserTemplate(
@@ -139,6 +152,9 @@ class ParserTemplateRepository @Inject constructor(
          */
         fun peekByName(name: String): ParserTemplate? =
             INSTANCE?.getAll()?.find { it.name.equals(name, ignoreCase = true) }
+
+        /** Returns true when [INSTANCE] has been initialised by Hilt. */
+        fun instanceIsReady(): Boolean = INSTANCE != null
 
         fun peekAll(): List<ParserTemplate> = INSTANCE?.getAll().orEmpty()
 
