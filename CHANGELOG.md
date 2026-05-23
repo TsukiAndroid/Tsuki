@@ -1,3 +1,13 @@
+## Alpha 1.643 (Build [#258](https://github.com/Space4414/Tsuki/actions/runs/26327917831))
+
+_2026-05-23 08:18 UTC_
+
+- feat(usb): Part 2 — Gemini prompt, real-time progress, 4-layer fallback (a4ba7bf)
+- fix(usb): correct JsRenderFetcher + SmartPageFetcher string literals (1159e6f)
+- fix(usb): fix JsRenderFetcher + SmartPageFetcher compile errors (29e80e2)
+- feat(usb): HtmlCleaner + SmartPageFetcher + JsRenderFetcher (0d76071)
+
+
 ## Alpha 1.638 (Build [#254](https://github.com/Space4414/Tsuki/actions/runs/26325347666))
 
 _2026-05-23 06:06 UTC_
