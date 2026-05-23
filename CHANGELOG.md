@@ -1,3 +1,11 @@
+## Alpha 1.638 (Build [#254](https://github.com/Space4414/Tsuki/actions/runs/26325347666))
+
+_2026-05-23 06:06 UTC_
+
+- docs: update AGENTS.md with Session 3 — proven-parser routing (2b6cbd7)
+- feat(universal-source): route to proven CMS parser instead of generic template (9eb9006)
+
+
 ## Alpha 1.636 (Build [#253](https://github.com/Space4414/Tsuki/actions/runs/26325139741))
 
 _2026-05-23 05:55 UTC_
