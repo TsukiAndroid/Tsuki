@@ -43,6 +43,12 @@ class SiteAutoDetector {
         val pageImageSelector: String = "",
         val paginationType: String = "page",   // "path" (WordPress /page/N/) or "page" (?page=N)
         val fieldConfidence: Map<String, Confidence> = emptyMap(),
+        /**
+         * The CMS theme fingerprinted from the site's HTML.
+         * The ViewModel maps this to the appropriate [CustomSourceType] so that the
+         * proven, battle-tested theme parser is used instead of the generic template parser.
+         */
+        val cmsType: CmsType = CmsType.UNKNOWN,
     )
 
     private data class CardResult(
@@ -59,7 +65,8 @@ class SiteAutoDetector {
         val chapterSelector: String,
     )
 
-    private enum class CmsType {
+    /** CMS theme detected from the site's HTML fingerprint. Exposed in [DetectedFields]. */
+    enum class CmsType {
         MADARA, MANGA_THEMESIA, MANGA_STREAM, KEYOAPP, MAD_THEME, MMRCMS,
         WORDPRESS_GENERIC, UNKNOWN
     }
@@ -158,6 +165,7 @@ class SiteAutoDetector {
             chapterSelector   = chapSel,
             pageImageSelector = pageImageSel,
             paginationType    = paginationType,
+            cmsType           = cmsType,
             fieldConfidence   = mapOf(
                 "cardSelector"      to score(cardSel),
                 "titleSelector"     to score(titleSel),

@@ -25,13 +25,15 @@ package io.github.landwarderer.futon.customsource.ui
    *
    * The user can either:
    *  A) Paste the site URL and tap "Auto-detect selectors" — the app fetches
-   *     the site HTML and pre-fills all CSS-selector fields automatically,
-   *     showing a per-field confidence indicator (High / Best guess / Not found).
+   *     the site HTML, fingerprints the CMS theme (Madara, MangaThemesia,
+   *     MangaStream, Keyoapp, MadTheme, Mmrcms, …), and routes to the
+   *     battle-tested dedicated parser for that theme. Pre-fills all CSS-selector
+   *     fields with a per-field confidence indicator for review.
    *  B) Fill in the fields manually.
    *
-   * Tapping Create calls the ViewModel which builds a [ParserTemplate] JSON,
-   * saves it, and registers a [CustomSource]. The existing [TemplateHtmlParser]
-   * then handles all scraping automatically.
+   * Tapping Create saves the source. If a known CMS is detected, the proven
+   * theme parser is used directly (no template JSON needed). For unknown sites
+   * the improved [TemplateHtmlParser] is used as a capable fallback.
    */
   @AndroidEntryPoint
   class UniversalSourceActivity : AppCompatActivity() {
@@ -76,8 +78,8 @@ package io.github.landwarderer.futon.customsource.ui
                   is UniversalSourceViewModel.Result.Success -> {
                       Toast.makeText(
                           this@UniversalSourceActivity,
-                          getString(R.string.universal_source_created, result.name),
-                          Toast.LENGTH_SHORT,
+                          "\"${result.name}\" added · ${result.parserLabel}",
+                          Toast.LENGTH_LONG,
                       ).show()
                       finish()
                   }
@@ -105,7 +107,13 @@ package io.github.landwarderer.futon.customsource.ui
                       binding.btnAutoDetect.text = getString(R.string.universal_source_auto_detect_btn)
                       applyDetectedFields(state.fields)
                       applyConfidenceHints(state.fields)
-                      showStatusCard(getString(R.string.universal_source_auto_detect_done), isError = false)
+                      val cmsName = cmsDisplayName(state.fields.cmsType)
+                      val statusMsg = if (cmsName != null) {
+                          "\u2713 $cmsName theme detected \u2014 proven parser selected. Tap Create."
+                      } else {
+                          getString(R.string.universal_source_auto_detect_done)
+                      }
+                      showStatusCard(statusMsg, isError = false)
                       viewModel.resetAutoDetect()
                   }
                   is UniversalSourceViewModel.AutoDetectState.Error -> {
@@ -204,6 +212,24 @@ package io.github.landwarderer.futon.customsource.ui
           theme.resolveAttribute(colorAttr, tv, true)
           binding.autoDetectStatusCard.setCardBackgroundColor(tv.data)
           binding.autoDetectStatusCard.visibility = View.VISIBLE
+      }
+
+      // ── CMS display name (for status card feedback) ───────────────────────────
+
+      /**
+       * Returns a short human-readable name for the detected CMS theme so the
+       * auto-detect status card can tell the user which proven parser was selected.
+       * Returns null for unknown/generic sites (status card shows the generic message).
+       */
+      private fun cmsDisplayName(cmsType: SiteAutoDetector.CmsType): String? = when (cmsType) {
+          SiteAutoDetector.CmsType.MADARA          -> "WordPress Madara"
+          SiteAutoDetector.CmsType.MANGA_THEMESIA  -> "MangaThemesia"
+          SiteAutoDetector.CmsType.MANGA_STREAM    -> "MangaStream"
+          SiteAutoDetector.CmsType.KEYOAPP         -> "Keyoapp"
+          SiteAutoDetector.CmsType.MAD_THEME       -> "Madtheme"
+          SiteAutoDetector.CmsType.MMRCMS          -> "MMRCMS"
+          SiteAutoDetector.CmsType.WORDPRESS_GENERIC,
+          SiteAutoDetector.CmsType.UNKNOWN         -> null
       }
 
       // ── Submit ────────────────────────────────────────────────────────────────
