@@ -67,6 +67,36 @@ whose listing page uses WordPress path-based pagination (`/manhwa/page/2/` etc.)
 | `app/src/main/kotlin/.../customsource/ui/UniversalSourceViewModel.kt` | Stores `lastDetectedPaginationType` from auto-detect result. `buildJson()` takes `paginationType` param and writes `"pagination"` key to template JSON. Heuristic fallback: any slug-only listPath without `?` gets `"path"` pagination. |
 | `app/src/main/kotlin/.../extensions/ui/CreateExtensionViewModel.kt` | Added `detectMadaraListingPath(html)` to scan HTML for archive slug. `identifyCms()` passes detected path to `maDaraTemplate()`. `maDaraTemplate()` rewritten with 3-strategy `getMangaList()`, correct path pagination, and improved `getMangaDetails()` / `getChapterPages()`. |
 
+### Follow-up fix (same session) — Kotlin string interpolation
+
+The first push caused a Kotlin compilation error:
+
+```
+CreateExtensionViewModel.kt:219:72 Syntax error: Expecting an expression.
+```
+
+**Root cause:** The JavaScript template string embedded inside a Kotlin triple-quoted
+string contained `'\\$&'` (standard JS regex replacement).  In Kotlin, `$` inside a
+string literal starts interpolation, and `$&` is not a valid identifier, causing a parse
+error.
+
+**Fix:** Replaced the one-liner `BASE_URL.replace(/…/g, '\\$&')` with two simpler
+replacements that escape only `.` and `/` — the only characters in a URL that are
+meaningful in regex — thereby avoiding any `$` character in the Kotlin source:
+
+```javascript
+var escapedBase = BASE_URL.replace(/\./g, '\\.').replace(/\//g, '\\/');
+var linkRe = new RegExp('<a[^>]+href="(' + escapedBase + '/[^/"#?]+/)"[^>]*>', 'gi');
+```
+
+**Lesson for future agents:** Any `$` character inside a JavaScript template string
+that lives inside a Kotlin `"""…"""` block must either be absent or escaped as
+`${'$'}`. Prefer removing the `$` from JS logic entirely when possible.
+
+CI re-run: **success** (commit `3c65420`).
+
+---
+
 ### What still exists (no action needed)
 
 - `app/src/main/assets/extensions/manhwaread.js` — separate bundled JS extension
