@@ -132,20 +132,76 @@ class TemplateHtmlParser(
     }
 
     fun getPages(chapter: MangaChapter): List<MangaPage> {
-        val section = pageListSection ?: return emptyList()
-        val imgSel = section.optString("imageSelector").ifEmpty { "img" }
+        val section = pageListSection
+        val configuredSel = section?.optString("imageSelector")?.ifEmpty { null }
         val doc = runCatching { fetchDocument(chapter.url) }.getOrElse { return emptyList() }
-        return doc.select(imgSel).mapIndexedNotNull { idx, img ->
-            // Resolve ALL relative URL forms against the chapter page URL
-            val url = img.imageUrl(chapter.url)
-            if (url.isBlank() || !url.startsWith("http")) null
-            else MangaPage(
-                id      = chapter.id * 1000L + idx,
-                url     = url,
-                preview = null,
-                source  = customSource,
-            )
+
+        fun Element.toMangaPage(idx: Int): MangaPage? {
+            val url = imageUrl(chapter.url)
+            return if (url.isBlank() || !url.startsWith("http") || url.isLogoUrl()) null
+            else MangaPage(id = chapter.id * 1000L + idx, url = url, preview = null, source = customSource)
         }
+
+        // 1. Configured selector (when explicitly set and not the bare "img" fallback)
+        if (configuredSel != null && configuredSel != "img") {
+            val pages = doc.select(configuredSel).mapIndexedNotNull { i, el -> el.toMangaPage(i) }
+            if (pages.isNotEmpty()) return pages
+        }
+
+        // 2. Madara / WordPress-specific reader selectors — these never match header/nav logos
+        val madaraSel = "div.page-break img, div.reading-content img, " +
+            ".wp-manga-chapter-img img, #reader img, " +
+            "[class*=reader-area] img, [class*=chapter-image] img, " +
+            ".chapter-images img, .chapter-content img"
+        val madaraPages = doc.select(madaraSel).mapIndexedNotNull { i, el -> el.toMangaPage(i) }
+        if (madaraPages.isNotEmpty()) return madaraPages
+
+        // 3. Mangomic-core / manhwaread.com: page images live in a base64 JS variable,
+        //    not in the DOM at all — parse the <script> block instead.
+        val scriptPages = parseChapterDataScript(doc, chapter)
+        if (scriptPages.isNotEmpty()) return scriptPages
+
+        // 4. Last resort: generic "img", filtering logo-looking images
+        return doc.select(configuredSel ?: "img")
+            .mapIndexedNotNull { i, el -> el.toMangaPage(i) }
+    }
+
+    /**
+     * Mangomic-core reader used by manhwaread.com and related forks.
+     * Chapter images are NOT in the DOM; they're encoded as base64 JSON inside
+     * a <script> block: `var chapterData = {"data":"<b64>","base":"https://cdn/postId"}`.
+     * Each decoded entry is `{"src":"chapterId\/mr_001.jpg","w":800,"h":5000}`.
+     * Full URL = base + "/" + src (backslash-escaped slashes unescaped).
+     */
+    private fun parseChapterDataScript(doc: Document, chapter: MangaChapter): List<MangaPage> {
+        val script = doc.select("script:not([src])").asSequence()
+            .map { it.data() }
+            .firstOrNull { it.contains("chapterData") } ?: return emptyList()
+        return runCatching {
+            val baseRe = Regex(""""base"\s*:\s*"([^"]+)"""")
+            val dataRe = Regex(""""data"\s*:\s*"([^"]+)"""")
+            val srcRe  = Regex(""""src"\s*:\s*"([^"]+)"""")
+            val base = baseRe.find(script)?.groupValues?.getOrNull(1)?.trimEnd('/') ?: ""
+            val data = dataRe.find(script)?.groupValues?.getOrNull(1)
+                ?: return@runCatching emptyList()
+            val decoded = String(java.util.Base64.getDecoder().decode(data))
+            srcRe.findAll(decoded).mapIndexed { i, mr ->
+                val rawSrc = mr.groupValues[1].replace("\\/", "/")
+                val url = if (base.isNotEmpty()) "$base/$rawSrc" else rawSrc
+                MangaPage(id = chapter.id * 1000L + i, url = url, preview = null, source = customSource)
+            }.toList()
+        }.getOrElse { emptyList() }
+    }
+
+    /**
+     * Returns true when the URL path suggests this is a site logo, icon, or favicon
+     * rather than a manga cover or chapter-page image.
+     * Used to skip hotlink-protection fallback images that CDNs serve instead of real content.
+     */
+    private fun String.isLogoUrl(): Boolean {
+        val lower = lowercase()
+        return "/logo" in lower || "favicon" in lower || "site-icon" in lower ||
+               "/brand" in lower || "header-logo" in lower
     }
 
     /**
@@ -234,10 +290,10 @@ class TemplateHtmlParser(
             val url = doc.selectFirst(sel)?.imageUrl(pageUrl)
             if (!url.isNullOrEmpty() && url.startsWith("http")) return url
         }
-        // og:image as final cover fallback
+        // og:image as final cover fallback — skip if it looks like a site logo/icon
         val ogImage = doc.selectFirst("meta[property=og:image]")?.attr("content")
             ?.trim()?.resolveUrl(pageUrl)
-        if (!ogImage.isNullOrEmpty() && ogImage.startsWith("http")) return ogImage
+        if (!ogImage.isNullOrEmpty() && ogImage.startsWith("http") && !ogImage.isLogoUrl()) return ogImage
 
         return fallbackUrl.orEmpty()
     }
@@ -659,7 +715,11 @@ class TemplateHtmlParser(
 
     companion object {
         private const val PAGE_SIZE   = 16
-        private const val USER_AGENT  = "Tsuki/1.0 (Android)"
+        // Full browser UA — bot-like strings cause many WordPress CDNs to block
+        // the request or return a placeholder image instead of the real content.
+        private const val USER_AGENT  =
+            "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 " +
+            "(KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36"
         private val CHAPTER_NUM_RE    = Regex("""[Cc]hapter[s]?\s*([\d.]+)""")
 
         /**
