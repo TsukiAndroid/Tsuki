@@ -59,6 +59,7 @@ package io.github.landwarderer.futon.customsource.ui
               repeatOnLifecycle(Lifecycle.State.STARTED) {
                   launch { observeCreateResult() }
                   launch { observeAutoDetect() }
+                  launch { observeProgressStep() }
               }
           }
       }
@@ -87,6 +88,15 @@ package io.github.landwarderer.futon.customsource.ui
           }
       }
 
+      private suspend fun observeProgressStep() {
+          viewModel.progressStep.collect { step ->
+              if (step.isNotBlank()) {
+                  // Keep the progress bar visible and update the status text live
+                  showStatusCard(step, isError = false)
+              }
+          }
+      }
+
       private suspend fun observeAutoDetect() {
           viewModel.autoDetectState.collect { state ->
               when (state) {
@@ -97,9 +107,14 @@ package io.github.landwarderer.futon.customsource.ui
                   }
                   is UniversalSourceViewModel.AutoDetectState.Loading -> {
                       binding.autoDetectProgress.visibility = View.VISIBLE
-                      binding.autoDetectStatusCard.visibility = View.GONE
                       binding.btnAutoDetect.isEnabled = false
                       binding.btnAutoDetect.text = getString(R.string.universal_source_auto_detecting)
+                      // Show status card with current step — never show a frozen blank screen
+                      showStatusCard(
+                          binding.autoDetectStatusText.text?.toString()?.takeIf { it.isNotBlank() }
+                              ?: "\uD83CDF19 Starting analysis...",
+                          isError = false,
+                      )
                   }
                   is UniversalSourceViewModel.AutoDetectState.Done -> {
                       binding.autoDetectProgress.visibility = View.GONE

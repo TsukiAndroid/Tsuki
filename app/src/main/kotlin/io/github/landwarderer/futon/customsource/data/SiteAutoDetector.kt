@@ -6,6 +6,7 @@ import io.github.landwarderer.futon.browser.learning.PageType
 import io.github.landwarderer.futon.customsource.data.HtmlCleaner
 import io.github.landwarderer.futon.customsource.data.JsRenderFetcher
 import io.github.landwarderer.futon.customsource.data.SmartPageFetcher
+import io.github.landwarderer.futon.customsource.data.GeminiSelectorAnalyzer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jsoup.Jsoup
@@ -29,7 +30,11 @@ import java.util.zip.GZIPInputStream
  * Works with Tailwind CSS sites, WordPress themes, and traditional CMS manga themes
  * (Madara, MangaThemesia, MadTheme, etc.).
  */
-class SiteAutoDetector(private val context: android.content.Context? = null) {
+class SiteAutoDetector(
+    private val context: android.content.Context? = null,
+    private val geminiApiKey: String? = null,
+    private val onProgress: ((String) -> Unit)? = null,
+) {
 
     enum class Confidence { HIGH, MEDIUM, LOW }
 
@@ -80,6 +85,7 @@ class SiteAutoDetector(private val context: android.content.Context? = null) {
         val normalUrl = normalizeUrl(baseUrl)
         val domain = extractDomain(normalUrl)
 
+        onProgress?.invoke("\uD83CDF19 Fetching manga list page...")
         // Step 1: Fetch homepage (upgrade to WebView render when JS-only content detected)
           val rawHomeHtml = fetchHtml(normalUrl)
               ?: return@withContext DetectedFields(
@@ -97,12 +103,24 @@ class SiteAutoDetector(private val context: android.content.Context? = null) {
           val siteName = extractSiteName(homeDoc, domain)
           val isWP = homeHtml.contains("wp-content") || homeHtml.contains("/wp-json/")
           val cmsType = detectCmsType(homeHtml)
+          val cmsProgressMsg = when (cmsType) {
+              CmsType.MADARA           -> "\uD83CDF19 Detected: WordPress Madara \u2014 routing to proven parser"
+              CmsType.MANGA_THEMESIA   -> "\uD83CDF19 Detected: MangaThemesia \u2014 routing to proven parser"
+              CmsType.MANGA_STREAM     -> "\uD83CDF19 Detected: MangaStream \u2014 routing to proven parser"
+              CmsType.KEYOAPP         -> "\uD83CDF19 Detected: Keyoapp \u2014 routing to proven parser"
+              CmsType.MAD_THEME       -> "\uD83CDF19 Detected: MadTheme \u2014 routing to proven parser"
+              CmsType.MMRCMS          -> "\uD83CDF19 Detected: MMRCMS \u2014 routing to proven parser"
+              CmsType.WORDPRESS_GENERIC -> "\uD83CDF19 Unknown WordPress site \u2014 analyzing with AI..."
+              CmsType.UNKNOWN         -> "\uD83CDF19 Unknown site \u2014 analyzing with AI..."
+          }
+          onProgress?.invoke(cmsProgressMsg)
           val searchPath = detectSearchPath(homeDoc)
 
           // Steps 3-7: SmartPageFetcher discovers the correct manga-list page via HEAD-probed
           // common paths and nav-link scanning, then fetches a sample detail page and chapter page.
           // Every individual fetch is transparently upgraded to WebView rendering when
           // JS-only content is detected -- so comix.to-style sites work out of the box.
+          onProgress?.invoke("\uD83CDF19 Looking for manga detail page...")
           val fetched  = SmartPageFetcher(context).fetch(normalUrl, homeHtml)
           val listHtml = fetched.listHtml
           val listUrl  = fetched.listUrl
@@ -127,6 +145,7 @@ class SiteAutoDetector(private val context: android.content.Context? = null) {
           // Step 7: Chapter page -- prefer SmartPageFetcher result, fall back to detail doc scan
           val chapterUrl  = fetched.chapterUrl
               ?: detailDoc?.let { findChapterUrl(it, normalUrl) }
+          onProgress?.invoke("\uD83CDF19 Looking for chapter page...")
           val chapterHtml = fetched.chapterHtml
               ?: if (chapterUrl != null) fetchHtml(chapterUrl) else null
           val chapterDoc  = if (chapterHtml != null && chapterUrl != null)
@@ -149,6 +168,54 @@ class SiteAutoDetector(private val context: android.content.Context? = null) {
           }
 
 
+
+        // Layer 2: Gemini AI analysis for unknown/generic CMS sites
+        // Only invoked when CSS-only analysis would give low confidence.
+        val geminiResult: GeminiSelectorAnalyzer.AnalysisResult? = if (
+            (cmsType == CmsType.UNKNOWN || cmsType == CmsType.WORDPRESS_GENERIC) &&
+            !geminiApiKey.isNullOrBlank()
+        ) {
+            runCatching {
+                GeminiSelectorAnalyzer().analyze(
+                    listHtml    = listHtml,
+                    detailHtml  = detailHtml,
+                    chapterHtml = chapterHtml,
+                    listUrl     = listUrl,
+                    domain      = domain,
+                    apiKey      = geminiApiKey,
+                    onProgress  = onProgress,
+                )
+            }.onFailure { Log.w(TAG, "Gemini layer failed, using CSS fallback", it) }.getOrNull()
+        } else null
+
+        // If Gemini succeeded and produced selectors, use its result directly.
+        // Otherwise fall through to the CSS-based assembly below (Layer 3).
+        if (geminiResult != null) {
+            val conf = geminiResult.confidence
+            val doneMsg = if (conf == "low") {
+                val n = geminiResult.fields.run {
+                    listOf(cardSelector, titleSelector, coverSelector, detailTitle,
+                           description, chapterSelector, pageImageSelector)
+                        .count { it.isNotEmpty() }
+                }
+                "\u26A0\uFE0F Done with low confidence. Please review $n fields."
+            } else {
+                val n = geminiResult.fields.run {
+                    listOf(cardSelector, titleSelector, coverSelector, detailTitle,
+                           description, chapterSelector, pageImageSelector)
+                        .count { it.isNotEmpty() }
+                }
+                "\u2713 Done! $n fields detected. Parser ready."
+            }
+            onProgress?.invoke(doneMsg)
+            return@withContext geminiResult.fields.copy(
+                siteName = siteName.ifEmpty { geminiResult.fields.siteName },
+                listPath = geminiResult.fields.listPath.ifEmpty { listPath },
+                searchPath = geminiResult.fields.searchPath.ifEmpty { searchPath },
+                paginationType = if (isWP) "path" else "page",
+                cmsType = cmsType,
+            )
+        }
         // Step 10: Assemble result
         // Build multi-selector fallback strings — combine all patterns that match the listing
         // page, so the parser has fallbacks when the primary selector is too specific.
@@ -198,6 +265,15 @@ class SiteAutoDetector(private val context: android.content.Context? = null) {
                 "searchPath" to if (searchPath.isNotEmpty()) Confidence.HIGH else Confidence.LOW,
             ),
         )
+        .also { f ->
+            val n = listOf(f.cardSelector, f.titleSelector, f.coverSelector, f.detailTitle, f.description, f.chapterSelector, f.pageImageSelector).count { it.isNotEmpty() }
+            val msg = if (f.fieldConfidence.values.count { it == Confidence.LOW } > 4) {
+                "\u26A0\uFE0F Done with low confidence. Please review fields."
+            } else {
+                "\u2713 Done! $n fields detected. Parser ready."
+            }
+            onProgress?.invoke(msg)
+        }
     }
 
     /**

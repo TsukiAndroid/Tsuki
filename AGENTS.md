@@ -451,3 +451,66 @@ Build #251 (`8ca6fd3`) is the last successful build from Session 2 (this session
   - CI build: pending (see GitHub Actions).
 
   
+
+  ---
+
+  ## USB Fix Session — Part 2 (May 2026)
+
+  ### Root Cause 4 — Gemini prompt not specific enough
+  **New file: GeminiSelectorAnalyzer.kt** (`customsource.data` package)
+  - Uses the exact USB-specific JSON schema (mangaList, mangaDetail, chapterList, pageList, genres, confidence, notes)
+  - System instruction emphasises: only standard CSS selectors, comma-separated fallback selectors, never guess
+  - Validates every returned selector via `Jsoup.parse(html).select(selector).isNotEmpty()`
+  - Decodes Gemini response safely (strips markdown fences); never crashes on malformed JSON
+  - Returns `null` on any Gemini failure so callers can fall through to the next layer
+
+  ### Root Cause 5 — No user feedback during process
+  **Modified: SiteAutoDetector.kt**
+  - Added `onProgress: ((String) -> Unit)?` constructor parameter
+  - Emits 7 real-time step messages matching the USB spec exactly:
+    1. "🌙 Fetching manga list page..."
+    2. "🌙 Looking for manga detail page..."
+    3. "🌙 Looking for chapter page..."
+    4. "🌙 Detected: [CMS name] — routing to proven parser" OR "🌙 Unknown site — analyzing with AI..."
+    5. "🧠 Sending to Gemini AI for analysis..." (emitted inside GeminiSelectorAnalyzer)
+    6. "✅ Verifying selectors against live HTML..." (emitted inside GeminiSelectorAnalyzer)
+    7. "✓ Done! [N] fields detected. Parser ready." OR "⚠️ Done with low confidence. Please review fields."
+
+  **Modified: UniversalSourceViewModel.kt**
+  - Added `progressStep: StateFlow<String>` exposed to the Activity
+  - Wires the `onProgress` callback from SiteAutoDetector to emit into `_progressStep`
+  - Added `getGeminiApiKey()` helper reading from `futon_prefs` SharedPreferences (`gemini_api_key` key)
+
+  **Modified: UniversalSourceActivity.kt**
+  - Added `observeProgressStep()` coroutine that updates the status card text with each emitted step
+  - Status card is now VISIBLE during Loading state (never blank/frozen screen)
+  - Progress text updates live as each step completes
+
+  ### Root Cause 6 — No fallback when Gemini fails
+  **Modified: SiteAutoDetector.kt** — multi-layer fallback added to `detect()`:
+  - Layer 1: Known CMS routing (already existed — Madara, MangaThemesia, MangaStream, Keyoapp, MadTheme, MMRCMS)
+  - Layer 2: GeminiSelectorAnalyzer — for unknown CMS sites when Gemini API key is present
+    - If Gemini succeeds, its result is returned directly (with siteName/listPath merged from CSS analysis)
+    - If Gemini fails, falls through to Layer 3
+  - Layer 3: Existing structural DOM analysis (buildMultiSelector + detectMangaCardsStructural)
+  - Layer 4: Always returns DetectedFields — never empty form, always pre-fills best available guess
+
+  ### Files changed in this session (Part 1 + Part 2)
+  | File | Change |
+  |------|--------|
+  | HtmlCleaner.kt | NEW — strips scripts/styles/SVG/comments, caps at 15K chars for Gemini |
+  | SmartPageFetcher.kt | NEW — HEAD-probes common paths, scans nav links, JS-render upgrade |
+  | JsRenderFetcher.kt | NEW — hidden WebView renderer with 2s settle delay |
+  | GeminiSelectorAnalyzer.kt | NEW — USB-specific Gemini prompt + selector validation |
+  | SiteAutoDetector.kt | MOD — progress callbacks, Gemini layer, always pre-fills |
+  | UniversalSourceViewModel.kt | MOD — progressStep StateFlow, geminiApiKey helper |
+  | UniversalSourceActivity.kt | MOD — live progress display, no blank screen |
+
+  ### Test sites
+  1. manhwaread.com — regression (should still work via CSS detection)
+  2. comix.to — JS-rendered → JsRenderFetcher → Gemini analysis
+  3. mangadex.org — MANGADEX_COMPATIBLE detection
+  4. toonily.com — Madara variant (Layer 1)
+  5. asurascans.com — MangaThemesia variant (Layer 1)
+  6. Unknown site — Layer 2 (Gemini) → Layer 3 (heuristic) → Layer 4 (pre-filled guess)
+  

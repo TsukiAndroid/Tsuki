@@ -68,6 +68,11 @@ class UniversalSourceViewModel @Inject constructor(
     }
 
     private val _autoDetectState = MutableStateFlow<AutoDetectState>(AutoDetectState.Idle)
+
+    // ── Progress step (real-time sub-steps during auto-detect) ──────────────
+    private val _progressStep = MutableStateFlow("")
+    /** Emits the current work step during [autoDetect]; empty string otherwise. */
+    val progressStep: StateFlow<String> = _progressStep.asStateFlow()
     val autoDetectState: StateFlow<AutoDetectState> = _autoDetectState.asStateFlow()
 
     private var lastDetectedPaginationType: String = "page"
@@ -89,13 +94,22 @@ class UniversalSourceViewModel @Inject constructor(
         }
         viewModelScope.launch {
             _autoDetectState.value = AutoDetectState.Loading
-            runCatching { SiteAutoDetector(appContext).detect(trimUrl) }
+            _progressStep.value = ""
+            runCatching {
+                SiteAutoDetector(
+                    context      = appContext,
+                    geminiApiKey = getGeminiApiKey(),
+                    onProgress   = { step -> _progressStep.value = step },
+                ).detect(trimUrl)
+            }
                 .onSuccess { fields ->
+                    _progressStep.value = ""
                     lastDetectedPaginationType = fields.paginationType
                     lastDetectedCmsType = fields.cmsType
                     _autoDetectState.value = AutoDetectState.Done(fields)
                 }
                 .onFailure { e ->
+                    _progressStep.value = ""
                     _autoDetectState.value = AutoDetectState.Error(
                         e.message ?: "Detection failed — please fill in selectors manually."
                     )
@@ -222,6 +236,16 @@ class UniversalSourceViewModel @Inject constructor(
             SiteAutoDetector.CmsType.WORDPRESS_GENERIC,
             SiteAutoDetector.CmsType.UNKNOWN         -> CustomSourceType.CUSTOM_TEMPLATE
         }
+
+    // ── Gemini API key helper ──────────────────────────────────────────────
+    /**
+     * Reads the Gemini API key from shared preferences.
+     * The key is stored by SettingsActivity under "gemini_api_key".
+     */
+    private fun getGeminiApiKey(): String? {
+        val prefs = appContext.getSharedPreferences("futon_prefs", android.content.Context.MODE_PRIVATE)
+        return prefs.getString("gemini_api_key", null)?.takeIf { it.isNotBlank() }
+    }
 
     // ── Template JSON (used only for CUSTOM_TEMPLATE fallback) ────────────────
 
