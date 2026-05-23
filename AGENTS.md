@@ -110,6 +110,94 @@ CI re-run: **success** (commit `3c65420`).
 
 ---
 
+## Session 2 (May 23 2026) — Fix site-logo showing as cover & chapter pages (manhwaread.com)
+
+### Problems reported
+
+1. **Bug 1 — Cover shows site logo:** Tapping a manhwa from the Panhwaread
+   (manhwaread.com) custom source shows the ManhwaRead site logo as the cover
+   instead of the real cover image.
+
+2. **Bug 2 — Reader shows site logo:** Reading a chapter shows only the site
+   logo instead of actual manga pages.
+
+### Root causes
+
+**Bug 2 (pages):**  
+`TemplateHtmlParser.getPages()` used a bare `"img"` CSS selector.
+manhwaread.com (Mangomic-core theme) includes the site logo as a `<img>` in the
+header/navigation. The bare selector picks this up, returning only the logo.
+Furthermore, Mangomic-core does **not** embed chapter page images in the DOM at
+all — they are encoded as a base64 JSON blob inside an inline `<script>` block:
+
+```javascript
+var chapterData = {"data":"<base64>","base":"https://cdn/postId"};
+```
+
+Each decoded entry is `{"src":"chapterId\/mr_001.jpg","w":800,"h":5000}`.
+No DOM-based selector will ever find these images.
+
+**Bug 1 (cover):**  
+`TemplateHtmlParser.extractDetailCover()` fell through to the `og:image` meta
+tag, which on manhwaread.com is set to the site logo URL (WordPress default when
+a page-specific OG image is not configured). Additionally,
+`TemplateHtmlParser.USER_AGENT` was `"Tsuki/1.0 (Android)"` — some WordPress
+CDNs reject bot-like UAs or return placeholder images. Also,
+`PageLoader.createPageRequest()` never set a `Referer` header for
+`CustomMangaSource` OkHttp requests, so CDNs with hotlink-protection served
+the logo instead of the real image.
+
+### Fixes applied
+
+#### `TemplateHtmlParser.kt`
+1. **`getPages()` — cascading selector strategy:**
+   - Step 1: Use configured `imageSelector` from template JSON (if present and
+     not the generic `"img"`).
+   - Step 2: Try Madara/WordPress-specific reader selectors
+     (`div.page-break img`, `div.reading-content img`,
+     `.wp-manga-chapter-img img`, `#reader img`, etc.) — these never match
+     header/nav logo images.
+   - Step 3: Parse `chapterData` inline `<script>` block (Mangomic-core /
+     manhwaread.com). Base64-decodes `data`, resolves each `src` against `base`.
+   - Step 4: Last-resort generic `"img"` selector, filtered through `isLogoUrl()`.
+   - Removed the `pageListSection ?: return emptyList()` guard — sources created
+     without an explicit `pageList` section now still attempt page extraction.
+
+2. **`parseChapterDataScript()` private method** — ported from `MadaraHtmlParser`.
+   Parses the base64 `chapterData` JS variable from an inline `<script>`.
+
+3. **`isLogoUrl()` extension on `String`** — returns `true` if the URL path
+   contains `/logo`, `favicon`, `site-icon`, `/brand`, or `header-logo`.
+
+4. **`extractDetailCover()`** — now skips `og:image` when `isLogoUrl()` is true.
+
+5. **`USER_AGENT`** — changed from `"Tsuki/1.0 (Android)"` to a full Chrome
+   Android browser UA so WordPress CDN checks pass during static HTML fetches.
+
+#### `PageLoader.kt`
+6. **`createPageRequest()`** — when `mangaSource is CustomMangaSource`, injects:
+   - `Referer: <source.cleanBaseUrl>/` — satisfies WordPress/Madara CDN
+     hotlink-protection checks.
+   - `User-Agent: <BROWSER_UA>` — prevents CDN bot-rejection.
+
+   `CommonHeadersInterceptor` only auto-adds these headers for built-in
+   `MangaParserSource` instances; custom sources were never covered.
+
+### Files changed
+
+| File | Change |
+|---|---|
+| `customsource/data/TemplateHtmlParser.kt` | `getPages()`, `parseChapterDataScript()`, `isLogoUrl()`, `extractDetailCover()`, `USER_AGENT` |
+| `reader/domain/PageLoader.kt` | `createPageRequest()` — Referer + UA for CustomMangaSource |
+
+### Commit & CI
+
+- Commit: `8ca6fd3d4dded2cbca1d56b6649ad49ae9f4453a`
+- CI build #251: **success**
+- Branch `devel` HEAD is now `8ca6fd3`.
+
+---
+
 ## Architecture notes (for future agents)
 
 ### Two independent source creation paths
@@ -180,4 +268,5 @@ GitHub Actions. The workflow builds a debug APK. To check status:
 gh run list --repo Space4414/Tsuki --branch devel --limit 5
 ```
 
-Build #248 was the last successful build before this session (tag `alpha-latest`).
+Build #250 (`3c65420`) was the last successful build from Session 1.
+Build #251 (`8ca6fd3`) is the last successful build from Session 2 (this session).
