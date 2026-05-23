@@ -1,5 +1,7 @@
 package io.github.landwarderer.futon.browser.learning
 
+import io.github.landwarderer.futon.customsource.data.HtmlCleaner
+
   import android.util.Log
   import kotlinx.coroutines.Dispatchers
   import kotlinx.coroutines.withContext
@@ -198,15 +200,15 @@ package io.github.landwarderer.futon.browser.learning
 
           session.mangaListPage?.let {
               sb.appendLine("\n═══ MANGA LIST PAGE HTML (url: ${it.url}) ═══")
-              sb.appendLine(it.html.take(HTML_BUDGET_PER_PAGE))
+              sb.appendLine(HtmlCleaner.cleanAndCap(it.html))
           }
           session.mangaDetailPage?.let {
               sb.appendLine("\n═══ MANGA DETAIL PAGE HTML (url: ${it.url}) ═══")
-              sb.appendLine(it.html.take(HTML_BUDGET_PER_PAGE))
+              sb.appendLine(HtmlCleaner.cleanAndCap(it.html))
           }
           session.chapterReaderPage?.let {
               sb.appendLine("\n═══ CHAPTER READER PAGE HTML (url: ${it.url}) ═══")
-              sb.appendLine(it.html.take(HTML_BUDGET_PER_PAGE))
+              sb.appendLine(HtmlCleaner.cleanAndCap(it.html))
           }
 
           sb.appendLine("\nReturn ONLY the JSON object. No markdown fences. No explanation.")

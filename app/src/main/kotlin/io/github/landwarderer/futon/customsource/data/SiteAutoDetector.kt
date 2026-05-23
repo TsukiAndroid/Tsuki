@@ -3,6 +3,9 @@ package io.github.landwarderer.futon.customsource.data
 import android.util.Log
 import io.github.landwarderer.futon.browser.learning.LearningSession
 import io.github.landwarderer.futon.browser.learning.PageType
+import io.github.landwarderer.futon.customsource.data.HtmlCleaner
+import io.github.landwarderer.futon.customsource.data.JsRenderFetcher
+import io.github.landwarderer.futon.customsource.data.SmartPageFetcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jsoup.Jsoup
@@ -26,7 +29,7 @@ import java.util.zip.GZIPInputStream
  * Works with Tailwind CSS sites, WordPress themes, and traditional CMS manga themes
  * (Madara, MangaThemesia, MadTheme, etc.).
  */
-class SiteAutoDetector {
+class SiteAutoDetector(private val context: android.content.Context? = null) {
 
     enum class Confidence { HIGH, MEDIUM, LOW }
 
@@ -77,57 +80,74 @@ class SiteAutoDetector {
         val normalUrl = normalizeUrl(baseUrl)
         val domain = extractDomain(normalUrl)
 
-        // Step 1: Fetch homepage
-        val homeHtml = fetchHtml(normalUrl)
-            ?: return@withContext DetectedFields(
-                siteName = domain.removePrefix("www.").substringBefore(".")
-                    .replaceFirstChar { it.uppercaseChar() }
-            )
-        val homeDoc = Jsoup.parse(homeHtml, normalUrl)
+        // Step 1: Fetch homepage (upgrade to WebView render when JS-only content detected)
+          val rawHomeHtml = fetchHtml(normalUrl)
+              ?: return@withContext DetectedFields(
+                  siteName = domain.removePrefix("www.").substringBefore(".")
+                      .replaceFirstChar { it.uppercaseChar() }
+              )
+          val homeHtml = if (context != null && JsRenderFetcher.isJsRendered(rawHomeHtml)) {
+              JsRenderFetcher(context).fetch(normalUrl) ?: rawHomeHtml
+          } else {
+              rawHomeHtml
+          }
+          val homeDoc = Jsoup.parse(homeHtml, normalUrl)
 
-        // Step 2: Site signals
-        val siteName = extractSiteName(homeDoc, domain)
-        val isWP = homeHtml.contains("wp-content") || homeHtml.contains("/wp-json/")
-        val cmsType = detectCmsType(homeHtml)
-        val searchPath = detectSearchPath(homeDoc)
+          // Step 2: Site signals
+          val siteName = extractSiteName(homeDoc, domain)
+          val isWP = homeHtml.contains("wp-content") || homeHtml.contains("/wp-json/")
+          val cmsType = detectCmsType(homeHtml)
+          val searchPath = detectSearchPath(homeDoc)
 
-        // Step 3: Find manga listing page
-        val (listHtml, listUrl) = findMangaListPage(homeDoc, homeHtml, normalUrl, isWP)
-        val listDoc = if (listUrl == normalUrl) homeDoc else Jsoup.parse(listHtml, listUrl)
-        val listPath = extractRelativePath(listUrl, normalUrl)
+          // Steps 3-7: SmartPageFetcher discovers the correct manga-list page via HEAD-probed
+          // common paths and nav-link scanning, then fetches a sample detail page and chapter page.
+          // Every individual fetch is transparently upgraded to WebView rendering when
+          // JS-only content is detected -- so comix.to-style sites work out of the box.
+          val fetched  = SmartPageFetcher(context).fetch(normalUrl, homeHtml)
+          val listHtml = fetched.listHtml
+          val listUrl  = fetched.listUrl
+          val listDoc  = if (listUrl == normalUrl) homeDoc else Jsoup.parse(listHtml, listUrl)
+          val listPath = extractRelativePath(listUrl, normalUrl)
 
-        // Step 4: Detect manga cards
-        val cardResult = detectMangaCards(listDoc, listUrl, cmsType)
+          // Step 4: Detect manga cards
+          val cardResult = detectMangaCards(listDoc, listUrl, cmsType)
 
-        // Step 5: Fetch detail page
-        val detailUrl = cardResult?.sampleDetailUrl
-            ?: findDetailUrlFallback(listDoc, normalUrl)
-        val detailHtml = if (detailUrl != null) fetchHtml(detailUrl) else null
-        val detailDoc = if (detailHtml != null && detailUrl != null)
-            Jsoup.parse(detailHtml, detailUrl) else null
+          // Step 5: Detail page -- prefer SmartPageFetcher result, fall back to card link / DOM scan
+          val detailUrl  = fetched.detailUrl
+              ?: cardResult?.sampleDetailUrl
+              ?: findDetailUrlFallback(listDoc, normalUrl)
+          val detailHtml = fetched.detailHtml
+              ?: if (detailUrl != null) fetchHtml(detailUrl) else null
+          val detailDoc  = if (detailHtml != null && detailUrl != null)
+              Jsoup.parse(detailHtml, detailUrl) else null
 
-        // Step 6: Detect detail selectors
-        val detailResult = if (detailDoc != null) detectDetailSelectors(detailDoc, cmsType) else null
+          // Step 6: Detect detail selectors
+          val detailResult = if (detailDoc != null) detectDetailSelectors(detailDoc, cmsType) else null
 
-        // Step 7: Fetch chapter page
-        val chapterUrl = detailDoc?.let { findChapterUrl(it, normalUrl) }
-        val chapterHtml = if (chapterUrl != null) fetchHtml(chapterUrl) else null
-        val chapterDoc = if (chapterHtml != null && chapterUrl != null)
-            Jsoup.parse(chapterHtml, chapterUrl) else null
+          // Step 7: Chapter page -- prefer SmartPageFetcher result, fall back to detail doc scan
+          val chapterUrl  = fetched.chapterUrl
+              ?: detailDoc?.let { findChapterUrl(it, normalUrl) }
+          val chapterHtml = fetched.chapterHtml
+              ?: if (chapterUrl != null) fetchHtml(chapterUrl) else null
+          val chapterDoc  = if (chapterHtml != null && chapterUrl != null)
+              Jsoup.parse(chapterHtml, chapterUrl) else null
 
-        // Step 8: Detect page images
-        val pageImageSel = if (chapterDoc != null) detectPageImages(chapterDoc) else ""
+          // Step 8: Detect page images
+          val pageImageSel = if (chapterDoc != null) detectPageImages(chapterDoc) else ""
 
-        // Step 9: Feed learning session (for future Gemini path)
-        runCatching {
-            val session = LearningSession()
-            session.domain = domain
-            session.capture(PageType.MANGA_LIST, listUrl, listHtml)
-            if (detailHtml != null && detailUrl != null)
-                session.capture(PageType.MANGA_DETAIL, detailUrl, detailHtml)
-            if (chapterHtml != null && chapterUrl != null)
-                session.capture(PageType.CHAPTER_READER, chapterUrl, chapterHtml)
-        }
+          // Step 9: Feed learning session with HtmlCleaner-stripped HTML.
+          // Scripts, styles, SVGs, comments, and inline attributes are removed and the result
+          // is capped at 15,000 chars (middle section) so Gemini sees only content-rich markup.
+          runCatching {
+              val session = LearningSession()
+              session.domain = domain
+              session.capture(PageType.MANGA_LIST, listUrl, HtmlCleaner.cleanAndCap(listHtml))
+              if (detailHtml != null && detailUrl != null)
+                  session.capture(PageType.MANGA_DETAIL, detailUrl, HtmlCleaner.cleanAndCap(detailHtml))
+              if (chapterHtml != null && chapterUrl != null)
+                  session.capture(PageType.CHAPTER_READER, chapterUrl, HtmlCleaner.cleanAndCap(chapterHtml))
+          }
+
 
         // Step 10: Assemble result
         // Build multi-selector fallback strings — combine all patterns that match the listing

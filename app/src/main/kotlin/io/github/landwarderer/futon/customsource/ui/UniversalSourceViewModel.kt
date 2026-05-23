@@ -1,5 +1,8 @@
 package io.github.landwarderer.futon.customsource.ui
 
+import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -35,6 +38,7 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class UniversalSourceViewModel @Inject constructor(
+    @ApplicationContext private val appContext: Context,
     private val parserTemplateRepository: ParserTemplateRepository,
     private val customSourcesRepository: CustomSourcesRepository,
 ) : ViewModel() {
@@ -85,7 +89,7 @@ class UniversalSourceViewModel @Inject constructor(
         }
         viewModelScope.launch {
             _autoDetectState.value = AutoDetectState.Loading
-            runCatching { SiteAutoDetector().detect(trimUrl) }
+            runCatching { SiteAutoDetector(appContext).detect(trimUrl) }
                 .onSuccess { fields ->
                     lastDetectedPaginationType = fields.paginationType
                     lastDetectedCmsType = fields.cmsType

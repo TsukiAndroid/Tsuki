@@ -385,3 +385,69 @@ gh run list --repo Space4414/Tsuki --branch devel --limit 5
 
 Build #250 (`3c65420`) was the last successful build from Session 1.
 Build #251 (`8ca6fd3`) is the last successful build from Session 2 (this session).
+
+  ---
+
+  ## Session 4 (May 23 2026) -- USB: HtmlCleaner + SmartPageFetcher + JsRenderFetcher
+
+  ### Problems addressed
+  Universal Source Beta (USB) worked well for WordPress Madara sites but failed for
+  most other sites. Three root causes were identified and fixed.
+
+  ### Root cause 1 -- HTML too large for Gemini
+  Full HTML from manga sites is 500 KB-1 MB. Gemini gets overwhelmed.
+
+  **Fix -- created `HtmlCleaner.kt`:**
+  - Removes ALL <script>, <style>, <head>, HTML comments, inline style= attributes, <svg>
+  - Collapses whitespace. Keeps ONLY <body> content.
+  - Hard-caps at 15,000 characters, taking the **middle section** (where manga cards live)
+  - Applied in SiteAutoDetector Step 9 before storing into LearningSession
+  - Applied in AiParserGenerator.buildGeminiPrompt() replacing .take(HTML_BUDGET_PER_PAGE)
+
+  ### Root cause 2 -- Wrong page fetched
+  USB fetched the homepage which often has no manga cards.
+
+  **Fix -- created `SmartPageFetcher.kt`:**
+  - Probes 11 common manga-list paths (/manga, /manhwa, /manhua, /comics, /series, ...)
+    via HEAD requests; fetches the first that returns HTTP 200
+  - Falls back to scanning homepage nav/header links for manga keywords
+  - Falls back to original URL if nothing matches
+  - Also fetches ONE manga detail page (href matching /manga/*, /series/*, /title/*, ...)
+  - Also fetches ONE chapter page (href matching /chapter/*, /ch/*, /read/*, ...)
+  - Replaces the old findMangaListPage + individual fetchHtml calls (Steps 3-7)
+
+  ### Root cause 3 -- JavaScript-rendered content
+  Sites like comix.to render manga cards via JavaScript; raw HTTP returns empty HTML.
+
+  **Fix -- created `JsRenderFetcher.kt`:**
+  - Detection: JS-rendered when ANY of these are true:
+    - Fewer than 3 <img> tags in raw HTML
+    - Fewer than 200 visible body-text characters
+    - Contains: __NEXT_DATA__, window.__NUXT__, ng-app, data-reactroot, div id="app/root"
+  - If JS-rendered: loads URL in hidden WebView, waits onload + 2s settle, extracts DOM HTML
+  - If NOT JS-rendered: plain HTTP fetch (faster)
+  - SmartPageFetcher calls JsRenderFetcher.isJsRendered() on every page automatically
+
+  ### Wiring changes
+  - SiteAutoDetector: added optional context: Context? = null param; homepage also checked
+    for JS rendering
+  - UniversalSourceViewModel: injected @ApplicationContext Context (Hilt); passed to SiteAutoDetector
+  - AiParserGenerator: replaced .take(HTML_BUDGET_PER_PAGE) with HtmlCleaner.cleanAndCap()
+
+  ### Files changed
+
+  | File | Change |
+  |---|---|
+  | customsource/data/HtmlCleaner.kt | NEW -- HTML cleaning/capping utility |
+  | customsource/data/SmartPageFetcher.kt | NEW -- smart multi-page discovery |
+  | customsource/data/JsRenderFetcher.kt | NEW -- JS rendering detection + WebView fetch |
+  | customsource/data/SiteAutoDetector.kt | Added context param; integrated new helpers |
+  | browser/learning/AiParserGenerator.kt | HtmlCleaner in Gemini prompt builder |
+  | customsource/ui/UniversalSourceViewModel.kt | Inject Context; pass to SiteAutoDetector |
+
+  ### Commit & CI
+
+  - Branch devel HEAD updated in this session.
+  - CI build: pending (see GitHub Actions).
+
+  
