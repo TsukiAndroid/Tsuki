@@ -1,3 +1,13 @@
+## Alpha 1.632 (Build [#251](https://github.com/Space4414/Tsuki/actions/runs/26324729494))
+
+_2026-05-23 05:34 UTC_
+
+- fix(reader): fix site-logo showing as cover/pages for custom Madara sources (8ca6fd3)
+- docs: add Kotlin dollar-sign escape lesson to AGENTS.md [skip ci] (678a150)
+- fix(universal-source): fix Kotlin dollar-sign escape in maDaraTemplate JS (3c65420)
+- fix(universal-source): fix Nothing Found bug + multi-selector support + Madara path detection (3be6e82)
+
+
 ## Alpha 1.629 (Build [#250](https://github.com/Space4414/Tsuki/actions/runs/26319211741))
 
 _2026-05-23 01:02 UTC_
