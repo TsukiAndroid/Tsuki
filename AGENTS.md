@@ -198,14 +198,129 @@ the logo instead of the real image.
 
 ---
 
+## Session 3 (May 23 2026) — Universal Source Beta: route to proven theme parsers
+
+### Problem
+
+Sessions 1 and 2 patched symptoms (selector guessing, chapterData JS parsing,
+Referer headers) but left the root cause untouched: `UniversalSourceViewModel`
+always created a `CustomSource` with `type = CUSTOM_TEMPLATE`, sending every
+user-added site through the fragile `TemplateHtmlParser` — regardless of whether
+a battle-tested theme parser already existed for that CMS.
+
+The codebase already had **40+ proven theme parsers** (Madara, MangaThemesia,
+MangaStream, Keyoapp, MadTheme, Mmrcms, …) and `SiteAutoDetector` already
+correctly fingerprinted the CMS theme. The two were just never wired together.
+
+### Root cause
+
+`UniversalSourceViewModel.create()` hardcoded `CustomSourceType.CUSTOM_TEMPLATE`
+regardless of what `SiteAutoDetector` detected.
+
+### Fix
+
+**3 file changes, zero new parser code needed.**
+
+#### `SiteAutoDetector.kt`
+- Changed `private enum class CmsType` → `enum class CmsType` (made public)
+- Added `cmsType: CmsType = CmsType.UNKNOWN` field to `DetectedFields`
+- Propagated detected `cmsType` into the return value
+
+#### `UniversalSourceViewModel.kt`
+- Added `lastDetectedCmsType: SiteAutoDetector.CmsType` property
+- `autoDetect()` now stores `fields.cmsType` from the detector
+- New private `cmsTypeToSourceType()` maps fingerprinted CMS → proven parser type:
+
+| Detected CmsType | CustomSourceType | Parser used |
+|---|---|---|
+| `MADARA` | `MADARA` | `MadaraHtmlParser` |
+| `MANGA_THEMESIA` | `MANGATHEMESIA` | `MangaThemesiaHtmlParser` |
+| `MANGA_STREAM` | `MANGASTREAM` | `MangaStreamHtmlParser` |
+| `KEYOAPP` | `KEYOAPP` | `KeyoappHtmlParser` |
+| `MAD_THEME` | `MADTHEME` | `MadthemeHtmlParser` |
+| `MMRCMS` | `MMRCMS` | `MmrcmsHtmlParser` |
+| `WORDPRESS_GENERIC` / `UNKNOWN` | `CUSTOM_TEMPLATE` | `TemplateHtmlParser` (fallback) |
+
+- Proven parsers skip `ParserTemplate` JSON save (they never read it)
+- `pageImageSelector` validation only enforced for `CUSTOM_TEMPLATE` fallback
+- `Result.Success` now carries `parserLabel` (the `CustomSourceType.label`) for UI feedback
+
+#### `UniversalSourceActivity.kt`
+- Auto-detect status card shows "✓ WordPress Madara theme detected — proven parser selected."
+  for known CMS; generic message for unknown CMS
+- Success toast shows which parser was selected, e.g. `"ManhwaRead" added · WordPress Madara`
+- Comment updated to describe the new routing behaviour
+
+### Effect for manhwaread.com / all Madara sites
+
+```
+User taps Auto-detect on manhwaread.com URL
+  → SiteAutoDetector sees "wp-manga" / "madara" in HTML → CmsType.MADARA
+  → Status card: "✓ WordPress Madara theme detected — proven parser selected."
+User taps Create
+  → CustomSource(type = CUSTOM_TEMPLATE) NO LONGER CREATED
+  → CustomSource(type = MADARA) saved in CustomSourcesRepository
+  → CustomMangaRepository routes all calls to MadaraHtmlParser
+     • getList()  → correct manga cards, pagination, search — all work
+     • getDetails() → correct cover (.summary_image), description, tags
+     • getPages() → parseChapterDataScript() handles chapterData JS variable
+                    (Mangomic-core) natively — real chapter pages load
+```
+
+### Files changed
+
+| File | Change |
+|---|---|
+| `customsource/data/SiteAutoDetector.kt` | Made `CmsType` public; added `cmsType` to `DetectedFields` return |
+| `customsource/ui/UniversalSourceViewModel.kt` | `cmsTypeToSourceType()` mapping; route to proven parsers |
+| `customsource/ui/UniversalSourceActivity.kt` | Status card + success toast show detected parser |
+
+### Commit & CI
+
+- Commit: `9eb9006ffcc2ae16ee057f18cd8b19d6f6052514`
+- CI build #252: **success**
+- Branch `devel` HEAD is now `9eb9006`.
+
+---
+
 ## Architecture notes (for future agents)
 
-### Two independent source creation paths
+### Universal Source Beta — revised flow (Session 3+)
 
-| Path | Entry point | Parser |
+| Path | Entry point | Result |
 |---|---|---|
-| **Universal Source Beta** | `UniversalSourceActivity` → `UniversalSourceViewModel` → `SiteAutoDetector` | `TemplateHtmlParser` (Kotlin, Jsoup) |
+| **Known CMS detected** | `UniversalSourceActivity` → `UniversalSourceViewModel` → `SiteAutoDetector` (CmsType ≠ UNKNOWN) | `CustomSource(type = MADARA / MANGATHEMESIA / …)` → routes to proven parser in `CustomMangaRepository` |
+| **Unknown CMS** | Same flow, CmsType = UNKNOWN or WORDPRESS_GENERIC | `CustomSource(type = CUSTOM_TEMPLATE)` → `TemplateHtmlParser` (improved fallback) |
 | **Create Extension (JS/Dart)** | `CreateExtensionActivity` → `CreateExtensionViewModel` | JS engine (QuickJS or similar) calling exported functions |
+
+### CMS detection fingerprints (`SiteAutoDetector.detectCmsType`)
+
+| CmsType | HTML fingerprint |
+|---|---|
+| `MADARA` | `wp-manga`, `WpMangaReader`, `madara`, `wp-manga-chapter` |
+| `MANGA_THEMESIA` | `ts_reader.run`, `.bsx` + `anilist` |
+| `MANGA_STREAM` | `WPMangaStream`, `readerarea` |
+| `KEYOAPP` | `series-card` + `series_tags_page` |
+| `MAD_THEME` | `book-item` + `wp-content` + `/search/` |
+| `MMRCMS` | `filterList` + `media-body` |
+| `WORDPRESS_GENERIC` | `wp-content`, `/wp-json/` |
+| `UNKNOWN` | None of the above |
+
+### `CustomMangaRepository` parser routing (for future agents)
+
+All parser types are in `customsource/data/`. Each parser takes `CustomMangaSource`
+as its only constructor argument and implements `getList()`, `getDetails()`,
+`getGenres()`, `getPages()`. `CustomMangaRepository` lazy-initialises one instance
+per type and delegates based on `customSource.source.type`.
+
+For `CUSTOM_TEMPLATE` (unknown sites), `TemplateHtmlParser` is used. As of Session 2,
+it now handles:
+- Specific Madara reader selectors before generic `"img"`
+- `parseChapterDataScript()` for Mangomic-core `chapterData` JS variable
+- `isLogoUrl()` filtering for logo-polluted `og:image` fallbacks
+- Browser UA + Referer for CDN hotlink protection (via `PageLoader`)
+
+### Template JSON schema (CUSTOM_TEMPLATE only)
 
 The "Universal Source Beta" creates a `CustomSource` with `type = CUSTOM_TEMPLATE`
 and a linked `ParserTemplate` JSON in `ParserTemplateRepository`. The template
