@@ -1,3 +1,14 @@
+## Alpha 1.629 (Build [#250](https://github.com/Space4414/Tsuki/actions/runs/26319211741))
+
+_2026-05-23 01:02 UTC_
+
+- fix(universal-source): fix Kotlin dollar-sign escape in maDaraTemplate JS (3c65420)
+- fix(universal-source): fix Nothing Found bug + multi-selector support + Madara path detection (3be6e82)
+- fix(template-parser): fix type mismatch String? vs String in extractDetailTitle/Cover params (520b565)
+- fix(universal-source): include coverSelector in mangaDetail JSON so detail page cover resolves correctly (4868c29)
+- fix(template-parser): resolve relative image URLs, fix title extraction (skip "Read" buttons), og:title/og:image fallbacks, WordPress AJAX chapter fallback, auto-detect genres (539d6bf)
+
+
 ## Alpha 1.626 (Build [#248](https://github.com/Space4414/Tsuki/actions/runs/26302628258))
 
 _2026-05-22 17:34 UTC_
