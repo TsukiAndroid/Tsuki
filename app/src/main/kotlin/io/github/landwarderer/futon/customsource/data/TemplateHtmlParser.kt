@@ -80,8 +80,21 @@ class TemplateHtmlParser(
                 fetchPostList(endpointUrl, page, action, section)
             }
             else -> {
-                val pageParam = section.optString("pageParam", "page")
-                fetchGetList(section, "$endpointUrl?$pageParam=$page")
+                val base = endpointUrl.trimEnd('/')
+                // Page 1: always use the bare endpoint — avoids ?page=1 rejections on
+                // sites that only accept the path without a query string (e.g. manhwaread.com).
+                // Page 2+: use the pagination strategy stored in the template.
+                //   "path" / "wordpress" → WordPress /page/N/ archive style
+                //   anything else        → query-param ?pageParam=N style
+                val url = when {
+                    page <= 1 -> "$base/"
+                    pagination == "path" || pagination == "wordpress" -> "$base/page/$page/"
+                    else -> {
+                        val pageParam = section.optString("pageParam", "page")
+                        "$base?$pageParam=$page"
+                    }
+                }
+                fetchGetList(section, url)
             }
         }
     }
@@ -668,18 +681,41 @@ class TemplateHtmlParser(
             ".chapter-list li, .listing-chapters li, #chapters > a, .chapter-row, " +
             ".volume-chapter li, li.volume-chapter, li.chapter, .chapter_list li"
 
-        /** Cascade of container selectors tried when no explicit itemSelector is present. */
+        /**
+         * Cascade of container selectors tried when no explicit itemSelector is present.
+         * Listed in priority order — most-specific / most-common CMS patterns first.
+         * Multiple selectors at the same priority can be combined with commas in the template.
+         */
         private val GENERIC_ITEM_SELECTORS = listOf(
+            // Madara / WP-Manga
             "div.page-item-detail",
             "div.c-tabs-item__content",
+            ".c-image-hover",
+            // MangaThemesia
+            "div.bsx",
+            "div.bs",
+            // Common WordPress article types
+            "article.type-manga",
+            "article.type-manhwa",
+            "article.type-comic",
+            "article.type-manhua",
+            "article.type-webtoon",
+            "article[class*=type-manga]",
+            "article[class*=type-comic]",
+            // Generic semantic class names
             ".manga-item",
-            "article.manga",
             "li.manga-item",
             ".media.manga",
-            ".novel-item",
+            ".manga-card",
             ".book-item",
+            ".novel-item",
             ".series-item",
-            "div.bs",
+            ".series-card",
+            ".story-item",
+            ".list-truyen-item-wrap",
+            "div.manga__item",
+            // WP block post list
+            "li.wp-block-post",
         )
 
         /** Cascade of title selectors tried when no explicit titleSelector is present. */

@@ -59,6 +59,10 @@ package io.github.landwarderer.futon.customsource.ui
       private val _autoDetectState = MutableStateFlow<AutoDetectState>(AutoDetectState.Idle)
       val autoDetectState: StateFlow<AutoDetectState> = _autoDetectState.asStateFlow()
 
+      // Stores the pagination type detected during auto-detect so it can be written
+      // to the template JSON when the user taps Create — without requiring a UI field.
+      private var lastDetectedPaginationType: String = "page"
+
       /**
        * Fetches [url]'s HTML, runs CSS-selector heuristics, and emits
        * [AutoDetectState.Done] with pre-filled form values on success.
@@ -76,7 +80,10 @@ package io.github.landwarderer.futon.customsource.ui
           viewModelScope.launch {
               _autoDetectState.value = AutoDetectState.Loading
               runCatching { SiteAutoDetector().detect(trimUrl) }
-                  .onSuccess { fields -> _autoDetectState.value = AutoDetectState.Done(fields) }
+                  .onSuccess { fields ->
+                      lastDetectedPaginationType = fields.paginationType
+                      _autoDetectState.value = AutoDetectState.Done(fields)
+                  }
                   .onFailure { e ->
                       _autoDetectState.value = AutoDetectState.Error(
                           e.message ?: "Detection failed — please fill in selectors manually."
@@ -132,6 +139,7 @@ package io.github.landwarderer.futon.customsource.ui
               description   = description.trim(),
               chapterSel    = chapterSelector.trim(),
               pageImageSel  = trimPageImg,
+              paginationType = lastDetectedPaginationType,
           )
 
           val timestamp = System.currentTimeMillis()
@@ -169,14 +177,27 @@ package io.github.landwarderer.futon.customsource.ui
           description: String,
           chapterSel: String,
           pageImageSel: String,
+          paginationType: String = "page",
       ): String {
           val root = JSONObject()
           root.put("name", name)
           root.put("version", "1.0")
           root.put("type", "html")
 
+          // Infer pagination type: any slug-only path (e.g. /manhwa/, /manga/) on a
+          // WordPress site uses /page/N/ path pagination, not ?page=N query params.
+          // Explicit paginationType from auto-detect takes precedence; otherwise we
+          // fall back to heuristic: path looks like a WordPress archive slug.
+          val resolvedPagination = when {
+              paginationType != "page" -> paginationType
+              listPath.trim('/').isNotEmpty() && !listPath.contains('?') &&
+                  listPath.trim('/').none { it == '/' } -> "path"
+              else -> "page"
+          }
+
           val mangaList = JSONObject()
           mangaList.put("endpoint", listPath)
+          mangaList.put("pagination", resolvedPagination)
           mangaList.put("pageParam", "page")
           if (cardSelector.isNotEmpty())  mangaList.put("itemSelector",  cardSelector)
           if (titleSelector.isNotEmpty()) mangaList.put("titleSelector", titleSelector)

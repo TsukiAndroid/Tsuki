@@ -41,6 +41,7 @@ class SiteAutoDetector {
         val description: String = "",
         val chapterSelector: String = "",
         val pageImageSelector: String = "",
+        val paginationType: String = "page",   // "path" (WordPress /page/N/) or "page" (?page=N)
         val fieldConfidence: Map<String, Confidence> = emptyMap(),
     )
 
@@ -122,12 +123,22 @@ class SiteAutoDetector {
         }
 
         // Step 10: Assemble result
-        val cardSel         = cardResult?.cardSelector ?: ""
+        // Build multi-selector fallback strings — combine all patterns that match the listing
+        // page, so the parser has fallbacks when the primary selector is too specific.
+        val cardSel         = buildMultiSelector(listDoc, cardResult?.cardSelector)
         val titleSel        = cardResult?.titleSelector ?: ""
         val coverSel        = cardResult?.coverSelector ?: ""
         val detailTitleSel  = detailResult?.titleSelector ?: ""
         val descSel         = detailResult?.descriptionSelector ?: ""
         val chapSel         = detailResult?.chapterSelector ?: ""
+
+        // WordPress path-based pagination (/page/N/) vs query-param (?page=N)
+        val paginationType = when {
+            isWP -> "path"
+            cmsType == CmsType.MADARA || cmsType == CmsType.MANGA_THEMESIA ||
+            cmsType == CmsType.MANGA_STREAM || cmsType == CmsType.MAD_THEME -> "path"
+            else -> "page"
+        }
 
         fun score(sel: String) = when {
             sel.isEmpty() -> Confidence.LOW
@@ -146,6 +157,7 @@ class SiteAutoDetector {
             description       = descSel,
             chapterSelector   = chapSel,
             pageImageSelector = pageImageSel,
+            paginationType    = paginationType,
             fieldConfidence   = mapOf(
                 "cardSelector"      to score(cardSel),
                 "titleSelector"     to score(titleSel),
@@ -158,6 +170,30 @@ class SiteAutoDetector {
                 "searchPath" to if (searchPath.isNotEmpty()) Confidence.HIGH else Confidence.LOW,
             ),
         )
+    }
+
+    /**
+     * Given the primary detected card selector, also finds all other common patterns
+     * that return >= 2 elements on [doc] and combines them as a comma-separated CSS
+     * selector string. This means the parser always has fallbacks even if one selector
+     * stops matching after a site redesign.
+     */
+    private fun buildMultiSelector(doc: Document, primary: String?): String {
+        val candidates = listOf(
+            "div.page-item-detail", "div.c-tabs-item__content", ".c-image-hover",
+            "div.bsx", "div.bs",
+            "article.type-manga", "article.type-manhwa", "article.type-comic",
+            "article.type-manhua", "article.type-webtoon",
+            ".manga-item", ".manga-card", ".book-item", ".series-item", ".series-card",
+            ".story-item", "div.manga__item", "li.wp-block-post",
+        )
+        val matched = mutableListOf<String>()
+        if (!primary.isNullOrEmpty()) matched.add(primary)
+        for (sel in candidates) {
+            if (!primary.isNullOrEmpty() && sel == primary) continue
+            if (doc.select(sel).size >= 2 && sel !in matched) matched.add(sel)
+        }
+        return matched.joinToString(", ").ifEmpty { primary.orEmpty() }
     }
 
     // ── URL helpers ───────────────────────────────────────────────────────────
