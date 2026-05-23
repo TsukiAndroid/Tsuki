@@ -1,3 +1,11 @@
+## Alpha 1.636 (Build [#253](https://github.com/Space4414/Tsuki/actions/runs/26325139741))
+
+_2026-05-23 05:55 UTC_
+
+- feat(universal-source): route to proven CMS parser instead of generic template (9eb9006)
+- docs: update AGENTS.md with Session 2 — site-logo cover & reader fixes (a4b74bf)
+
+
 ## Alpha 1.634 (Build [#252](https://github.com/Space4414/Tsuki/actions/runs/26324934358))
 
 _2026-05-23 05:44 UTC_
