@@ -215,8 +215,9 @@ function getMangaList(html, offset, query) {
   }
   if (items.length > 0) return JSON.stringify({ items: items });
 
-  // Strategy 3: any link to listing-path pages with nearby image
-  var linkRe = new RegExp('<a[^>]+href="(' + BASE_URL.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '/[^/"#?]+/)"[^>]*>', 'gi');
+  // Strategy 3: any link to detail pages on same domain with nearby image
+  var escapedBase = BASE_URL.replace(/\./g, '\\.').replace(/\//g, '\\/');
+  var linkRe = new RegExp('<a[^>]+href="(' + escapedBase + '/[^/"#?]+/)"[^>]*>', 'gi');
   while ((m = linkRe.exec(html)) !== null) {
     var url = m[1].trim();
     if (seenUrls[url]) continue;
