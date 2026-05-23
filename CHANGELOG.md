@@ -1,3 +1,12 @@
+## Alpha 1.634 (Build [#252](https://github.com/Space4414/Tsuki/actions/runs/26324934358))
+
+_2026-05-23 05:44 UTC_
+
+- docs: update AGENTS.md with Session 2 — site-logo cover & reader fixes (a4b74bf)
+- fix(reader): fix site-logo showing as cover/pages for custom Madara sources (8ca6fd3)
+- docs: add Kotlin dollar-sign escape lesson to AGENTS.md [skip ci] (678a150)
+
+
 ## Alpha 1.632 (Build [#251](https://github.com/Space4414/Tsuki/actions/runs/26324729494))
 
 _2026-05-23 05:34 UTC_
