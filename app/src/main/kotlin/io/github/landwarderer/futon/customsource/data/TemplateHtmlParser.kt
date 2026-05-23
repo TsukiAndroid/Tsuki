@@ -64,9 +64,10 @@ class TemplateHtmlParser(
             val name = customSource.source.parserSourceName ?: return null
             val raw  = ParserTemplateRepository.peekByName(name)?.rawJson
             if (raw == null) {
+                val instanceState = if (ParserTemplateRepository.instanceIsReady()) "ready" else "NOT SET"
                 android.util.Log.w(
                     "USB-Template",
-                    "peekByName('$name') returned null -- INSTANCE=${if (ParserTemplateRepository.instanceIsReady()) \"ready\" else \"NOT SET\"}, templateCount=${ParserTemplateRepository.peekAll().size}",
+                    "peekByName('$name') returned null -- INSTANCE=$instanceState, templateCount=${ParserTemplateRepository.peekAll().size}",
                 )
                 return null
             }
