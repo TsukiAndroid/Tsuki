@@ -17,6 +17,8 @@ import io.github.landwarderer.futon.core.util.ext.processLifecycleScope
 import io.github.landwarderer.futon.local.data.LocalStorageChanges
 import io.github.landwarderer.futon.local.data.index.LocalMangaIndex
 import io.github.landwarderer.futon.local.domain.model.LocalManga
+import io.github.landwarderer.futon.customsource.data.CustomSourcesRepository
+import io.github.landwarderer.futon.customsource.data.ParserTemplateRepository
 import io.github.landwarderer.futon.extensions.data.BuiltinExtensionSeeder
 import io.github.landwarderer.futon.mihon.MihonExtensionManager
 import io.github.landwarderer.futon.settings.work.WorkScheduleManager
@@ -66,6 +68,17 @@ open class BaseApp : Application(), Configuration.Provider {
 	@Inject
 	lateinit var notificationHelper: TrackerNotificationHelper
 
+	/**
+	 * Eagerly injected so [ParserTemplateRepository.INSTANCE] and
+	 * [CustomSourcesRepository.INSTANCE] are set at app startup, before any
+	 * [CustomMangaRepository.getList] call can race against Hilt lazy-init.
+	 */
+	@Inject
+	lateinit var parserTemplateRepository: ParserTemplateRepository
+
+	@Inject
+	lateinit var customSourcesRepository: CustomSourcesRepository
+
 	@Inject
 	lateinit var localMangaIndexProvider: Provider<LocalMangaIndex>
 
@@ -92,6 +105,7 @@ open class BaseApp : Application(), Configuration.Provider {
 			Security.insertProviderAt(Conscrypt.newProvider(), 1)
 		}
 		setupActivityLifecycleCallbacks()
+		android.util.Log.d("TsukiDebug", "BaseApp.onCreate: parserTemplateRepository ready, templates=${parserTemplateRepository.getAll().size}, sources=${customSourcesRepository.getAll().size}")
 		mihonExtensionManager.initialize()
 		processLifecycleScope.launch(Dispatchers.IO) {
 			setupDatabaseObservers()

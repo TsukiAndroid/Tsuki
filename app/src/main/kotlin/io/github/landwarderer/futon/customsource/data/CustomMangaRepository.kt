@@ -172,6 +172,15 @@ package io.github.landwarderer.futon.customsource.data
           order: SortOrder?,
           filter: MangaListFilter?,
       ): List<Manga> {
+          val _src = customSource.source
+          android.util.Log.d("TsukiDebug", "CMR.getList: name='${_src.name}' type=${_src.type.name} parserSourceName=${_src.parserSourceName}")
+          if (_src.type == io.github.landwarderer.futon.customsource.domain.CustomSourceType.CUSTOM_TEMPLATE) {
+              val _tName = _src.parserSourceName
+              val _tFound = io.github.landwarderer.futon.customsource.data.ParserTemplateRepository.peekByName(_tName ?: "")
+              android.util.Log.d("TsukiDebug", "CMR.getList: CUSTOM_TEMPLATE lookup name='$_tName' found=${_tFound != null} instanceReady=${io.github.landwarderer.futon.customsource.data.ParserTemplateRepository.instanceIsReady()} knownNames=${io.github.landwarderer.futon.customsource.data.ParserTemplateRepository.peekAll().map { it.name }}")
+          } else {
+              android.util.Log.d("TsukiDebug", "CMR.getList: routing ${_src.type.name} to proven parser")
+          }
           return when (customSource.source.type) {
               CustomSourceType.WEBVIEW               -> emptyList()
               CustomSourceType.MANGADEX_COMPATIBLE   -> runCatching { fetchMangaDexList(customSource.source, offset, order, filter) }.getOrElse { emptyList() }

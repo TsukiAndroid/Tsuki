@@ -83,7 +83,10 @@ class TemplateHtmlParser(
     // ── Public API ─────────────────────────────────────────────────────────────
 
     fun getList(offset: Int, order: SortOrder?, filter: MangaListFilter?): List<Manga> {
-        val section = mangaListSection ?: return emptyList()
+                val _tmpl = template
+                val _section = mangaListSection
+                android.util.Log.d("TsukiDebug", "THP.getList: parserSourceName='${customSource.source.parserSourceName}' templateFound=${_tmpl != null} sectionFound=${_section != null} endpoint=${_section?.optString("endpoint", "(none)")} pagination=${_section?.optString("pagination", "(none)")} itemSelector=${_section?.optString("itemSelector", "(none)")}")
+                val section = _section ?: return emptyList()
         val query = filter?.query?.trim()
         val method = section.optString("method", "GET").uppercase()
         val endpoint = section.optString("endpoint", "/").ifEmpty { "/" }

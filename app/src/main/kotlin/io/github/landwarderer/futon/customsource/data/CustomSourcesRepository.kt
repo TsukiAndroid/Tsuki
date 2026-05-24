@@ -101,30 +101,27 @@ class CustomSourcesRepository @Inject constructor(
 
     private fun loadAll(): List<CustomSource> {
         val json = prefs.getString(KEY_SOURCES, null)
-        if (json == null) {
-            Log.d("USB-CSR", "loadAll: no saved sources")
-            return emptyList()
-        }
+        Log.d("TsukiDebug", "CSR.loadAll: jsonIsNull=${json == null}")
+        if (json == null) return emptyList()
         return try {
             val array = JSONArray(json)
             val loaded = (0 until array.length()).map { i -> array.getJSONObject(i).toCustomSource() }
-            Log.d("USB-CSR", "loadAll: restored ${loaded.size} source(s)")
             loaded.forEach { s ->
-                Log.d("USB-CSR", "  source[${s.id}] name=${s.name} type=${s.type.name} parserSourceName=${s.parserSourceName}")
+                Log.d("TsukiDebug", "CSR.loadAll: id=${s.id} name='${s.name}' type=${s.type.name} parserSourceName=${s.parserSourceName}")
             }
+            Log.d("TsukiDebug", "CSR.loadAll: total=${loaded.size}")
             loaded
         } catch (e: Exception) {
-            Log.e("USB-CSR", "loadAll: JSON parse failed", e)
+            Log.e("TsukiDebug", "CSR.loadAll: JSON parse FAILED", e)
             emptyList()
         }
     }
 
     private fun saveAll(sources: List<CustomSource>) {
         val array = JSONArray(sources.map { it.toJson() })
-        prefs.edit().putString(KEY_SOURCES, array.toString()).apply()
-        Log.d("USB-CSR", "saveAll: persisted ${sources.size} source(s)")
-        sources.filter { it.type.name == "CUSTOM_TEMPLATE" }.forEach { s ->
-            Log.d("USB-CSR", "  CUSTOM_TEMPLATE[${s.id}] name=${s.name} parserSourceName=${s.parserSourceName}")
+        val committed = prefs.edit().putString(KEY_SOURCES, array.toString()).commit()
+        sources.forEach { s ->
+            Log.d("TsukiDebug", "CSR.saveAll: id=${s.id} name='${s.name}' type=${s.type.name} parserSourceName=${s.parserSourceName} commit=$committed")
         }
     }
 

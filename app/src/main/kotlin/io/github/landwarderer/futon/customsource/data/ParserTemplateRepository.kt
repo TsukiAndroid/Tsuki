@@ -85,30 +85,38 @@ class ParserTemplateRepository @Inject constructor(
     }
 
     private fun loadAll(): List<ParserTemplate> {
+        val prefsFile = context.applicationContext.filesDir.parent + "/shared_prefs/" + PREFS_NAME + ".xml"
+        val fileExists = java.io.File(prefsFile).exists()
         val json = prefs.getString(KEY_TEMPLATES, null)
+        Log.d("TsukiDebug", "PTR.loadAll: prefsFile=$prefsFile fileExistsOnDisk=$fileExists jsonIsNull=${json == null}")
         if (json == null) {
-            Log.d("USB-PTR", "loadAll: no saved templates (first launch or cleared data)")
+            Log.d("TsukiDebug", "PTR.loadAll: no templates in prefs (first launch or data cleared)")
             return emptyList()
         }
         return try {
             val array = JSONArray(json)
             val loaded = (0 until array.length()).map { i -> array.getJSONObject(i).toParserTemplate() }
-            Log.d("USB-PTR", "loadAll: restored ${loaded.size} template(s): ${loaded.map { it.name }}")
+            loaded.forEach { t ->
+                Log.d("TsukiDebug", "PTR.loadAll: found template name='${t.name}' id=${t.id} isEnabled=${t.isEnabled}")
+            }
+            Log.d("TsukiDebug", "PTR.loadAll: total loaded=${loaded.size}")
             loaded
         } catch (e: Exception) {
-            Log.e("USB-PTR", "loadAll: JSON parse failed, returning empty", e)
+            Log.e("TsukiDebug", "PTR.loadAll: JSON parse FAILED -- no templates available", e)
             emptyList()
         }
     }
 
     private fun saveAll(templates: List<ParserTemplate>) {
         val array = JSONArray(templates.map { it.toJson() })
-        prefs.edit().putString(KEY_TEMPLATES, array.toString()).apply()
-        Log.d("USB-PTR", "saveAll: persisted ${templates.size} template(s): ${templates.map { it.name }}")
-        // Verify the write landed
+        val committed = prefs.edit().putString(KEY_TEMPLATES, array.toString()).commit()
+        val prefsFile = context.applicationContext.filesDir.parent + "/shared_prefs/" + PREFS_NAME + ".xml"
+        templates.forEach { t ->
+            Log.d("TsukiDebug", "PTR.saveAll: template name='${t.name}' prefsFile=$prefsFile commitResult=$committed")
+        }
         val verify = prefs.getString(KEY_TEMPLATES, null)
-        if (verify == null) Log.e("USB-PTR", "saveAll: WRITE FAILED — prefs returned null immediately after apply()")
-        else Log.d("USB-PTR", "saveAll: write verified OK (${verify.length} bytes)")
+        val fileExists = java.io.File(prefsFile).exists()
+        Log.d("TsukiDebug", "PTR.saveAll: total=${templates.size} commit=$committed verifyRead=${verify != null} fileExistsOnDisk=$fileExists")
     }
 
     private fun JSONObject.toParserTemplate() = ParserTemplate(
@@ -150,8 +158,11 @@ class ParserTemplateRepository @Inject constructor(
          * of Hilt's dependency-injection graph and therefore cannot receive
          * [ParserTemplateRepository] as a constructor parameter.
          */
-        fun peekByName(name: String): ParserTemplate? =
-            INSTANCE?.getAll()?.find { it.name.equals(name, ignoreCase = true) }
+        fun peekByName(name: String): ParserTemplate? {
+            val result = INSTANCE?.getAll()?.find { it.name.equals(name, ignoreCase = true) }
+            Log.d("TsukiDebug", "PTR.peekByName: request='$name' found=${result != null} instanceReady=${INSTANCE != null} allNames=${INSTANCE?.getAll()?.map { it.name }}")
+            return result
+        }
 
         /** Returns true when [INSTANCE] has been initialised by Hilt. */
         fun instanceIsReady(): Boolean = INSTANCE != null

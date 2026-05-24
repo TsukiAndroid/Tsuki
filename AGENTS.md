@@ -631,3 +631,97 @@ Build #251 (`8ca6fd3`) is the last successful build from Session 2 (this session
      - `loadAll` logged it back after restart
      - `USB-Template` W tag is **never emitted** (means template was found)
   
+
+  ---
+
+  ## USB Fix Session — Part 4 (May 2026)
+
+  ### Bug: "Nothing Found" after restart — STILL occurring after Part 3 lazy→get() fix
+
+  **Root Cause 9 — ParserTemplateRepository.INSTANCE may be null at getList() time**
+
+  Even after changing `template` from `by lazy` to a plain `get()` property, the bug
+  persists. The underlying cause is an initialization-order race:
+
+  1. App restarts; Hilt initialises singletons lazily (on first injection request).
+  2. The source-list screen opens and immediately calls `CustomMangaRepository.getList()`.
+  3. At this moment nothing has yet injected `ParserTemplateRepository` — INSTANCE is null.
+  4. `TemplateHtmlParser.template` getter calls `peekByName(name)` → returns null.
+  5. `getList()` returns `emptyList()` → "Nothing found" shown.
+  6. The screen ViewMode caches the empty result; `getList()` is never retried.
+
+  The `get()` fix in Part 3 was necessary but not sufficient: it makes the getter
+  re-evaluate on every access, but the caller still caches the empty result after
+  the very first call.
+
+  **Fix: Eager injection of ParserTemplateRepository + CustomSourcesRepository in BaseApp**
+
+  Added two `@Inject` fields to `BaseApp`:
+
+  ```kotlin
+  @Inject lateinit var parserTemplateRepository: ParserTemplateRepository
+  @Inject lateinit var customSourcesRepository: CustomSourcesRepository
+  ```
+
+  Because `BaseApp.onCreate()` is called before any Activity or screen can open,
+  Hilt injects these singletons at app startup. Both `.INSTANCE` fields are set
+  before the source-list screen ever calls `getList()`, eliminating the race.
+
+  **Root Cause 10 — SharedPreferences.apply() is asynchronous (write-loss risk)**
+
+  Both repositories used `.apply()` which posts the disk write to a background
+  queue. If the Android OS kills the process before the queue drains (low-memory
+  pressure, ANR, crash), the template/source data is never written to disk.
+
+  **Fix:** Changed to `.commit()` in both `ParserTemplateRepository.saveAll()`
+  and `CustomSourcesRepository.saveAll()`. `.commit()` writes synchronously and
+  returns a boolean confirming success — the write is durable before the method returns.
+
+  ### TsukiDebug logging added (all 4 files)
+
+  Per user request, added `Log.d("TsukiDebug", ...)` at every critical point in
+  the persistence chain so logcat reveals exactly where the chain breaks:
+
+  | Tag | Location | What it logs |
+  |-----|----------|--------------|
+  | TsukiDebug | `PTR.loadAll` | Prefs XML file path, fileExists flag, template names + IDs on load |
+  | TsukiDebug | `PTR.saveAll` | Template name, prefs file path, commit() result, fileExists verify |
+  | TsukiDebug | `PTR.peekByName` | Requested name, found/not-found, INSTANCE state, all known names |
+  | TsukiDebug | `CSR.loadAll` | Every source: id, name, type, parserSourceName |
+  | TsukiDebug | `CSR.saveAll` | Every source: id, name, type, parserSourceName, commit() result |
+  | TsukiDebug | `CMR.getList` | Source name/type/parserSourceName; CUSTOM_TEMPLATE lookup result; proven-parser routing |
+  | TsukiDebug | `THP.getList` | parserSourceName, templateFound, sectionFound, endpoint, pagination, itemSelector |
+  | TsukiDebug | `BaseApp.onCreate` | Confirms repos are ready, total template count, total source count |
+
+  ### How to reproduce and use the logs
+
+  ```
+  adb logcat -s TsukiDebug
+  ```
+
+  **Expected on first use (no restart):**
+  ```
+  PTR.saveAll: template name='Manhwaread' commitResult=true fileExistsOnDisk=true
+  CSR.saveAll: id=... name='Manhwaread' type=CUSTOM_TEMPLATE parserSourceName=Manhwaread
+  CMR.getList: name='Manhwaread' type=CUSTOM_TEMPLATE parserSourceName=Manhwaread
+  PTR.peekByName: request='Manhwaread' found=true instanceReady=true
+  THP.getList: parserSourceName='Manhwaread' templateFound=true sectionFound=true
+  ```
+
+  **If bug still occurs after restart — what to look for:**
+  - `PTR.loadAll: jsonIsNull=true` → prefs file was never written (apply() lost it)
+  - `PTR.peekByName: found=false instanceReady=false` → INSTANCE null (eager init failed)
+  - `CMR.getList: CUSTOM_TEMPLATE lookup name='...' found=false` → name mismatch
+  - `CSR.loadAll: parserSourceName=null` → parserSourceName lost during serialization
+  - `THP.getList: templateFound=false sectionFound=false` → confirms nothing reached THP
+
+  ### Files changed in Part 4
+
+  | File | Change |
+  |------|--------|
+  | BaseApp.kt | Added `@Inject lateinit var parserTemplateRepository` + `customSourcesRepository` for eager init; `TsukiDebug` log in `onCreate()` |
+  | ParserTemplateRepository.kt | `apply()` → `commit()`; replaced USB-PTR logs with TsukiDebug; added file-path + fileExists logging; expanded peekByName() to log all details |
+  | CustomSourcesRepository.kt | `apply()` → `commit()`; replaced USB-CSR logs with TsukiDebug; logs all sources (not just CUSTOM_TEMPLATE) on load/save |
+  | CustomMangaRepository.kt | Added TsukiDebug log at start of `getList()`: source name/type/parserSourceName, CUSTOM_TEMPLATE template lookup, proven-parser routing |
+  | TemplateHtmlParser.kt | Added TsukiDebug log at start of `getList()`: parserSourceName, templateFound, sectionFound, endpoint, pagination, itemSelector |
+  
