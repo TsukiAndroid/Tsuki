@@ -1,3 +1,12 @@
+## Alpha 1.648 (Build [#261](https://github.com/Space4414/Tsuki/actions/runs/26348996819))
+
+_2026-05-24 01:52 UTC_
+
+- fix(usb): Part 4 -- TsukiDebug logging + eager init + synchronous writes (17cd2e3)
+- fix(usb): Part 3 fix2 -- correct Kotlin string interpolation in USB-Template log (4b9265c)
+- fix(usb): Part 3 -- fix persistence bug causing "Nothing Found" after restart (af0edcf)
+
+
 ## Alpha 1.646 (Build [#260](https://github.com/Space4414/Tsuki/actions/runs/26336938110))
 
 _2026-05-23 15:46 UTC_
