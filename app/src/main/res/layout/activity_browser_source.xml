@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:fitsSystemWindows="false"
+        app:liftOnScroll="false">
+
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="56dp"
+            android:paddingHorizontal="4dp">
+
+            <!-- Navigation row: close | back | forward | URL bar | refresh | adblock -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <!-- Close button -->
+                <ImageButton
+                    android:id="@+id/btn_close"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/close"
+                    android:src="@drawable/ic_close"
+                    android:tint="?attr/colorOnSurface" />
+
+                <!-- Back button -->
+                <ImageButton
+                    android:id="@+id/btn_back"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:alpha="0.4"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/browser_source_back"
+                    android:enabled="false"
+                    android:src="@drawable/ic_arrow_back"
+                    android:tint="?attr/colorOnSurface" />
+
+                <!-- Forward button -->
+                <ImageButton
+                    android:id="@+id/btn_forward"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:alpha="0.4"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/browser_source_forward"
+                    android:enabled="false"
+                    android:src="@drawable/ic_arrow_forward"
+                    android:tint="?attr/colorOnSurface" />
+
+                <!-- URL bar -->
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/url_bar"
+                    android:layout_width="0dp"
+                    android:layout_height="36dp"
+                    android:layout_marginHorizontal="4dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_url_bar"
+                    android:imeOptions="actionGo|flagNoExtractUi"
+                    android:inputType="textUri|textNoSuggestions"
+                    android:maxLines="1"
+                    android:paddingHorizontal="12dp"
+                    android:singleLine="true"
+                    android:textSize="13sp"
+                    tools:text="https://mangadex.org" />
+
+                <!-- Refresh button -->
+                <ImageButton
+                    android:id="@+id/btn_refresh"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/browser_source_refresh"
+                    android:src="@drawable/ic_refresh"
+                    android:tint="?attr/colorOnSurface" />
+
+                <!-- Ad blocker toggle -->
+                <ImageButton
+                    android:id="@+id/btn_adblock"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/browser_source_adblock_toggle"
+                    android:src="@drawable/ic_shield"
+                    android:tint="?attr/colorPrimary" />
+
+            </LinearLayout>
+        </androidx.appcompat.widget.Toolbar>
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <WebView
+        android:id="@+id/web_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior" />
+
+    <com.google.android.material.progressindicator.LinearProgressIndicator
+        android:id="@+id/progress_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:indeterminate="false"
+        android:visibility="gone"
+        app:layout_anchor="@id/appbar"
+        app:layout_anchorGravity="bottom"
+        app:trackCornerRadius="0dp"
+        tools:visibility="visible" />
+
+    <!-- FAB: Open in Tsuki Reader (shown on chapter pages) -->
+    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+        android:id="@+id/fab_open_reader"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="16dp"
+        android:contentDescription="@string/webview_open_in_reader"
+        android:text="@string/webview_open_in_reader"
+        android:visibility="gone"
+        app:icon="@drawable/ic_book_open"
+        tools:visibility="visible" />
+
+    <!-- FAB: Add to Library / Already in library hint (shown on manga detail pages) -->
+    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+        android:id="@+id/fab_add_to_library"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|start"
+        android:layout_margin="16dp"
+        android:contentDescription="@string/webview_add_to_library"
+        android:text="@string/webview_source_already_in_library"
+        android:visibility="gone"
+        app:icon="@drawable/ic_bookmark"
+        tools:visibility="visible" />
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

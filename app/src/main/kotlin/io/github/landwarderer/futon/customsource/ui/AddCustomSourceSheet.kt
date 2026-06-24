@@ -229,7 +229,8 @@ class AddCustomSourceSheet : BottomSheetDialogFragment() {
                 it != CustomSourceType.KOTATSU_PARSER &&
                     it != CustomSourceType.CUSTOM_TEMPLATE &&
                     it != CustomSourceType.BATO &&
-                    it != CustomSourceType.MANGAPARK
+                    it != CustomSourceType.MANGAPARK &&
+                    it != CustomSourceType.BROWSER_SOURCE
             }
             .forEach { list.add(ParserEntry.BuiltIn(it)) }
         if (templates.isNotEmpty()) {

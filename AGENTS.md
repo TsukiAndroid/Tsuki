@@ -725,3 +725,52 @@ Build #251 (`8ca6fd3`) is the last successful build from Session 2 (this session
   | CustomMangaRepository.kt | Added TsukiDebug log at start of `getList()`: source name/type/parserSourceName, CUSTOM_TEMPLATE template lookup, proven-parser routing |
   | TemplateHtmlParser.kt | Added TsukiDebug log at start of `getList()`: parserSourceName, templateFound, sectionFound, endpoint, pagination, itemSelector |
   
+---
+
+## Session 3 (June 24 2026) — BROWSER_SOURCE source type
+
+### Feature added
+A new `CustomSourceType.BROWSER_SOURCE` that gives users a full in-app browser for
+any manga website, with chapter detection, reading history, favicon auto-fetch, and
+cookie/session persistence. Does **not** touch any existing source type.
+
+### New files
+
+| File | Purpose |
+|---|---|
+| `app/src/main/kotlin/.../browsersource/data/BrowserSourceRepository.kt` | SharedPreferences persistence for last URL, scroll position, per-source history. Cookies handled automatically by Android CookieManager. |
+| `app/src/main/kotlin/.../browsersource/data/BrowserSourceChapterDetector.kt` | URL-pattern + image-count heuristics; JS snippets for image extraction, og:title/image, read-chapter CSS marking. No dependency injection needed — pure `object`. |
+| `app/src/main/kotlin/.../browsersource/data/BrowserSourceHistoryTracker.kt` | Singleton Hilt service that records and marks chapters as read. Delegates persistence to BrowserSourceRepository. |
+| `app/src/main/kotlin/.../browsersource/ui/BrowserSourceActivity.kt` | Full in-app browser: URL bar + back/forward/refresh/adblock toolbar, WebView with AdBlock integration, chapter-detection FAB "📖 Open in Tsuki Reader", scroll persistence, last-URL resume. |
+| `app/src/main/kotlin/.../browsersource/ui/ProgressChromeClient.kt` | Drives LinearProgressIndicator from WebChromeClient.onProgressChanged. |
+| `app/src/main/kotlin/.../browsersource/ui/AddBrowserSourceSheet.kt` | BottomSheetDialogFragment: URL input → favicon auto-fetch (3 strategies + letter-avatar fallback using Jsoup) → preview → save. |
+| `app/src/main/res/layout/activity_browser_source.xml` | CoordinatorLayout: AppBarLayout toolbar + WebView + LinearProgressIndicator + two ExtendedFABs. |
+| `app/src/main/res/layout/sheet_add_browser_source.xml` | Bottom sheet layout for AddBrowserSourceSheet. |
+| `app/src/main/res/menu/opt_browser_source.xml` | Options menu for BrowserSourceActivity overflow. |
+| `app/src/main/res/drawable/ic_browser_source.xml` | Globe icon for browser sources. |
+| `app/src/main/res/drawable/ic_refresh.xml` | Refresh icon. |
+| `app/src/main/res/drawable/ic_shield.xml` | Shield icon for ad-block toggle. |
+| `app/src/main/res/drawable/ic_book_open.xml` | Book-open icon for "Open in Reader" FAB. |
+| `app/src/main/res/drawable/ic_arrow_back.xml` | Back navigation arrow. |
+| `app/src/main/res/drawable/bg_url_bar.xml` | Rounded rectangle background for URL bar. |
+
+### Modified files
+
+| File | Change |
+|---|---|
+| `customsource/domain/CustomSource.kt` | Added `BROWSER_SOURCE("Browser Source")` to `CustomSourceType` enum (before WEBVIEW). |
+| `explore/ui/ExploreFragment.kt` | Added `BROWSER_SOURCE` branch in `onItemClick`: launches `BrowserSourceActivity`. |
+| `explore/ui/ExploreMenuProvider.kt` | Added `R.id.action_add_browser_source` case: shows `AddBrowserSourceSheet`. |
+| `res/menu/opt_explore.xml` | Added `action_add_browser_source` menu item. |
+| `AndroidManifest.xml` | Registered `BrowserSourceActivity`. |
+| `customsource/ui/AddCustomSourceSheet.kt` | Excluded `BROWSER_SOURCE` from type dropdown (same pattern as KOTATSU_PARSER). |
+| `res/values/strings.xml` | Added 18 new string resources for the browser source feature. |
+
+### Key design decisions
+- **No new parser infrastructure** — BROWSER_SOURCE is explicitly excluded from `AddCustomSourceSheet` type picker. Users add browser sources exclusively via `AddBrowserSourceSheet` from the Explore overflow menu.
+- **Favicon fetching** uses three strategies: `favicon.ico` direct HEAD → `<link rel="icon">` via Jsoup → Google favicon service fallback. Letter-avatar shown if all fail.
+- **Cookie persistence** is automatic via Android's `CookieManager` — no serialization needed.
+- **AdBlock integration** reuses existing `AdBlock.shouldLoadUrl()` from `io.github.landwarderer.futon.core.network.webview.adblock`.
+- **Chapter detection** is multi-strategy: URL pattern first, then image-count heuristic from `shouldInterceptRequest`, then JavaScript image collection on page load.
+- **Read chapters** are marked with a CSS `✓` overlay injected via JavaScript on manga detail pages.
+

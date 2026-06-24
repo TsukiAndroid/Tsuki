@@ -26,4 +26,9 @@
                 android:title="@string/ext_extensions"
                 android:titleCondensed="@string/ext_extensions_short" />
 
+        <item
+                android:id="@+id/action_add_browser_source"
+                android:title="@string/add_browser_source"
+                android:titleCondensed="@string/browser_source" />
+
 </menu>

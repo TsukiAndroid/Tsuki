@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/action_browser_source_adblock"
+        android:title="@string/browser_source_adblock_toggle" />
+
+    <item
+        android:id="@+id/action_browser_source_js"
+        android:title="@string/webview_js_title" />
+
+    <item
+        android:id="@+id/action_browser_source_desktop"
+        android:title="@string/webview_desktop_mode" />
+
+    <item
+        android:id="@+id/action_browser_source_open_external"
+        android:title="@string/browser_source_open_external" />
+
+    <item
+        android:id="@+id/action_browser_source_clear_cookies"
+        android:title="@string/browser_source_clear_cookies" />
+
+    <item
+        android:id="@+id/action_browser_source_history"
+        android:title="@string/browser_source_view_history" />
+
+</menu>

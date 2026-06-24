@@ -49,6 +49,7 @@ import io.github.landwarderer.futon.list.ui.model.ListHeader
 import org.koitharu.kotatsu.parsers.model.Manga
 import org.koitharu.kotatsu.parsers.model.MangaParserSource
 import io.github.landwarderer.futon.customsource.domain.CustomMangaSource
+import io.github.landwarderer.futon.browsersource.ui.BrowserSourceActivity
 import io.github.landwarderer.futon.customsource.domain.CustomSourceType
 
 @AndroidEntryPoint
@@ -166,6 +167,16 @@ class ExploreFragment :
                         return
                 }
                 val mangaSource = item.source.mangaSource
+                if (mangaSource is CustomMangaSource && mangaSource.source.type == CustomSourceType.BROWSER_SOURCE) {
+                        val intent = BrowserSourceActivity.createIntent(
+                                requireContext(),
+                                mangaSource.source.id,
+                                mangaSource.source.displayName,
+                                mangaSource.source.cleanBaseUrl,
+                        )
+                        startActivity(intent)
+                        return
+                }
                 if (mangaSource is CustomMangaSource && mangaSource.source.type == CustomSourceType.WEBVIEW) {
                         router.openBrowser(mangaSource.source.cleanBaseUrl, mangaSource, mangaSource.displayTitle)
                         return

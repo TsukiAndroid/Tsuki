@@ -225,6 +225,12 @@
                         android:name="io.github.landwarderer.futon.settings.storage.directories.MangaDirectoriesActivity"
                         android:label="@string/local_manga_directories" />
                 <activity
+                        android:name="io.github.landwarderer.futon.browsersource.ui.BrowserSourceActivity"
+                        android:configChanges="orientation|screenSize|keyboardHidden"
+                        android:exported="false"
+                        android:windowSoftInputMode="adjustResize" />
+
+                <activity
                         android:name="io.github.landwarderer.futon.browser.BrowserActivity"
                         android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
                         android:windowSoftInputMode="adjustResize" />

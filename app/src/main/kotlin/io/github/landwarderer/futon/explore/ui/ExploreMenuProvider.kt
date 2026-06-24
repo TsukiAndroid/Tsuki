@@ -8,6 +8,7 @@ import androidx.fragment.app.FragmentManager
 import io.github.landwarderer.futon.R
 import io.github.landwarderer.futon.core.nav.AppRouter
 import io.github.landwarderer.futon.customsource.ui.AddCustomSourceSheet
+import io.github.landwarderer.futon.browsersource.ui.AddBrowserSourceSheet
 import io.github.landwarderer.futon.customsource.ui.ImportParserSheet
 class ExploreMenuProvider(
         private val router: AppRouter,
@@ -45,6 +46,12 @@ class ExploreMenuProvider(
 
                         R.id.action_manage_extensions -> {
                                 router.openExtensions()
+                                true
+                        }
+
+                        R.id.action_add_browser_source -> {
+                                AddBrowserSourceSheet.newInstance()
+                                        .show(fragmentManager, AddBrowserSourceSheet.TAG)
                                 true
                         }
 

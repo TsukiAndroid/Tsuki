@@ -327,6 +327,15 @@ enum class CustomSourceType(val label: String) {
      */
     ANIMEBOOTSTRAP("AnimeBootstrap Theme"),
 
+    /**
+     * A full in-app browser source. The user enters any manga website URL and
+     * the app opens it in a built-in browser with chapter detection, favicon,
+     * reading history, and login-session persistence.
+     * Unlike WEBVIEW, each BROWSER_SOURCE entry has its own favicon and
+     * persistent cookies stored per site.
+     */
+    BROWSER_SOURCE("Browser Source"),
+
     /** Any website opened in a WebView — user navigates manually (no parsing) */
     WEBVIEW("Web Browser (Manual)"),
 
