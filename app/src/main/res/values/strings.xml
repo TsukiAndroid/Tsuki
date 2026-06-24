@@ -1371,8 +1371,8 @@
 
       <!-- Universal Source auto-detect -->
       <string name="universal_source_auto_detect_btn">Auto-detect selectors</string>
-      <string name="universal_source_auto_detecting">Analyzing website\u2026</string>
-      <string name="universal_source_auto_detect_done">\u2713 Selectors detected — review fields below, then tap Create.</string>
+      <string name="universal_source_auto_detecting">Analyzing website…</string>
+      <string name="universal_source_auto_detect_done">✓ Selectors detected — review fields below, then tap Create.</string>
       <string name="universal_source_create_btn">Create Source</string>
 
   
