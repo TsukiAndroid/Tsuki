@@ -12,6 +12,9 @@ import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import coil3.ImageLoader
 import coil3.request.ImageRequest
+import coil3.request.error
+import coil3.request.placeholder
+import coil3.request.transformations
 import coil3.transform.CircleCropTransformation
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.button.MaterialButton
