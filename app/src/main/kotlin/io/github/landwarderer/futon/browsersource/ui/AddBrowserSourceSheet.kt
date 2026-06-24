@@ -15,6 +15,7 @@ import coil3.request.ImageRequest
 import coil3.request.error
 import coil3.request.placeholder
 import coil3.request.transformations
+import coil3.target.ImageViewTarget
 import coil3.transform.CircleCropTransformation
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.button.MaterialButton
@@ -106,7 +107,7 @@ class AddBrowserSourceSheet : BottomSheetDialogFragment() {
                             .placeholder(R.drawable.ic_browser_source)
                             .error(R.drawable.ic_browser_source)
                             .transformations(CircleCropTransformation())
-                            .target(faviconImage)
+                            .target(ImageViewTarget(faviconImage))
                             .build()
                         imageLoader.enqueue(request)
                     } else {
