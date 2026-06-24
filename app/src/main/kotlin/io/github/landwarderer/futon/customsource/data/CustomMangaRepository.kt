@@ -234,6 +234,7 @@ import org.json.JSONObject
               CustomSourceType.GATTSU                -> runCatching { gattsuParser.getList(offset, order, filter) }.getOrElse { emptyList() }
               CustomSourceType.ANIMEBOOTSTRAP        -> runCatching { animeBootstrapParser.getList(offset, order, filter) }.getOrElse { emptyList() }
               CustomSourceType.CUSTOM_TEMPLATE       -> runCatching { templateParser.getList(offset, order, filter) }.getOrElse { emptyList() }
+              CustomSourceType.BROWSER_SOURCE        -> emptyList()
               CustomSourceType.KOTATSU_PARSER        -> emptyList()
           }
       }

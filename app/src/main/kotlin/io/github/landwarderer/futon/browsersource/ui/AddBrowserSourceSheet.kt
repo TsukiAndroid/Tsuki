@@ -10,7 +10,9 @@ import android.view.ViewGroup
 import android.webkit.URLUtil
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
-import com.bumptech.glide.Glide
+import coil3.ImageLoader
+import coil3.request.ImageRequest
+import coil3.transform.CircleCropTransformation
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
@@ -39,6 +41,7 @@ import javax.inject.Inject
 class AddBrowserSourceSheet : BottomSheetDialogFragment() {
 
     @Inject lateinit var customSourcesRepository: CustomSourcesRepository
+    @Inject lateinit var imageLoader: ImageLoader
 
     private var faviconFetchJob: Job? = null
     private var fetchedFaviconUrl: String? = null
@@ -95,12 +98,14 @@ class AddBrowserSourceSheet : BottomSheetDialogFragment() {
                     fetchedFaviconUrl = faviconUrl
 
                     if (faviconUrl != null) {
-                        Glide.with(this@AddBrowserSourceSheet)
-                            .load(faviconUrl)
+                        val request = ImageRequest.Builder(requireContext())
+                            .data(faviconUrl)
                             .placeholder(R.drawable.ic_browser_source)
                             .error(R.drawable.ic_browser_source)
-                            .circleCrop()
-                            .into(faviconImage)
+                            .transformations(CircleCropTransformation())
+                            .target(faviconImage)
+                            .build()
+                        imageLoader.enqueue(request)
                     } else {
                         // Show letter avatar
                         showLetterAvatar(faviconImage, domain)
