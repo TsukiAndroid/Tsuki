@@ -1389,8 +1389,8 @@
     <string name="browser_source_url_invalid">Please enter a valid URL</string>
     <string name="browser_source_duplicate">This site is already added</string>
     <string name="browser_source_added">Browser source added</string>
-    <string name="browser_source_preview_hint">Tap 'Add' to save this browser source</string>
-    <string name="browser_source_help_text">Opens this site in a full in-app browser. When a chapter is detected, a button appears to open pages in Tsuki's native reader.</string>
+    <string name="browser_source_preview_hint">Tap \'Add\' to save this browser source</string>
+    <string name="browser_source_help_text">Opens this site in a full in-app browser. When a chapter is detected, a button appears to open pages in Tsuki\'s native reader.</string>
     <string name="browser_source_favicon_desc">Site icon</string>
     <string name="browser_source_already_added_hint">This source is already in your library</string>
     <string name="browser_source_adblock_toggle">Toggle Ad Blocker</string>
