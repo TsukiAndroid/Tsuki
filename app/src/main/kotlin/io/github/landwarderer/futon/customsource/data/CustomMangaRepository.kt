@@ -7,7 +7,8 @@ package io.github.landwarderer.futon.customsource.data
   import okhttp3.OkHttpClient
   import okhttp3.Request
   import org.json.JSONArray
-  import org.json.JSONObject
+  import io.github.landwarderer.futon.browsersource.data.BrowserSourcePageStore
+import org.json.JSONObject
   import org.koitharu.kotatsu.parsers.model.ContentRating
   import org.koitharu.kotatsu.parsers.model.Manga
   import org.koitharu.kotatsu.parsers.model.MangaChapter
@@ -344,6 +345,7 @@ package io.github.landwarderer.futon.customsource.data
               CustomSourceType.GATTSU                -> runCatching { gattsuParser.getPages(chapter) }.getOrElse { emptyList() }
               CustomSourceType.ANIMEBOOTSTRAP        -> runCatching { animeBootstrapParser.getPages(chapter) }.getOrElse { emptyList() }
               CustomSourceType.CUSTOM_TEMPLATE       -> runCatching { templateParser.getPages(chapter) }.getOrElse { emptyList() }
+              CustomSourceType.BROWSER_SOURCE         -> BrowserSourcePageStore.getAndClear(chapter.id)
               else                                   -> emptyList()
           }
       }

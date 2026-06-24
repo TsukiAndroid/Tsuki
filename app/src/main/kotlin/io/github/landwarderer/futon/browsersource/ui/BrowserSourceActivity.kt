@@ -5,7 +5,6 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.os.Bundle
 import android.view.KeyEvent
-import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.webkit.CookieManager
@@ -15,25 +14,28 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.net.toUri
 import androidx.core.view.isVisible
-import androidx.lifecycle.lifecycleScope
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.landwarderer.futon.R
 import io.github.landwarderer.futon.browser.webview.WebViewSettingsManager
 import io.github.landwarderer.futon.browsersource.data.BrowserSourceChapterDetector
 import io.github.landwarderer.futon.browsersource.data.BrowserSourceHistoryTracker
+import io.github.landwarderer.futon.browsersource.data.BrowserSourcePageStore
 import io.github.landwarderer.futon.browsersource.data.BrowserSourceRepository
+import io.github.landwarderer.futon.core.model.parcelable.ParcelableManga
+import io.github.landwarderer.futon.core.nav.ReaderIntent
+import io.github.landwarderer.futon.core.nav.router
 import io.github.landwarderer.futon.core.network.webview.adblock.AdBlock
 import io.github.landwarderer.futon.customsource.data.CustomSourcesRepository
 import io.github.landwarderer.futon.customsource.domain.CustomMangaSource
 import io.github.landwarderer.futon.databinding.ActivityBrowserSourceBinding
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import org.koitharu.kotatsu.parsers.model.ContentRating
+import org.koitharu.kotatsu.parsers.model.Manga
+import org.koitharu.kotatsu.parsers.model.MangaChapter
+import org.koitharu.kotatsu.parsers.model.MangaPage
+import org.koitharu.kotatsu.parsers.model.MangaState
 import javax.inject.Inject
 
 /**
@@ -43,7 +45,8 @@ import javax.inject.Inject
  *  - URL bar with back / forward / refresh navigation
  *  - Ad blocker integration (reuses [AdBlock] singleton)
  *  - Chapter detection → "📖 Open in Tsuki Reader" FAB
- *  - Manga detail detection → "🌙 Add to Library" FAB (dismiss-only; source already added)
+ *  - Pages extracted from WebView → stored in [BrowserSourcePageStore] →
+ *    [CustomMangaRepository] serves them to [ReaderActivity] on demand
  *  - Reading history tracked via [BrowserSourceHistoryTracker]
  *  - Last-visited URL and scroll position persisted via [BrowserSourceRepository]
  *  - Cookie persistence is automatic via Android's [CookieManager]
@@ -63,11 +66,10 @@ class BrowserSourceActivity : AppCompatActivity() {
     private var sourceName: String = ""
     private var baseUrl: String = ""
 
-    // Metadata extracted from the current page
+    // Metadata extracted from the current page (og: tags)
     private var currentPageTitle: String = ""
     private var currentPageCover: String? = null
 
-    // Back-press handler that navigates WebView history before finishing
     private val webViewBackCallback = object : OnBackPressedCallback(true) {
         override fun handleOnBackPressed() {
             if (binding.webView.canGoBack()) {
@@ -94,7 +96,6 @@ class BrowserSourceActivity : AppCompatActivity() {
         setupWebView()
         setupFabs()
 
-        // Enable cookie persistence
         CookieManager.getInstance().setAcceptCookie(true)
         CookieManager.getInstance().setAcceptThirdPartyCookies(binding.webView, true)
 
@@ -112,57 +113,39 @@ class BrowserSourceActivity : AppCompatActivity() {
         setSupportActionBar(binding.toolbar)
         supportActionBar?.setDisplayShowTitleEnabled(false)
 
-        binding.btnBack.setOnClickListener {
-            if (binding.webView.canGoBack()) binding.webView.goBack()
-        }
-        binding.btnForward.setOnClickListener {
-            if (binding.webView.canGoForward()) binding.webView.goForward()
-        }
-        binding.btnRefresh.setOnClickListener {
-            binding.webView.reload()
-        }
-        binding.btnClose.setOnClickListener {
-            finish()
-        }
+        binding.btnBack.setOnClickListener { if (binding.webView.canGoBack()) binding.webView.goBack() }
+        binding.btnForward.setOnClickListener { if (binding.webView.canGoForward()) binding.webView.goForward() }
+        binding.btnRefresh.setOnClickListener { binding.webView.reload() }
+        binding.btnClose.setOnClickListener { finish() }
 
-        // Ad blocker toggle button
-        updateAdBlockIcon()
+        updateAdblockIcon()
         binding.btnAdblock.setOnClickListener {
             val newState = !webViewSettings.isAdBlockEnabled
             webViewSettings.isAdBlockEnabled = newState
-            updateAdBlockIcon()
+            updateAdblockIcon()
             val msgRes = if (newState) R.string.webview_adblock_toggled_on
                          else R.string.webview_adblock_toggled_off
             Snackbar.make(binding.webView, msgRes, Snackbar.LENGTH_SHORT).show()
         }
 
-        // URL bar: tap to focus and edit
         binding.urlBar.setOnEditorActionListener { _, actionId, event ->
             if (actionId == EditorInfo.IME_ACTION_GO ||
                 (event?.keyCode == KeyEvent.KEYCODE_ENTER && event.action == KeyEvent.ACTION_DOWN)
             ) {
                 val typed = binding.urlBar.text?.toString().orEmpty().trim()
-                val url = if (typed.startsWith("http://") || typed.startsWith("https://")) {
-                    typed
-                } else {
-                    "https://$typed"
-                }
+                val url = if (typed.startsWith("http://") || typed.startsWith("https://")) typed
+                          else "https://$typed"
                 loadUrl(url)
                 hideKeyboard()
                 true
             } else false
         }
 
-        binding.urlBar.setOnFocusChangeListener { _, hasFocus ->
-            if (hasFocus) {
-                binding.urlBar.selectAll()
-            }
-        }
+        binding.urlBar.setOnFocusChangeListener { _, hasFocus -> if (hasFocus) binding.urlBar.selectAll() }
     }
 
-    private fun updateAdBlockIcon() {
-        val alpha = if (webViewSettings.isAdBlockEnabled) 255 else 100
-        binding.btnAdblock.imageAlpha = alpha
+    private fun updateAdblockIcon() {
+        binding.btnAdblock.imageAlpha = if (webViewSettings.isAdBlockEnabled) 255 else 100
     }
 
     private fun updateNavButtons() {
@@ -184,10 +167,7 @@ class BrowserSourceActivity : AppCompatActivity() {
             displayZoomControls = false
             loadWithOverviewMode = true
             useWideViewPort = true
-            val resolvedUa = webViewSettings.resolvedUserAgent()
-            if (resolvedUa != null) {
-                userAgentString = resolvedUa
-            }
+            webViewSettings.resolvedUserAgent()?.let { userAgentString = it }
         }
 
         binding.webView.webChromeClient = ProgressChromeClient(binding.progressBar)
@@ -198,18 +178,14 @@ class BrowserSourceActivity : AppCompatActivity() {
                 view: WebView,
                 request: WebResourceRequest,
             ): WebResourceResponse? {
-                // Ad blocking
                 if (webViewSettings.isAdBlockEnabled) {
-                    val reqUrl = request.url.toString()
-                    val pageUrlStr = view.url
-                    if (!adBlock.shouldLoadUrl(reqUrl, pageUrlStr)) {
+                    if (!adBlock.shouldLoadUrl(request.url.toString(), view.url)) {
                         return WebResourceResponse("text/plain", "utf-8", null)
                     }
                 }
-                // Image-count heuristic for chapter detection
                 val pageUrl = view.url ?: ""
                 if (BrowserSourceChapterDetector.onResourceRequest(pageUrl, request)) {
-                    runOnUiThread { showFabOpenReader() }
+                    runOnUiThread { maybeShowOpenReaderFab() }
                 }
                 return null
             }
@@ -233,31 +209,26 @@ class BrowserSourceActivity : AppCompatActivity() {
                     binding.urlBar.setText(pageUrl)
                     updateNavButtons()
 
-                    // Persist last URL
                     if (sourceId != -1L) {
                         browserSourceRepository.saveLastUrl(sourceId, pageUrl)
                     }
 
-                    // Restore scroll position
                     val savedScroll = browserSourceRepository.getScrollPosition(sourceId, pageUrl)
                     if (savedScroll > 0) {
                         view.evaluateJavascript("window.scrollTo(0, $savedScroll);", null)
                     }
 
-                    // Determine which FABs to show based on URL pattern
                     when {
-                        BrowserSourceChapterDetector.isChapterUrl(pageUrl) -> showFabOpenReader()
-                        BrowserSourceChapterDetector.isDetailUrl(pageUrl) -> binding.fabAddToLibrary.show()
+                        BrowserSourceChapterDetector.isChapterUrl(pageUrl) -> maybeShowOpenReaderFab()
+                        BrowserSourceChapterDetector.isDetailUrl(pageUrl)  -> binding.fabAddToLibrary.show()
                     }
 
-                    // Extract page metadata (og:title, og:image)
                     view.evaluateJavascript(BrowserSourceChapterDetector.GET_PAGE_META_JS) { json ->
                         val (title, coverUrl, _) = BrowserSourceChapterDetector.parseMetaJson(json)
                         currentPageTitle = title.ifBlank { view.title ?: "" }
                         currentPageCover = coverUrl.takeIf { it.isNotEmpty() }
                     }
 
-                    // Inject read-chapter markers when on a detail page
                     if (BrowserSourceChapterDetector.isDetailUrl(pageUrl) && sourceId != -1L) {
                         val readUrls = historyTracker.getReadUrls(sourceId)
                         if (readUrls.isNotEmpty()) {
@@ -267,7 +238,6 @@ class BrowserSourceActivity : AppCompatActivity() {
                         }
                     }
 
-                    // Flush cookies to disk
                     CookieManager.getInstance().flush()
                 }
             }
@@ -284,7 +254,6 @@ class BrowserSourceActivity : AppCompatActivity() {
     private fun setupFabs() {
         binding.fabOpenReader.setOnClickListener { openInNativeReader() }
         binding.fabAddToLibrary.setOnClickListener {
-            // The source is already added — just dismiss this FAB
             binding.fabAddToLibrary.hide()
             Snackbar.make(
                 binding.webView,
@@ -294,68 +263,104 @@ class BrowserSourceActivity : AppCompatActivity() {
         }
     }
 
-    private fun showFabOpenReader() {
+    private fun maybeShowOpenReaderFab() {
         if (webViewSettings.isOpenInReaderPromptEnabled) {
             binding.fabOpenReader.show()
         }
     }
 
+    // ── Reader integration ────────────────────────────────────────────────────
+
     private fun openInNativeReader() {
         binding.webView.evaluateJavascript(BrowserSourceChapterDetector.COLLECT_IMAGES_JS) { jsonResult ->
-            val urls = BrowserSourceChapterDetector.parseImageUrls(jsonResult)
-            if (urls.isEmpty()) {
+            val imageUrls = BrowserSourceChapterDetector.parseImageUrls(jsonResult)
+            if (imageUrls.isEmpty()) {
                 Toast.makeText(this, R.string.webview_no_images_found, Toast.LENGTH_SHORT).show()
                 return@evaluateJavascript
             }
-            val chapterUrl = binding.webView.url ?: ""
-            val pageTitle = currentPageTitle.ifBlank { binding.webView.title ?: "Chapter" }
 
-            // Record history
+            val chapterUrl = binding.webView.url ?: return@evaluateJavascript
+            val pageTitle  = currentPageTitle.ifBlank { binding.webView.title ?: "Chapter" }
+
+            // Stable ID derived from the chapter URL
+            val chapterId = chapterUrl.hashCode().toLong()
+            val mangaId   = (baseUrl + "_browser").hashCode().toLong()
+
+            // Look up the CustomSource so we can pass the correct MangaSource
+            val customSource = customSourcesRepository.findById(sourceId)
+                ?.let { CustomMangaSource(it) }
+                ?: return@evaluateJavascript
+
+            // Convert image URLs → MangaPage objects
+            val pages: List<MangaPage> = imageUrls.mapIndexed { i, url ->
+                MangaPage(
+                    id      = chapterId * 1000L + i,
+                    url     = url,
+                    preview = null,
+                    source  = customSource,
+                )
+            }
+
+            // Stash pages so CustomMangaRepository.getPages() can serve them
+            BrowserSourcePageStore.put(chapterId, pages)
+
+            // Build synthetic MangaChapter
+            val chapter = MangaChapter(
+                id          = chapterId,
+                title       = pageTitle,
+                number      = 1f,
+                volume      = 0,
+                url         = chapterUrl,
+                scanlator   = null,
+                uploadDate  = 0L,
+                branch      = null,
+                source      = customSource,
+            )
+
+            // Build synthetic Manga carrying the chapter list
+            val manga = Manga(
+                id            = mangaId,
+                title         = sourceName.ifBlank { pageTitle },
+                altTitles     = emptySet(),
+                url           = chapterUrl,
+                publicUrl     = chapterUrl,
+                rating        = 0f,
+                contentRating = ContentRating.SAFE,
+                coverUrl      = currentPageCover ?: "",
+                tags          = emptySet(),
+                state         = MangaState.ONGOING,
+                authors       = emptySet(),
+                largeCoverUrl = currentPageCover,
+                description   = null,
+                chapters      = listOf(chapter),
+                source        = customSource,
+            )
+
+            // Record in reading history
             if (sourceId != -1L) {
                 historyTracker.recordChapterOpened(
-                    sourceId = sourceId,
-                    sourceName = sourceName,
-                    chapterUrl = chapterUrl,
-                    mangaTitle = pageTitle,
+                    sourceId      = sourceId,
+                    sourceName    = sourceName,
+                    chapterUrl    = chapterUrl,
+                    mangaTitle    = pageTitle,
                     mangaCoverUrl = currentPageCover,
-                    chapterTitle = pageTitle,
+                    chapterTitle  = pageTitle,
                 )
                 historyTracker.markRead(sourceId, chapterUrl)
             }
 
-            // Open in Tsuki's native reader via intent
-            val readerIntent = buildReaderIntent(urls, pageTitle, sourceId)
-            if (readerIntent != null) {
-                startActivity(readerIntent)
-            } else {
-                Toast.makeText(this, R.string.webview_reader_opened, Toast.LENGTH_SHORT).show()
-            }
+            // Open the native reader
+            val readerIntent = ReaderIntent.Builder(this)
+                .manga(manga)
+                .build()
+            router.openReader(readerIntent)
         }
-    }
-
-    /**
-     * Builds an intent to open the native MangaReader with a list of image URLs.
-     * Uses the deep-link / extra-based contract that Tsuki's ReaderActivity accepts.
-     */
-    private fun buildReaderIntent(imageUrls: List<String>, title: String, srcId: Long): Intent? {
-        return runCatching {
-            val sourceName = CustomMangaSource.NAME_PREFIX + srcId
-            // ReaderActivity accepts a BROWSER_SOURCE chapter via a specific Intent contract.
-            // We pass the image URLs as a string array extra.
-            Intent("io.github.landwarderer.futon.OPEN_BROWSER_CHAPTER").apply {
-                setPackage(packageName)
-                putExtra("image_urls", imageUrls.toTypedArray())
-                putExtra("title", title)
-                putExtra("source_name", sourceName)
-            }
-        }.getOrNull()
     }
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
     override fun onPause() {
         binding.webView.onPause()
-        // Save scroll position
         val currentUrl = binding.webView.url
         if (!currentUrl.isNullOrEmpty() && sourceId != -1L) {
             binding.webView.evaluateJavascript("window.scrollY") { scrollY ->
@@ -391,9 +396,9 @@ class BrowserSourceActivity : AppCompatActivity() {
     // ── Companion ─────────────────────────────────────────────────────────────
 
     companion object {
-        const val KEY_SOURCE_ID = "browser_source_id"
+        const val KEY_SOURCE_ID   = "browser_source_id"
         const val KEY_SOURCE_NAME = "browser_source_name"
-        const val KEY_BASE_URL = "browser_source_url"
+        const val KEY_BASE_URL    = "browser_source_url"
 
         fun createIntent(
             context: Context,
