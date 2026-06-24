@@ -10,6 +10,7 @@ import io.github.landwarderer.futon.core.nav.AppRouter
 import io.github.landwarderer.futon.customsource.ui.AddCustomSourceSheet
 import io.github.landwarderer.futon.browsersource.ui.AddBrowserSourceSheet
 import io.github.landwarderer.futon.customsource.ui.ImportParserSheet
+import io.github.landwarderer.futon.customsource.ui.visualpicker.VisualRuleBuilderActivity
 class ExploreMenuProvider(
         private val router: AppRouter,
         private val fragmentManager: FragmentManager,

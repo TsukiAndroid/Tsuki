@@ -19,6 +19,7 @@ package io.github.landwarderer.futon.customsource.ui
   import io.github.landwarderer.futon.customsource.data.SiteAutoDetector
   import io.github.landwarderer.futon.customsource.data.SiteAutoDetector.Confidence
   import io.github.landwarderer.futon.databinding.ActivityUniversalSourceBinding
+import io.github.landwarderer.futon.customsource.ui.visualpicker.VisualRuleBuilderActivity
 
   /**
    * Form-based "Universal Source" wizard.
@@ -54,6 +55,15 @@ package io.github.landwarderer.futon.customsource.ui
               viewModel.autoDetect(binding.editBaseUrl.text?.toString().orEmpty())
           }
           binding.btnCreate.setOnClickListener { submitForm() }
+        binding.btnPickElements.setOnClickListener {
+            val url = binding.editBaseUrl.text?.toString().orEmpty().trim()
+            val name = binding.editName.text?.toString().orEmpty().trim()
+            if (url.isBlank()) {
+                Toast.makeText(this, getString(R.string.browser_source_url_invalid), Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            startActivity(VisualRuleBuilderActivity.createIntent(this, url, name))
+        }
 
           lifecycleScope.launch {
               repeatOnLifecycle(Lifecycle.State.STARTED) {

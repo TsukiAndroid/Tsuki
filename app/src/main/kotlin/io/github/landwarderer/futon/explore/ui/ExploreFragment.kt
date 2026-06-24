@@ -51,6 +51,8 @@ import org.koitharu.kotatsu.parsers.model.MangaParserSource
 import io.github.landwarderer.futon.customsource.domain.CustomMangaSource
 import io.github.landwarderer.futon.browsersource.ui.BrowserSourceActivity
 import io.github.landwarderer.futon.customsource.domain.CustomSourceType
+import io.github.landwarderer.futon.customsource.ui.visualpicker.VisualRuleBuilderActivity
+import io.github.landwarderer.futon.customsource.ui.visualpicker.VisualRuleBuilderActivity
 
 @AndroidEntryPoint
 class ExploreFragment :
@@ -219,6 +221,8 @@ class ExploreFragment :
                 menu.findItem(R.id.action_disable)?.isVisible = !viewModel.isAllSourcesEnabled.value &&
                         selectedSources.all { it.mangaSource is MangaParserSource }
                 menu.findItem(R.id.action_delete)?.isVisible = selectedSources.all { it.mangaSource is ExternalMangaSource }
+                menu.findItem(R.id.action_fix_visually)?.isVisible = isSingleSelection &&
+                        selectedSources.any { (it.mangaSource as? CustomMangaSource)?.source?.type == CustomSourceType.CUSTOM_TEMPLATE }
                 return super.onPrepareActionMode(controller, mode, menu)
         }
 
@@ -259,6 +263,20 @@ class ExploreFragment :
 
                         R.id.action_unpin -> {
                                 viewModel.setSourcesPinned(selectedSources, isPinned = false)
+                                mode?.finish()
+                        }
+
+                        R.id.action_fix_visually -> {
+                                val source = selectedSources.singleOrNull() ?: return false
+                                val customSource = (source.mangaSource as? CustomMangaSource)?.source ?: return false
+                                startActivity(
+                                        VisualRuleBuilderActivity.createIntentForFix(
+                                                requireContext(),
+                                                customSource.cleanBaseUrl,
+                                                customSource.displayName,
+                                                emptyMap(),
+                                        )
+                                )
                                 mode?.finish()
                         }
 

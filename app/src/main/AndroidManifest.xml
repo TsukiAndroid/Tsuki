@@ -231,6 +231,12 @@
                         android:windowSoftInputMode="adjustResize" />
 
                 <activity
+                        android:name="io.github.landwarderer.futon.customsource.ui.visualpicker.VisualRuleBuilderActivity"
+                        android:configChanges="orientation|screenSize|keyboardHidden"
+                        android:exported="false"
+                        android:windowSoftInputMode="adjustResize" />
+
+                <activity
                         android:name="io.github.landwarderer.futon.browser.BrowserActivity"
                         android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
                         android:windowSoftInputMode="adjustResize" />

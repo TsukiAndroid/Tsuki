@@ -343,6 +343,15 @@
                       android:maxLines="1" />
               </com.google.android.material.textfield.TextInputLayout>
 
+              <!-- Pick Elements Manually button -->
+              <com.google.android.material.button.MaterialButton
+                  android:id="@+id/btn_pick_elements"
+                  style="@style/Widget.Material3.Button.OutlinedButton"
+                  android:layout_width="match_parent"
+                  android:layout_height="wrap_content"
+                  android:layout_marginBottom="8dp"
+                  android:text="@string/visual_rule_builder_pick_elements_manually" />
+
               <!-- Create button -->
               <com.google.android.material.button.MaterialButton
                   android:id="@+id/btn_create"

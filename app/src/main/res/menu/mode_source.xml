@@ -39,4 +39,11 @@
 		android:icon="@drawable/ic_settings"
 		android:title="@string/settings"
 		app:showAsAction="ifRoom|withText" />
+
+<item
+android:id="@+id/action_fix_visually"
+android:icon="@drawable/ic_settings"
+android:title="@string/visual_rule_builder_fix_source_visually"
+android:visible="false"
+app:showAsAction="ifRoom|withText" />
 </menu>

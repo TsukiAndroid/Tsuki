@@ -61,4 +61,9 @@
 
         <!-- Intelligent WebView -->
         <color name="tsuki_learning_banner_bg">#CC1A237E</color>
+
+    <!-- Visual Rule Builder picker chip states -->
+    <color name="picker_chip_active">#7C5CFF</color>
+    <color name="picker_chip_captured">#3DAD77</color>
+    <color name="picker_chip_inactive">#E0DCF0</color>
 </resources>

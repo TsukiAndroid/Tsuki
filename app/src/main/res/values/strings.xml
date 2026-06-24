@@ -1402,4 +1402,19 @@
     <string name="browser_source_view_history">Reading history</string>
     <string name="webview_source_already_in_library">Already in library</string>
 
+
+    <!-- Visual Rule Builder -->
+    <string name="visual_rule_builder_title">Visual Rule Builder</string>
+    <string name="visual_rule_builder_add_source_visually">Add Source Visually</string>
+    <string name="visual_rule_builder_pick_elements_manually">🎯 Pick Elements Manually</string>
+    <string name="visual_rule_builder_fix_source_visually">🔧 Fix Source Visually</string>
+    <string name="visual_rule_builder_undo">Undo last tap</string>
+    <string name="visual_rule_builder_skip">Skip</string>
+    <string name="visual_rule_builder_test">Test Parser</string>
+    <string name="visual_rule_builder_save">Save Source</string>
+    <string name="visual_rule_builder_review_prompt">Review your selectors and tap Test Parser.</string>
+    <string name="visual_rule_builder_test_success">✓ Found %1$d manga! Tap Save Source to continue.</string>
+    <string name="visual_rule_builder_test_failure">⚠️ %1$s</string>
+    <string name="visual_rule_builder_saved">"%1$s" added via Visual Rule Builder</string>
+
 </resources>

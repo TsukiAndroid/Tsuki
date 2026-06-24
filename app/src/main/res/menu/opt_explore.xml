@@ -31,4 +31,10 @@
                 android:title="@string/add_browser_source"
                 android:titleCondensed="@string/browser_source" />
 
+
+    <item
+            android:id="@+id/action_add_source_visually"
+            android:title="@string/visual_rule_builder_add_source_visually"
+            android:titleCondensed="@string/visual_rule_builder_title" />
+
 </menu>

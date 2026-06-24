@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- Toolbar -->
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize" />
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <!-- Main content: WebView container + bottom sheet -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <!-- WebView placeholder — replaced at runtime with ElementPickerWebView -->
+        <FrameLayout
+            android:id="@+id/web_view_container"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
+
+        <!-- Step instruction banner (overlaid at top of WebView) -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/step_instruction_card"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="12dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="4dp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <TextView
+                android:id="@+id/step_instruction_banner"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="12dp"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                tools:text="🌙 Tap on any manga TITLE in the list" />
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Current URL indicator (small, at bottom of WebView area) -->
+        <TextView
+            android:id="@+id/current_url_text"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginBottom="216dp"
+            android:alpha="0.6"
+            android:ellipsize="middle"
+            android:maxLines="1"
+            android:textSize="11sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            tools:text="https://manga-site.com/manga-list/" />
+
+        <!-- Progress overlay during save -->
+        <FrameLayout
+            android:id="@+id/progress_overlay"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:background="#80000000"
+            android:visibility="gone"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            tools:visibility="gone">
+
+            <com.google.android.material.progressindicator.CircularProgressIndicator
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:indeterminate="true" />
+
+        </FrameLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <!-- Bottom sheet -->
+    <LinearLayout
+        android:id="@+id/bottom_sheet"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="?attr/colorSurface"
+        android:elevation="8dp"
+        app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior">
+
+        <!-- Drag handle -->
+        <View
+            android:layout_width="40dp"
+            android:layout_height="4dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="4dp"
+            android:background="@drawable/bg_bottom_sheet_handle"
+            android:backgroundTint="?attr/colorOutline" />
+
+        <!-- Progress chips (one per step) -->
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/progress_chips_group"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="12dp"
+            android:layout_marginTop="4dp"
+            app:chipSpacingHorizontal="4dp"
+            app:singleLine="true" />
+
+        <!-- Captured fields summary chips -->
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/captured_summary_group"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="12dp"
+            android:layout_marginTop="2dp"
+            app:chipSpacingHorizontal="4dp" />
+
+        <!-- Test result text -->
+        <TextView
+            android:id="@+id/test_result_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="8dp"
+            android:textSize="13sp"
+            android:visibility="gone"
+            tools:text="✓ Found 24 manga! Tap 'Save Source' to continue."
+            tools:visibility="visible" />
+
+        <!-- Button row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_margin="12dp"
+            android:gravity="center_vertical">
+
+            <!-- Undo -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_undo"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginEnd="4dp"
+                android:text="@string/visual_rule_builder_undo"
+                android:visibility="visible" />
+
+            <!-- Skip -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_skip"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginHorizontal="4dp"
+                android:text="@string/visual_rule_builder_skip"
+                android:visibility="gone" />
+
+            <!-- Test & Save -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_test_save"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="4dp"
+                android:text="@string/visual_rule_builder_test"
+                android:visibility="gone" />
+
+        </LinearLayout>
+
+        <!-- Confirm Save (appears after successful test) -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_save_confirm"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="12dp"
+            android:layout_marginBottom="16dp"
+            android:text="@string/visual_rule_builder_save"
+            android:visibility="gone" />
+
+    </LinearLayout>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

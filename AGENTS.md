@@ -774,3 +774,59 @@ cookie/session persistence. Does **not** touch any existing source type.
 - **Chapter detection** is multi-strategy: URL pattern first, then image-count heuristic from `shouldInterceptRequest`, then JavaScript image collection on page load.
 - **Read chapters** are marked with a CSS `✓` overlay injected via JavaScript on manga detail pages.
 
+
+---
+
+## Session 4 (June 24 2026) — Visual Point-and-Click Rule Builder
+
+### Feature added
+A complete visual element picker that lets users tap directly on manga website elements
+to auto-generate CSS selectors — no coding knowledge required. Fixes broken parsers and
+adds support for unknown sites through a guided 5-step tap flow.
+
+### New files
+
+| File | Purpose |
+|---|---|
+| `app/src/main/assets/element_picker.js` | JavaScript injected into every WebView page: hover/tap highlighting, CSS-selector generation (class→data-attr→parent→tag strategies), sibling highlighting, auto parent-container detection, wrong-element warnings (nav/logo/ad), `window.TsukiPicker` JS interface bridge. |
+| `app/src/main/kotlin/.../customsource/ui/visualpicker/PickerState.kt` | `PickerStep` enum (MANGA_TITLE, COVER_IMAGE, CARD_CONTAINER, CHAPTER_TITLE, PAGE_IMAGE, COMPLETE), `PickerSession` data class, `TestResult` sealed interface. |
+| `app/src/main/kotlin/.../customsource/ui/visualpicker/SelectorGenerator.kt` | Validates selectors (`isUsable()`), builds `ParserTemplate`-compatible JSON from captured selectors (`buildTemplateJson()`). Same schema as USB output so existing `TemplateHtmlParser` works with no changes. |
+| `app/src/main/kotlin/.../customsource/ui/visualpicker/ElementPickerWebView.kt` | `WebView` subclass — injects `element_picker.js` on every `onPageFinished`, registers `TsukiPicker` JS interface, exposes `clearHighlights()` and `highlightSelector()` helpers, uses same browser UA as other parsers, optional `AdBlock` integration via `shouldLoadUrl()`. |
+| `app/src/main/kotlin/.../customsource/ui/visualpicker/VisualRuleBuilderViewModel.kt` | Manages `PickerSession` state machine: element selection → step progression, auto-fill CARD_CONTAINER from JS parent detection, undo, skip, retap, live parser test via Jsoup, save to `ParserTemplateRepository` + `CustomSourcesRepository`. |
+| `app/src/main/kotlin/.../customsource/ui/visualpicker/VisualRuleBuilderActivity.kt` | Full-screen activity: `ElementPickerWebView` (80%) + collapsible `BottomSheetBehavior` (20%) with step instruction banner, progress chips, captured-selector summary chips, Undo/Skip/Test Parser/Save buttons. Two intent factories: `createIntent()` (fresh) + `createIntentForFix()` (pre-filled existing selectors). |
+| `app/src/main/res/layout/activity_visual_rule_builder.xml` | CoordinatorLayout: AppBar → WebView container → instruction banner overlay → bottom sheet with chips + buttons. |
+| `app/src/main/res/menu/opt_visual_rule_builder.xml` | Placeholder overflow menu for `VisualRuleBuilderActivity`. |
+| `app/src/main/res/drawable/bg_bottom_sheet_handle.xml` | Pill-shaped drag handle for the bottom sheet. |
+
+### Modified files
+
+| File | Change |
+|---|---|
+| `AndroidManifest.xml` | Registered `VisualRuleBuilderActivity` (configChanges + adjustResize, not exported). |
+| `customsource/ui/UniversalSourceActivity.kt` | Added `binding.btnPickElements.setOnClickListener` — launches `VisualRuleBuilderActivity.createIntent()` with the current URL and name fields. |
+| `res/layout/activity_universal_source.xml` | Added `btn_pick_elements` (`OutlinedButton`) above `btn_create` — "🎯 Pick Elements Manually". |
+| `explore/ui/ExploreMenuProvider.kt` | Added `R.id.action_add_source_visually` case — launches `VisualRuleBuilderActivity.createIntent()`. |
+| `explore/ui/ExploreFragment.kt` | Added `R.id.action_fix_visually` action in `onActionItemClicked` (launches `createIntentForFix`) and shows the item in `onPrepareActionMode` only for single-selected CUSTOM_TEMPLATE sources. |
+| `res/menu/opt_explore.xml` | Added `action_add_source_visually` menu item — "Add Source Visually". |
+| `res/menu/mode_source.xml` | Added `action_fix_visually` item (hidden by default, shown only for CUSTOM_TEMPLATE in `onPrepareActionMode`). |
+| `res/values/strings.xml` | 12 new strings: `visual_rule_builder_title`, `_add_source_visually`, `_pick_elements_manually`, `_fix_source_visually`, `_undo`, `_skip`, `_test`, `_save`, `_review_prompt`, `_test_success`, `_test_failure`, `_saved`. |
+| `res/values/colors.xml` | Added `picker_chip_active` (#7C5CFF), `picker_chip_captured` (#3DAD77), `picker_chip_inactive` (#E0DCF0). |
+| `res/values/dimens.xml` | Added `picker_bottom_sheet_peek_height` (220dp). |
+
+### User flow summary
+1. **Entry** — USB → "🎯 Pick Elements Manually" button, or Explore ⋮ → "Add Source Visually", or Explore long-press CUSTOM_TEMPLATE source → "🔧 Fix Source Visually" (action mode).
+2. **Guided tapping** — 5 steps in sequence (manga title → cover → card container → chapter title → page image). Each tap: JS generates selector, highlights matched elements in purple (selected = solid, siblings = dashed), auto-detects parent card container.
+3. **Smart warnings** — navigation elements, logos, and ads trigger warning toasts; only-1-match triggers "try outer container" hint.
+4. **Review** — captured selectors shown as dismissible chips. Tap any chip to retap that field.
+5. **Test** — "Test Parser" fetches the site with Jsoup and counts matching items. Shows "✓ Found N manga!" or error.
+6. **Save** — creates `ParserTemplate` JSON + `CustomSource(type=CUSTOM_TEMPLATE)` via existing `TemplateHtmlParser` infrastructure. No new parser needed.
+
+### DO NOT TOUCH
+- `TemplateHtmlParser.kt` core logic — not modified. VRB output is consumed as a normal `ParserTemplate` JSON.
+- All existing custom source types and parsers.
+
+### Architecture notes
+- JS selector generation prefers: stable classes → data attributes → parent+child → tag-only (last resort).
+- `AdBlock` integration uses `shouldLoadUrl(url, baseUrl)` — matches existing `BrowserSourceActivity` pattern.
+- `VisualRuleBuilderActivity` replaces its `web_view_container` FrameLayout at runtime with a fully configured `ElementPickerWebView` instance (to pass constructor-time callbacks).
+- Pre-filled selectors (for fix flow) are encoded as `STEP_NAME=selector` pairs joined by `|` in the intent extras — avoids a JSON dependency in the intent.
