@@ -1,3 +1,29 @@
+## Alpha 1.671 (Build [#270](https://github.com/Space4414/Tsuki/actions/runs/28137681622))
+
+_2026-06-25 00:04 UTC_
+
+- fix: prevent RuntimeException in BrowserSourceActivity.shouldInterceptRequest (16d9125)
+- chore(deps): bump kotatsu-parsers-redo to c11c524f1a (fdd0df5)
+- chore(deps): bump kotatsu-parsers-redo to 0aa0c13f5b (4680fbe)
+- chore(deps): bump kotatsu-parsers-redo to 01e9a75a0c (d8b1b7e)
+- fix: use ImageViewTarget for Coil 3 ImageRequest in AddBrowserSourceSheet (96f1f28)
+- fix: add missing Coil 3 extension imports for placeholder/error/transformations (5e50bb7)
+- fix: resolve three pre-existing build errors introduced by dependency bump (6f95155)
+- chore(deps): bump kotatsu-parsers-redo 454a8cb35d → c2dc896890 [auto] (1981825)
+- fix: escape apostrophes in browser_source strings to fix AAPT2 build error (98b001e)
+- fix: replace invalid \u escape sequences in strings.xml with UTF-8 chars (5c3d7b2)
+- feat: Visual Point-and-Click Rule Builder (79344c1)
+- feat: Wire "Open in Tsuki Reader" FAB to native ReaderActivity (4146b8f)
+- feat: Add BROWSER_SOURCE custom source type (eec9e6e)
+- chore(deps): bump kotatsu-parsers-redo to 454a8cb35d (e91d352)
+- chore(deps): bump kotatsu-parsers-redo to 4c59835026 (d1f8934)
+- chore(deps): bump kotatsu-parsers-redo to f3f7c6d3c6 (5a8d3d4)
+- chore(deps): bump kotatsu-parsers-redo to d39a3eb61b (f19f6a7)
+- chore(deps): bump kotatsu-parsers-redo to 280f1d027e (5cb9d75)
+- chore(deps): bump kotatsu-parsers-redo to 9d0524777b (1621737)
+- chore(deps): bump kotatsu-parsers-redo to 50173c2545 (32c0fac)
+
+
 ## Alpha 1.666 (Build [#269](https://github.com/Space4414/Tsuki/actions/runs/28081292660))
 
 _2026-06-24 07:03 UTC_
