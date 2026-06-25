@@ -57,7 +57,21 @@ This is **Tsuki (月)** , the app that refused to die.
 
 ---
 
-## 📱 Requirements
+## 📸 Screenshots
+
+  <p align="center">
+    <img src="https://raw.githubusercontent.com/Space4414/Tsuki/devel/screenshots/screenshot_1.png" width="22%" alt="History feed"/>
+    &nbsp;
+    <img src="https://raw.githubusercontent.com/Space4414/Tsuki/devel/screenshots/screenshot_2.png" width="22%" alt="Favorites library"/>
+    &nbsp;
+    <img src="https://raw.githubusercontent.com/Space4414/Tsuki/devel/screenshots/screenshot_3.png" width="22%" alt="Explore and sources"/>
+    &nbsp;
+    <img src="https://raw.githubusercontent.com/Space4414/Tsuki/devel/screenshots/screenshot_4.png" width="22%" alt="Updates feed"/>
+  </p>
+
+  ---
+
+  ## 📱 Requirements
 
 Android 6.0 (API 23) or higher
 
