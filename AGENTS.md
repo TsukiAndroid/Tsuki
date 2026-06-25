@@ -830,3 +830,50 @@ adds support for unknown sites through a guided 5-step tap flow.
 - `AdBlock` integration uses `shouldLoadUrl(url, baseUrl)` — matches existing `BrowserSourceActivity` pattern.
 - `VisualRuleBuilderActivity` replaces its `web_view_container` FrameLayout at runtime with a fully configured `ElementPickerWebView` instance (to pass constructor-time callbacks).
 - Pre-filled selectors (for fix flow) are encoded as `STEP_NAME=selector` pairs joined by `|` in the intent extras — avoids a JSON dependency in the intent.
+
+---
+
+## Session 5 (Jun 25 2026) — BrowserSourceActivity WebView thread crash fix
+
+### Problem reported
+`BrowserSourceActivity` crashed immediately when tapping a browser source favicon:
+
+```
+java.lang.RuntimeException: A WebView method was called on thread 'ThreadPoolForeg'.
+All WebView methods must be called on the same thread.
+at BrowserSourceActivity$setupWebView$2.shouldInterceptRequest
+```
+
+### Root cause
+`shouldInterceptRequest()` is called by Android on a **background thread** (IO thread pool).  
+Inside the override, two calls to `view.url` (i.e. `WebView.getUrl()`) were made:
+
+```kotlin
+adBlock.shouldLoadUrl(request.url.toString(), view.url)   // line 182
+val pageUrl = view.url ?: ""                               // line 186
+```
+
+Calling any `WebView` method from a non-main thread throws `RuntimeException` unconditionally.
+
+### Fix applied — `BrowserSourceActivity.kt`
+
+1. **Added `@Volatile private var currentUrl: String = ""`** — a thread-safe snapshot field
+   updated exclusively on the main thread.
+
+2. **`onPageStarted()` (main thread)** — sets `currentUrl = it` as the very first action so
+   subsequent resource requests for the new page see the correct URL immediately.
+
+3. **`shouldInterceptRequest()` (background thread)** — replaced both `view.url` calls with
+   `currentUrl`. No other WebView methods are called in this callback.
+
+### Files changed
+
+| File | Change |
+|---|---|
+| `browsersource/ui/BrowserSourceActivity.kt` | Added `@Volatile currentUrl`; `onPageStarted` updates it; `shouldInterceptRequest` reads it instead of `view.url`. |
+
+### Rule for future agents
+**Never call any `WebView` method inside `shouldInterceptRequest()`.** This callback runs on
+a background thread by design. Safe pattern: use `@Volatile` fields updated in main-thread
+callbacks (`onPageStarted`, `onPageFinished`, `shouldOverrideUrlLoading`) and read those
+fields inside the background callbacks.

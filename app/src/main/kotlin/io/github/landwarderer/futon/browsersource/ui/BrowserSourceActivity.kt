@@ -66,6 +66,11 @@ class BrowserSourceActivity : AppCompatActivity() {
     private var sourceName: String = ""
     private var baseUrl: String = ""
 
+    // Safe snapshot of the WebView URL, updated on the main thread in onPageStarted.
+    // Used inside shouldInterceptRequest() which runs on a background thread — calling
+    // webView.getUrl() from there causes a RuntimeException.
+    @Volatile private var currentUrl: String = ""
+
     // Metadata extracted from the current page (og: tags)
     private var currentPageTitle: String = ""
     private var currentPageCover: String? = null
@@ -178,12 +183,17 @@ class BrowserSourceActivity : AppCompatActivity() {
                 view: WebView,
                 request: WebResourceRequest,
             ): WebResourceResponse? {
+                // NOTE: this callback runs on a background thread. Do NOT call any
+                // WebView methods here (webView.url, webView.title, etc.) — that
+                // causes "WebView method called on wrong thread" RuntimeException.
+                // Use the @Volatile currentUrl field instead, which is always updated
+                // on the main thread inside onPageStarted().
                 if (webViewSettings.isAdBlockEnabled) {
-                    if (!adBlock.shouldLoadUrl(request.url.toString(), view.url)) {
+                    if (!adBlock.shouldLoadUrl(request.url.toString(), currentUrl)) {
                         return WebResourceResponse("text/plain", "utf-8", null)
                     }
                 }
-                val pageUrl = view.url ?: ""
+                val pageUrl = currentUrl
                 if (BrowserSourceChapterDetector.onResourceRequest(pageUrl, request)) {
                     runOnUiThread { maybeShowOpenReaderFab() }
                 }
@@ -192,6 +202,9 @@ class BrowserSourceActivity : AppCompatActivity() {
 
             override fun onPageStarted(view: WebView, url: String?, favicon: Bitmap?) {
                 super.onPageStarted(view, url, favicon)
+                // Update the thread-safe URL snapshot FIRST so shouldInterceptRequest()
+                // sees the correct URL for all subsequent resource requests on this page.
+                url?.let { currentUrl = it }
                 url?.let {
                     binding.urlBar.setText(it)
                     BrowserSourceChapterDetector.resetForPage(it)
