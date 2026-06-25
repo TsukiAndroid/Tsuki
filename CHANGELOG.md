@@ -1,3 +1,14 @@
+## Alpha 1.673 (Build [#271](https://github.com/Space4414/Tsuki/actions/runs/28139933614))
+
+_2026-06-25 01:05 UTC_
+
+- docs: add screenshots to README (380e0a6)
+- fix: prevent RuntimeException in BrowserSourceActivity.shouldInterceptRequest (16d9125)
+- chore(deps): bump kotatsu-parsers-redo to c11c524f1a (fdd0df5)
+- chore(deps): bump kotatsu-parsers-redo to 0aa0c13f5b (4680fbe)
+- chore(deps): bump kotatsu-parsers-redo to 01e9a75a0c (d8b1b7e)
+
+
 ## Alpha 1.671 (Build [#270](https://github.com/Space4414/Tsuki/actions/runs/28137681622))
 
 _2026-06-25 00:04 UTC_
