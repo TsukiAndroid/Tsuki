@@ -1,3 +1,12 @@
+## Alpha 1.677 (Build [#272](https://github.com/Space4414/Tsuki/actions/runs/29172860650))
+
+_2026-07-11 23:54 UTC_
+
+- Delete screenshots/screenshot_1.png (1a8fdfb)
+- chore(deps): bump kotatsu-parsers-redo to f287c414a6 (882d007)
+- docs: add screenshots to README (380e0a6)
+
+
 ## Stable 1.4.8 (Build [#7](https://github.com/Space4414/Tsuki/actions/runs/29165893378))
 
 _2026-07-11 19:48 UTC_
