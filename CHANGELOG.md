@@ -1,3 +1,12 @@
+## Alpha 1.686 (Build [#278](https://github.com/Space4414/Tsuki/actions/runs/29210950728))
+
+_2026-07-12 22:08 UTC_
+
+- Removed useless.md file (40a1e52)
+- chore(deps): bump kotatsu-parsers-redo to d35a99c00c (0cbe50f)
+- docs: add all screenshots to README (3-per-row grid) (f60c810)
+
+
 ## Alpha 1.683 (Build [#277](https://github.com/Space4414/Tsuki/actions/runs/29173470801))
 
 _2026-07-12 00:17 UTC_
