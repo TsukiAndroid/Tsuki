@@ -60,21 +60,22 @@ This is **Tsuki (月)** , the app that refused to die.
 ## 📸 Screenshots
 
   <p align="center">
-    <img src="https://raw.githubusercontent.com/Space4414/Tsuki/devel/screenshots/screenshot_1.png" width="22%" alt="History feed"/>
-    &nbsp;
-    <img src="https://raw.githubusercontent.com/Space4414/Tsuki/devel/screenshots/screenshot_2.png" width="22%" alt="Favorites library"/>
-    &nbsp;
-    <img src="https://raw.githubusercontent.com/Space4414/Tsuki/devel/screenshots/screenshot_3.png" width="22%" alt="Explore and sources"/>
-    &nbsp;
-    <img src="https://raw.githubusercontent.com/Space4414/Tsuki/devel/screenshots/screenshot_4.png" width="22%" alt="Updates feed"/>
+    <img src="https://raw.githubusercontent.com/Space4414/Tsuki/devel/screenshots/screenshot_1.png" width="30%" alt="Screenshot 1"/>
+    <img src="https://raw.githubusercontent.com/Space4414/Tsuki/devel/screenshots/screenshot_2.png" width="30%" alt="Screenshot 2"/>
+    <img src="https://raw.githubusercontent.com/Space4414/Tsuki/devel/screenshots/screenshot_3.png" width="30%" alt="Screenshot 3"/>
   </p>
 
-  ---
+  <p align="center">
+    <img src="https://raw.githubusercontent.com/Space4414/Tsuki/devel/screenshots/screenshot_4.png" width="30%" alt="Screenshot 4"/>
+    <img src="https://raw.githubusercontent.com/Space4414/Tsuki/devel/screenshots/screenshot_5.png" width="30%" alt="Screenshot 5"/>
+    <img src="https://raw.githubusercontent.com/Space4414/Tsuki/devel/screenshots/screenshot_6.png" width="30%" alt="Screenshot 6"/>
+  </p>
 
-  ## 📱 Requirements
-
-Android 6.0 (API 23) or higher
-
+  <p align="center">
+    <img src="https://raw.githubusercontent.com/Space4414/Tsuki/devel/screenshots/screenshot_8.png" width="30%" alt="Screenshot 8"/>
+    <img src="https://raw.githubusercontent.com/Space4414/Tsuki/devel/screenshots/screenshot_9.png" width="30%" alt="Screenshot 9"/>
+    <img src="https://raw.githubusercontent.com/Space4414/Tsuki/devel/screenshots/screenshot_10.png" width="30%" alt="Screenshot 10"/>
+  </p>
 ---
 
 ## 📦 Download
