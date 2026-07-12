@@ -1,3 +1,10 @@
+## Alpha 1.683 (Build [#277](https://github.com/Space4414/Tsuki/actions/runs/29173470801))
+
+_2026-07-12 00:17 UTC_
+
+- docs: add all screenshots to README (3-per-row grid) (f60c810)
+
+
 ## Alpha 1.677 (Build [#272](https://github.com/Space4414/Tsuki/actions/runs/29172860650))
 
 _2026-07-11 23:54 UTC_
