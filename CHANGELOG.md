@@ -1,3 +1,12 @@
+## Alpha 1.691 (Build [#280](https://github.com/Space4414/Tsuki/actions/runs/29293973528))
+
+_2026-07-13 23:45 UTC_
+
+- Fix WebView performance and Cloudflare captcha never completing (b404c54)
+- feat: opt-in Sentry crash reporting with first-launch consent dialog (de116b8)
+- chore(deps): bump kotatsu-parsers-redo to dbd62fbd7c (c1dcbb5)
+
+
 ## Alpha 1.689 (Build [#279](https://github.com/Space4414/Tsuki/actions/runs/29290186194))
 
 _2026-07-13 22:32 UTC_
