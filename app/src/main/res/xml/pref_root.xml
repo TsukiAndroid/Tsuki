@@ -72,6 +72,12 @@
         android:summary="@string/webview_settings_summary" />
 
     <PreferenceScreen
+        android:fragment="io.github.landwarderer.futon.settings.privacy.PrivacySettingsFragment"
+        android:icon="@drawable/ic_data_privacy"
+        android:key="privacy"
+        android:title="@string/privacy" />
+
+    <PreferenceScreen
         android:fragment="io.github.landwarderer.futon.settings.about.AboutSettingsFragment"
         android:icon="@drawable/ic_info_outline"
         android:key="about"

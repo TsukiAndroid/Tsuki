@@ -877,3 +877,71 @@ Calling any `WebView` method from a non-main thread throws `RuntimeException` un
 a background thread by design. Safe pattern: use `@Volatile` fields updated in main-thread
 callbacks (`onPageStarted`, `onPageFinished`, `shouldOverrideUrlLoading`) and read those
 fields inside the background callbacks.
+
+---
+
+## Session 6 (Jul 13 2026) — Opt-in Sentry crash reporting (IzzyOnDroid compliance)
+
+### Requirement
+Add opt-in crash reporting via Sentry. Sentry must be **completely disabled by default**
+and only activate after explicit user consent. Required for IzzyOnDroid distribution compliance.
+
+### What was already in place (prior sessions)
+
+| Item | Status |
+|---|---|
+| `BaseApp.kt` — Sentry only called inside `if (settings.isCrashAnalyticsEnabled) { initializeSentry() }` | Already done |
+| `AppSettings.isCrashAnalyticsEnabled` — key `"crash_analytics_enabled"`, default `false` | Already done |
+| `pref_services.xml` — `SwitchPreferenceCompat` for `crash_analytics_enabled` | Already done |
+| Strings `crash_reporting`, `crash_reporting_summary`, `privacy` | Already done |
+
+### What this session adds
+
+#### New files
+
+| File | Purpose |
+|---|---|
+| `settings/privacy/CrashReportingConsentDialog.kt` | `DialogFragment` shown once on first cold launch. "Allow" sets `isCrashAnalyticsEnabled=true` + `isCrashConsentShown=true`. "No Thanks" sets only `isCrashConsentShown=true`. Sentry never starts until the user taps "Allow". |
+| `settings/privacy/PrivacySettingsFragment.kt` | Dedicated Privacy settings screen. Loads `pref_privacy.xml`. Has click listener to open privacy policy URL in browser. |
+| `res/xml/pref_privacy.xml` | Preference XML with `SwitchPreferenceCompat` (key `crash_analytics_enabled`) and a Privacy Policy link preference. |
+
+#### Modified files
+
+| File | Change |
+|---|---|
+| `core/prefs/AppSettings.kt` | Added `isCrashConsentShown` property (key `"crash_consent_shown"`, default `false`) and `KEY_CRASH_CONSENT_SHOWN` constant. |
+| `main/ui/MainViewModel.kt` | Added `onShowCrashConsent` event flow. `init {}` block checks `!settings.isCrashConsentShown` and fires the event so MainActivity can show the dialog. |
+| `main/ui/MainActivity.kt` | Imported `CrashReportingConsentDialog`; observes `viewModel.onShowCrashConsent` and calls `CrashReportingConsentDialog.show(supportFragmentManager)`. |
+| `res/xml/pref_root.xml` | Added Privacy entry (`ic_data_privacy` icon, `PrivacySettingsFragment`) before the About entry. |
+| `settings/RootSettingsFragment.kt` | Added `bindPreferenceSummary("privacy", R.string.crash_reporting)` so the Privacy row shows a subtitle in Settings root. |
+| `res/values/strings.xml` | Added `crash_consent_title`, `crash_consent_message`, `crash_consent_allow`, `crash_consent_decline`, `privacy_policy`, `privacy_policy_summary`. |
+
+### Privacy flow
+
+```
+1. Cold start → BaseApp.onCreate()
+     → settings.isCrashAnalyticsEnabled == false (default)
+     → Sentry NOT initialized ✅
+
+2. MainActivity resumes → MainViewModel.onShowCrashConsent fires (first launch only)
+     → CrashReportingConsentDialog appears
+     → User taps "Allow"  → isCrashAnalyticsEnabled=true, isCrashConsentShown=true
+     → User taps "No Thanks" → isCrashAnalyticsEnabled stays false, isCrashConsentShown=true
+     → Dialog never shown again on subsequent launches
+
+3. On next cold start (if user allowed):
+     → settings.isCrashAnalyticsEnabled == true
+     → initializeSentry() called ✅
+
+4. User can toggle any time: Settings → Privacy → Crash Reporting switch
+     → Takes effect after next cold start
+```
+
+### Privacy policy URL
+`https://tsukiapp.vercel.app/privacy`
+
+### Key names
+| Key | Default | Meaning |
+|---|---|---|
+| `crash_analytics_enabled` | `false` | Whether user opted in to crash reporting |
+| `crash_consent_shown` | `false` | Whether the first-launch dialog was shown (prevents re-showing) |

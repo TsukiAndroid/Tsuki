@@ -35,6 +35,7 @@ class MainViewModel @Inject constructor(
         val onOpenReader = MutableEventFlow<Manga>()
         val onFirstStart = MutableEventFlow<Unit>()
         val onShowWhatsNew = MutableEventFlow<Unit>()
+        val onShowCrashConsent = MutableEventFlow<Unit>()
         val onShowSyncMigrationBanner = MutableEventFlow<Unit>()
         val onShowUpdateBanner = MutableEventFlow<Unit>()
 
@@ -65,6 +66,11 @@ class MainViewModel @Inject constructor(
         )
 
         init {
+                launchJob(Dispatchers.IO) {
+                        if (!settings.isCrashConsentShown) {
+                                onShowCrashConsent.call(Unit)
+                        }
+                }
                 launchJob(Dispatchers.IO) {
                         if (sourcesRepository.isSetupRequired()) {
                                 onFirstStart.call(Unit)

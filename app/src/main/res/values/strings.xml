@@ -1403,6 +1403,15 @@
     <string name="webview_source_already_in_library">Already in library</string>
 
 
+    <!-- Crash reporting consent dialog (first-launch opt-in) -->
+    <string name="crash_consent_title">Help Improve Tsuki</string>
+    <string name="crash_consent_message">Would you like to send anonymous crash reports? This helps us fix bugs faster. No personal data or reading history is ever collected.\n\nChanges take effect after restarting the app.</string>
+    <string name="crash_consent_allow">Allow</string>
+    <string name="crash_consent_decline">No Thanks</string>
+    <!-- Privacy settings screen -->
+    <string name="privacy_policy">Privacy Policy</string>
+    <string name="privacy_policy_summary">Read Tsuki\'s privacy policy</string>
+
     <!-- Visual Rule Builder -->
     <string name="visual_rule_builder_title">Visual Rule Builder</string>
     <string name="visual_rule_builder_add_source_visually">Add Source Visually</string>

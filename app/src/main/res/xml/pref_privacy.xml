@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:title="@string/privacy">
+
+    <PreferenceCategory android:title="@string/crash_reporting">
+
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
+            android:key="crash_analytics_enabled"
+            android:summary="@string/crash_reporting_summary"
+            android:title="@string/crash_reporting" />
+
+        <Preference
+            android:key="privacy_policy"
+            android:persistent="false"
+            android:summary="@string/privacy_policy_summary"
+            android:title="@string/privacy_policy" />
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

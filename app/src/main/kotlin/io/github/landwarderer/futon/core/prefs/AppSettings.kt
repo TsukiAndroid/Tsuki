@@ -693,6 +693,10 @@ class AppSettings @Inject constructor(@ApplicationContext context: Context) {
                 get() = prefs.getBoolean(KEY_CRASH_ANALYTICS_ENABLED, false)
                 set(value) = prefs.edit { putBoolean(KEY_CRASH_ANALYTICS_ENABLED, value) }
 
+        var isCrashConsentShown: Boolean
+                get() = prefs.getBoolean(KEY_CRASH_CONSENT_SHOWN, false)
+                set(value) = prefs.edit { putBoolean(KEY_CRASH_CONSENT_SHOWN, value) }
+
         var gitHubMirror: GitHubMirror
                 get() = prefs.getEnumValue(KEY_GITHUB_MIRROR, GitHubMirror.KEIYOUSHI)
                 set(value) = prefs.edit { putEnumValue(KEY_GITHUB_MIRROR, value) }
@@ -967,6 +971,7 @@ class AppSettings @Inject constructor(@ApplicationContext context: Context) {
                 const val KEY_DISCORD_RPC_SKIP_NSFW = "discord_rpc_skip_nsfw"
                 const val KEY_DISCORD_TOKEN = "discord_token"
                 const val KEY_CRASH_ANALYTICS_ENABLED = "crash_analytics_enabled"
+                const val KEY_CRASH_CONSENT_SHOWN = "crash_consent_shown"
                 const val KEY_GITHUB_MIRROR = "github_mirror"
 
                 // keys for non-persistent preferences
