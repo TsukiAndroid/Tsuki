@@ -1,3 +1,13 @@
+## Alpha 1.689 (Build [#279](https://github.com/Space4414/Tsuki/actions/runs/29290186194))
+
+_2026-07-13 22:32 UTC_
+
+- feat: opt-in Sentry crash reporting with first-launch consent dialog (de116b8)
+- chore(deps): bump kotatsu-parsers-redo to dbd62fbd7c (c1dcbb5)
+- Removed useless.md file (40a1e52)
+- chore(deps): bump kotatsu-parsers-redo to d35a99c00c (0cbe50f)
+
+
 ## Alpha 1.686 (Build [#278](https://github.com/Space4414/Tsuki/actions/runs/29210950728))
 
 _2026-07-12 22:08 UTC_
