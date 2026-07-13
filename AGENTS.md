@@ -1067,5 +1067,5 @@ and only activate after explicit user consent. Required for IzzyOnDroid distribu
 | `res/values/strings.xml` | `cloudflare_solving_banner`, `cloudflare_timeout_message` |
 
 ### Commit & CI
-- Commit: (see git log — pushed this session)
-- CI: check `gh run list --repo Space4414/Tsuki --branch devel --limit 5`
+- Commit: `b404c54` pushed to `devel` (parent `8fb0518`).
+- CI: "Build Alpha APK" run for `b404c54` completed with conclusion `success` (https://github.com/Space4414/Tsuki/actions/runs/29293973528).
