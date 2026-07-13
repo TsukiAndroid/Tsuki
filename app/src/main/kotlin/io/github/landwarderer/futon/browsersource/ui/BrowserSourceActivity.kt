@@ -27,6 +27,7 @@ import io.github.landwarderer.futon.browsersource.data.BrowserSourceRepository
 import io.github.landwarderer.futon.core.model.parcelable.ParcelableManga
 import io.github.landwarderer.futon.core.nav.ReaderIntent
 import io.github.landwarderer.futon.core.nav.router
+import io.github.landwarderer.futon.core.network.webview.WebViewPerformanceConfigurator
 import io.github.landwarderer.futon.core.network.webview.adblock.AdBlock
 import io.github.landwarderer.futon.customsource.data.CustomSourcesRepository
 import io.github.landwarderer.futon.customsource.domain.CustomMangaSource
@@ -174,6 +175,7 @@ class BrowserSourceActivity : AppCompatActivity() {
             useWideViewPort = true
             webViewSettings.resolvedUserAgent()?.let { userAgentString = it }
         }
+        WebViewPerformanceConfigurator.applyPerformanceSettings(binding.webView)
 
         binding.webView.webChromeClient = ProgressChromeClient(binding.progressBar)
 

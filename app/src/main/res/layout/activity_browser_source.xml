@@ -114,8 +114,10 @@
         android:layout_height="wrap_content"
         android:indeterminate="false"
         android:visibility="gone"
+        app:indicatorColor="@color/picker_chip_active"
         app:layout_anchor="@id/appbar"
         app:layout_anchorGravity="bottom"
+        app:trackColor="@android:color/transparent"
         app:trackCornerRadius="0dp"
         tools:visibility="visible" />
 

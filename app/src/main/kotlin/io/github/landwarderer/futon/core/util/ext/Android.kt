@@ -216,9 +216,13 @@ fun WebView.configureForParser(userAgentOverride: String?) = with(settings) {
 	}
 	databaseEnabled = true
 	allowContentAccess = false
-	if (userAgentOverride != null) {
-		userAgentString = userAgentOverride
-	}
+	// No explicit UA supplied by the parser/intent: fall back to the real default
+	// UA with the " wv" WebView marker stripped, rather than leaving it untouched.
+	// Sites (and Cloudflare's bot heuristics) that see that marker often serve a
+	// degraded page or block the request outright.
+	userAgentString = userAgentOverride
+		?: io.github.landwarderer.futon.core.network.webview.WebViewPerformanceConfigurator
+			.stripWebViewMarker(android.webkit.WebSettings.getDefaultUserAgent(this@configureForParser.context))
 	val cookieManager = CookieManager.getInstance()
 	cookieManager.setAcceptCookie(true)
 	cookieManager.setAcceptThirdPartyCookies(this@configureForParser, true)

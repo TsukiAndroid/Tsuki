@@ -8,6 +8,7 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import io.github.landwarderer.futon.core.network.webview.WebViewPerformanceConfigurator
 import io.github.landwarderer.futon.core.network.webview.adblock.AdBlock
 
 /**
@@ -65,6 +66,7 @@ class ElementPickerWebView @JvmOverloads constructor(
             displayZoomControls = false
             userAgentString = BROWSER_UA
         }
+        WebViewPerformanceConfigurator.applyPerformanceSettings(this)
 
         // Load JS from assets once
         pickerJs = context.assets.open("element_picker.js")

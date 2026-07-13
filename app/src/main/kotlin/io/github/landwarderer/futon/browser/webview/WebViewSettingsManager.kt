@@ -2,7 +2,9 @@ package io.github.landwarderer.futon.browser.webview
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.webkit.WebSettings
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.landwarderer.futon.core.network.webview.WebViewPerformanceConfigurator
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -35,7 +37,15 @@ class WebViewSettingsManager @Inject constructor(
 
     fun resolvedUserAgent(): String? {
         val ua = userAgentType.resolve(customUserAgent)
-        return if (isDesktopMode && ua == null) CHROME_DESKTOP_UA else ua
+        return when {
+            ua != null -> ua
+            isDesktopMode -> CHROME_DESKTOP_UA
+            // DEFAULT_ANDROID: still override, but only to strip the " wv" WebView
+            // marker from the real default UA (see WebViewPerformanceConfigurator) —
+            // many sites and Cloudflare's bot heuristics treat that marker as a
+            // signal to serve a degraded page or block the request outright.
+            else -> WebViewPerformanceConfigurator.stripWebViewMarker(WebSettings.getDefaultUserAgent(context))
+        }
     }
 
     // ── AI Parser Learning ────────────────────────────────────────────────────

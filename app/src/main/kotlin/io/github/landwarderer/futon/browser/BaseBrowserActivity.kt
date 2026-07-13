@@ -10,6 +10,7 @@ import io.github.landwarderer.futon.core.model.MangaSource
 import io.github.landwarderer.futon.core.nav.AppRouter
 import io.github.landwarderer.futon.core.network.CommonHeaders
 import io.github.landwarderer.futon.core.network.proxy.ProxyProvider
+import io.github.landwarderer.futon.core.network.webview.WebViewPerformanceConfigurator
 import io.github.landwarderer.futon.core.network.webview.adblock.AdBlock
 import io.github.landwarderer.futon.core.parser.MangaRepository
 import io.github.landwarderer.futon.core.parser.ParserMangaRepository
@@ -49,6 +50,7 @@ abstract class BaseBrowserActivity : BaseActivity<ActivityBrowserBinding>(), Bro
 		val userAgent = intent?.getStringExtra(AppRouter.KEY_USER_AGENT)?.nullIfEmpty()
 			?: repository?.getRequestHeaders()?.get(CommonHeaders.USER_AGENT)
 		viewBinding.webView.configureForParser(userAgent)
+		WebViewPerformanceConfigurator.applyPerformanceSettings(viewBinding.webView)
 
 		onCreate2(savedInstanceState, mangaSource, repository)
 	}

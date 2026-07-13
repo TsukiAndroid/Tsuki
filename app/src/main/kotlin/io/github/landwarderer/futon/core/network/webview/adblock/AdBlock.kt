@@ -33,6 +33,24 @@ class AdBlock @Inject constructor(
 
 	private var rules: RulesList? = null
 
+	/**
+	 * Eagerly parses the blocklist on a background thread. Call this once at app
+	 * startup (see BaseApp.onCreate) so the HashSet-backed [RulesList] is already
+	 * built before the first WebView is opened -- otherwise the first page load
+	 * pays the parse cost inline on [shouldLoadUrl]'s caller thread.
+	 */
+	@WorkerThread
+	fun warmUp() {
+		if (!settings.isAdBlockEnabled) {
+			return
+		}
+		synchronized(this) {
+			if (rules == null) {
+				rules = parseRules()
+			}
+		}
+	}
+
 	@WorkerThread
 	fun shouldLoadUrl(url: String, baseUrl: String?): Boolean {
 		return shouldLoadUrl(

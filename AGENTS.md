@@ -945,3 +945,127 @@ and only activate after explicit user consent. Required for IzzyOnDroid distribu
 |---|---|---|
 | `crash_analytics_enabled` | `false` | Whether user opted in to crash reporting |
 | `crash_consent_shown` | `false` | Whether the first-launch dialog was shown (prevents re-showing) |
+
+---
+
+## Session — WebView performance + Cloudflare captcha never completing (Jul 13 2026)
+
+### Problems reported
+1. WebView browsing (browser source, visual rule builder, Cloudflare challenge) felt slow:
+   no ad-blocker fast path, no shared WebView performance tuning, no connection
+   pre-warming, cold WebView process on first use, default progress-bar styling.
+2. The Cloudflare captcha challenge (`CloudFlareActivity`) frequently never completes —
+   clearance is granted by Cloudflare but the app keeps looping/retrying.
+
+### Root causes for "captcha never completes"
+- `CloudFlareClient`/`CloudFlareInterceptClient` were constructed with a non-null
+  `AdBlock`, and `BrowserClient.shouldInterceptRequest` ad-blocks **every** request
+  unconditionally — including Cloudflare's own challenge-platform requests. A
+  false-positive block there is indistinguishable from "challenge never resolves".
+- WebView's default UA carries the `wv` marker (`...Version/4.0 Chrome/... wv)...`),
+  a well-known bot-detection signal; nothing stripped it when no explicit UA
+  override was configured (`DEFAULT_ANDROID`).
+- No anti-automation JS was ever injected into the challenge page (`navigator.webdriver`,
+  empty `navigator.plugins`, etc. — all default WebView tells).
+- No timeout/feedback during solving, so a genuinely stuck challenge looked
+  identical to a slow-but-working one.
+
+### Fixes applied
+- **`adBlock` made nullable** on `BrowserClient` (already was), `CloudFlareClient`,
+  `CloudFlareInterceptClient`. `CloudFlareActivity` now constructs both with
+  `adBlock = null` — ad-blocking is off only for the Cloudflare challenge page itself.
+- **UA marker stripping, not a hardcoded UA string.** Deliberate deviation from the
+  fix spec's suggestion to hardcode a static Chrome desktop/mobile UA: hardcoding
+  goes stale as Chrome/WebView versions ship and is itself a distinguishing signal.
+  Instead, `WebViewPerformanceConfigurator.stripWebViewMarker()` regex-strips the
+  `; wv` / ` wv)` token from `WebSettings.getDefaultUserAgent(context)`, preserving
+  the real device/Chrome fingerprint. Wired into:
+  - `Android.kt`'s `WebView.configureForParser()` (was: leave UA untouched when
+    override is null; now: strip marker from the real default UA instead)
+  - `WebViewSettingsManager.resolvedUserAgent()` for the `DEFAULT_ANDROID` case
+    (was: return `null`/no override; now: return the stripped UA)
+- **New `browser/cloudflare/CloudflareWebView.kt`** — Cloudflare-specific WebView
+  settings (`javaScriptCanOpenWindowsAutomatically`, `allowContentAccess = true`,
+  layered on top of `WebViewPerformanceConfigurator`) plus `injectAntiDetectionJs()`
+  (masks `navigator.webdriver`, empty `navigator.plugins`/`navigator.languages`,
+  missing `window.chrome`), called from `CloudFlareClient.onPageStarted` on every
+  page load of the challenge.
+- **New `browser/cloudflare/CloudflareCookieSyncer.kt`** — deliberately *not* a
+  cookie-copying mechanism. Read `AndroidCookieJar`: it already reads/writes
+  straight through `android.webkit.CookieManager`, the same store the WebView
+  itself uses, so OkHttp sees `cf_clearance` the instant Cloudflare's JS sets it —
+  no manual sync needed. This class is a named, documented wrapper around
+  `CloudFlareHelper.getClearanceCookie` so `CloudFlareClient` doesn't inline that
+  logic, and so a future agent doesn't reintroduce a redundant sync mechanism
+  (the fix spec's README suggested one; it would have been dead code here).
+- **Solving banner + 30s timeout watchdog** added to `CloudFlareActivity`
+  (`showSolvingBanner()`, `startTimeoutWatchdog()`) — surfaces a retry action via
+  Snackbar if clearance hasn't landed in time, instead of a silently "frozen" WebView.
+
+### Performance fixes applied
+- **New `core/network/webview/WebViewPerformanceConfigurator.kt`** — single place
+  for `LOAD_DEFAULT` cache mode, Safe Browsing disabled (API 26+), mixed-content
+  compatibility mode, legacy `RenderPriority.HIGH`, `LAYER_TYPE_HARDWARE`. Applied
+  in `BaseBrowserActivity.onCreate()` (covers `BrowserActivity`/`CloudFlareActivity`),
+  `BrowserSourceActivity.setupWebView()`, `ElementPickerWebView.init`, and
+  `CloudflareWebView.configure()` — one call site per WebView instead of copy-paste.
+- **`RulesList` (ad-block) rewritten**: plain domain rules (no modifiers) now live
+  in `HashSet`s for O(1) lookup instead of a linear scan over every parsed rule;
+  rules with modifiers/paths keep the linear list since they need full evaluation.
+  `registrableDomain()` memoizes `HttpUrl.topPrivateDomain()` per host.
+- **`AdBlock.warmUp()`** (new) — eagerly parses the blocklist on a background
+  thread; **`WebViewPrewarmer.prewarm()`** (new) — spins up and tears down a
+  throwaway `WebView` once at startup. Both called from `BaseApp.onCreate()` on
+  `Dispatchers.IO`, off the critical path, so the first real WebView opened later
+  doesn't pay the parse/process-cold-start cost inline.
+- **New `core/network/ConnectionWarmer.kt`** — Hilt-injectable wrapper around the
+  `@BaseHttpClient OkHttpClient`; fires a fire-and-forget HEAD request to warm
+  DNS/TLS. Called from `ExploreFragment.onItemClick()` right before launching
+  `BrowserSourceActivity` for a browser-source item — this is the closest real
+  equivalent in this codebase to "warm the connection on tap", since there is no
+  favicon-tap affordance to hook into.
+- **Progress bar color** — reused the existing `picker_chip_active` (`#7C5CFF`)
+  color resource, which already matches the requested neon purple, on the
+  `LinearProgressIndicator` in `activity_browser.xml` and `activity_browser_source.xml`
+  (`app:indicatorColor`, transparent `app:trackColor`). No new color defined.
+- **`android:hardwareAccelerated="true"`** added explicitly to the 4
+  WebView-hosting activities: `BrowserSourceActivity`, `VisualRuleBuilderActivity`,
+  `BrowserActivity`, `CloudFlareActivity`. `UniversalSourceActivity` was **not**
+  touched — confirmed it does not directly instantiate a WebView (delegates to
+  `SmartPageFetcher`/`JsRenderFetcher` for JS-render detection, not a persistent
+  in-activity WebView).
+
+### Deviations from the fix spec's literal suggestions (intentional)
+1. No hardcoded static Chrome UA string — UA marker stripping instead (see above).
+2. No standalone `CloudflareCookieSyncer` that copies cookies between stores —
+   the existing `AndroidCookieJar` already shares Cloudflare's cookies with OkHttp
+   automatically via `CookieManager`; a copy mechanism would have been redundant.
+3. `UniversalSourceActivity` manifest entry skipped — no direct WebView usage.
+
+### Files changed
+| File | Change |
+|---|---|
+| `core/network/webview/adblock/RulesList.kt` | HashSet fast path for plain domain rules |
+| `core/network/webview/adblock/AdBlock.kt` | `warmUp()` |
+| `core/network/webview/WebViewPerformanceConfigurator.kt` | NEW — shared WebView perf settings + UA marker stripping |
+| `core/network/webview/WebViewPrewarmer.kt` | NEW — startup WebView prewarm |
+| `core/network/ConnectionWarmer.kt` | NEW — DNS/TLS warm-up via HEAD request |
+| `core/BaseApp.kt` | Injects `AdBlock`, calls `warmUp()` + `WebViewPrewarmer.prewarm()` at startup |
+| `core/util/ext/Android.kt` | `configureForParser()` — UA marker stripping when no override |
+| `browser/webview/WebViewSettingsManager.kt` | `resolvedUserAgent()` — UA marker stripping for `DEFAULT_ANDROID` |
+| `browser/BaseBrowserActivity.kt` | Applies `WebViewPerformanceConfigurator` after `configureForParser` |
+| `browser/cloudflare/CloudFlareClient.kt` | Nullable `adBlock`; injects anti-detection JS on every page start; uses `CloudflareCookieSyncer` |
+| `browser/cloudflare/CloudFlareInterceptClient.kt` | Nullable `adBlock` |
+| `browser/cloudflare/CloudFlareActivity.kt` | Passes `adBlock = null`; `CloudflareWebView.configure()`; solving banner; 30s timeout watchdog |
+| `browser/cloudflare/CloudflareWebView.kt` | NEW — CF-specific WebView settings + anti-detection JS |
+| `browser/cloudflare/CloudflareCookieSyncer.kt` | NEW — documented wrapper around existing automatic cookie sharing |
+| `browsersource/ui/BrowserSourceActivity.kt` | Applies `WebViewPerformanceConfigurator` in `setupWebView()` |
+| `customsource/ui/visualpicker/ElementPickerWebView.kt` | Applies `WebViewPerformanceConfigurator` in `init` |
+| `explore/ui/ExploreFragment.kt` | Calls `ConnectionWarmer.warm()` before launching `BrowserSourceActivity` |
+| `AndroidManifest.xml` | `hardwareAccelerated="true"` on 4 WebView-hosting activities |
+| `res/layout/activity_browser.xml`, `activity_browser_source.xml` | Progress bar tinted with `picker_chip_active` |
+| `res/values/strings.xml` | `cloudflare_solving_banner`, `cloudflare_timeout_message` |
+
+### Commit & CI
+- Commit: (see git log — pushed this session)
+- CI: check `gh run list --repo Space4414/Tsuki --branch devel --limit 5`

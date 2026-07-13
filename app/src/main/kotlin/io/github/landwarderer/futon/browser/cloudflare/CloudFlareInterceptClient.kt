@@ -22,7 +22,7 @@ private const val TAG = "CFInterceptClient"
 class CloudFlareInterceptClient(
 	private val cookieJar: MutableCookieJar,
 	callback: CloudFlareCallback,
-	adBlock: AdBlock,
+	adBlock: AdBlock?,
 	targetUrl: String,
 ) : CloudFlareClient(cookieJar, callback, adBlock, targetUrl) {
 

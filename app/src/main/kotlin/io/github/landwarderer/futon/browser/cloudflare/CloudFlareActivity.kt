@@ -12,6 +12,7 @@ import androidx.lifecycle.lifecycleScope
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.yield
@@ -59,15 +60,22 @@ class CloudFlareActivity : BaseBrowserActivity(), CloudFlareCallback {
 		val needsInterception = shouldUseInterception(source, repository)
 		Log.d(TAG, "Source: ${source.name}, needsInterception: $needsInterception")
 
+		// Ad-blocking is intentionally left off (adBlock = null) for the challenge
+		// itself: a false-positive block of a Cloudflare challenge-platform
+		// request is indistinguishable from "the captcha never completes", and
+		// there is nothing worth ad-blocking on an interstitial page.
 		cfClient = if (needsInterception) {
 			Log.d(TAG, "Using CloudFlareInterceptClient with header filtering")
-			CloudFlareInterceptClient(cookieJar, this, adBlock, url)
+			CloudFlareInterceptClient(cookieJar, this, null, url)
 		} else {
 			Log.d(TAG, "Using regular CloudFlareClient (no interception)")
-			CloudFlareClient(cookieJar, this, adBlock, url)
+			CloudFlareClient(cookieJar, this, null, url)
 		}
 
+		CloudflareWebView.configure(viewBinding.webView)
 		viewBinding.webView.webViewClient = cfClient
+		showSolvingBanner()
+		startTimeoutWatchdog()
 		lifecycleScope.launch {
 			try {
 				proxyProvider.applyWebViewConfig()
@@ -77,6 +85,34 @@ class CloudFlareActivity : BaseBrowserActivity(), CloudFlareCallback {
 			if (savedInstanceState == null) {
 				onTitleChanged(getString(R.string.loading_), url)
 				viewBinding.webView.loadUrl(url)
+			}
+		}
+	}
+
+	/** One-time banner explaining what's happening; captcha solving isn't self-explanatory UI. */
+	private fun showSolvingBanner() {
+		Snackbar.make(
+			viewBinding.webView,
+			R.string.cloudflare_solving_banner,
+			Snackbar.LENGTH_LONG,
+		).show()
+	}
+
+	/**
+	 * If clearance still hasn't been granted after [CHALLENGE_TIMEOUT_MS], the
+	 * user is likely stuck on a persistent challenge (rare but happens on some
+	 * hosts/regions). Surface that instead of leaving them staring at a WebView
+	 * that looks frozen.
+	 */
+	private fun startTimeoutWatchdog() {
+		lifecycleScope.launch {
+			delay(CHALLENGE_TIMEOUT_MS)
+			if (pendingResult != RESULT_OK) {
+				Snackbar.make(
+					viewBinding.webView,
+					R.string.cloudflare_timeout_message,
+					Snackbar.LENGTH_INDEFINITE,
+				).setAction(R.string.retry) { restartCheck() }.show()
 			}
 		}
 	}
@@ -193,5 +229,6 @@ class CloudFlareActivity : BaseBrowserActivity(), CloudFlareCallback {
 	companion object {
 
 		const val TAG = "CloudFlareActivity"
+		private const val CHALLENGE_TIMEOUT_MS = 30_000L
 	}
 }

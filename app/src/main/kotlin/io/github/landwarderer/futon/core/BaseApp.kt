@@ -11,6 +11,8 @@ import androidx.work.Configuration
 import dagger.hilt.android.HiltAndroidApp
 import io.github.landwarderer.futon.BuildConfig
 import io.github.landwarderer.futon.core.db.MangaDatabase
+import io.github.landwarderer.futon.core.network.webview.WebViewPrewarmer
+import io.github.landwarderer.futon.core.network.webview.adblock.AdBlock
 import io.github.landwarderer.futon.core.os.AppValidator
 import io.github.landwarderer.futon.core.prefs.AppSettings
 import io.github.landwarderer.futon.core.util.ext.processLifecycleScope
@@ -68,6 +70,9 @@ open class BaseApp : Application(), Configuration.Provider {
 	@Inject
 	lateinit var notificationHelper: TrackerNotificationHelper
 
+	@Inject
+	lateinit var adBlock: AdBlock
+
 	/**
 	 * Eagerly injected so [ParserTemplateRepository.INSTANCE] and
 	 * [CustomSourcesRepository.INSTANCE] are set at app startup, before any
@@ -114,6 +119,11 @@ open class BaseApp : Application(), Configuration.Provider {
 		workScheduleManager.init()
 		notificationHelper.updateChannels()
 		processLifecycleScope.launch(Dispatchers.IO) { builtinExtensionSeeder.seedIfNeeded() }
+		// Parse the ad-block list and spin up a throwaway WebView now, off the UI
+		// thread and off the user's critical path, so the first browser-source /
+		// Cloudflare WebView opened later does not pay for either.
+		processLifecycleScope.launch(Dispatchers.IO) { adBlock.warmUp() }
+		WebViewPrewarmer.prewarm(this)
 	}
 
 	override fun attachBaseContext(base: Context) {

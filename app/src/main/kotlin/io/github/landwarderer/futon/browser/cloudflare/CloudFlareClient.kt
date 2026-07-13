@@ -5,14 +5,18 @@ import android.webkit.WebView
 import io.github.landwarderer.futon.browser.BrowserClient
 import io.github.landwarderer.futon.core.network.cookies.MutableCookieJar
 import io.github.landwarderer.futon.core.network.webview.adblock.AdBlock
-import org.koitharu.kotatsu.parsers.network.CloudFlareHelper
 
 private const val LOOP_COUNTER = 3
 
 open class CloudFlareClient(
 	private val cookieJar: MutableCookieJar,
 	private val callback: CloudFlareCallback,
-	adBlock: AdBlock,
+	// Nullable on purpose: ad-block filtering is disabled for the Cloudflare
+	// challenge itself (see CloudFlareActivity) since a false-positive block of
+	// a challenge-platform script/request is indistinguishable from "captcha
+	// never completes" to the user, and there's nothing to ad-block on an
+	// interstitial page anyway.
+	adBlock: AdBlock?,
 	private val targetUrl: String,
 ) : BrowserClient(callback, adBlock) {
 
@@ -21,6 +25,7 @@ open class CloudFlareClient(
 
 	override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
 		super.onPageStarted(view, url, favicon)
+		view?.let { CloudflareWebView.injectAntiDetectionJs(it) }
 		checkClearance()
 	}
 
@@ -39,8 +44,7 @@ open class CloudFlareClient(
 	}
 
 	private fun checkClearance() {
-		val clearance = getClearance()
-		if (clearance != null && clearance != oldClearance) {
+		if (CloudflareCookieSyncer.hasFreshClearance(cookieJar, targetUrl, oldClearance)) {
 			callback.onCheckPassed()
 		} else {
 			counter++
@@ -51,5 +55,5 @@ open class CloudFlareClient(
 		}
 	}
 
-	private fun getClearance() = CloudFlareHelper.getClearanceCookie(cookieJar, targetUrl)
+	private fun getClearance() = CloudflareCookieSyncer.currentClearance(cookieJar, targetUrl)
 }

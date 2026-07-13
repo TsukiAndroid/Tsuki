@@ -52,6 +52,8 @@ import io.github.landwarderer.futon.customsource.domain.CustomMangaSource
 import io.github.landwarderer.futon.browsersource.ui.BrowserSourceActivity
 import io.github.landwarderer.futon.customsource.domain.CustomSourceType
 import io.github.landwarderer.futon.customsource.ui.visualpicker.VisualRuleBuilderActivity
+import io.github.landwarderer.futon.core.network.ConnectionWarmer
+import androidx.lifecycle.lifecycleScope
 
 @AndroidEntryPoint
 class ExploreFragment :
@@ -62,6 +64,9 @@ class ExploreFragment :
 
         @Inject
         lateinit var settings: AppSettings
+
+        @Inject
+        lateinit var connectionWarmer: ConnectionWarmer
 
         private val viewModel by viewModels<ExploreViewModel>()
         private var exploreAdapter: ExploreAdapter? = null
@@ -169,6 +174,10 @@ class ExploreFragment :
                 }
                 val mangaSource = item.source.mangaSource
                 if (mangaSource is CustomMangaSource && mangaSource.source.type == CustomSourceType.BROWSER_SOURCE) {
+                        // DNS + TLS warm-up in parallel with the activity transition, so by
+                        // the time BrowserSourceActivity's WebView calls loadUrl() the
+                        // connection to this host is already established.
+                        connectionWarmer.warm(mangaSource.source.cleanBaseUrl, viewLifecycleOwner.lifecycleScope)
                         val intent = BrowserSourceActivity.createIntent(
                                 requireContext(),
                                 mangaSource.source.id,
