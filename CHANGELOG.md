@@ -1,3 +1,11 @@
+## Alpha 1.695 (Build [#282](https://github.com/Space4414/Tsuki/actions/runs/29295688769))
+
+_2026-07-14 00:21 UTC_
+
+- Add universal manga-site detection (passive WebView pattern learning) (73de503)
+- docs: record commit hash and CI success for WebView/Cloudflare fixes (b60b92f)
+
+
 ## Alpha 1.693 (Build [#281](https://github.com/Space4414/Tsuki/actions/runs/29294461462))
 
 _2026-07-13 23:55 UTC_
