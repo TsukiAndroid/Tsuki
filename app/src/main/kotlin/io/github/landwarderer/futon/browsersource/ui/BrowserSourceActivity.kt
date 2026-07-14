@@ -16,9 +16,14 @@ import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
+import androidx.lifecycle.lifecycleScope
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.landwarderer.futon.R
+import io.github.landwarderer.futon.browser.detection.DetectionPromptLevel
+import io.github.landwarderer.futon.browser.detection.MangaSiteDetector
+import io.github.landwarderer.futon.browser.detection.MangaSitePrompt
+import io.github.landwarderer.futon.browser.detection.promptLevel
 import io.github.landwarderer.futon.browser.webview.WebViewSettingsManager
 import io.github.landwarderer.futon.browsersource.data.BrowserSourceChapterDetector
 import io.github.landwarderer.futon.browsersource.data.BrowserSourceHistoryTracker
@@ -32,6 +37,7 @@ import io.github.landwarderer.futon.core.network.webview.adblock.AdBlock
 import io.github.landwarderer.futon.customsource.data.CustomSourcesRepository
 import io.github.landwarderer.futon.customsource.domain.CustomMangaSource
 import io.github.landwarderer.futon.databinding.ActivityBrowserSourceBinding
+import kotlinx.coroutines.launch
 import org.koitharu.kotatsu.parsers.model.ContentRating
 import org.koitharu.kotatsu.parsers.model.Manga
 import org.koitharu.kotatsu.parsers.model.MangaChapter
@@ -60,12 +66,18 @@ class BrowserSourceActivity : AppCompatActivity() {
     @Inject lateinit var browserSourceRepository: BrowserSourceRepository
     @Inject lateinit var historyTracker: BrowserSourceHistoryTracker
     @Inject lateinit var customSourcesRepository: CustomSourcesRepository
+    @Inject lateinit var mangaSiteDetector: MangaSiteDetector
 
     private lateinit var binding: ActivityBrowserSourceBinding
+    private lateinit var mangaSitePrompt: MangaSitePrompt
 
     private var sourceId: Long = -1L
     private var sourceName: String = ""
     private var baseUrl: String = ""
+
+    // Domain whose Level 3 "Add Source?" bottom sheet is currently showing, if any --
+    // guards against re-showing it every time onPageFinished fires for the same site.
+    private var addSourcePromptedDomain: String? = null
 
     // Safe snapshot of the WebView URL, updated on the main thread in onPageStarted.
     // Used inside shouldInterceptRequest() which runs on a background thread — calling
@@ -97,6 +109,8 @@ class BrowserSourceActivity : AppCompatActivity() {
         baseUrl = intent.getStringExtra(KEY_BASE_URL) ?: ""
 
         onBackPressedDispatcher.addCallback(this, webViewBackCallback)
+
+        mangaSitePrompt = MangaSitePrompt(this)
 
         setupToolbar()
         setupWebView()
@@ -199,6 +213,12 @@ class BrowserSourceActivity : AppCompatActivity() {
                 if (BrowserSourceChapterDetector.onResourceRequest(pageUrl, request)) {
                     runOnUiThread { maybeShowOpenReaderFab() }
                 }
+                // Feed reader-page image requests into the universal manga-site
+                // detector; cheap/synchronous, safe to call from this background thread.
+                val requestUrl = request.url.toString()
+                if (looksLikeImageRequest(requestUrl)) {
+                    mangaSiteDetector.recordImageUrl(pageUrl, requestUrl)
+                }
                 return null
             }
 
@@ -254,9 +274,95 @@ class BrowserSourceActivity : AppCompatActivity() {
                     }
 
                     CookieManager.getInstance().flush()
+
+                    view.evaluateJavascript("document.documentElement.outerHTML") { rawJson ->
+                        val html = unescapeJsString(rawJson)
+                        if (html.isNotBlank()) {
+                            runUniversalDetection(pageUrl, html)
+                        }
+                    }
                 }
             }
         }
+    }
+
+    /** WebView returns evaluateJavascript results as a JSON string literal; unwrap it. */
+    private fun unescapeJsString(raw: String?): String {
+        if (raw.isNullOrEmpty() || raw == "null") return ""
+        return runCatching { org.json.JSONTokener(raw).nextValue() as? String }.getOrNull().orEmpty()
+    }
+
+    private fun looksLikeImageRequest(url: String): Boolean {
+        val lower = url.substringBefore('?').lowercase()
+        return lower.endsWith(".jpg") || lower.endsWith(".jpeg") ||
+            lower.endsWith(".png") || lower.endsWith(".webp") || lower.endsWith(".avif")
+    }
+
+    // ── Universal manga-site detection ───────────────────────────────────────
+
+    private fun runUniversalDetection(pageUrl: String, html: String) {
+        lifecycleScope.launch {
+            val session = mangaSiteDetector.analyzePage(pageUrl, html) ?: return@launch
+            if (session.dismissedThisSession) return@launch
+            when (session.promptLevel()) {
+                DetectionPromptLevel.NONE -> {
+                    mangaSitePrompt.hideLearningIcon(binding.mangaSiteDetectIcon)
+                    mangaSitePrompt.hideHintBanner(binding.mangaSiteHintBanner)
+                }
+                DetectionPromptLevel.LEARNING -> {
+                    mangaSitePrompt.hideHintBanner(binding.mangaSiteHintBanner)
+                    mangaSitePrompt.showLearningIcon(binding.mangaSiteDetectIcon)
+                }
+                DetectionPromptLevel.HINT -> {
+                    mangaSitePrompt.hideLearningIcon(binding.mangaSiteDetectIcon)
+                    mangaSitePrompt.showHintBanner(
+                        bannerRoot = binding.mangaSiteHintBanner,
+                        messageView = binding.mangaSiteHintMessage,
+                        dismissButton = binding.mangaSiteHintDismiss,
+                        message = getString(R.string.manga_site_hint_message),
+                        onDismiss = { mangaSiteDetector.dismissForSession(session.domain) },
+                    )
+                }
+                DetectionPromptLevel.ADD_SOURCE -> {
+                    mangaSitePrompt.hideLearningIcon(binding.mangaSiteDetectIcon)
+                    mangaSitePrompt.hideHintBanner(binding.mangaSiteHintBanner)
+                    if (addSourcePromptedDomain != session.domain) {
+                        addSourcePromptedDomain = session.domain
+                        showAddSourceSheet(session.domain)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun showAddSourceSheet(domain: String) {
+        val session = mangaSiteDetector.sessionFor(domain) ?: return
+        mangaSitePrompt.showAddSourcePrompt(
+            session = session,
+            onAddSource = {
+                lifecycleScope.launch {
+                    Snackbar.make(binding.webView, getString(R.string.manga_site_prompt_creating, session.siteTitle), Snackbar.LENGTH_SHORT).show()
+                    when (val result = mangaSiteDetector.createSource(domain)) {
+                        is MangaSiteDetector.CreateResult.Success ->
+                            Snackbar.make(binding.webView, getString(R.string.manga_site_prompt_created, result.name), Snackbar.LENGTH_LONG).show()
+                        is MangaSiteDetector.CreateResult.ValidationFailed ->
+                            Snackbar.make(binding.webView, getString(R.string.manga_site_prompt_create_failed, result.reason), Snackbar.LENGTH_LONG).show()
+                        is MangaSiteDetector.CreateResult.Error ->
+                            Snackbar.make(binding.webView, getString(R.string.manga_site_prompt_create_failed, result.message), Snackbar.LENGTH_LONG).show()
+                    }
+                }
+            },
+            onTestFirst = {
+                lifecycleScope.launch {
+                    val sample = mangaSiteDetector.previewSample(domain)
+                    val msg = if (sample.isEmpty()) getString(R.string.manga_site_prompt_test_empty)
+                              else getString(R.string.manga_site_prompt_test_result, sample.size)
+                    Snackbar.make(binding.webView, msg, Snackbar.LENGTH_LONG).show()
+                }
+            },
+            onNotNow = { mangaSiteDetector.dismissForSession(domain) },
+            onNeverForSite = { mangaSiteDetector.markNeverForSite(domain) },
+        )
     }
 
     private fun loadUrl(url: String) {
@@ -397,6 +503,7 @@ class BrowserSourceActivity : AppCompatActivity() {
     override fun onDestroy() {
         binding.webView.stopLoading()
         binding.webView.destroy()
+        mangaSiteDetector.clearAllSessions()
         super.onDestroy()
     }
 

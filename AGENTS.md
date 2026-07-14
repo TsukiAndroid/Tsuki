@@ -1069,3 +1069,67 @@ and only activate after explicit user consent. Required for IzzyOnDroid distribu
 ### Commit & CI
 - Commit: `b404c54` pushed to `devel` (parent `8fb0518`).
 - CI: "Build Alpha APK" run for `b404c54` completed with conclusion `success` (https://github.com/Space4414/Tsuki/actions/runs/29293973528).
+
+---
+
+## Session 4 (Jul 14 2026) — Universal Manga Site Detection
+
+### Goal
+Passively watch WebView browsing in the in-app browser, recognise universal
+manga-site patterns (list / detail / reader / search) with **no site-specific
+rules**, accumulate confidence per domain across page visits, and prompt the
+user to auto-add a working source once confidence is high enough. Spec
+provided by the user; explicit "DO NOT TOUCH" list honoured: built-in Kotatsu
+sources, `TemplateHtmlParser.kt` core logic, `applicationId`, existing
+`CustomSourceType` enum entries, and templates already imported by users.
+
+### New package: `browser/detection/`
+| File | Purpose |
+|---|---|
+| `UniversalPatternDetector.kt` | Pure heuristics: repeated portrait-image "card" grids → manga list; hero image + heading + long paragraph + chapter links → manga detail; text input + submit → search; run of 5+ sequential large images sharing a URL path prefix → chapter reader. No CMS/domain knowledge. |
+| `DetectionSession.kt` + `DetectionSessionStore` | Per-domain in-memory session (selectors found so far, confidence, captured image URLs). TTL 30 min, max 20 sessions (oldest evicted), cleared on browser close. `DetectionPromptLevel` enum: NONE(<40) / LEARNING(40-69) / HINT(70-99) / ADD_SOURCE(100+). |
+| `UniversalSelectorExtractor.kt` | Converts detected DOM elements into CSS selector strings, and assembles a completed session into a generic parser-template JSON (same shape `ParserTemplateValidator` expects). |
+| `MangaSiteDetector.kt` (Hilt `@Singleton`) | Orchestrator. `analyzePage(url, html)` scores a freshly-loaded page; `recordImageUrl(pageUrl, imageUrl)` feeds reader detection from `shouldInterceptRequest`. Persists a "never for this site" domain blocklist (`SharedPreferences`, `tsuki_manga_site_detector`). `createSource(domain)` re-fetches the list page fresh and requires ≥3 manga found before saving a `ParserTemplate` + `CustomSource(type = CUSTOM_TEMPLATE)` — never saves an unvalidated template. `previewSample(domain)` powers "Test First" without creating anything. When confidence is stuck at 70-99, calls `GeminiSelectorAnalyzer` to fill only the missing list/detail selectors (reuses the same Gemini key the user already set in WebView settings, `tsuki_webview_settings` / `wv_gemini_key`) rather than re-running the ai gemini flow. |
+| `MangaSitePrompt.kt` | Pure View plumbing for the 3 UI tiers: pulsing "🌙" toolbar icon (Level 1), dismissible banner (Level 2), programmatically-built `BottomSheetDialog` with checklist + Add/Test First/Not now/Never buttons (Level 3). No detection logic. |
+
+### Integration points
+- **`BrowserSourceActivity`** (the primary target — `BROWSER_SOURCE` custom
+  sources): `onPageFinished` grabs `document.documentElement.outerHTML` via
+  `evaluateJavascript` and calls `mangaSiteDetector.analyzePage`;
+  `shouldInterceptRequest` feeds image-looking request URLs into
+  `recordImageUrl`. Toolbar gained a moon icon + a dismissible banner
+  (`activity_browser_source.xml`); Level 3 opens the bottom sheet once per
+  domain per session. `onDestroy` calls `clearAllSessions()`.
+- **`UniversalSourceViewModel.autoDetect`**: if a warm, high-confidence
+  passive-detection session already exists for the entered domain (e.g. the
+  user just browsed it), skips the full fetch + CMS-fingerprint pipeline and
+  pre-fills `DetectedFields` straight from the session — Universal Source Beta
+  becomes instant for sites Tsuki has already been watching.
+- **Deliberately NOT wired into `BrowserActivity`** (the legacy generic
+  WebView activity): it already has its own, older, equivalent pipeline
+  (`LearningSession` + `AiParserGenerator` + the learning banner) built for
+  the same purpose. Running both there would double-prompt the user and
+  double the detection work per page load. If the two are ever meant to
+  converge, that should be its own follow-up, not silently duplicated here.
+- **Not implemented this session** (scoped out for time — flagged, not
+  silently dropped): auto-launching the Visual Rule Builder pre-filled with
+  partial selectors when validation fails (currently just surfaces the
+  failure reason in a Snackbar and suggests the Visual Rule Builder by name).
+
+### Design notes / non-obvious decisions
+- Detection reuses the WebView's already-rendered DOM (`outerHTML` via JS
+  bridge) instead of a second network fetch, so it stays within the <500ms/page
+  budget and has zero extra network cost; `createSource`/`previewSample` are
+  the only paths that do a fresh OkHttp fetch, and only when the user
+  explicitly acts on a Level 3 prompt.
+- Confidence scoring intentionally never lets domain/URL keyword bonuses alone
+  cross the ADD_SOURCE threshold — list+detail (60) is the minimum required
+  combination before those bonuses can push a domain over 100.
+- New `CustomSource`s created from detection always use
+  `CustomSourceType.CUSTOM_TEMPLATE`, per the "don't add new enum values"
+  constraint — matches the existing manual Universal Source Beta fallback
+  path and `BrowserActivity`'s AI-learning save path.
+
+### Commit & CI
+- Compiled/verified via GitHub Actions only (no local Gradle toolchain in this
+  environment) — see commit hash and CI run link appended after push below.

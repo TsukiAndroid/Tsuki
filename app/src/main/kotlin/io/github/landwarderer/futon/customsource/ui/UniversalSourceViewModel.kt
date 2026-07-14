@@ -6,6 +6,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.github.landwarderer.futon.browser.detection.MangaSiteDetector
 import io.github.landwarderer.futon.customsource.data.CustomSourcesRepository
 import io.github.landwarderer.futon.customsource.data.ParserTemplateRepository
 import io.github.landwarderer.futon.customsource.data.SiteAutoDetector
@@ -41,6 +42,7 @@ class UniversalSourceViewModel @Inject constructor(
     @ApplicationContext private val appContext: Context,
     private val parserTemplateRepository: ParserTemplateRepository,
     private val customSourcesRepository: CustomSourcesRepository,
+    private val mangaSiteDetector: MangaSiteDetector,
 ) : ViewModel() {
 
     // ── Create result ─────────────────────────────────────────────────────────
@@ -95,6 +97,39 @@ class UniversalSourceViewModel @Inject constructor(
         viewModelScope.launch {
             _autoDetectState.value = AutoDetectState.Loading
             _progressStep.value = ""
+
+            // Fast path: if the universal passive detector (see MangaSiteDetector) already
+            // built up a high-confidence session for this domain from earlier browsing --
+            // e.g. the user was just looking at it in the in-app browser -- reuse those
+            // selectors instead of re-running the full fetch + CMS-fingerprint pipeline.
+            val warmDomain = runCatching { java.net.URI(trimUrl).host }.getOrNull()
+            val warmSession = warmDomain?.let { mangaSiteDetector.sessionFor(it) }
+            if (warmSession != null && warmSession.mangaListDetected) {
+                val list = warmSession.mangaListSelectors!!
+                val detail = warmSession.mangaDetailSelectors
+                lastDetectedPaginationType = "page"
+                lastDetectedCmsType = SiteAutoDetector.CmsType.UNKNOWN
+                _progressStep.value = ""
+                _autoDetectState.value = AutoDetectState.Done(
+                    SiteAutoDetector.DetectedFields(
+                        siteName = warmSession.siteTitle,
+                        cardSelector = list.itemSelector,
+                        titleSelector = list.titleSelector,
+                        coverSelector = list.coverSelector,
+                        detailTitle = detail?.titleSelector.orEmpty(),
+                        description = detail?.descriptionSelector.orEmpty(),
+                        chapterSelector = detail?.chapterListSelector.orEmpty(),
+                        pageImageSelector = warmSession.pageImageSelectors?.imageSelector.orEmpty(),
+                        fieldConfidence = mapOf(
+                            "cardSelector" to SiteAutoDetector.Confidence.MEDIUM,
+                            "titleSelector" to SiteAutoDetector.Confidence.MEDIUM,
+                        ),
+                        cmsType = SiteAutoDetector.CmsType.UNKNOWN,
+                    ),
+                )
+                return@launch
+            }
+
             runCatching {
                 SiteAutoDetector(
                     context      = appContext,

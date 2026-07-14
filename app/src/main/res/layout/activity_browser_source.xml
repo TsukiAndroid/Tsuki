@@ -97,8 +97,53 @@
                     android:src="@drawable/ic_shield"
                     android:tint="?attr/colorPrimary" />
 
+                <!-- Universal manga-site detection indicator (Level 1: silent monitoring) -->
+                <TextView
+                    android:id="@+id/manga_site_detect_icon"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:layout_gravity="center_vertical"
+                    android:contentDescription="@string/manga_site_detect_icon_desc"
+                    android:gravity="center"
+                    android:text="@string/manga_site_detect_moon_emoji"
+                    android:textSize="18sp"
+                    android:visibility="gone"
+                    tools:visibility="visible" />
+
             </LinearLayout>
         </androidx.appcompat.widget.Toolbar>
+
+        <!-- Universal manga-site detection banner (Level 2: dismissible hint) -->
+        <LinearLayout
+            android:id="@+id/manga_site_hint_banner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="?attr/colorSurfaceVariant"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="10dp"
+            android:visibility="gone"
+            tools:visibility="visible">
+
+            <TextView
+                android:id="@+id/manga_site_hint_message"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textSize="13sp"
+                tools:text="This looks like a manga site Tsuki could add automatically." />
+
+            <ImageButton
+                android:id="@+id/manga_site_hint_dismiss"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/close"
+                android:src="@drawable/ic_close"
+                android:tint="?attr/colorOnSurface" />
+
+        </LinearLayout>
 
     </com.google.android.material.appbar.AppBarLayout>
 
