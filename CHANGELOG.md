@@ -1,3 +1,11 @@
+## Alpha 1.693 (Build [#281](https://github.com/Space4414/Tsuki/actions/runs/29294461462))
+
+_2026-07-13 23:55 UTC_
+
+- docs: record commit hash and CI success for WebView/Cloudflare fixes (b60b92f)
+- Fix WebView performance and Cloudflare captcha never completing (b404c54)
+
+
 ## Alpha 1.691 (Build [#280](https://github.com/Space4414/Tsuki/actions/runs/29293973528))
 
 _2026-07-13 23:45 UTC_
