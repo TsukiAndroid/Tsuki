@@ -1131,5 +1131,6 @@ sources, `TemplateHtmlParser.kt` core logic, `applicationId`, existing
   path and `BrowserActivity`'s AI-learning save path.
 
 ### Commit & CI
-- Compiled/verified via GitHub Actions only (no local Gradle toolchain in this
-  environment) — see commit hash and CI run link appended after push below.
+- Commit: `73de503` pushed to `devel` (rebased onto parent `b60b92f`).
+- CI: "Build Alpha APK" run for `73de503` completed with conclusion `success`
+  (https://github.com/Space4414/Tsuki/actions/runs/29295688769).
