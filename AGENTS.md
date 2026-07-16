@@ -1134,3 +1134,87 @@ sources, `TemplateHtmlParser.kt` core logic, `applicationId`, existing
 - Commit: `73de503` pushed to `devel` (rebased onto parent `b60b92f`).
 - CI: "Build Alpha APK" run for `73de503` completed with conclusion `success`
   (https://github.com/Space4414/Tsuki/actions/runs/29295688769).
+
+---
+
+## Android 16 Bug Fix Session — July 2026
+
+### Problems reported
+
+A user on Android 16 reported two related bugs in the Library/Favorites system.
+
+---
+
+### Bug 1 — "New Chapters" filter in Favorites tab shows nothing on Android 16
+
+#### Root cause
+
+`FavouritesDao.getCondition()` for `ListFilterOption.Macro.NEW_CHAPTERS` used:
+
+```sql
+(SELECT chapters_new FROM tracks WHERE tracks.manga_id = favourites.manga_id) > 0
+```
+
+When a manga is in Favorites but has no corresponding row in the `tracks` table
+(e.g. the tracker hasn't initialized yet, or tracking was reset), the subquery
+returns `NULL`. In SQLite, `NULL > 0` evaluates to `NULL` — not `TRUE` — so
+those manga are silently excluded from the filter on every Android version,
+but this is especially visible on Android 16 where background restrictions
+can delay or skip initial track-record creation.
+
+#### Fix — `FavouritesDao.kt`
+
+Wrapped the subquery with `IFNULL(..., 0)` so a missing track row is treated
+as zero new chapters (excluded from the filter) rather than `NULL` (which
+silently drops the row from the result set):
+
+```sql
+IFNULL((SELECT chapters_new FROM tracks WHERE tracks.manga_id = favourites.manga_id), 0) > 0
+```
+
+Note: the `ListSortOrder.NEW_CHAPTERS` sort expression in the same file already
+used `IFNULL` correctly — this fix brings the filter condition into parity.
+
+---
+
+### Bug 2 — Feeds tab requires manual refresh instead of auto-fetching on Android 10+
+
+#### Root cause
+
+`FeedFragment` never triggered a chapter check when the Feeds tab came to the
+foreground. The only triggers were:
+- Swipe-to-refresh (`onRefresh()` → `viewModel.update()`)
+- The periodic WorkManager job (which Android 10+ aggressively restricts in
+  the background)
+
+`FeedViewModel.content` is already fully reactive via a Room `Flow`, so once
+new chapters land in the database the UI updates instantly. The missing piece
+was simply the fetch trigger when the user opens the tab.
+
+#### Fix
+
+**`FeedViewModel.kt`**
+- Added `lastAutoUpdateTime: AtomicLong` to track when the last check ran.
+- `update()` now records the current time in `lastAutoUpdateTime`.
+- New `updateIfNeeded()` method: triggers `update()` only if ≥ 15 minutes
+  have elapsed since the last check (matching the Android WorkManager minimum
+  periodic interval). This prevents flooding the network when the user
+  rapidly switches tabs.
+
+**`FeedFragment.kt`**
+- Added `override fun onResume()` that calls `viewModel.updateIfNeeded()`.
+- This fires every time the Feeds tab becomes visible (app foreground, tab
+  switch, back-navigation) and is debounced to at most once per 15 minutes.
+
+#### Files changed
+
+| File | Change |
+|---|---|
+| `favourites/data/FavouritesDao.kt` | Bug 1: `IFNULL` fix in `NEW_CHAPTERS` filter condition |
+| `tracker/ui/feed/FeedViewModel.kt` | Bug 2: `lastAutoUpdateTime`, `updateIfNeeded()`, `AUTO_UPDATE_DEBOUNCE_MS` constant |
+| `tracker/ui/feed/FeedFragment.kt` | Bug 2: `onResume()` override calling `updateIfNeeded()` |
+
+### Commit & CI
+
+- Branch: `fix/android16-library-feeds-bugs` (PR against `devel`)
+- CI: pending — see GitHub Actions.

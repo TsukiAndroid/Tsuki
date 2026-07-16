@@ -156,6 +156,13 @@ class FeedFragment :
                 return insets.consumeAll(typeMask)
         }
 
+        override fun onResume() {
+                super.onResume()
+                // Automatically trigger a chapter check when the Feeds tab comes to the foreground.
+                // Debounced to at most once per 15 minutes so we don't spam the network.
+                viewModel.updateIfNeeded()
+        }
+
         override fun onRefresh() {
                 viewModel.update()
         }
