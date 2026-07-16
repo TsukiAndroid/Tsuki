@@ -1,3 +1,12 @@
+## Alpha 1.699 (Build [#283](https://github.com/Space4414/Tsuki/actions/runs/29542622603))
+
+_2026-07-16 23:38 UTC_
+
+- fix: Android 16 library New Chapters filter + Feeds auto-refresh (f753c42)
+- docs: record commit hash and CI success for universal manga-site detection [skip ci] (c727f66)
+- Add universal manga-site detection (passive WebView pattern learning) (73de503)
+
+
 ## Beta 1.5.0 (Build [#5](https://github.com/Space4414/Tsuki/actions/runs/29298148287))
 
 _2026-07-14 01:16 UTC_
