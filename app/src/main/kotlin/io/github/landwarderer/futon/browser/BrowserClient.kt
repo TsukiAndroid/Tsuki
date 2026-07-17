@@ -76,10 +76,13 @@ open class BrowserClient(
 	 * Google (and Twitter, Facebook, Discord, GitHub) explicitly block OAuth
 	 * inside embedded WebViews that don't identify as a full Chrome session.
 	 * Opening in the system browser lets the user complete login and return.
+	 *
+	 * Nullable params match the underlying Java [WebViewClient] platform-type
+	 * signature so subclasses can safely override with nullable receivers.
 	 */
-	override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
-		val url = request.url.toString()
-		if (isOAuthUrl(url)) {
+	override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
+		val url = request?.url?.toString() ?: return super.shouldOverrideUrlLoading(view, request)
+		if (isOAuthUrl(url) && view != null) {
 			runCatching {
 				val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
 					addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
