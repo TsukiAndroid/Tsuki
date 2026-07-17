@@ -1,3 +1,14 @@
+## Alpha 1.703 (Build [#286](https://github.com/Space4414/Tsuki/actions/runs/29545067804))
+
+_2026-07-17 00:32 UTC_
+
+- fix: DiscordRpc.kt — safe-call nullable String? fields (chapter.title, manga.coverUrl) (fd10bfe)
+- fix: BrowserClient.shouldOverrideUrlLoading — use nullable WebView? param to match Java platform type so RequestInterceptorWebViewClient subclass override still compiles (09e2dbb)
+- fix: 4-bug batch (Explore source detection, Cloudflare bypass, AI WebView removal, Discord RPC) (d9f3383)
+- fix: Android 16 library New Chapters filter + Feeds auto-refresh (f753c42)
+- docs: record commit hash and CI success for universal manga-site detection [skip ci] (c727f66)
+
+
 ## Alpha 1.699 (Build [#283](https://github.com/Space4414/Tsuki/actions/runs/29542622603))
 
 _2026-07-16 23:38 UTC_
