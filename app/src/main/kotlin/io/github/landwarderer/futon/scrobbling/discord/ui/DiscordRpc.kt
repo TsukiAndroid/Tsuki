@@ -93,11 +93,11 @@ class DiscordRpc @Inject constructor(
 			// cancels the whole updateRpcAsync job, so fall back to the app icon.
 			val isCustomOrBrowser = manga.source.name.startsWith("CUSTOM_")
 			val stateText = if (isCustomOrBrowser && state.chaptersTotal <= 1) {
-				"${state.chapter.title.ifBlank { "Chapter" }} · via Tsuki Browser"
+				"${state.chapter.title?.ifBlank { "Chapter" } ?: "Chapter"} · via Tsuki Browser"
 			} else {
 				context.getString(R.string.chapter_d_of_d, state.chapterNumber, state.chaptersTotal)
 			}
-			val safeCoverUrl = manga.coverUrl.takeIf { it.isNotBlank() } ?: appIcon
+			val safeCoverUrl = manga.coverUrl?.takeIf { it.isNotBlank() } ?: appIcon
 			updateRpcAsync(
 				activity = Activity(
 					applicationId = appId,
