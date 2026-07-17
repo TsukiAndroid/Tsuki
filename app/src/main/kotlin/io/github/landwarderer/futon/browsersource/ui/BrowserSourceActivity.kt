@@ -473,6 +473,7 @@ class BrowserSourceActivity : AppCompatActivity() {
             // Open the native reader
             val readerIntent = ReaderIntent.Builder(this)
                 .manga(manga)
+                .incognito(false)
                 .build()
             router.openReader(readerIntent)
         }

@@ -12,9 +12,6 @@ import androidx.lifecycle.lifecycleScope
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.landwarderer.futon.R
-import io.github.landwarderer.futon.browser.learning.AiParserGenerator
-import io.github.landwarderer.futon.browser.learning.LearningSession
-import io.github.landwarderer.futon.browser.learning.PageType
 import io.github.landwarderer.futon.browser.webview.ChapterDetector
 import io.github.landwarderer.futon.browser.webview.WebViewSettingsManager
 import io.github.landwarderer.futon.core.exceptions.InteractiveActionRequiredException
@@ -45,10 +42,6 @@ class BrowserActivity : BaseBrowserActivity() {
     lateinit var webViewSettings: WebViewSettingsManager
 
     private var customSourceId: Long? = null
-    private val learningSession = LearningSession()
-    private val aiParserGenerator = AiParserGenerator()
-    private var generatedParserJson: String? = null
-    private var isBannerDismissed = false
 
     override fun onCreate2(savedInstanceState: Bundle?, source: MangaSource, repository: ParserMangaRepository?) {
         setDisplayHomeAsUp(isEnabled = true, showUpAsClose = true)
@@ -58,9 +51,6 @@ class BrowserActivity : BaseBrowserActivity() {
             callback = this,
             adBlock = adBlock,
             webViewSettings = webViewSettings,
-            learningSession = learningSession,
-            onPageClassified = { pageType, url -> onPageClassified(pageType, url) },
-            onNewLearningData = { onNewLearningData() },
         )
 
         // Apply per-session JS + UA settings
@@ -73,7 +63,6 @@ class BrowserActivity : BaseBrowserActivity() {
         customSourceId = intent?.getStringExtra(AppRouter.KEY_SOURCE)
             ?.let { CustomMangaSource.extractId(it) }
 
-        setupLearningBanner()
         setupFabs()
 
         lifecycleScope.launch {
@@ -100,112 +89,6 @@ class BrowserActivity : BaseBrowserActivity() {
                 }
             }
         }
-    }
-
-    // ── Learning Banner ────────────────────────────────────────────────────────
-
-    private fun setupLearningBanner() {
-        viewBinding.learningBannerDismiss.setOnClickListener {
-            isBannerDismissed = true
-            viewBinding.learningBanner.isVisible = false
-        }
-
-        viewBinding.learningBanner.setOnClickListener {
-            val json = generatedParserJson
-            if (json != null) showParserCreationDialog(json)
-        }
-
-        updateLearningBanner()
-    }
-
-    private fun updateLearningBanner() {
-        if (isBannerDismissed || !webViewSettings.isAiParserLearningEnabled ||
-            !webViewSettings.isLearningBannerVisible
-        ) {
-            viewBinding.learningBanner.isVisible = false
-            return
-        }
-
-        val captured = learningSession.capturedTypes
-        val hasJson = generatedParserJson != null
-
-        val message = when {
-            hasJson -> getString(R.string.webview_parser_ready)
-            PageType.MANGA_LIST !in captured -> getString(R.string.webview_learning_msg_0)
-            PageType.MANGA_DETAIL !in captured -> getString(R.string.webview_learning_msg_1)
-            PageType.CHAPTER_READER !in captured -> getString(R.string.webview_learning_msg_2)
-            else -> getString(R.string.webview_learning_generating)
-        }
-        viewBinding.learningBannerMessage.text = message
-
-        val listCheck = if (PageType.MANGA_LIST in captured) "✓" else "○"
-        val detailCheck = if (PageType.MANGA_DETAIL in captured) "✓" else "○"
-        val chapterCheck = if (PageType.CHAPTER_READER in captured) "✓" else "○"
-        viewBinding.checkList.text =
-            "[$listCheck ${getString(R.string.webview_checklist_list)}] " +
-            "[$detailCheck ${getString(R.string.webview_checklist_detail)}] " +
-            "[$chapterCheck ${getString(R.string.webview_checklist_chapter)}]"
-
-        viewBinding.learningBanner.isVisible = true
-    }
-
-    private fun onPageClassified(pageType: PageType, url: String) {
-        runOnUiThread { updateLearningBanner() }
-    }
-
-    private fun onNewLearningData() {
-        if (!webViewSettings.isAiParserLearningEnabled) return
-        lifecycleScope.launch {
-            val json = withContext(Dispatchers.IO) {
-                runCatching {
-                    aiParserGenerator.generate(
-                        session = learningSession,
-                        geminiApiKey = webViewSettings.geminiApiKey.takeIf { it.isNotBlank() },
-                    )
-                }.getOrNull()
-            }
-            if (json != null) {
-                generatedParserJson = json
-                updateLearningBanner()
-            }
-        }
-    }
-
-    private fun showParserCreationDialog(parserJson: String) {
-        val domain = learningSession.domain
-        val siteName = learningSession.siteName.ifBlank {
-            domain.removePrefix("www.").substringBefore(".")
-                .replaceFirstChar { it.uppercase() }
-        }
-
-        androidx.appcompat.app.AlertDialog.Builder(this)
-            .setTitle(R.string.webview_parser_sheet_title)
-            .setMessage("Site: $siteName\nDomain: $domain\n\nParser generated. Add it as a custom source?")
-            .setPositiveButton(R.string.webview_parser_add_source) { _, _ ->
-                saveParserAsSource(siteName, parserJson)
-            }
-            .setNeutralButton(R.string.webview_parser_dismiss, null)
-            .show()
-    }
-
-    private fun saveParserAsSource(name: String, parserJson: String) {
-        val currentUrl = viewBinding.webView.url ?: return
-        val baseUrl = runCatching {
-            val uri = URI(currentUrl)
-            "${uri.scheme}://${uri.host}"
-        }.getOrDefault(currentUrl)
-
-        val newSource = CustomSource(
-            id = CustomSourcesRepository.generateId(),
-            name = name,
-            baseUrl = baseUrl,
-            type = CustomSourceType.CUSTOM_TEMPLATE,
-        )
-        customSourcesRepository.add(newSource)
-        generatedParserJson = null
-        learningSession.reset()
-        updateLearningBanner()
-        Snackbar.make(viewBinding.webView, R.string.webview_source_added, Snackbar.LENGTH_SHORT).show()
     }
 
     // ── FABs ───────────────────────────────────────────────────────────────────
@@ -256,9 +139,12 @@ class BrowserActivity : BaseBrowserActivity() {
         val title = viewBinding.webView.title?.takeIf { it.isNotBlank() }
             ?: baseUrl.removePrefix("https://").removePrefix("www.")
 
-        // Check if already added
+        // Check if already added as a parsed (non-browser) source.
+        // BROWSER_SOURCE can coexist with a new CUSTOM_TEMPLATE entry — don't block it.
         val existing = customSourcesRepository.findByUrl(baseUrl)
-        if (existing != null && existing.type != CustomSourceType.WEBVIEW) {
+        if (existing != null &&
+            existing.type != CustomSourceType.WEBVIEW &&
+            existing.type != CustomSourceType.BROWSER_SOURCE) {
             // Already a proper parseable source — nothing to do
             Snackbar.make(
                 viewBinding.webView,

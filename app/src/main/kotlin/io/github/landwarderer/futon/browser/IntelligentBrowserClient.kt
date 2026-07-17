@@ -1,33 +1,34 @@
 package io.github.landwarderer.futon.browser
 
-import android.util.Log
+import android.graphics.Bitmap
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import androidx.annotation.WorkerThread
-import io.github.landwarderer.futon.browser.learning.LearningSession
-import io.github.landwarderer.futon.browser.learning.PageClassifier
-import io.github.landwarderer.futon.browser.learning.PageType
+import io.github.landwarderer.futon.browser.cloudflare.CloudflareWebView
 import io.github.landwarderer.futon.browser.webview.WebViewSettingsManager
 import io.github.landwarderer.futon.core.network.webview.adblock.AdBlock
-import java.io.ByteArrayInputStream
-import java.net.HttpURLConnection
-import java.net.URL
 
 /**
- * Enhanced WebViewClient that adds AI parser learning, popup blocking support,
- * custom domain blocking, and page classification to the existing [BrowserClient].
+ * Enhanced WebViewClient that adds Cloudflare anti-bot bypass, popup blocking,
+ * and custom CSS injection on top of [BrowserClient].
  *
- * Existing ad-block and history/title callbacks are preserved.
+ * AI parser learning has been removed in favour of the Universal Detection flow
+ * (CMS fingerprinting via FAB → [BrowserActivity.addCurrentSiteToLibrary]).
  */
 class IntelligentBrowserClient(
     callback: BrowserCallback,
     adBlock: AdBlock?,
     private val webViewSettings: WebViewSettingsManager,
-    private val learningSession: LearningSession,
-    private val onPageClassified: (PageType, String) -> Unit,
-    private val onNewLearningData: () -> Unit,
 ) : BrowserClient(callback, adBlock) {
+
+    /**
+     * Set to true when the page being loaded contains Cloudflare challenge
+     * markers. While true, [shouldInterceptRequest] passes all requests through
+     * unmodified so Cloudflare's internal challenge scripts are never blocked.
+     */
+    @Volatile
+    private var isOnCloudflarePage = false
 
     /** Popup-blocker JS injected once per page load. */
     private val popupBlockerScript = """
@@ -50,11 +51,33 @@ class IntelligentBrowserClient(
         })();
     """.trimIndent()
 
+    override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
+        super.onPageStarted(view, url, favicon)
+        // Inject anti-bot JS on EVERY page start so Cloudflare challenges never
+        // see the WebView automation fingerprint before the page is committed.
+        view?.let { CloudflareWebView.injectAntiDetectionJs(it) }
+    }
+
     override fun onPageFinished(webView: WebView, url: String) {
         super.onPageFinished(webView, url)
 
         // Inject popup blocker
         webView.evaluateJavascript(popupBlockerScript, null)
+
+        // Detect Cloudflare challenge page and update bypass flag.
+        webView.evaluateJavascript(CLOUDFLARE_DETECT_JS) { result ->
+            val isCf = result?.trim()?.removeSurrounding("\"") == "true"
+            if (isCf != isOnCloudflarePage) {
+                isOnCloudflarePage = isCf
+                if (isCf) {
+                    // Switch to Cloudflare-compatible UA and re-inject anti-detection JS.
+                    webView.post {
+                        CloudflareWebView.applyCloudflareUserAgent(webView)
+                        CloudflareWebView.injectAntiDetectionJs(webView)
+                    }
+                }
+            }
+        }
 
         // Inject custom CSS
         val domain = runCatching {
@@ -69,21 +92,6 @@ class IntelligentBrowserClient(
         if (combinedCss.isNotBlank()) {
             webView.evaluateJavascript(buildCssScript(combinedCss), null)
         }
-
-        // Capture page HTML for learning if enabled
-        if (webViewSettings.isAiParserLearningEnabled) {
-            webView.evaluateJavascript("document.documentElement.outerHTML") { html ->
-                if (!html.isNullOrBlank() && html != "null") {
-                    val cleanHtml = html.removePrefix("\"").removeSuffix("\"")
-                        .replace("\\u003C", "<")
-                        .replace("\\u003E", ">")
-                        .replace("\\\"", "\"")
-                        .replace("\\n", "\n")
-                        .replace("\\t", "\t")
-                    processPageForLearning(url, cleanHtml)
-                }
-            }
-        }
     }
 
     @WorkerThread
@@ -91,40 +99,42 @@ class IntelligentBrowserClient(
         view: WebView?,
         request: WebResourceRequest?,
     ): WebResourceResponse? {
-        if (request == null) return super.shouldInterceptRequest(view, null as WebResourceRequest?)
-        val url = request.url.toString()
-
-        // Check custom blocked/whitelisted domains
-        if (webViewSettings.isAdBlockEnabled) {
-            val host = request.url.host ?: ""
-            val whitelisted = webViewSettings.whitelistedDomains
-            val customBlocked = webViewSettings.customBlockedDomains
-            if (whitelisted.none { host.endsWith(it) } &&
-                customBlocked.any { host.endsWith(it) }
-            ) {
-                webViewSettings.incrementBlockedCount()
-                return emptyWebResponse()
-            }
-        }
-
+        // On Cloudflare challenge pages, pass EVERY request through unmodified.
+        // Any interception — even ad-block — can look like a bot to Cloudflare's
+        // challenge verifier and cause the spinner to loop forever.
+        if (isOnCloudflarePage) return null
         return super.shouldInterceptRequest(view, request)
     }
 
-    private fun processPageForLearning(url: String, html: String) {
-        val pageType = PageClassifier.classify(url, html)
-        if (pageType != PageType.UNKNOWN) {
-            learningSession.capture(pageType, url, html)
-            onPageClassified(pageType, url)
-            if (learningSession.isReadyForGeneration) {
-                onNewLearningData()
-            }
-        }
+    @WorkerThread
+    @Deprecated("Deprecated in Java")
+    override fun shouldInterceptRequest(
+        view: WebView?,
+        url: String?,
+    ): WebResourceResponse? {
+        if (isOnCloudflarePage) return null
+        return super.shouldInterceptRequest(view, url)
     }
 
-    private fun emptyWebResponse() =
-        WebResourceResponse("text/plain", "utf-8", ByteArrayInputStream(byteArrayOf()))
-
     companion object {
-        private const val TAG = "IntelligentBrowserClient"
+        /**
+         * JavaScript that evaluates to the string "true" when the current page
+         * is a Cloudflare browser-challenge interstitial.
+         */
+        private const val CLOUDFLARE_DETECT_JS = """
+            (function() {
+                try {
+                    var title = (document.title || '').toLowerCase();
+                    var body  = document.body ? document.body.innerHTML : '';
+                    var isCf  = title.indexOf('just a moment') !== -1 ||
+                                body.indexOf('cf-browser-verification') !== -1 ||
+                                body.indexOf('cf-ray') !== -1 ||
+                                body.toLowerCase().indexOf('checking your browser') !== -1 ||
+                                document.querySelector('.cf-browser-verification') !== null ||
+                                document.querySelector('#cf-wrapper') !== null;
+                    return String(isCf);
+                } catch(e) { return 'false'; }
+            })()
+        """
     }
 }

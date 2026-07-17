@@ -49,23 +49,45 @@ object CloudflareWebView {
         webView.evaluateJavascript(ANTI_DETECTION_JS, null)
     }
 
+    /** Cloudflare-specific user agent that passes bot fingerprinting. */
+    const val CLOUDFLARE_USER_AGENT =
+        "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36"
+
+    /** Apply the Cloudflare user agent to the given WebView. */
+    fun applyCloudflareUserAgent(webView: WebView) {
+        webView.settings.userAgentString = CLOUDFLARE_USER_AGENT
+    }
+
     private val ANTI_DETECTION_JS = """
         (function() {
             try {
-                Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
-                if (!window.chrome) {
-                    window.chrome = { runtime: {} };
-                }
-                if (navigator.plugins && navigator.plugins.length === 0) {
-                    Object.defineProperty(navigator, 'plugins', {
-                        get: () => [1, 2, 3, 4, 5],
-                    });
-                }
-                if (navigator.languages && navigator.languages.length === 0) {
-                    Object.defineProperty(navigator, 'languages', {
-                        get: () => ['en-US', 'en'],
-                    });
-                }
+                Object.defineProperty(navigator, 'webdriver', {
+                    get: () => undefined,
+                    configurable: true
+                });
+                window.chrome = {
+                    runtime: {},
+                    loadTimes: function() { return {}; },
+                    csi: function() { return {}; },
+                    app: { isInstalled: false }
+                };
+                Object.defineProperty(navigator, 'plugins', {
+                    get: () => [1, 2, 3, 4, 5],
+                    configurable: true
+                });
+                Object.defineProperty(navigator, 'languages', {
+                    get: () => ['en-US', 'en'],
+                    configurable: true
+                });
+                Object.defineProperty(navigator, 'platform', {
+                    get: () => 'Linux armv8l',
+                    configurable: true
+                });
+                window.outerHeight = window.innerHeight;
+                window.outerWidth = window.innerWidth;
+                try { delete window.cdc_adoQpoasnfa76pfcZLmcfl_Array; } catch(e) {}
+                try { delete window.cdc_adoQpoasnfa76pfcZLmcfl_Promise; } catch(e) {}
+                try { delete window.cdc_adoQpoasnfa76pfcZLmcfl_Symbol; } catch(e) {}
                 const originalQuery = window.navigator.permissions && window.navigator.permissions.query;
                 if (originalQuery) {
                     window.navigator.permissions.query = (parameters) => (

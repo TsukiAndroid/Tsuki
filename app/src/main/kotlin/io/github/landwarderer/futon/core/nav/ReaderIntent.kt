@@ -29,8 +29,8 @@ value class ReaderIntent private constructor(
 			intent.setData(AppRouter.shortMangaUrl(mangaId))
 		}
 
-		fun incognito() = apply {
-			intent.putExtra(EXTRA_INCOGNITO, true)
+		fun incognito(enabled: Boolean = true) = apply {
+			intent.putExtra(EXTRA_INCOGNITO, enabled)
 		}
 
 		fun branch(branch: String?) = apply {

@@ -88,18 +88,28 @@ class DiscordRpc @Inject constructor(
 				clearRpc()
 				return
 			}
+			// Detect browser/custom sources: synthetic single-chapter manga with empty coverUrl.
+			// An empty largeImage causes the media-proxy coroutine to fail and silently
+			// cancels the whole updateRpcAsync job, so fall back to the app icon.
+			val isCustomOrBrowser = manga.source.name.startsWith("CUSTOM_")
+			val stateText = if (isCustomOrBrowser && state.chaptersTotal <= 1) {
+				"${state.chapter.title.ifBlank { "Chapter" }} · via Tsuki Browser"
+			} else {
+				context.getString(R.string.chapter_d_of_d, state.chapterNumber, state.chaptersTotal)
+			}
+			val safeCoverUrl = manga.coverUrl.takeIf { it.isNotBlank() } ?: appIcon
 			updateRpcAsync(
 				activity = Activity(
 					applicationId = appId,
 					name = appName,
 					details = manga.title,
-					state = context.getString(R.string.chapter_d_of_d, state.chapterNumber, state.chaptersTotal),
+					state = stateText,
 					type = 3,
 					timestamps = Timestamps(
 						start = lastActivity?.timestamps?.start ?: System.currentTimeMillis(),
 					),
 					assets = Assets(
-						largeImage = manga.coverUrl,
+						largeImage = safeCoverUrl,
 						largeText = context.getString(R.string.reading_s, manga.title),
 						smallText = context.getString(R.string.discord_rpc_description),
 						smallImage = appIcon,

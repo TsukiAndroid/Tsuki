@@ -1,7 +1,9 @@
 package io.github.landwarderer.futon.browser
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.graphics.Bitmap
+import android.net.Uri
 import android.os.Looper
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
@@ -67,6 +69,48 @@ open class BrowserClient(
 
 	private fun emptyResponse(): WebResourceResponse =
 		WebResourceResponse("text/plain", "utf-8", ByteArrayInputStream(byteArrayOf()))
+
+	/**
+	 * Redirect OAuth / sign-in URLs to Chrome or the system browser.
+	 *
+	 * Google (and Twitter, Facebook, Discord, GitHub) explicitly block OAuth
+	 * inside embedded WebViews that don't identify as a full Chrome session.
+	 * Opening in the system browser lets the user complete login and return.
+	 */
+	override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
+		val url = request.url.toString()
+		if (isOAuthUrl(url)) {
+			runCatching {
+				val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
+					addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+				}
+				view.context.startActivity(intent)
+			}
+			return true
+		}
+		return super.shouldOverrideUrlLoading(view, request)
+	}
+
+	private fun isOAuthUrl(url: String): Boolean {
+		val lower = url.lowercase()
+		return OAUTH_DOMAINS.any { lower.contains(it) }
+	}
+
+	companion object {
+		/**
+		 * URL substrings that must open in an external browser rather than the
+		 * in-app WebView.
+		 */
+		private val OAUTH_DOMAINS = listOf(
+			"accounts.google.com",
+			"oauth.google.com",
+			"accounts.youtube.com",
+			"accounts.twitter.com",
+			"www.facebook.com/login",
+			"discord.com/oauth2",
+			"github.com/login/oauth",
+		)
+	}
 
 	@SuppressLint("WrongThread")
 	@AnyThread

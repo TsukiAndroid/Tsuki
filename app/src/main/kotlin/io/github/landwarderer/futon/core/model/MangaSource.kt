@@ -115,7 +115,14 @@ fun MangaSource.getSummary(context: Context): String? = when (val source = unwra
 
         is ExternalMangaSource -> context.getString(R.string.external_source)
 
-        is CustomMangaSource -> context.getString(R.string.custom_source)
+        is CustomMangaSource -> {
+                val domain = runCatching {
+                        java.net.URI(source.source.baseUrl).host?.removePrefix("www.")
+                                ?: source.source.baseUrl
+                }.getOrDefault(source.source.baseUrl)
+                val typeLabel = source.source.type.label
+                "$domain · $typeLabel"
+        }
 
         is MihonMangaSource -> {
                 val contentType = when (source.contentType) {

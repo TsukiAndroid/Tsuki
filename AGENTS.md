@@ -1218,3 +1218,181 @@ was simply the fetch trigger when the user opens the tab.
 
 - Branch: `fix/android16-library-feeds-bugs` (PR against `devel`)
 - CI: pending — see GitHub Actions.
+
+---
+
+## Bug Fix Session — July 2026 (4-Bug Batch)
+
+### Summary
+
+Fixed 4 bugs in the Tsuki browser/reader stack, pushed directly to `devel`.
+
+---
+
+### Bug 1 — Detected source doesn't appear in Explore tab after being added
+
+#### Root cause
+
+`BrowserActivity.addCurrentSiteToLibrary()` had an early-return guard:
+
+```kotlin
+if (existing != null && existing.type != CustomSourceType.WEBVIEW) { return }
+```
+
+This blocked adding a `CUSTOM_TEMPLATE` source when a `BROWSER_SOURCE` already
+existed for the same domain, because `BROWSER_SOURCE != WEBVIEW` → the guard
+fired → the new source was never added.
+
+Additionally, `CustomMangaSource` entries all showed the generic subtitle
+"Custom Source" in the Explore tab, making same-named sources from different
+domains indistinguishable.
+
+#### Fix
+
+**`browser/BrowserActivity.kt`**
+- Changed early-return condition to `existing.type != WEBVIEW && existing.type != BROWSER_SOURCE`.
+  A `BROWSER_SOURCE` entry now no longer blocks the parallel creation of a
+  `CUSTOM_TEMPLATE` source for the same domain.
+
+**`core/model/MangaSource.kt` — `getSummary()`**
+- `CustomMangaSource` branch now returns `"<domain> · <type label>"` (e.g.
+  `"mangadex.org · Browser Source"`) instead of the generic "Custom Source"
+  string, disambiguating same-titled entries in the Explore grid/list.
+
+---
+
+### Bug 2 — Cloudflare captcha loops + Google OAuth blocked in WebView
+
+#### Root cause (2A — Cloudflare)
+
+- `CloudflareWebView.injectAntiDetectionJs()` used a minimal JS snippet that
+  left the strongest Cloudflare bot-detection signals intact.
+- `IntelligentBrowserClient` never injected the anti-bot JS on page start, and
+  never bypassed request interception on Cloudflare challenge pages — meaning
+  ad-block / domain-blocking could cancel Cloudflare's internal challenge XHRs
+  and cause an infinite spinner.
+
+#### Root cause (2B — Google OAuth)
+
+No `shouldOverrideUrlLoading` existed in the WebView client hierarchy; OAuth
+URLs (Google, Twitter, Facebook, Discord, GitHub) loaded inside the app WebView
+and were always rejected by those providers' embedded-WebView restrictions.
+
+#### Fix
+
+**`browser/cloudflare/CloudflareWebView.kt`**
+- Rewrote `ANTI_DETECTION_JS` with the full battery of anti-fingerprinting
+  overrides: `navigator.webdriver`, `window.chrome`, `navigator.plugins`,
+  `navigator.languages`, `navigator.platform`, `window.outerHeight/Width`,
+  Selenium CDC artifact removal, and `navigator.permissions.query` override.
+- Added `CLOUDFLARE_USER_AGENT` constant and `applyCloudflareUserAgent(WebView)`
+  helper for switching to a Chrome-compatible UA on challenge pages.
+
+**`browser/IntelligentBrowserClient.kt`**
+- Overrides `onPageStarted` to inject anti-bot JS on every navigation (before
+  page content loads).
+- Overrides `onPageFinished` to evaluate `CLOUDFLARE_DETECT_JS` after load;
+  if a challenge page is detected: sets `isOnCloudflarePage = true`, switches
+  to the Cloudflare UA, and re-injects anti-bot JS.
+- Overrides both `shouldInterceptRequest` overloads: if `isOnCloudflarePage`
+  is true, returns `null` (pass-through) so none of Cloudflare's internal XHRs
+  are blocked.
+- Removed all AI parser learning code (see Bug 3).
+
+**`browser/BrowserClient.kt`** (base class used by all browser WebViews)
+- Added `shouldOverrideUrlLoading` that detects OAuth URL patterns
+  (`accounts.google.com`, `discord.com/oauth2`, `github.com/login/oauth`, etc.)
+  and opens them with `Intent.ACTION_VIEW` (system browser / Chrome Custom Tab)
+  instead of loading them inside the embedded WebView.
+
+---
+
+### Bug 3 — Two WebView browsers, only one should remain
+
+#### Root cause
+
+`BrowserActivity` contained a complete AI parser learning system ("AI Parser
+WebView") alongside the intended Universal Detection FAB system ("Universal
+Parser WebView"). The AI system (LearningSession, AiParserGenerator, learning
+banner, page classifier callbacks) was activated automatically on every page
+load, cluttering the UI and adding dead code weight.
+
+#### Fix
+
+**`browser/BrowserActivity.kt`**
+- Removed fields: `learningSession`, `aiParserGenerator`, `generatedParserJson`,
+  `isBannerDismissed`.
+- Removed methods: `setupLearningBanner()`, `updateLearningBanner()`,
+  `onPageClassified()`, `onNewLearningData()`, `showParserCreationDialog()`,
+  `saveParserAsSource()`.
+- Removed `setupLearningBanner()` call from `onCreate2`.
+- Simplified `IntelligentBrowserClient` constructor (no AI params).
+- Removed imports: `AiParserGenerator`, `LearningSession`, `PageType`.
+
+**`browser/IntelligentBrowserClient.kt`** (full rewrite)
+- Removed constructor params: `learningSession`, `onPageClassified`,
+  `onNewLearningData`.
+- Removed `processPageForLearning()` and all AI HTML capture logic.
+- Kept and enhanced: popup blocker, custom CSS injection, Cloudflare bypass
+  (see Bug 2).
+
+**`res/layout/activity_browser.xml`**
+- Removed the entire `learningBanner` LinearLayout (including
+  `learningBannerMessage`, `learningBannerDismiss`, `learningChecklist`,
+  `checkList` TextViews) — ~60 lines of XML.
+
+---
+
+### Bug 4 — Discord RPC silent for WebView/Browser source reading
+
+#### Root causes
+
+1. **Null incognito mode**: `BrowserSourceActivity` built `ReaderIntent` without
+   setting `EXTRA_INCOGNITO`, so `isIncognitoMode` started as `null`. Since the
+   RPC gate is `isIncognitoMode.value == false`, `null == false` → `false` →
+   RPC skipped until incognito resolved asynchronously.
+2. **Empty cover URL crash**: Browser-source manga has `coverUrl = ""`. In
+   `updateRpcAsync`, `"".toMediaProxyUrl()` calls `getMediaProxyUrl("")` which
+   throws/cancels, and because `runCatchingCancellable` re-throws
+   `CancellationException`, the entire `updateRpcAsync` coroutine was silently
+   cancelled with no RPC update at all.
+
+#### Fix
+
+**`core/nav/ReaderIntent.kt`**
+- Added `incognito(enabled: Boolean = true)` overload to `Builder`, replacing
+  the old no-arg `incognito()` method. Old callers pass `true` by default;
+  `BrowserSourceActivity` now passes `false` explicitly.
+
+**`browsersource/ui/BrowserSourceActivity.kt`**
+- Added `.incognito(false)` to the `ReaderIntent.Builder` chain so
+  `EXTRA_INCOGNITO` is always set to `false` — the RPC gate fires immediately.
+
+**`scrobbling/discord/ui/DiscordRpc.kt`**
+- `largeImage = manga.coverUrl.takeIf { it.isNotBlank() } ?: appIcon` — the
+  app icon is used as a fallback when `coverUrl` is blank, preventing the
+  `toMediaProxyUrl("")` failure that was silently cancelling the RPC update.
+- For `CUSTOM_` sources with `chaptersTotal <= 1` (browser-source reads), the
+  `state` string is `"<chapter title> · via Tsuki Browser"` instead of the
+  generic "Chapter N of M" which shows "Chapter 1 of 1" for every page.
+
+---
+
+### Files changed in this session
+
+| File | Bug(s) | Change |
+|---|---|---|
+| `browser/BrowserActivity.kt` | 1, 3 | Bug 1: coexistence check; Bug 3: remove AI fields/methods |
+| `core/model/MangaSource.kt` | 1 | `getSummary` shows domain + type for `CustomMangaSource` |
+| `browser/cloudflare/CloudflareWebView.kt` | 2 | Full anti-bot JS; `CLOUDFLARE_USER_AGENT` + `applyCloudflareUserAgent()` |
+| `browser/IntelligentBrowserClient.kt` | 2, 3 | CF bypass, anti-bot injection, OAuth passthrough; AI removed |
+| `browser/BrowserClient.kt` | 2 | `shouldOverrideUrlLoading` for OAuth URL redirect |
+| `res/layout/activity_browser.xml` | 3 | Removed `learningBanner` + checklist views |
+| `core/nav/ReaderIntent.kt` | 4 | `incognito(Boolean)` overload |
+| `browsersource/ui/BrowserSourceActivity.kt` | 4 | `.incognito(false)` in ReaderIntent builder |
+| `scrobbling/discord/ui/DiscordRpc.kt` | 4 | Empty cover fallback; browser-source state string |
+
+### Commit & CI
+
+- Branch: `devel` (direct push)
+- CI: `Build Alpha APK` — see GitHub Actions.
