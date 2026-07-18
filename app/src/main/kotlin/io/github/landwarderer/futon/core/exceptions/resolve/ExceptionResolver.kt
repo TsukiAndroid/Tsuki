@@ -13,7 +13,6 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.async
 import io.github.landwarderer.futon.R
-import io.github.landwarderer.futon.browser.BrowserActivity
 import io.github.landwarderer.futon.browser.cloudflare.CloudFlareActivity
 import io.github.landwarderer.futon.core.exceptions.CloudFlareProtectedException
 import io.github.landwarderer.futon.core.exceptions.EmptyMangaException
@@ -49,9 +48,6 @@ class ExceptionResolver private constructor(
 ) {
     private val continuations = MutableScatterMap<String, Continuation<Boolean>>(1)
 
-    private val browserActionContract = host.registerForActivityResult(BrowserActivity.Contract()) {
-        handleActivityResult(BrowserActivity.TAG, true)
-    }
     private val sourceAuthContract = host.registerForActivityResult(SourceAuthActivity.Contract()) {
         handleActivityResult(SourceAuthActivity.TAG, it)
     }
@@ -73,7 +69,10 @@ class ExceptionResolver private constructor(
                 false
             }
 
-            is InteractiveActionRequiredException -> resolveBrowserAction(e)
+            is InteractiveActionRequiredException -> {
+                openInBrowser(e.url)
+                false
+            }
 
             is ProxyConfigException -> {
                 host.router.openProxySettings()
@@ -115,13 +114,6 @@ class ExceptionResolver private constructor(
             else -> false
         }
     }.await()
-
-    private suspend fun resolveBrowserAction(
-        e: InteractiveActionRequiredException
-    ): Boolean = suspendCoroutine { cont ->
-        continuations[BrowserActivity.TAG] = cont
-        browserActionContract.launch(e)
-    }
 
     private suspend fun resolveCF(e: CloudFlareProtectedException): Boolean = suspendCoroutine { cont ->
         continuations[CloudFlareActivity.TAG] = cont

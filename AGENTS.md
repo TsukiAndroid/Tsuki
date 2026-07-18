@@ -1524,3 +1524,84 @@ TsukiSourceDebug: ExploreViewModel.buildList: sources.size=N   (← confirms Exp
 
 - Branch: `devel` (direct push)
 - CI: `Build Alpha APK` — see GitHub Actions.
+
+---
+
+## Session 6 (July 18 2026) — Remove old BrowserActivity, keep only BrowserSourceActivity
+
+### Request
+
+User reported two duplicate WebView browser implementations. They want ONLY the
+WebView that opens from Explore → ⋮ → Add Browser Source to remain. The second,
+general-purpose BrowserActivity must be removed.
+
+### Two implementations identified
+
+| Class | File | Status |
+|---|---|---|
+| `BrowserSourceActivity` | `browsersource/ui/BrowserSourceActivity.kt` | **KEPT** — the Explore → ⋮ → Add Browser Source browser with URL bar, ad-blocker, chapter detection, and Universal Detection integration |
+| `BrowserActivity` | `browser/BrowserActivity.kt` | **REMOVED** — generic in-app browser extending `BaseBrowserActivity`, used by `AppRouter.openBrowser()` |
+
+### Files deleted
+
+| File | Reason |
+|---|---|
+| `browser/BrowserActivity.kt` | The old generic in-app browser being removed |
+| `browser/IntelligentBrowserClient.kt` | Only used by `BrowserActivity`; becomes orphan |
+| `browser/learning/AiParserGenerator.kt` | AI learning removed in Session 3; already orphan |
+
+### Files modified
+
+**`AndroidManifest.xml`**
+- Removed the `<activity android:name="...BrowserActivity" .../>` declaration.
+
+**`core/nav/AppRouter.kt`**
+- Removed `import io.github.landwarderer.futon.browser.BrowserActivity`.
+- Changed `browserIntent()` from `Intent(context, BrowserActivity::class.java)` +
+  extras to `Intent(Intent.ACTION_VIEW, url.toUri())` — all callers now open the
+  URL in the system browser instead of the removed in-app browser.
+- `openBrowser(url, source, title)` and `openBrowser(manga)` unchanged; they still
+  delegate to `browserIntent()` which now targets the OS browser.
+
+**`core/exceptions/resolve/ExceptionResolver.kt`**
+- Removed `import io.github.landwarderer.futon.browser.BrowserActivity`.
+- Removed `private val browserActionContract` field (was `registerForActivityResult(BrowserActivity.Contract())`).
+- Removed `private suspend fun resolveBrowserAction()` method.
+- `InteractiveActionRequiredException` case in `resolve()` now calls `openInBrowser(e.url)` + returns `false`, opening the interactive-action URL in the OS browser instead.
+
+### What is kept untouched
+
+- `BaseBrowserActivity` — still needed by `CloudFlareActivity`, `SourceAuthActivity`,
+  `DiscordAuthActivity`
+- `BrowserCallback`, `BrowserClient`, `WebViewBackPressedCallback` — shared utilities
+  used by `BaseBrowserActivity` subclasses
+- `BrowserSourceActivity` and all of `browsersource/` — completely untouched
+- Gemini API Key setting in Settings → WebView — already present in `pref_webview.xml`
+  / `WebViewSettingsFragment`; no migration needed
+
+### Downstream behaviour after removal
+
+| Previous caller | New behaviour |
+|---|---|
+| Explore ⋮ menu → WEBVIEW custom source tap | Opens site in OS browser |
+| Manga details → "Open in Browser" | Opens manga page in OS browser |
+| Error dialog → "Open in browser" | Opens error URL in OS browser |
+| Source settings → browser button | Opens source URL in OS browser |
+| `ExceptionResolver` `InteractiveActionRequired` | Opens interactive-action URL in OS browser |
+| `ExceptionResolver` `EmptyMangaReason.RESTRICTED` | Opens manga URL in OS browser |
+
+### Files changed in this session
+
+| File | Change |
+|---|---|
+| `browser/BrowserActivity.kt` | **DELETED** |
+| `browser/IntelligentBrowserClient.kt` | **DELETED** (orphan) |
+| `browser/learning/AiParserGenerator.kt` | **DELETED** (orphan since Session 3) |
+| `AndroidManifest.xml` | Removed BrowserActivity `<activity>` declaration |
+| `core/nav/AppRouter.kt` | `browserIntent()` → OS browser; removed BrowserActivity import |
+| `core/exceptions/resolve/ExceptionResolver.kt` | Removed browserActionContract + resolveBrowserAction; IAE opens OS browser |
+
+### Commit & CI
+
+- Branch: `devel` (direct push)
+- CI: `Build Alpha APK` — see GitHub Actions.

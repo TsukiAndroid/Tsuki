@@ -239,11 +239,6 @@
                         android:windowSoftInputMode="adjustResize" />
 
                 <activity
-                        android:name="io.github.landwarderer.futon.browser.BrowserActivity"
-                        android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
-                        android:hardwareAccelerated="true"
-                        android:windowSoftInputMode="adjustResize" />
-                <activity
                         android:name="io.github.landwarderer.futon.browser.cloudflare.CloudFlareActivity"
                         android:autoRemoveFromRecents="true"
                         android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
