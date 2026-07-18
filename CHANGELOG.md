@@ -1,3 +1,11 @@
+## Alpha 1.711 (Build [#290](https://github.com/Space4414/Tsuki/actions/runs/29641204286))
+
+_2026-07-18 10:39 UTC_
+
+- Rebrand issue templates: Futon → Tsuki (0a5141a)
+- Fix Cloudflare CAPTCHA loop and Google OAuth blocked in WebView (994f657)
+
+
 ## Alpha 1.709 (Build [#289](https://github.com/Space4414/Tsuki/actions/runs/29640901292))
 
 _2026-07-18 10:28 UTC_
