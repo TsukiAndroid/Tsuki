@@ -251,6 +251,7 @@ dependencies {
         implementation libs.material
         implementation libs.androidx.lifecycle.common.java8
         implementation libs.androidx.webkit
+        implementation libs.androidx.browser
     implementation libs.injekt.core
 
         implementation libs.androidx.work.runtime

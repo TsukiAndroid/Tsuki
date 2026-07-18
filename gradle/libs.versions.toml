@@ -49,6 +49,7 @@ testRules = "1.7.0"
 testRunner = "1.7.0"
 transition = "1.6.0"
 viewpager2 = "1.1.0"
+browser = "1.8.0"
 webkit = "1.14.0"
 workRuntime = "2.10.5"
 workinspector = "1.2"
@@ -81,6 +82,7 @@ androidx-swiperefreshlayout = { module = "androidx.swiperefreshlayout:swiperefre
 androidx-test-core = { module = "androidx.test:core-ktx", version.ref = "testRules" }
 androidx-transition = { module = "androidx.transition:transition-ktx", version.ref = "transition" }
 androidx-viewpager2 = { module = "androidx.viewpager2:viewpager2", version.ref = "viewpager2" }
+androidx-browser = { module = "androidx.browser:browser", version.ref = "browser" }
 androidx-webkit = { module = "androidx.webkit:webkit", version.ref = "webkit" }
 androidx-work-runtime = { module = "androidx.work:work-runtime", version.ref = "workRuntime" }
 avif-decoder = { module = "org.aomedia.avif.android:avif", version.ref = "avifDecoder" }

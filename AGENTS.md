@@ -1605,3 +1605,79 @@ general-purpose BrowserActivity must be removed.
 
 - Branch: `devel` (direct push)
 - CI: `Build Alpha APK` — see GitHub Actions.
+
+---
+
+## Session 6 — Cloudflare CAPTCHA + Google OAuth WebView fixes
+
+### Problems solved
+
+**Problem A — Cloudflare captcha loops forever:**
+Cloudflare's JS challenge was being silently broken by ad-block request interception in `BrowserSourceActivity`, and the WebView was fingerprinted as a bot (no `window.chrome`, `navigator.webdriver` exposed, empty plugins list).
+
+**Problem B — Google OAuth blocked in WebView:**
+OAuth pages (Google, Twitter, Facebook, Discord, GitHub) explicitly reject embedded WebViews. The existing fallback only used the system browser and was missing several domains and all pattern-based URL matching.
+
+### Fix A — Cloudflare (BrowserSourceActivity + CloudflareWebView)
+
+**A1 — Disable request interception during CF challenge:**
+- Added `@Volatile private var isCloudflareChallenge = false` flag to `BrowserSourceActivity`.
+- In `shouldInterceptRequest()`: when flag is `true`, immediately return `null` (pass-through) so no CF sub-request is ever blocked.
+
+**A2 — Anti-detection JS on every page load:**
+- In `onPageStarted()`: call `CloudflareWebView.injectAntiDetectionJs(view)` on every page. Removes `navigator.webdriver`, adds `window.chrome`, fixes `navigator.plugins`/`languages`/`platform`, scrubs CDC automation artifacts, fixes permissions API.
+
+**A3 — Chrome user agent:**
+- Already handled by `WebViewSettingsManager.resolvedUserAgent()` which strips the `" wv"` WebView marker from the default UA. No additional change needed here.
+
+**A4 — Cookie sync:**
+- Already handled: `AndroidCookieJar` reads directly from `CookieManager`, so `cf_clearance` is visible to OkHttp the moment Cloudflare sets it — no manual copy needed.
+- Added `onCloudflarePassed()` which resets the flag and shows success banner when `cf_clearance` is detected in `onPageFinished`.
+
+**A5 — User guidance banners:**
+- `onReceivedHttpError()`: detects CF via HTTP 403/503 + `cf-ray` response header → sets flag + shows banner.
+- `isCloudflarePage()`: detects CF via page HTML signals ("just a moment", "checking your browser", "cloudflare", "challenge-platform", "_cf_chl", "cf-ray").
+- `showCloudflareBanner()`: indefinite Snackbar — "🛡️ Cloudflare protection detected. Tap the checkbox when it appears to verify."
+- `onCloudflarePassed()`: dismisses banner, shows "✓ Verified! This source is now unlocked."
+
+### Fix B — Google OAuth (BrowserClient)
+
+**B1 — Expanded OAuth URL detection:**
+- Added `twitter.com/i/oauth`, `www.facebook.com/dialog/oauth` to `OAUTH_DOMAINS`.
+- Added pattern-based `OAUTH_PATTERNS`: `/oauth`, `/oauth2`, `/auth/`, `/login/oauth`, `/connect/`, `response_type=code`, `response_type=token`.
+
+**B2 — Chrome Custom Tab with system-browser fallback:**
+- `shouldOverrideUrlLoading()`: tries `CustomTabsIntent` first; falls back to `Intent.ACTION_VIEW` if Custom Tab unavailable.
+
+**B3 — User explanation:**
+- Shows Toast: "Opening login in Chrome for security. Return to Tsuki after signing in." before opening external browser.
+
+**B4 — CustomTabs dependency:**
+- Added `browser = "1.8.0"` to `gradle/libs.versions.toml` `[versions]`.
+- Added `androidx-browser` library entry to `[libraries]`.
+- Added `implementation libs.androidx.browser` to `app/build.gradle`.
+
+### New strings added
+
+| Key | Value |
+|---|---|
+| `browser_source_cloudflare_detected` | 🛡️ Cloudflare protection detected. Tap the checkbox when it appears to verify. |
+| `browser_source_cloudflare_verified` | ✓ Verified! This source is now unlocked. |
+
+### Files changed
+
+| File | Change |
+|---|---|
+| `browsersource/ui/BrowserSourceActivity.kt` | Add `isCloudflareChallenge` flag, CF bypass in `shouldInterceptRequest`, anti-detection JS in `onPageStarted`, `onReceivedHttpError` for 403/503 detection, CF content detection + clearance check in `onPageFinished`, helper methods `isCloudflarePage` / `showCloudflareBanner` / `onCloudflarePassed` |
+| `browser/BrowserClient.kt` | Chrome Custom Tabs in `shouldOverrideUrlLoading`, expanded `OAUTH_DOMAINS`, new `OAUTH_PATTERNS` list, Toast message before opening |
+| `gradle/libs.versions.toml` | Added `browser = "1.8.0"` version + `androidx-browser` library entry |
+| `app/build.gradle` | Added `implementation libs.androidx.browser` |
+| `app/src/main/res/values/strings.xml` | Added `browser_source_cloudflare_detected` + `browser_source_cloudflare_verified` |
+
+### DO NOT TOUCH (still applies)
+- `TemplateHtmlParser.kt`, `CloudflareCookieSyncer.kt` (already correct), `KotatsuParserMatcher.kt`, USB/Universal Source Beta, `applicationId` in `build.gradle`.
+
+### Commit & CI
+
+- Branch: `devel` (direct push)
+- CI: `Build Alpha APK` — see GitHub Actions.

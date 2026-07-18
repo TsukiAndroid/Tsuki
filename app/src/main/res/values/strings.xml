@@ -16,6 +16,8 @@
     <string name="remote_sources">Manga sources</string>
     <string name="loading_">Loading…</string>
     <string name="cloudflare_solving_banner">Solving Cloudflare check — complete any prompt shown, then wait a moment.</string>
+    <string name="browser_source_cloudflare_detected">🛡️ Cloudflare protection detected. Tap the checkbox when it appears to verify.</string>
+    <string name="browser_source_cloudflare_verified">✓ Verified! This source is now unlocked.</string>
     <string name="cloudflare_timeout_message">Still stuck on the check. Try again, or open the source in a regular browser.</string>
     <string name="computing_">Computing…</string>
     <string name="chapter_d_of_d">Chapter %1$d of %2$d</string>

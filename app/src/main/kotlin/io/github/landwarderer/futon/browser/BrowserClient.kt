@@ -4,6 +4,8 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
+import android.widget.Toast
+import androidx.browser.customtabs.CustomTabsIntent
 import android.os.Looper
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
@@ -83,11 +85,28 @@ open class BrowserClient(
 	override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
 		val url = request?.url?.toString() ?: return super.shouldOverrideUrlLoading(view, request)
 		if (isOAuthUrl(url) && view != null) {
+			// Inform the user before leaving the in-app WebView (Step B3)
+			Toast.makeText(
+				view.context,
+				"Opening login in Chrome for security. Return to Tsuki after signing in.",
+				Toast.LENGTH_LONG,
+			).show()
+			// Step B2 — try Chrome Custom Tab first (best experience)
+			runCatching {
+				val customTabIntent = CustomTabsIntent.Builder()
+					.setShowTitle(true)
+					.setShareState(CustomTabsIntent.SHARE_STATE_OFF)
+					.build()
+				customTabIntent.launchUrl(view.context, Uri.parse(url))
+				return true
+			}
+			// Fall back to system browser if Custom Tab is unavailable
 			runCatching {
 				val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
 					addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 				}
 				view.context.startActivity(intent)
+				return true
 			}
 			return true
 		}
@@ -96,22 +115,40 @@ open class BrowserClient(
 
 	private fun isOAuthUrl(url: String): Boolean {
 		val lower = url.lowercase()
-		return OAUTH_DOMAINS.any { lower.contains(it) }
+		return OAUTH_DOMAINS.any { lower.contains(it) } ||
+			OAUTH_PATTERNS.any { lower.contains(it) }
 	}
 
 	companion object {
 		/**
-		 * URL substrings that must open in an external browser rather than the
-		 * in-app WebView.
+		 * URL substrings (domains) that must open in an external browser rather
+		 * than the in-app WebView. Google, Twitter, Facebook, Discord, and GitHub
+		 * explicitly block OAuth inside embedded WebViews.
 		 */
 		private val OAUTH_DOMAINS = listOf(
 			"accounts.google.com",
 			"oauth.google.com",
 			"accounts.youtube.com",
 			"accounts.twitter.com",
+			"www.facebook.com/dialog/oauth",
 			"www.facebook.com/login",
 			"discord.com/oauth2",
 			"github.com/login/oauth",
+			"twitter.com/i/oauth",
+		)
+
+		/**
+		 * URL patterns that indicate an OAuth / login flow regardless of domain.
+		 * Checked in addition to [OAUTH_DOMAINS].
+		 */
+		private val OAUTH_PATTERNS = listOf(
+			"/oauth",
+			"/oauth2",
+			"/auth/",
+			"/login/oauth",
+			"/connect/",
+			"response_type=code",
+			"response_type=token",
 		)
 	}
 
