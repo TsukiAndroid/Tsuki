@@ -1,3 +1,11 @@
+## Alpha 1.709 (Build [#289](https://github.com/Space4414/Tsuki/actions/runs/29640901292))
+
+_2026-07-18 10:28 UTC_
+
+- Fix Cloudflare CAPTCHA loop and Google OAuth blocked in WebView (994f657)
+- refactor: remove BrowserActivity, keep only BrowserSourceActivity (74772ae)
+
+
 ## Alpha 1.707 (Build [#288](https://github.com/Space4414/Tsuki/actions/runs/29630387050))
 
 _2026-07-18 04:20 UTC_
