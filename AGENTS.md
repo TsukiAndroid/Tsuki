@@ -1681,3 +1681,71 @@ OAuth pages (Google, Twitter, Facebook, Discord, GitHub) explicitly reject embed
 
 - Branch: `devel` (direct push)
 - CI: `Build Alpha APK` — see GitHub Actions.
+
+---
+
+## Session 7 — Discord RPC missing for Browser/WebView/Custom sources
+
+### Problem
+
+Discord RPC showed nothing when reading manga from a Browser Source, WEBVIEW, CUSTOM_TEMPLATE, KOTATSU_PARSER, MADARA, MANGATHEMESIA, or any other custom source type. It only worked for built-in MangaParserSource.
+
+### Root Cause
+
+`DiscordRpc.updateRpc()` had two bugs:
+1. The state text guard `isCustomOrBrowser && state.chaptersTotal <= 1` meant that custom sources with more than one chapter (CUSTOM_TEMPLATE, MADARA, KOTATSU_PARSER, etc.) fell through to the `chapter_d_of_d` format ("Chapter X of Y") with no source name shown.
+2. Even for single-chapter browser sources, the state text hardcoded "via Tsuki Browser" instead of using the actual source display name.
+
+### Fix — `DiscordRpc.kt`
+
+Changed the state-text block:
+
+**Before:**
+```kotlin
+val stateText = if (isCustomOrBrowser && state.chaptersTotal <= 1) {
+    "${state.chapter.title?.ifBlank { "Chapter" } ?: "Chapter"} · via Tsuki Browser"
+} else {
+    context.getString(R.string.chapter_d_of_d, state.chapterNumber, state.chaptersTotal)
+}
+```
+
+**After:**
+```kotlin
+val stateText = if (isCustomOrBrowser) {
+    val chapterLabel = state.chapter.title?.takeIf { it.isNotBlank() }
+        ?: run {
+            val n = state.chapter.number
+            "Chapter ${if (n % 1f == 0f) n.toInt() else n}"
+        }
+    "$chapterLabel · ${manga.source.getTitle(context)}"
+} else {
+    context.getString(R.string.chapter_d_of_d, state.chapterNumber, state.chaptersTotal)
+}
+```
+
+### Resulting RPC format (all source types)
+
+| Source type | Details | State |
+|---|---|---|
+| Built-in MangaParserSource | manga title | Chapter X of Y (unchanged) |
+| BROWSER_SOURCE | manga title (source name or page og:title) | Chapter title · Source name |
+| WEBVIEW | manga title | Chapter title · Source name |
+| CUSTOM_TEMPLATE | manga title | Chapter title · Source name |
+| KOTATSU_PARSER | manga title | Chapter title · Source name |
+| MADARA / MANGATHEMESIA / etc. | manga title | Chapter title · Source name |
+
+Chapter label priority: chapter title (if non-blank) → "Chapter N" (from chapter.number, integer-formatted).
+
+### Files changed
+
+| File | Change |
+|---|---|
+| `scrobbling/discord/ui/DiscordRpc.kt` | Removed `&& state.chaptersTotal <= 1` guard; replaced hardcoded "via Tsuki Browser" with `manga.source.getTitle(context)`; added chapter-label resolution with number fallback |
+
+### DO NOT TOUCH (still applies)
+- `TemplateHtmlParser.kt`, `CloudflareCookieSyncer.kt`, USB/Universal Source Beta, `applicationId` in `build.gradle`.
+
+### Commit & CI
+
+- Branch: `devel` (direct push)
+- CI: `Build Alpha APK` — see GitHub Actions.

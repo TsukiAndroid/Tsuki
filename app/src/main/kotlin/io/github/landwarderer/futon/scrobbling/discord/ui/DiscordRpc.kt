@@ -88,12 +88,19 @@ class DiscordRpc @Inject constructor(
 				clearRpc()
 				return
 			}
-			// Detect browser/custom sources: synthetic single-chapter manga with empty coverUrl.
+			// All custom sources (BROWSER_SOURCE, WEBVIEW, CUSTOM_TEMPLATE, KOTATSU_PARSER,
+			// MADARA, MANGATHEMESIA, etc.) carry a "CUSTOM_<id>" MangaSource name.
+			// For these we show "[Chapter title] · [Source name]" regardless of chapter count.
 			// An empty largeImage causes the media-proxy coroutine to fail and silently
 			// cancels the whole updateRpcAsync job, so fall back to the app icon.
 			val isCustomOrBrowser = manga.source.name.startsWith("CUSTOM_")
-			val stateText = if (isCustomOrBrowser && state.chaptersTotal <= 1) {
-				"${state.chapter.title?.ifBlank { "Chapter" } ?: "Chapter"} · via Tsuki Browser"
+			val stateText = if (isCustomOrBrowser) {
+				val chapterLabel = state.chapter.title?.takeIf { it.isNotBlank() }
+					?: run {
+						val n = state.chapter.number
+						"Chapter ${if (n % 1f == 0f) n.toInt() else n}"
+					}
+				"$chapterLabel · ${manga.source.getTitle(context)}"
 			} else {
 				context.getString(R.string.chapter_d_of_d, state.chapterNumber, state.chaptersTotal)
 			}
