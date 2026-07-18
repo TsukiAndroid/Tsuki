@@ -1,3 +1,11 @@
+## Alpha 1.707 (Build [#288](https://github.com/Space4414/Tsuki/actions/runs/29630387050))
+
+_2026-07-18 04:20 UTC_
+
+- refactor: remove BrowserActivity, keep only BrowserSourceActivity (74772ae)
+- fix: Universal Detection — source not appearing in Explore tab after being added (152abdb)
+
+
 ## Alpha 1.705 (Build [#287](https://github.com/Space4414/Tsuki/actions/runs/29627846151))
 
 _2026-07-18 02:53 UTC_
