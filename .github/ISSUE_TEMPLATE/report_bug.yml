@@ -1,5 +1,5 @@
 name: 🐞 Bug report
-description: Report a bug in Futon
+description: Report a bug in Tsuki
 labels: [bug]
 body:
 
@@ -26,10 +26,10 @@ body:
 
 
     - type: input
-      id: futon-version
+      id: tsuki-version
       attributes:
-          label: Futon version
-          description: You can find your Futon version in **Settings → About**.
+          label: Tsuki version
+          description: You can find your Tsuki version in **Settings → About**.
           placeholder: |
               Example: "9.6.8"
       validations:
@@ -60,7 +60,7 @@ body:
       attributes:
           label: Acknowledgements
           options:
-              - label: This is not a duplicate of an existing issue. Please look through the list of [open issues](https://github.com/AppFuton/Futon/issues) before creating a new one.
+              - label: This is not a duplicate of an existing issue. Please look through the list of [open issues](https://github.com/Space4414/Tsuki/issues) before creating a new one.
                 required: true
               - label: This is not an issue with a specific manga source. Otherwise, you have to proceed from [parsers repository](https://github.com/Kotatsu-Redo/kotatsu-parsers-redo/issues).
                 required: true

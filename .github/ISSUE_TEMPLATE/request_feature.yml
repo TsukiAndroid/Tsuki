@@ -1,5 +1,5 @@
 name: ⭐ Feature request
-description: Suggest a new idea how to improve Futon
+description: Suggest a new idea how to improve Tsuki
 labels: [feature request]
 body:
 
@@ -7,7 +7,7 @@ body:
       id: feature-description
       attributes:
           label: Describe your suggested feature
-          description: How can Futon be improved?
+          description: How can Tsuki be improved?
           placeholder: |
               Example:
                 "It should work like this..."
@@ -20,5 +20,5 @@ body:
           label: Acknowledgements
           description: Read this carefully, we will close and ignore your issue if you skimmed through this.
           options:
-              - label: This is not a duplicate of an existing issue. Please look through the list of [open issues](https://github.com/AppFuton/Futon/issues) before creating a new one.
+              - label: This is not a duplicate of an existing issue. Please look through the list of [open issues](https://github.com/Space4414/Tsuki/issues) before creating a new one.
                 required: true

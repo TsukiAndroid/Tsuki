@@ -2,7 +2,7 @@
 
 I acknowledge that:
 
-- I have updated to the latest version of the app (https://github.com/AppFuton/Futon/releases/latest)
+- I have updated to the latest version of the app (https://github.com/Space4414/Tsuki/releases/latest)
 - If this is an issue with a parser, that I should be opening an issue in https://github.com/Kotatsu-Redo/kotatsu-parsers-redo instead of here.
 - I have searched the existing issues and this is new ticket **NOT** a duplicate or related to another open or closed issue
 - I will fill out the title and the information in this template
@@ -14,7 +14,7 @@ Note that the issue will be automatically closed if you do not fill out the titl
 ---
 
 ## Device information
-* Kotatsu version: ?
+* Tsuki version: ?
 * Android version: ?
 * Device: ?
 
