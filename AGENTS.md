@@ -1396,3 +1396,131 @@ load, cluttering the UI and adding dead code weight.
 
 - Branch: `devel` (direct push)
 - CI: `Build Alpha APK` — see GitHub Actions.
+
+---
+
+## Session 5 (July 18 2026) — Universal Detection: source not appearing in Explore tab
+
+### Bug reported
+
+Universally detected source doesn't appear in Explore tab after being added:
+
+- User browses a manga site in BrowserSourceActivity
+- Universal detection reaches 100% confidence
+- Prompt appears: "Add [site] as source?"
+- User taps "Add"
+- Success/error message shows
+- BUT the new source NEVER appears in Explore tab
+
+### Root causes identified
+
+**Root Cause 1 — `findByUrl()` in `MangaSiteDetector.createSource()` blocked BROWSER_SOURCE coexistence**
+
+`createSource()` checked `customSourcesRepository.findByUrl(baseUrl)` and returned
+`CreateResult.Error("This site is already in your sources.")` if ANY source with
+that URL existed — including the BROWSER_SOURCE the user was browsing from.
+
+Since the detection flow runs inside `BrowserSourceActivity` (which is opened for
+an existing BROWSER_SOURCE entry), `findByUrl()` always found the BROWSER_SOURCE
+and aborted before saving — so `customSourcesRepository.add()` was never called,
+and the Explore tab was never updated.
+
+`BrowserActivity.addCurrentSiteToLibrary()` already handled this correctly by
+skipping `BROWSER_SOURCE` and `WEBVIEW` types in its coexistence check. The same
+logic was missing from `MangaSiteDetector.createSource()`.
+
+**Root Cause 2 — `parserSourceName` not set on saved `CustomSource`**
+
+`createSource()` saved the `CustomSource` with `parserSourceName = null`. When
+`CustomMangaRepository` later tried to load manga for a `CUSTOM_TEMPLATE` source,
+it called `ParserTemplateRepository.peekByName(null)` → returned null → no manga
+loaded. The source appeared in Explore but clicking it showed nothing.
+
+The fix: set `parserSourceName = template.name` (same name used for the template)
+so the link is valid when `CustomMangaRepository.getList()` runs.
+
+### Fix
+
+**`browser/detection/MangaSiteDetector.kt`**
+
+1. Changed the `findByUrl` coexistence check to skip `BROWSER_SOURCE` and `WEBVIEW`
+   types — mirrors the logic in `BrowserActivity.addCurrentSiteToLibrary()`.
+2. Added `parserSourceName = templateName` to the `CustomSource` constructor so
+   `CustomMangaRepository` can find the template at runtime.
+3. Added `Log.d("TsukiSourceDebug", …)` at every stage of `createSource()`:
+   domain+baseUrl, coexistence check result, template save, source save.
+
+**`browsersource/ui/BrowserSourceActivity.kt`**
+
+Added `Log.d("TsukiSourceDebug", …)` in `showAddSourceSheet()`:
+- When user taps "Add" (UI → ViewModel boundary)
+- Before calling `createSource()`
+- For each `CreateResult` branch (Success / ValidationFailed / Error)
+
+**`customsource/data/CustomSourcesRepository.kt`**
+
+Added `Log.d("TsukiSourceDebug", …)` in `add()`:
+- Logs id, name, type, parserSourceName, isEnabled before updating StateFlow
+- Logs total source count after StateFlow is updated (confirms emission occurred)
+
+**`core/model/MangaSource.kt`**
+
+Updated `getSummary()` for `CustomMangaSource` to show human-readable subtitles:
+- `CUSTOM_TEMPLATE` → `"domain · Auto-detected"` (was `"domain · Custom Template"`)
+- `BROWSER_SOURCE` → `"domain · Browser"` (was `"domain · Browser Source"`)
+
+This differentiates the two source types when both appear in the Explore tab for
+the same site (e.g. `manhwaread.com · Auto-detected` vs `manhwaread.com · Browser`).
+
+**`explore/ui/ExploreViewModel.kt`**
+
+Added `Log.d("TsukiSourceDebug", …)` in `buildList()` logging `sources.size`
+so logcat confirms when the Explore tab's source list is rebuilt after a save.
+
+### Debug log usage
+
+```
+adb logcat -s TsukiSourceDebug
+```
+
+Expected sequence when "Add" is tapped for a new site:
+
+```
+TsukiSourceDebug: showAddSourceSheet.onAddSource: user tapped Add for domain=manhwaread.com
+TsukiSourceDebug: showAddSourceSheet: calling mangaSiteDetector.createSource(domain=manhwaread.com)
+TsukiSourceDebug: createSource: domain=manhwaread.com baseUrl=https://manhwaread.com
+TsukiSourceDebug: createSource: coexistence check passed existingType=BROWSER_SOURCE
+TsukiSourceDebug: createSource: saving ParserTemplate name=ManhwaRead id=...
+TsukiSourceDebug: createSource: ParserTemplate saved successfully
+TsukiSourceDebug: createSource: saving CustomSource name=ManhwaRead id=... parserSourceName=ManhwaRead
+TsukiSourceDebug: CustomSourcesRepository.add: id=... name='ManhwaRead' type=CUSTOM_TEMPLATE parserSourceName=ManhwaRead isEnabled=true
+TsukiSourceDebug: CustomSourcesRepository.add: StateFlow updated totalSources=N
+TsukiSourceDebug: createSource: SUCCESS name=ManhwaRead
+TsukiSourceDebug: showAddSourceSheet: createSource SUCCESS name=ManhwaRead
+TsukiSourceDebug: ExploreViewModel.buildList: sources.size=N   (← confirms Explore tab rebuilt)
+```
+
+### Explore tab reactivity (confirmed correct, no changes needed)
+
+`MangaSourcesRepository.observeEnabledSources()` already chains correctly:
+
+1. `customSourcesRepository.sources` StateFlow emits (triggered by `_sources.value = updated`)
+2. `observeExternalSources()` combine fires → calls `getExternalSources()` → includes new `CustomMangaSource`
+3. `observeEnabledSources()` combine fires → produces updated `List<MangaSourceInfo>`
+4. `ExploreViewModel.createContentFlow()` combine fires → `buildList()` rebuilds the UI list
+5. `content` StateFlow emits → Explore tab updates instantly
+
+### Files changed in this session
+
+| File | Change |
+|---|---|
+| `browser/detection/MangaSiteDetector.kt` | Fix coexistence check; add `parserSourceName`; add debug logs |
+| `browsersource/ui/BrowserSourceActivity.kt` | Add debug logs at button tap and all result branches |
+| `customsource/data/CustomSourcesRepository.kt` | Add debug log in `add()` |
+| `core/model/MangaSource.kt` | Better subtitles: "Auto-detected" / "Browser" |
+| `explore/ui/ExploreViewModel.kt` | Add debug log in `buildList()` |
+
+### Commit & CI
+
+- Branch: `devel` (direct push)
+- CI: `Build Alpha APK` — see GitHub Actions.

@@ -120,7 +120,11 @@ fun MangaSource.getSummary(context: Context): String? = when (val source = unwra
                         java.net.URI(source.source.baseUrl).host?.removePrefix("www.")
                                 ?: source.source.baseUrl
                 }.getOrDefault(source.source.baseUrl)
-                val typeLabel = source.source.type.label
+                val typeLabel = when (source.source.type) {
+                        io.github.landwarderer.futon.customsource.domain.CustomSourceType.CUSTOM_TEMPLATE -> "Auto-detected"
+                        io.github.landwarderer.futon.customsource.domain.CustomSourceType.BROWSER_SOURCE -> "Browser"
+                        else -> source.source.type.label
+                }
                 "$domain · $typeLabel"
         }
 

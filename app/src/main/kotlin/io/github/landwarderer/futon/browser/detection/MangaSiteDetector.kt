@@ -204,24 +204,39 @@ class MangaSiteDetector @Inject constructor(
             "${uri.scheme}://${uri.host}"
         }.getOrElse { return@withContext CreateResult.Error("Could not resolve the site's base URL.") }
 
-        if (customSourcesRepository.findByUrl(baseUrl) != null) {
+        Log.d("TsukiSourceDebug", "createSource: domain=$domain baseUrl=$baseUrl")
+
+        // Allow BROWSER_SOURCE and WEBVIEW sources to coexist with the new CUSTOM_TEMPLATE
+        // entry — the user should be able to use both the parsed source and the browser source
+        // for the same site simultaneously. Only block if a proper parsed source already exists.
+        val existingSource = customSourcesRepository.findByUrl(baseUrl)
+        if (existingSource != null &&
+            existingSource.type != CustomSourceType.WEBVIEW &&
+            existingSource.type != CustomSourceType.BROWSER_SOURCE) {
+            Log.d("TsukiSourceDebug", "createSource: blocked — already have parsed source type=${existingSource.type}")
             return@withContext CreateResult.Error("This site is already in your sources.")
         }
+        Log.d("TsukiSourceDebug", "createSource: coexistence check passed existingType=${existingSource?.type}")
 
         val templateJson = UniversalSelectorExtractor.buildParserTemplateJson(session, baseUrl)
         val validation = ParserTemplateValidator.validate(templateJson)
         if (validation is ParserTemplateValidator.Result.Invalid) {
+            Log.d("TsukiSourceDebug", "createSource: template validation failed reason=${validation.reason}")
             return@withContext CreateResult.ValidationFailed(validation.reason)
         }
 
+        val templateName = session.siteTitle.ifBlank { domain }
         val template = ParserTemplate(
             id = ParserTemplateRepository.generateId(),
-            name = session.siteTitle.ifBlank { domain },
+            name = templateName,
             version = "1",
             type = "UNIVERSAL_DETECTED",
             rawJson = templateJson,
         )
+        // STEP 1: Save ParserTemplate first so the link exists when CustomMangaRepository loads
+        Log.d("TsukiSourceDebug", "createSource: saving ParserTemplate name=$templateName id=${template.id}")
         parserTemplateRepository.add(template)
+        Log.d("TsukiSourceDebug", "createSource: ParserTemplate saved successfully")
 
         val source = CustomSource(
             id = CustomSourcesRepository.generateId(),
@@ -229,10 +244,16 @@ class MangaSiteDetector @Inject constructor(
             baseUrl = baseUrl,
             type = CustomSourceType.CUSTOM_TEMPLATE,
             iconUrl = session.faviconUrl.takeIf { it.isNotBlank() },
+            // Link to the parser template so CustomMangaRepository can find it at runtime
+            parserSourceName = templateName,
         )
+        // STEP 2: Save CustomSource after template so the parserSourceName link is valid
+        Log.d("TsukiSourceDebug", "createSource: saving CustomSource name=${source.name} id=${source.id} parserSourceName=${source.parserSourceName}")
         customSourcesRepository.add(source)
+        Log.d("TsukiSourceDebug", "createSource: CustomSource saved — sources.size=${customSourcesRepository.getAll().size}")
 
         DetectionSessionStore.remove(domain)
+        Log.d("TsukiSourceDebug", "createSource: SUCCESS name=${source.name}")
         CreateResult.Success(source.name)
     }
 

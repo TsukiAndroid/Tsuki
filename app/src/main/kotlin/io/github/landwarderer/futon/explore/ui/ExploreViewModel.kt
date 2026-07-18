@@ -157,6 +157,7 @@ class ExploreViewModel @Inject constructor(
 		allSourcesEnabled: Boolean,
 		hasNewSources: Boolean,
 	): List<ListModel> {
+		android.util.Log.d("TsukiSourceDebug", "ExploreViewModel.buildList: sources.size=${sources.size}")
 		val result = ArrayList<ListModel>(sources.size + 3)
 		result += ExploreButtons(randomLoading)
 		if (recommendation.isNotEmpty()) {

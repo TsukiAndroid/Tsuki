@@ -41,7 +41,9 @@ class CustomSourcesRepository @Inject constructor(
     fun add(source: CustomSource) {
         val updated = _sources.value.toMutableList().apply { add(source) }
         saveAll(updated)
+        Log.d("TsukiSourceDebug", "CustomSourcesRepository.add: id=${source.id} name='${source.name}' type=${source.type} parserSourceName=${source.parserSourceName} isEnabled=${source.isEnabled}")
         _sources.value = updated
+        Log.d("TsukiSourceDebug", "CustomSourcesRepository.add: StateFlow updated totalSources=${_sources.value.size}")
     }
 
     fun remove(id: Long) {

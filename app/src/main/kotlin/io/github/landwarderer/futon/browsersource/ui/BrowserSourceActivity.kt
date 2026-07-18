@@ -340,15 +340,23 @@ class BrowserSourceActivity : AppCompatActivity() {
         mangaSitePrompt.showAddSourcePrompt(
             session = session,
             onAddSource = {
+                android.util.Log.d("TsukiSourceDebug", "showAddSourceSheet.onAddSource: user tapped Add for domain=$domain")
                 lifecycleScope.launch {
                     Snackbar.make(binding.webView, getString(R.string.manga_site_prompt_creating, session.siteTitle), Snackbar.LENGTH_SHORT).show()
+                    android.util.Log.d("TsukiSourceDebug", "showAddSourceSheet: calling mangaSiteDetector.createSource(domain=$domain)")
                     when (val result = mangaSiteDetector.createSource(domain)) {
-                        is MangaSiteDetector.CreateResult.Success ->
+                        is MangaSiteDetector.CreateResult.Success -> {
+                            android.util.Log.d("TsukiSourceDebug", "showAddSourceSheet: createSource SUCCESS name=${result.name}")
                             Snackbar.make(binding.webView, getString(R.string.manga_site_prompt_created, result.name), Snackbar.LENGTH_LONG).show()
-                        is MangaSiteDetector.CreateResult.ValidationFailed ->
+                        }
+                        is MangaSiteDetector.CreateResult.ValidationFailed -> {
+                            android.util.Log.d("TsukiSourceDebug", "showAddSourceSheet: createSource ValidationFailed reason=${result.reason}")
                             Snackbar.make(binding.webView, getString(R.string.manga_site_prompt_create_failed, result.reason), Snackbar.LENGTH_LONG).show()
-                        is MangaSiteDetector.CreateResult.Error ->
+                        }
+                        is MangaSiteDetector.CreateResult.Error -> {
+                            android.util.Log.d("TsukiSourceDebug", "showAddSourceSheet: createSource Error message=${result.message}")
                             Snackbar.make(binding.webView, getString(R.string.manga_site_prompt_create_failed, result.message), Snackbar.LENGTH_LONG).show()
+                        }
                     }
                 }
             },
