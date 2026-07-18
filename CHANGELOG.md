@@ -1,3 +1,11 @@
+## Alpha 1.713 (Build [#291](https://github.com/Space4414/Tsuki/actions/runs/29641705370))
+
+_2026-07-18 10:57 UTC_
+
+- Fix Discord RPC not showing for Browser/WebView/Custom sources (9bac022)
+- Rebrand issue templates: Futon → Tsuki (0a5141a)
+
+
 ## Alpha 1.711 (Build [#290](https://github.com/Space4414/Tsuki/actions/runs/29641204286))
 
 _2026-07-18 10:39 UTC_
