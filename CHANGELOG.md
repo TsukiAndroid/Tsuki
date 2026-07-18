@@ -1,3 +1,13 @@
+## Alpha 1.705 (Build [#287](https://github.com/Space4414/Tsuki/actions/runs/29627846151))
+
+_2026-07-18 02:53 UTC_
+
+- fix: Universal Detection — source not appearing in Explore tab after being added (152abdb)
+- fix: DiscordRpc.kt — safe-call nullable String? fields (chapter.title, manga.coverUrl) (fd10bfe)
+- fix: BrowserClient.shouldOverrideUrlLoading — use nullable WebView? param to match Java platform type so RequestInterceptorWebViewClient subclass override still compiles (09e2dbb)
+- fix: 4-bug batch (Explore source detection, Cloudflare bypass, AI WebView removal, Discord RPC) (d9f3383)
+
+
 ## Alpha 1.703 (Build [#286](https://github.com/Space4414/Tsuki/actions/runs/29545067804))
 
 _2026-07-17 00:32 UTC_
