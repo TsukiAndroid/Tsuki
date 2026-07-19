@@ -13,6 +13,8 @@ import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Toast
+import io.github.landwarderer.futon.browser.cloudflare.CloudflareBypassManager
+import io.github.landwarderer.futon.browser.cloudflare.CloudflareDetector
 import io.github.landwarderer.futon.browser.cloudflare.CloudflareWebView
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
@@ -88,7 +90,9 @@ class BrowserSourceActivity : AppCompatActivity() {
     // True while a Cloudflare challenge page is active; disables request
     // interception so CF's internal sub-requests are never accidentally blocked.
     @Volatile private var isCloudflareChallenge = false
-    private var cfBannerSnackbar: Snackbar? = null
+
+    private val cloudflareDetector = CloudflareDetector()
+    private lateinit var cloudflareBypassManager: CloudflareBypassManager
 
     // Metadata extracted from the current page (og: tags)
     private var currentPageTitle: String = ""
@@ -121,6 +125,20 @@ class BrowserSourceActivity : AppCompatActivity() {
         setupToolbar()
         setupWebView()
         setupFabs()
+        cloudflareBypassManager = CloudflareBypassManager(
+            activity  = this,
+            anchorView = binding.webView,
+            onComplete = { url ->
+                isCloudflareChallenge = false
+                loadUrl(url)
+            },
+            onTimeout = {
+                isCloudflareChallenge = false
+            },
+            onCancelled = {
+                isCloudflareChallenge = false
+            },
+        )
 
         CookieManager.getInstance().setAcceptCookie(true)
         CookieManager.getInstance().setAcceptThirdPartyCookies(binding.webView, true)
@@ -238,6 +256,9 @@ class BrowserSourceActivity : AppCompatActivity() {
                 // Update the thread-safe URL snapshot FIRST so shouldInterceptRequest()
                 // sees the correct URL for all subsequent resource requests on this page.
                 url?.let { currentUrl = it }
+                // Reset accumulated HTTP-error state so a stale 403/503 from the
+                // previous page cannot bleed into the next page's CF analysis.
+                cloudflareDetector.reset()
                 // Fix A2: Inject anti-detection JS on every page load so Cloudflare
                 // (and similar bot-management scripts) cannot fingerprint the WebView.
                 CloudflareWebView.injectAntiDetectionJs(view)
@@ -257,17 +278,14 @@ class BrowserSourceActivity : AppCompatActivity() {
                 errorResponse: WebResourceResponse,
             ) {
                 super.onReceivedHttpError(view, request, errorResponse)
-                // Fix A1/A5: Detect Cloudflare via HTTP 403/503 + cf-ray response header.
+                // Feed HTTP status + headers into the strict detector. The bypass
+                // is only triggered later in onPageFinished once we also have the
+                // full HTML and page title to confirm this is really Cloudflare.
                 if (request.isForMainFrame) {
-                    val code = errorResponse.statusCode
-                    if ((code == 403 || code == 503) &&
-                        errorResponse.responseHeaders?.containsKey("cf-ray") == true
-                    ) {
-                        if (!isCloudflareChallenge) {
-                            isCloudflareChallenge = true
-                            showCloudflareBanner()
-                        }
-                    }
+                    cloudflareDetector.recordHttpError(
+                        errorResponse.statusCode,
+                        errorResponse.responseHeaders,
+                    )
                 }
             }
 
@@ -312,20 +330,16 @@ class BrowserSourceActivity : AppCompatActivity() {
                     view.evaluateJavascript("document.documentElement.outerHTML") { rawJson ->
                         val html = unescapeJsString(rawJson)
                         if (html.isNotBlank()) {
-                            // Fix A1/A5: Detect Cloudflare via page content signals.
-                            if (!isCloudflareChallenge && isCloudflarePage(html)) {
-                                isCloudflareChallenge = true
-                                showCloudflareBanner()
+                            // Strict two-stage Cloudflare detection:
+                            // requires 403/503 HTTP status + ≥2 markers + CF page title.
+                            if (!isCloudflareChallenge) {
+                                val cookies = CookieManager.getInstance().getCookie(pageUrl) ?: ""
+                                if (cloudflareDetector.analyzeHtml(html, view.title ?: "", cookies)) {
+                                    isCloudflareChallenge = true
+                                    cloudflareBypassManager.startBypass(pageUrl)
+                                }
                             }
                             runUniversalDetection(pageUrl, html)
-                        }
-                        // Fix A4/A5: Monitor for cf_clearance cookie that marks
-                        // successful Cloudflare verification.
-                        if (isCloudflareChallenge) {
-                            val cookies = CookieManager.getInstance().getCookie(pageUrl) ?: ""
-                            if (cookies.contains("cf_clearance")) {
-                                onCloudflarePassed()
-                            }
                         }
                     }
                 }
@@ -334,55 +348,6 @@ class BrowserSourceActivity : AppCompatActivity() {
     }
 
     /** WebView returns evaluateJavascript results as a JSON string literal; unwrap it. */
-    // ── Cloudflare helpers ────────────────────────────────────────────────────
-
-    /**
-     * Returns true if the page HTML contains signals that indicate an active
-     * Cloudflare challenge (interstitial or CAPTCHA loop).
-     */
-    private fun isCloudflarePage(html: String): Boolean {
-        val lower = html.lowercase()
-        return lower.contains("just a moment") ||
-            lower.contains("checking your browser") ||
-            lower.contains("cf-ray") ||
-            lower.contains("cloudflare") ||
-            lower.contains("challenge-platform") ||
-            lower.contains("_cf_chl")
-    }
-
-    /**
-     * Fix A5: Show a persistent banner explaining that a Cloudflare challenge
-     * is active so the user knows to tap the verification checkbox.
-     */
-    private fun showCloudflareBanner() {
-        cfBannerSnackbar?.dismiss()
-        cfBannerSnackbar = Snackbar.make(
-            binding.webView,
-            R.string.browser_source_cloudflare_detected,
-            Snackbar.LENGTH_INDEFINITE,
-        )
-        cfBannerSnackbar?.show()
-    }
-
-    /**
-     * Fix A4/A5: Called when cf_clearance is present, meaning Cloudflare has
-     * been satisfied. Resets the challenge flag, hides the banner, and shows a
-     * success message.
-     *
-     * Cookie sync to OkHttp is automatic: [AndroidCookieJar] reads directly
-     * from [CookieManager], so the cookie is already visible to OkHttp the
-     * moment Cloudflare sets it — no manual copy needed.
-     */
-    private fun onCloudflarePassed() {
-        isCloudflareChallenge = false
-        cfBannerSnackbar?.dismiss()
-        cfBannerSnackbar = null
-        Snackbar.make(
-            binding.webView,
-            R.string.browser_source_cloudflare_verified,
-            Snackbar.LENGTH_LONG,
-        ).show()
-    }
 
     private fun unescapeJsString(raw: String?): String {
         if (raw.isNullOrEmpty() || raw == "null") return ""
@@ -607,6 +572,7 @@ class BrowserSourceActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
+        cloudflareBypassManager.cancel()
         binding.webView.stopLoading()
         binding.webView.destroy()
         mangaSiteDetector.clearAllSessions()

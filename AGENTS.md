@@ -1749,3 +1749,72 @@ Chapter label priority: chapter title (if non-blank) → "Chapter N" (from chapt
 
 - Branch: `devel` (direct push)
 - CI: `Build Alpha APK` — see GitHub Actions.
+
+---
+
+## Session 8 — Strict Cloudflare detection + Chrome Custom Tab bypass
+
+### Problem
+
+The previous session's Cloudflare detection had false positives: the `isCloudflarePage()` HTML scan triggered on any page containing "cloudflare" or "cf-ray" in its source (e.g., pages that mention Cloudflare in their footer or privacy policy). Additionally, the old approach — JS injection + banner snackbar — cannot solve Cloudflare Turnstile because Cloudflare detects WebView at the TLS/HTTP2 network layer *before* JavaScript runs. Chrome Custom Tab uses the real Chromium stack and bypasses this fingerprinting.
+
+### Solution Overview
+
+1. **Strict detection** (`CloudflareDetector.kt`) — requires ALL of: 403/503 HTTP status + ≥2 specific markers (from headers, HTML, cookies) + exact page title match. Eliminates false positives.
+2. **Chrome Custom Tab bypass** (`CloudflareBypassManager.kt`) — shows a dialog, opens the blocked URL in real Chrome (which passes Cloudflare's TLS fingerprinting), polls for `cf_clearance` cookie, and automatically reloads the original URL in the WebView when verified.
+3. **Cookie sync** — free on Android 7+: Chrome and Android WebView share the same underlying `CookieManager` cookie store, so `cf_clearance` set by Chrome is immediately visible to the WebView.
+
+### NEW FILE: `CloudflareDetector.kt`
+
+`io.github.landwarderer.futon.browser.cloudflare.CloudflareDetector`
+
+Two-stage stateful detector:
+- **Stage 1** `recordHttpError(statusCode, headers)` — called from `onReceivedHttpError`. Saves status 403/503 and counts header markers (cf-ray header, cloudflare in Server header).
+- **Stage 2** `analyzeHtml(html, title, cookies)` — called from `onPageFinished` inside the JS callback. Counts HTML markers (cdn-cgi/challenge-platform, _cf_chl_opt, cf-turnstile, challenges.cloudflare.com) and cookie markers (__cf_bm, cf_clearance). Returns true only if: status was 403/503 AND total markers ≥ 2 AND title is one of the 5 known CF challenge titles.
+- `reset()` — must be called in `onPageStarted` to prevent stale state from bleeding between pages.
+
+### NEW FILE: `CloudflareBypassManager.kt`
+
+`io.github.landwarderer.futon.browser.cloudflare.CloudflareBypassManager`
+
+Full bypass orchestrator:
+- `startBypass(blockedUrl)` — shows `MaterialAlertDialogBuilder` dialog with "Verify Now" / "Cancel".
+- On "Verify Now": calls `findCctBrowserPackage()` (checks Chrome → Edge → Samsung Internet → Firefox → Opera), launches `CustomTabsIntent` via `CustomTabsServiceConnection` warmup, starts cookie polling.
+- **Cookie polling** (`startCookiePolling`): runs in `activity.lifecycleScope` (survives `onPause` but cancelled on `onDestroy`). Checks `CookieManager.getInstance().getCookie(domain)` every 500ms. 2-minute timeout.
+- On `cf_clearance` detected: calls `FLAG_ACTIVITY_REORDER_TO_FRONT` to bring activity to foreground, shows "✓ Verified! Loading page…" snackbar, invokes `onComplete(originalUrl)`.
+- On timeout: shows timeout snackbar, invokes `onTimeout()`.
+- If no CCT browser available: falls back to `Intent.ACTION_VIEW` + shows "Complete verification in your browser" message.
+- `cancel()` — cancels polling job; call from `onDestroy`.
+
+### MODIFIED: `BrowserSourceActivity.kt`
+
+| Change | Detail |
+|---|---|
+| Added imports | `CloudflareBypassManager`, `CloudflareDetector` |
+| Removed field | `cfBannerSnackbar: Snackbar?` |
+| Added fields | `cloudflareDetector = CloudflareDetector()`, `cloudflareBypassManager: CloudflareBypassManager` |
+| `onCreate` | Initializes `cloudflareBypassManager` with callbacks that reset `isCloudflareChallenge` and call `loadUrl()` |
+| `onPageStarted` | Calls `cloudflareDetector.reset()` |
+| `onReceivedHttpError` | Replaced old detection with `cloudflareDetector.recordHttpError(statusCode, headers)` |
+| `onPageFinished` | Replaced `isCloudflarePage()` + `showCloudflareBanner()` block with `cloudflareDetector.analyzeHtml()` → `cloudflareBypassManager.startBypass()`. Removed `onCloudflarePassed()` call (polling handles it now). |
+| `onDestroy` | Calls `cloudflareBypassManager.cancel()` |
+| Removed methods | `isCloudflarePage()`, `showCloudflareBanner()`, `onCloudflarePassed()` |
+
+### NEW STRINGS in `strings.xml`
+
+| Key | Value |
+|---|---|
+| `cloudflare_bypass_title` | 🛡️ Security Verification Required |
+| `cloudflare_bypass_message` | This site uses Cloudflare protection… |
+| `cloudflare_bypass_verify` | Verify Now |
+| `cloudflare_bypass_cancel` | Cancel |
+| `cloudflare_bypass_verified` | ✓ Verified! Loading page… |
+| `cloudflare_bypass_timeout` | Verification timed out. Please try again. |
+| `cloudflare_bypass_fallback_message` | Complete verification in your browser and return to Tsuki when done. |
+
+### DO NOT TOUCH (still applies)
+- `TemplateHtmlParser.kt`, USB/Universal Source Beta, `applicationId` in `build.gradle`, Google OAuth fix, built-in Kotatsu sources.
+
+### Commit & CI
+- Branch: `devel` (direct push)
+- CI: `Build Alpha APK` — see GitHub Actions.

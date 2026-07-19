@@ -19,6 +19,14 @@
     <string name="browser_source_cloudflare_detected">🛡️ Cloudflare protection detected. Tap the checkbox when it appears to verify.</string>
     <string name="browser_source_cloudflare_verified">✓ Verified! This source is now unlocked.</string>
     <string name="cloudflare_timeout_message">Still stuck on the check. Try again, or open the source in a regular browser.</string>
+    <!-- Cloudflare bypass dialog + status strings -->
+    <string name="cloudflare_bypass_title">🛡️ Security Verification Required</string>
+    <string name="cloudflare_bypass_message">This site uses Cloudflare protection. Tap below to verify — it only takes a few seconds and you'll be right back.</string>
+    <string name="cloudflare_bypass_verify">Verify Now</string>
+    <string name="cloudflare_bypass_cancel">Cancel</string>
+    <string name="cloudflare_bypass_verified">✓ Verified! Loading page…</string>
+    <string name="cloudflare_bypass_timeout">Verification timed out. Please try again.</string>
+    <string name="cloudflare_bypass_fallback_message">Complete verification in your browser and return to Tsuki when done.</string>
     <string name="computing_">Computing…</string>
     <string name="chapter_d_of_d">Chapter %1$d of %2$d</string>
     <string name="close">Close</string>
