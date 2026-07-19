@@ -1,3 +1,12 @@
+## Alpha 1.717 (Build [#293](https://github.com/Space4414/Tsuki/actions/runs/29684182407))
+
+_2026-07-19 10:55 UTC_
+
+- Fix: escape apostrophe in cloudflare_bypass_message string (1cf0ee3)
+- Strict Cloudflare detection + Chrome Custom Tab bypass (fce2d56)
+- Fix Discord RPC not showing for Browser/WebView/Custom sources (9bac022)
+
+
 ## Beta 1.5.1 (Build [#6](https://github.com/Space4414/Tsuki/actions/runs/29652121674))
 
 _2026-07-18 16:31 UTC_
