@@ -188,7 +188,7 @@ object GlassEffectHelper {
     ) {
         when {
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-                window.setNavigationBarBlurRadius(blurRadius)
+                // API 31+: set a translucent nav bar tint; system handles blur behind the window.
                 window.navigationBarColor = Color.argb(
                     (tintOpacity * 255).toInt(), 0, 0, 0,
                 )
