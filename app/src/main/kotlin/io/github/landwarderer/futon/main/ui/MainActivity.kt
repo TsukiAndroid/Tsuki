@@ -546,6 +546,12 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
                   applyNavBarTransparencyStyle()
                   applySearchBarTransparencyStyle()
                   applyBarBlur()
+                  // Apply system navigation bar blur/tint with API-level compatibility
+                  if (settings.isNavBarBlurEnabled) {
+                          val blurRadius = (settings.navBarBlurIntensity * 0.4f).toInt().coerceAtLeast(1)
+                          val tintOpacity = settings.navBarBlurTintAlpha / 100f
+                          GlassEffectHelper.applyNavigationBarBlur(window, blurRadius, tintOpacity)
+                  }
           }
 
           private fun applySearchBarTransparencyStyle() {
@@ -630,10 +636,38 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), AppBarOwner, BottomNav
                         .target(iv)
                         .listener(object : ImageRequest.Listener {
                                 override fun onSuccess(request: ImageRequest, result: SuccessResult) {
-                                        // API 23-30 software blur (no-op on API 31+ which uses RenderEffect)
-                                        GlassEffectHelper.blurImageView(iv, blurIntensity)
-                                        ObjectAnimator.ofFloat(iv, "alpha", 0f, 0.85f).setDuration(700).start()
-                                        ObjectAnimator.ofFloat(dim, "alpha", 0f, 1f).setDuration(700).start()
+                                        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S && blurIntensity > 0) {
+                                                // API 26-30: use BlurCompat on a background thread for
+                                                // correct blur (RenderEffect is API 31+ only).
+                                                // API ≤ 25: keep existing path — already working.
+                                                val srcDrawable = iv.drawable
+                                                lifecycleScope.launch {
+                                                        val src = withContext(Dispatchers.Default) {
+                                                                when (srcDrawable) {
+                                                                        is android.graphics.drawable.BitmapDrawable -> srcDrawable.bitmap
+                                                                        else -> null
+                                                                }
+                                                        } ?: run {
+                                                                // Fallback: synchronous path for non-Bitmap drawables
+                                                                GlassEffectHelper.blurImageView(iv, blurIntensity)
+                                                                ObjectAnimator.ofFloat(iv, "alpha", 0f, 0.85f).setDuration(700).start()
+                                                                ObjectAnimator.ofFloat(dim, "alpha", 0f, 1f).setDuration(700).start()
+                                                                return@launch
+                                                        }
+                                                        val blurred = withContext(Dispatchers.Default) {
+                                                                GlassEffectHelper.blurBitmapForBackground(
+                                                                        this@MainActivity, src, blurIntensity,
+                                                                )
+                                                        }
+                                                        if (blurred != null) iv.setImageBitmap(blurred)
+                                                        ObjectAnimator.ofFloat(iv, "alpha", 0f, 0.85f).setDuration(700).start()
+                                                        ObjectAnimator.ofFloat(dim, "alpha", 0f, 1f).setDuration(700).start()
+                                                }
+                                        } else {
+                                                // API 31+: RenderEffect handles blur — just animate.
+                                                ObjectAnimator.ofFloat(iv, "alpha", 0f, 0.85f).setDuration(700).start()
+                                                ObjectAnimator.ofFloat(dim, "alpha", 0f, 1f).setDuration(700).start()
+                                        }
                                 }
                         })
                         .build()

@@ -982,7 +982,7 @@
     <string name="search_bar_opacity">Search bar opacity</string>
     <string name="search_bar_opacity_summary">Adjust the transparency of the search bar</string>
     <string name="background_blur">Background blur</string>
-    <string name="background_blur_summary">Control how much the background artwork is blurred</string>
+    <string name="background_blur_summary">Control how much the background artwork is blurred. Full blur requires Android 12+. Enhanced frosted effect on Android 8-11.</string>
     <string name="history_background">History background image</string>
     <string name="history_background_summary">Show the most recently read manga cover as a background in the History tab</string>
     <string name="history_bg_source">Background image source</string>
@@ -1002,7 +1002,7 @@
     <string name="transparent_nav_bar_summary">Remove the dark background from the navigation pill</string>
     <string name="nav_bar_blur">Navigation bar blur</string>
       <string name="nav_bar_blur_enabled">Navigation bar blur</string>
-      <string name="nav_bar_blur_enabled_summary">Enable frosted-glass blur behind the navigation bar</string>
+      <string name="nav_bar_blur_enabled_summary">Enable frosted-glass blur behind the navigation bar (full blur on Android 12+, frosted effect on older versions)</string>
             <string name="nav_bar_blur_summary">Blur strength for content scrolling behind the navigation bar (0 = off)</string>
       <string name="nav_bar_blur_tint">Tint opacity</string>
   

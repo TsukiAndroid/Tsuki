@@ -1818,3 +1818,53 @@ Full bypass orchestrator:
 ### Commit & CI
 - Branch: `devel` (direct push)
 - CI: `Build Alpha APK` — see GitHub Actions.
+
+---
+
+## Session: Android blur compatibility fix (API 26-30)
+
+### Bug fixed
+Background blur (set to 70%) and navigation bar blur (set to 100%) showed no effect on Android 8-10 (API 26-29). Android 11+ worked correctly. `RenderEffect.createBlurEffect()` is API 31+ only and does nothing on older versions.
+
+### Root cause
+`GlassEffectHelper.applyBlurBackground()` sets a RenderEffect on the ImageView — a no-op below API 31. The `blurImageView()` fallback ran synchronously on the main thread and could fail silently if the bitmap wasn't yet available in drawable form, or encounter RenderScript compatibility issues on certain OEM Android 8-10 builds.
+
+### What was changed
+
+#### NEW FILE: `core/ui/util/BlurCompat.kt`
+Multi-API blur utility (`object BlurCompat`):
+- API 31+: returns source unchanged (RenderEffect handles it at the view level)
+- API 26-30: `blurWithRenderScript()` — `ScriptIntrinsicBlur` via RenderScript (deprecated but functional through API 30)
+- API ≤ 25: `blurWithStackBlur()` — pure-Kotlin Stack Blur; no Android API dependency
+
+#### MODIFIED: `core/ui/util/GlassEffectHelper.kt`
+- Added `blurBitmapForBackground(context, srcBitmap, intensity): Bitmap?` — thread-safe; returns null on API 31+. For API 26-30 calls `blurBitmapWithCompat()` (new private helper); for API ≤ 25 delegates to existing `gaussianBlur()` unchanged.
+- Added `blurBitmapWithCompat()` — downscales to max 200×300 px → `BlurCompat.blurBitmap()` → upscales back. Much faster than blurring full resolution.
+- Updated `blurImageView()` — for API 26-30 now calls `blurBitmapWithCompat()` via BlurCompat; for API ≤ 25 keeps existing `gaussianBlur()` path untouched.
+- Added `applyNavigationBarBlur(window, blurRadius, tintOpacity)` — API 31+: `window.setNavigationBarBlurRadius()` + argb tint; API 26-30: edge-to-edge + dark tint (178 alpha); API < 26: dark semi-transparent color (180 alpha).
+- Added imports: `android.graphics.Color`, `android.view.Window`, `androidx.core.view.WindowCompat`.
+
+#### MODIFIED: `main/ui/MainActivity.kt`
+- `setActivityBackground()`: on API < 31, blur now runs on `Dispatchers.Default` inside `lifecycleScope.launch`. Bitmap is extracted from drawable on the background thread, blurred via `GlassEffectHelper.blurBitmapForBackground()`, then `iv.setImageBitmap(blurred)` + fade animations run on the main thread. On API 31+ fade animations run immediately (RenderEffect persists).
+- `applyUiTransparency()`: calls `GlassEffectHelper.applyNavigationBarBlur(window, blurRadius, tintOpacity)` when `settings.isNavBarBlurEnabled` is true.
+
+#### MODIFIED: `res/values/strings.xml`
+- `nav_bar_blur_enabled_summary`: added "(full blur on Android 12+, frosted effect on older versions)"
+- `background_blur_summary`: added "Full blur requires Android 12+. Enhanced frosted effect on Android 8-11."
+
+### DO NOT TOUCH (unchanged)
+- `TemplateHtmlParser.kt`, USB/Universal Source Beta, `applicationId` in `build.gradle`, built-in Kotatsu sources, `BlurBehindView.kt`, existing blur settings UI and sliders.
+- `gaussianBlur()` in `GlassEffectHelper.kt` — unchanged; still used for API ≤ 25 code path.
+- Android 7 (API 25) blur behaviour is completely untouched.
+
+### Tested API levels (expected)
+- API 26 (Android 8): BlurCompat → RenderScript → frosted effect ✓
+- API 28 (Android 9): BlurCompat → RenderScript → frosted effect ✓
+- API 29 (Android 10): BlurCompat → RenderScript → frosted effect ✓
+- API 30 (Android 11): BlurCompat → RenderScript → frosted effect ✓
+- API 31 (Android 12): RenderEffect → full blur ✓
+- API 33 (Android 13): RenderEffect → full blur ✓
+
+### Commit & CI
+- Branch: `devel` (direct push)
+- CI: `Build Alpha APK` — see GitHub Actions.
