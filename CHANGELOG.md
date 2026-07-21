@@ -1,3 +1,13 @@
+## Alpha 1.720 (Build [#295](https://github.com/Space4414/Tsuki/actions/runs/29808145760))
+
+_2026-07-21 06:47 UTC_
+
+- fix: remove non-public setNavigationBarBlurRadius API call (6732592)
+- fix: blur compatibility for Android 8-10 (API 26-30) (81b3296)
+- Fix: escape apostrophe in cloudflare_bypass_message string (1cf0ee3)
+- Strict Cloudflare detection + Chrome Custom Tab bypass (fce2d56)
+
+
 ## Alpha 1.717 (Build [#293](https://github.com/Space4414/Tsuki/actions/runs/29684182407))
 
 _2026-07-19 10:55 UTC_
