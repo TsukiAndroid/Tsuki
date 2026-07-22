@@ -3,12 +3,12 @@
 # 月 Tsuki
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Space4414/Tsuki/refs/heads/devel/metadata/en-US/images/icon.png" width="120" alt="Tsuki Logo"/>
+  <img src="https://raw.githubusercontent.com/TsukiAndroid/Tsuki/refs/heads/devel/metadata/en-US/images/icon.png" width="120" alt="Tsuki Logo"/>
 </p>
 
 **A free and open-source manga / manhwa / manhua reader for Android.**
 
-[![Tsuki Project](https://img.shields.io/badge/%F0%9F%8C%99%20Tsuki%20Project-Space4414%2FTsuki-6a0dad?style=flat&logo=github)](https://github.com/Space4414/Tsuki)
+[![Tsuki Project](https://img.shields.io/badge/%F0%9F%8C%99%20Tsuki%20Project-TsukiAndroid%2FTsuki-6a0dad?style=flat&logo=github)](https://github.com/TsukiAndroid/Tsuki)
 ![Android 6.0+](https://img.shields.io/badge/android-6.0+-brightgreen)
 ![Forked from Yukimi](https://img.shields.io/badge/forked%20from-Yukimi-orange)
 [![Discord](https://img.shields.io/badge/Discord-Join%20Us-5865F2?style=flat&logo=discord&logoColor=white)](https://discord.gg/gXsesG8G7H)
@@ -80,14 +80,14 @@ This is **Tsuki (月)** , the app that refused to die.
 
 ## 📦 Download
 
-Grab the latest APK from the [Releases](https://github.com/Space4414/Tsuki/releases) page.
+Grab the latest APK from the [Releases](https://github.com/TsukiAndroid/Tsuki/releases) page.
 
 
 ---
 
 ## 🛠️ Source Code
 
-This repository: https://github.com/Space4414/Tsuki/tree/devel
+This repository: https://github.com/TsukiAndroid/Tsuki/tree/devel
 
 ---
 
