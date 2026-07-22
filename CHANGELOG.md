@@ -1,3 +1,12 @@
+## Alpha 1.722 (Build [#296](https://github.com/Space4414/Tsuki/actions/runs/29956097764))
+
+_2026-07-22 20:40 UTC_
+
+- Change repository references from Space4414 to TsukiAndroid (4f5a5a3)
+- fix: remove non-public setNavigationBarBlurRadius API call (6732592)
+- fix: blur compatibility for Android 8-10 (API 26-30) (81b3296)
+
+
 ## Alpha 1.720 (Build [#295](https://github.com/Space4414/Tsuki/actions/runs/29808145760))
 
 _2026-07-21 06:47 UTC_
