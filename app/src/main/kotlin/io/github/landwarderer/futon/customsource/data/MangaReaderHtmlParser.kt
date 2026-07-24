@@ -214,7 +214,9 @@ class MangaReaderHtmlParser(
     private fun fetchDocument(url: String): Document {
         val req = Request.Builder()
             .url(url)
-            .header("User-Agent", USER_AGENT)
+            .header("User-Agent", BROWSER_UA)
+            .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8")
+            .header("Accept-Language", "en-US,en;q=0.9")
             .header("Referer", baseUrl)
             .get().build()
         return httpClient.newCall(req).execute().use { resp ->
@@ -254,7 +256,10 @@ class MangaReaderHtmlParser(
 
     companion object {
         private const val PAGE_SIZE = 24
-        private const val USER_AGENT = "Tsuki/1.0 (Android)"
+        // FIX: use a real Chrome mobile UA — "Tsuki/1.0 (Android)" was rejected by anti-bot
+        private const val BROWSER_UA =
+            "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) " +
+            "Chrome/124.0.0.0 Mobile Safari/537.36"
         private val CHAPTER_NUMBER_RE = Regex("""(?:[Cc]hapter|[Cc]h\.?)\s*([\d.]+)""")
 
         private val httpClient: OkHttpClient by lazy {

@@ -1351,6 +1351,7 @@
                                 <data android:host="nightsup.net" />
                                 <data android:host="kenmanga.com" />
                                 <data android:host="ravenscans.com" />
+                                <data android:host="ravenscans.org" />
                                 <data android:host="qscomics.org" />
                                 <data android:host="novelstreams.com" />
                                 <data android:host="reaper-scans.com" />

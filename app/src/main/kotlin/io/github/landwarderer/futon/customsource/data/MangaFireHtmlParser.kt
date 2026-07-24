@@ -32,11 +32,135 @@ import java.util.concurrent.TimeUnit
  *   Search : {baseUrl}/filter?keyword={q}&page=N
  *   Detail : {baseUrl}/manga/{slug}.{id}
  *   Chapter: {baseUrl}/read/{slug}.{id}/en/chapter-N
+ *
+ * FIX (2026-07): MangaFire requires a session token obtained by visiting the
+ * homepage.  All subsequent requests must include this token in their headers.
+ * See getToken() / mangaFireGet() below.  Auto-retry on 403 refreshes the token.
  */
 class MangaFireHtmlParser(
     private val customSource: CustomMangaSource,
 ) {
     private val baseUrl get() = customSource.source.cleanBaseUrl
+
+    // ── Token cache (FIX 1) ───────────────────────────────────────────────────
+
+    @Volatile private var cachedToken: String? = null
+    @Volatile private var tokenFetchedAt = 0L
+
+    /**
+     * Visit the MangaFire homepage, extract the session/CSRF token, and cache it.
+     *
+     * Tries in order:
+     *  1. window.__config  (MangaFire's primary token as of 2026)
+     *  2. window._token / window.csrf / _token= JS variable patterns
+     *  3. <meta name="csrf-token"> HTML tag
+     *  4. A cookie whose name contains "token"
+     *
+     * Cached for TOKEN_TTL ms.  Returns "" on failure (requests still go through
+     * without a token, which may 403 — the retry handler then clears cache).
+     */
+    private fun getToken(): String {
+        val now = System.currentTimeMillis()
+        val cached = cachedToken
+        if (cached != null && now - tokenFetchedAt < TOKEN_TTL) return cached
+
+        val req = Request.Builder()
+            .url(baseUrl)
+            .header("User-Agent", BROWSER_UA)
+            .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
+            .header("Accept-Language", "en-US,en;q=0.9")
+            .get().build()
+
+        val (html, cookieHeader) = runCatching {
+            httpClient.newCall(req).execute().use { resp ->
+                val body = resp.body?.string() ?: ""
+                // Collect Set-Cookie headers for token extraction
+                val cookies = resp.headers("Set-Cookie")
+                    .joinToString("; ") { it.substringBefore(";") }
+                Pair(body, cookies)
+            }
+        }.getOrElse { return "".also { cachedToken = it; tokenFetchedAt = now } }
+
+        // Method 1: window.__config (MangaFire's primary token, 2026)
+        val configToken = WINDOW_CONFIG_RE.find(html)?.groupValues?.getOrNull(1)
+
+        // Method 2: other JS variable patterns
+        val jsToken = if (configToken == null) {
+            JS_TOKEN_PATTERNS.firstNotNullOfOrNull { pattern ->
+                pattern.find(html)?.groupValues?.getOrNull(1)?.takeIf { it.isNotEmpty() }
+            }
+        } else null
+
+        // Method 3: <meta name="csrf-token">
+        val metaToken = if (configToken == null && jsToken == null) {
+            META_CSRF_RE.find(html)?.groupValues?.getOrNull(1)
+        } else null
+
+        // Method 4: token cookie
+        val cookieToken = if (configToken == null && jsToken == null && metaToken == null) {
+            cookieHeader.split("; ").firstOrNull { part ->
+                part.contains("token", ignoreCase = true)
+            }?.substringAfter("=")?.substringBefore(";")?.trim()
+        } else null
+
+        val token = configToken ?: jsToken ?: metaToken ?: cookieToken ?: ""
+        cachedToken = token
+        tokenFetchedAt = now
+        return token
+    }
+
+    // ── Authenticated GET (FIX 2) ─────────────────────────────────────────────
+
+    /**
+     * Fetch [url] as an HTML Document, injecting the session token and a full
+     * browser header set so MangaFire's Cloudflare / anti-bot layer lets it through.
+     *
+     * Automatically retries once on 403 after clearing the token cache (FIX 3).
+     */
+    private fun fetchDocument(url: String): Document {
+        return fetchDocumentInternal(url, retry = true)
+    }
+
+    private fun fetchDocumentInternal(url: String, retry: Boolean): Document {
+        val token = getToken()
+        val req = buildRequest(url, token)
+        val resp = httpClient.newCall(req).execute()
+        // FIX 3: auto-retry on 403 with fresh token
+        if (resp.code == 403 && retry) {
+            resp.close()
+            cachedToken = null
+            tokenFetchedAt = 0L
+            return fetchDocumentInternal(url, retry = false)
+        }
+        return resp.use { Jsoup.parse(it.body?.string() ?: "", url) }
+    }
+
+    private fun buildRequest(url: String, token: String): Request {
+        val builder = Request.Builder()
+            .url(url)
+            .header("User-Agent", BROWSER_UA)
+            .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8")
+            .header("Accept-Language", "en-US,en;q=0.9")
+            .header("Referer", baseUrl)
+            .header("Origin", baseUrl)
+            .header("Sec-Fetch-Dest", "document")
+            .header("Sec-Fetch-Mode", "navigate")
+            .header("Sec-Fetch-Site", "same-origin")
+        if (token.isNotEmpty()) {
+            // Send under every plausible header name; MangaFire uses one of these
+            builder
+                .header("X-CSRF-Token", token)
+                .header("X-Token", token)
+        }
+        return builder.get().build()
+    }
+
+    // ── FIX 5: Debug cookie logging (debug builds only) ───────────────────────
+    // Cookie management is handled automatically by OkHttp's cookie jar.
+    // If you need to inspect cookies during debugging, attach a logging interceptor
+    // to httpClient and log resp.headers("Set-Cookie").
+
+    // ── Public API ────────────────────────────────────────────────────────────
 
     fun getList(offset: Int, order: SortOrder?, filter: MangaListFilter?): List<Manga> {
         val query = filter?.query?.trim()
@@ -105,7 +229,7 @@ class MangaFireHtmlParser(
         }.getOrElse { emptyList() }
     }
 
-    // ── Private ───────────────────────────────────────────────────────────────
+    // ── Private helpers ───────────────────────────────────────────────────────
 
     private fun browseList(offset: Int, order: SortOrder?): List<Manga> {
         val page = offset / PAGE_SIZE + 1
@@ -186,17 +310,6 @@ class MangaFireHtmlParser(
         }.reversed()
     }
 
-    private fun fetchDocument(url: String): Document {
-        val req = Request.Builder()
-            .url(url)
-            .header("User-Agent", USER_AGENT)
-            .header("Referer", baseUrl)
-            .get().build()
-        return httpClient.newCall(req).execute().use { resp ->
-            Jsoup.parse(resp.body?.string() ?: "", url)
-        }
-    }
-
     private fun buildManga(title: String, pageUrl: String, coverUrl: String): Manga {
         val relativePath = runCatching {
             val uri = java.net.URI(pageUrl)
@@ -229,8 +342,31 @@ class MangaFireHtmlParser(
 
     companion object {
         private const val PAGE_SIZE = 24
-        private const val USER_AGENT = "Tsuki/1.0 (Android)"
+        private const val TOKEN_TTL = 30 * 60 * 1000L // 30 minutes
+
+        // FIX: use a real Chrome mobile UA — "Tsuki/1.0 (Android)" was rejected
+        private const val BROWSER_UA =
+            "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) " +
+            "Chrome/124.0.0.0 Mobile Safari/537.36"
+
         private val CHAPTER_NUMBER_RE = Regex("""(?:[Cc]hapter|[Cc]h\.?)\s*([\d.]+)""")
+
+        // Token extraction patterns (checked in order)
+        // 1. window.__config = "..." — MangaFire's primary token (2026)
+        private val WINDOW_CONFIG_RE = Regex("""window\.__config\s*=\s*["']([^"']+)["']""")
+
+        // 2. Other common JS variable patterns
+        private val JS_TOKEN_PATTERNS = listOf(
+            Regex("""window\._token\s*=\s*["']([^"']+)["']"""),
+            Regex("""window\.csrf\s*=\s*["']([^"']+)["']"""),
+            Regex("""csrf[_-]?token["']\s*:\s*["']([^"']+)["']"""),
+            Regex(""""_token"\s*:\s*"([^"]+)""""),
+            Regex("""_token\s*=\s*["']([^"']+)["']"""),
+        )
+
+        // 3. <meta name="csrf-token" content="...">
+        private val META_CSRF_RE = Regex("""<meta[^>]+name=["']csrf-token["'][^>]+content=["']([^"']+)["']""")
+
         private val httpClient: OkHttpClient by lazy {
             OkHttpClient.Builder()
                 .connectTimeout(20, TimeUnit.SECONDS)

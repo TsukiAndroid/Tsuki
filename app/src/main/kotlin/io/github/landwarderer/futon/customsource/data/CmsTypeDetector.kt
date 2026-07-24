@@ -72,6 +72,11 @@ package io.github.landwarderer.futon.customsource.data
           "manhwaread.com"   to CustomSourceType.WEBVIEW,
           "manhwaread.net"   to CustomSourceType.WEBVIEW,
           "comix.to"         to CustomSourceType.COMIXTO,
+          // RavenScans uses the WordPress MangaThemesia ("mangareader") theme.
+          // Without this fast-path the HTML fingerprinter incorrectly matches
+          // MANGAREADER because the theme CSS path contains "mangareader".
+          "ravenscans.com"   to CustomSourceType.MANGATHEMESIA,
+          "ravenscans.org"   to CustomSourceType.MANGATHEMESIA,
       )
 
       fun detect(baseUrl: String): CustomSourceType {

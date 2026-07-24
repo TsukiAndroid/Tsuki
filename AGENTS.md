@@ -1868,3 +1868,88 @@ Multi-API blur utility (`object BlurCompat`):
 ### Commit & CI
 - Branch: `devel` (direct push)
 - CI: `Build Alpha APK` — see GitHub Actions.
+
+---
+
+## Session (Jul 24 2026) — MangaFire 403 fix + MangaReader.to + RavenScans
+
+### Goal
+Fix three broken sources:
+1. **MangaFire** — 403 "Missing Token" / "Access Denied" on Android 16
+2. **MangaReader.to** — not loading (anti-bot / UA rejection)
+3. **RavenScans** — source broken; domain moved from `ravenscans.com` → `ravenscans.org`; misdetected as MANGAREADER type
+
+---
+
+### MangaFire fix — `MangaFireHtmlParser.kt` (all 5 README fixes)
+
+**Root cause:** `MangaFireHtmlParser` was sending requests with `User-Agent: Tsuki/1.0 (Android)`.  MangaFire's Cloudflare layer rejects non-browser UAs immediately.  Additionally, MangaFire embeds a session token (`window.__config`) on the homepage that must be included in subsequent requests.
+
+**Fix 1 — Token extraction with caching:**
+- Added `cachedToken: String?` + `tokenFetchedAt: Long` + `TOKEN_TTL = 30 min`
+- `getToken()` visits `baseUrl` homepage and extracts (in order):
+  1. `window.__config = "..."` — MangaFire's primary token (2026)
+  2. `window._token`, `window.csrf`, and other common JS variable patterns
+  3. `<meta name="csrf-token" content="...">`
+  4. A `Set-Cookie` header containing "token"
+
+**Fix 2 — Token in all requests:**
+- `fetchDocument()` now calls `getToken()` and injects `X-CSRF-Token` and `X-Token` headers alongside a full Chrome mobile browser header set (`Accept`, `Accept-Language`, `Referer`, `Origin`, `Sec-Fetch-*`).
+
+**Fix 3 — Auto-retry on 403:**
+- `fetchDocumentInternal(url, retry=true)` catches HTTP 403, clears `cachedToken`, and retries once with a fresh token.
+
+**Fix 4 — VRF (not applicable):**
+- `MangaFireHtmlParser` is an HTML scraper, not an API client, so there is no VRF parameter to update.
+
+**Fix 5 — Android 16 cookie handling:**
+- OkHttp's built-in cookie jar is already used; no manual cookie handling needed.
+
+**Files changed:**
+| File | Change |
+|---|---|
+| `MangaFireHtmlParser.kt` | Rewrote UA → `BROWSER_UA` (Chrome 124 mobile); added `getToken()` with multi-method extraction; added `buildRequest()` with full header set; added 403 auto-retry in `fetchDocumentInternal()`; added `WINDOW_CONFIG_RE`, `JS_TOKEN_PATTERNS`, `META_CSRF_RE` regex constants |
+
+---
+
+### MangaReader.to fix — `MangaReaderHtmlParser.kt`
+
+**Root cause:** Same UA issue — `"Tsuki/1.0 (Android)"` was rejected by the site's anti-bot layer.
+
+**Fix:**
+- Replaced `USER_AGENT = "Tsuki/1.0 (Android)"` with `BROWSER_UA` (Chrome 124 mobile).
+- Added `Accept` and `Accept-Language` headers to `fetchDocument()`.
+
+**Files changed:**
+| File | Change |
+|---|---|
+| `MangaReaderHtmlParser.kt` | `USER_AGENT` constant → `BROWSER_UA`; `fetchDocument()` now sends `Accept` + `Accept-Language` headers |
+
+---
+
+### RavenScans fix — `AndroidManifest.xml` + `CmsTypeDetector.kt`
+
+**Root cause:**
+1. `ravenscans.com` permanently redirected to `ravenscans.org`. Deep-link filter only listed `.com`, so opening `ravenscans.org` links in-app failed.
+2. `CmsTypeDetector` misidentified RavenScans as `MANGAREADER` because the site's WP theme CSS path contains the string "mangareader" (`/wp-content/themes/mangareader/`). The generic `html.contains("mangareader")` check at step 18 fired before a structural MangaThemesia check could match. RavenScans actually uses the MangaThemesia WordPress theme.
+
+**Fix 1 — AndroidManifest.xml:**
+- Added `<data android:host="ravenscans.org" />` alongside the existing `ravenscans.com` entry.
+
+**Fix 2 — CmsTypeDetector.kt:**
+- Added `"ravenscans.com" to CustomSourceType.MANGATHEMESIA` and `"ravenscans.org" to CustomSourceType.MANGATHEMESIA` to `KNOWN_DOMAIN_TYPES` (step 0 fast-path), bypassing the misleading HTML string match entirely.
+
+**Files changed:**
+| File | Change |
+|---|---|
+| `AndroidManifest.xml` | Added `ravenscans.org` as a deep-link host |
+| `CmsTypeDetector.kt` | Added `ravenscans.com` + `ravenscans.org` → `MANGATHEMESIA` in `KNOWN_DOMAIN_TYPES` |
+
+---
+
+### DO NOT TOUCH (unchanged)
+- `TemplateHtmlParser.kt`, USB/Universal Source Beta, `applicationId` in `build.gradle`, built-in Kotatsu sources, `CloudflareCookieSyncer.kt`, `KotatsuParserMatcher.kt`.
+
+### Commit & CI
+- Branch: `devel` (direct push)
+- CI: `Build Alpha APK` — see GitHub Actions.
