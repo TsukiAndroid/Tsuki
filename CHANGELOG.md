@@ -1,3 +1,11 @@
+## Alpha 1.724 (Build [#297](https://github.com/Space4414/Tsuki/actions/runs/30057847240))
+
+_2026-07-24 01:02 UTC_
+
+- fix: MangaFire 403, MangaReader.to UA, RavenScans domain + misdetection (7ff8255)
+- Change repository references from Space4414 to TsukiAndroid (4f5a5a3)
+
+
 ## Alpha 1.722 (Build [#296](https://github.com/Space4414/Tsuki/actions/runs/29956097764))
 
 _2026-07-22 20:40 UTC_
