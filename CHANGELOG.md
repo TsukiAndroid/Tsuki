@@ -1,3 +1,11 @@
+## Alpha 1.728 (Build [#299](https://github.com/Space4414/Tsuki/actions/runs/30192581562))
+
+_2026-07-26 07:19 UTC_
+
+- Delete .github/workflows/sync-parsers-version.yml (1886278)
+- Add auto-update workflow for kotatsu-parsers-redo (605027e)
+
+
 ## Alpha 1.726 (Build [#298](https://github.com/Space4414/Tsuki/actions/runs/30192328865))
 
 _2026-07-26 07:10 UTC_
