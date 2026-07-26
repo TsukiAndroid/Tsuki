@@ -1,3 +1,10 @@
+## Alpha 1.731 (Build [#301](https://github.com/Space4414/Tsuki/actions/runs/30204923046))
+
+_2026-07-26 13:52 UTC_
+
+- fix: open-in-browser always uses Tsuki WebView (never Chrome) (6d9789d)
+
+
 ## Alpha 1.728 (Build [#299](https://github.com/Space4414/Tsuki/actions/runs/30192581562))
 
 _2026-07-26 07:19 UTC_
