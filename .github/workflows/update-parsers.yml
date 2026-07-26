@@ -1,0 +1,46 @@
+name: Auto-update kotatsu-parsers-redo
+
+on:
+  schedule:
+    - cron: '0 */6 * * *' # Runs every 6 hours
+  workflow_dispatch: # Allows manual trigger
+
+jobs:
+  update-parsers:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Tsuki
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PARSERS_UPDATE_TOKEN }}
+
+      - name: Get latest parsers commit
+        id: latest
+        run: |
+          LATEST=$(curl -s \
+            -H "Authorization: Bearer ${{ secrets.PARSERS_UPDATE_TOKEN }}" \
+            "https://api.github.com/repos/clquwu/kotatsu-parsers-redo/commits/master" \
+            | jq -r '.sha' | cut -c1-10)
+          echo "commit=$LATEST" >> $GITHUB_OUTPUT
+
+      - name: Get current parsers version
+        id: current
+        run: |
+          CURRENT=$(grep 'parsers = ' gradle/libs.versions.toml \
+            | sed 's/parsers = "//;s/"//')
+          echo "commit=$CURRENT" >> $GITHUB_OUTPUT
+
+      - name: Update version if changed
+        if: steps.latest.outputs.commit != steps.current.outputs.commit
+        run: |
+          sed -i 's/parsers = "${{ steps.current.outputs.commit }}"/parsers = "${{ steps.latest.outputs.commit }}"/' \
+            gradle/libs.versions.toml
+
+      - name: Commit and push update
+        if: steps.latest.outputs.commit != steps.current.outputs.commit
+        run: |
+          git config user.name "Tsuki Bot"
+          git config user.email "bot@tsuki.app"
+          git add gradle/libs.versions.toml
+          git commit -m "chore: update kotatsu-parsers-redo to ${{ steps.latest.outputs.commit }}"
+          git push origin devel
