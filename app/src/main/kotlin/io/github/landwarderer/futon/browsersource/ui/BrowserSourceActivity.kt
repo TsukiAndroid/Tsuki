@@ -5,6 +5,8 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.os.Bundle
 import android.view.KeyEvent
+import android.view.Menu
+import android.view.MenuItem
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.webkit.CookieManager
@@ -118,6 +120,11 @@ class BrowserSourceActivity : AppCompatActivity() {
         sourceName = intent.getStringExtra(KEY_SOURCE_NAME) ?: ""
         baseUrl = intent.getStringExtra(KEY_BASE_URL) ?: ""
 
+        // Direct-URL mode: opened via TsukiBrowser.open() / AppRouter.openBrowser()
+        // instead of via a BROWSER_SOURCE custom source.  No source ID is involved.
+        val directUrl = intent.getStringExtra(KEY_DIRECT_URL)
+        val directTitle = intent.getStringExtra(KEY_DIRECT_TITLE)
+
         onBackPressedDispatcher.addCallback(this, webViewBackCallback)
 
         mangaSitePrompt = MangaSitePrompt(this)
@@ -144,11 +151,81 @@ class BrowserSourceActivity : AppCompatActivity() {
         CookieManager.getInstance().setAcceptThirdPartyCookies(binding.webView, true)
 
         if (savedInstanceState == null) {
-            val startUrl = browserSourceRepository.getLastUrl(sourceId)
-                ?.takeIf { it.isNotEmpty() }
-                ?: baseUrl
-            loadUrl(startUrl)
+            when {
+                directUrl != null -> {
+                    // Show the provided title immediately while the page loads
+                    if (!directTitle.isNullOrEmpty()) {
+                        supportActionBar?.title = directTitle
+                    }
+                    loadUrl(directUrl)
+                }
+                else -> {
+                    val startUrl = browserSourceRepository.getLastUrl(sourceId)
+                        ?.takeIf { it.isNotEmpty() }
+                        ?: baseUrl
+                    loadUrl(startUrl)
+                }
+            }
         }
+    }
+
+    // ── Options menu (overflow ⋮) ─────────────────────────────────────────────
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(io.github.landwarderer.futon.R.menu.opt_browser_source, menu)
+        return super.onCreateOptionsMenu(menu)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean = when (item.itemId) {
+
+        // Step 6 of the README: let users open the current page in Chrome if they
+        // specifically want to, while the default always uses Tsuki's WebView.
+        io.github.landwarderer.futon.R.id.action_browser_source_open_external -> {
+            val url = binding.webView.url
+            if (url != null) router.openExternalBrowser(url)
+            true
+        }
+
+        io.github.landwarderer.futon.R.id.action_browser_source_adblock -> {
+            val newState = !webViewSettings.isAdBlockEnabled
+            webViewSettings.isAdBlockEnabled = newState
+            updateAdblockIcon()
+            val msgRes = if (newState) io.github.landwarderer.futon.R.string.webview_adblock_toggled_on
+                         else io.github.landwarderer.futon.R.string.webview_adblock_toggled_off
+            Snackbar.make(binding.webView, msgRes, Snackbar.LENGTH_SHORT).show()
+            true
+        }
+
+        io.github.landwarderer.futon.R.id.action_browser_source_js -> {
+            val newJs = !webViewSettings.isJavaScriptEnabled
+            webViewSettings.isJavaScriptEnabled = newJs
+            binding.webView.settings.javaScriptEnabled = newJs
+            binding.webView.reload()
+            val msgRes = if (newJs) io.github.landwarderer.futon.R.string.webview_js_toggled_on
+                         else io.github.landwarderer.futon.R.string.webview_js_toggled_off
+            Snackbar.make(binding.webView, msgRes, Snackbar.LENGTH_SHORT).show()
+            true
+        }
+
+        io.github.landwarderer.futon.R.id.action_browser_source_desktop -> {
+            val newDesktop = !webViewSettings.isDesktopMode
+            webViewSettings.isDesktopMode = newDesktop
+            webViewSettings.resolvedUserAgent()?.let { binding.webView.settings.userAgentString = it }
+            binding.webView.reload()
+            val msgRes = if (newDesktop) io.github.landwarderer.futon.R.string.webview_desktop_on
+                         else io.github.landwarderer.futon.R.string.webview_desktop_off
+            Snackbar.make(binding.webView, msgRes, Snackbar.LENGTH_SHORT).show()
+            true
+        }
+
+        io.github.landwarderer.futon.R.id.action_browser_source_clear_cookies -> {
+            CookieManager.getInstance().removeAllCookies(null)
+            CookieManager.getInstance().flush()
+            Snackbar.make(binding.webView, io.github.landwarderer.futon.R.string.cookies_cleared, Snackbar.LENGTH_SHORT).show()
+            true
+        }
+
+        else -> super.onOptionsItemSelected(item)
     }
 
     // ── Toolbar ───────────────────────────────────────────────────────────────
@@ -594,6 +671,10 @@ class BrowserSourceActivity : AppCompatActivity() {
         const val KEY_SOURCE_NAME = "browser_source_name"
         const val KEY_BASE_URL    = "browser_source_url"
 
+        /** Extras used when opening a URL directly (not tied to a saved custom source). */
+        const val KEY_DIRECT_URL   = "browser_direct_url"
+        const val KEY_DIRECT_TITLE = "browser_direct_title"
+
         fun createIntent(
             context: Context,
             sourceId: Long,
@@ -603,6 +684,21 @@ class BrowserSourceActivity : AppCompatActivity() {
             putExtra(KEY_SOURCE_ID, sourceId)
             putExtra(KEY_SOURCE_NAME, sourceName)
             putExtra(KEY_BASE_URL, baseUrl)
+        }
+
+        /**
+         * Create an Intent that opens [url] directly in Tsuki's WebView browser
+         * without requiring a saved custom source entry.
+         *
+         * Used by [TsukiBrowser.open] and [AppRouter.browserIntent].
+         */
+        fun createDirectIntent(
+            context: Context,
+            url: String,
+            title: String?,
+        ): Intent = Intent(context, BrowserSourceActivity::class.java).apply {
+            putExtra(KEY_DIRECT_URL, url)
+            putExtra(KEY_DIRECT_TITLE, title ?: url)
         }
     }
 }

@@ -1953,3 +1953,85 @@ Fix three broken sources:
 ### Commit & CI
 - Branch: `devel` (direct push)
 - CI: `Build Alpha APK` — see GitHub Actions.
+
+---
+
+## Session (Jul 26 2026) — "Open in Browser" always uses Tsuki's built-in WebView
+
+### Goal
+Every "Open in web browser" action inside Tsuki must open Tsuki's own built-in
+WebView (`BrowserSourceActivity`) — never Chrome or any external browser.
+
+Exceptions kept external (as required by README):
+- Google OAuth / sign-in pages (already handled in `BrowserClient.shouldOverrideUrlLoading`)
+- Cloudflare captcha verification (already handled in `CloudflareBypassManager`)
+- Explicit "Share" / "Open in External Browser" user-initiated actions (`AppRouter.openExternalBrowser`)
+- About / Settings "Learn more" links (intentional, already using `openExternalBrowser`)
+
+---
+
+### Root cause
+`AppRouter.browserIntent()` created `Intent(Intent.ACTION_VIEW, url.toUri())` — this
+always opened Chrome/system browser.  Every `router.openBrowser(...)` call went through
+this function, so ALL "Open in browser" actions launched Chrome.
+
+---
+
+### Changes
+
+**1. New file: `TsukiBrowser.kt`**
+Central utility object (`TsukiBrowser.open(context, url, title?)`) that wraps
+`BrowserSourceActivity.createDirectIntent()` and starts the activity.
+All future in-app URL opening should go through this or `router.openBrowser()`.
+
+**2. `AppRouter.kt` — `browserIntent()` fixed**
+Changed from:
+```kotlin
+Intent(Intent.ACTION_VIEW, url.toUri())   // ← opened Chrome
+```
+To:
+```kotlin
+BrowserSourceActivity.createDirectIntent(context, url, title)   // ← Tsuki WebView
+```
+Added import for `BrowserSourceActivity`.
+
+**3. `BrowserSourceActivity.kt` — three additions**
+- New constants `KEY_DIRECT_URL` / `KEY_DIRECT_TITLE` in companion
+- New `createDirectIntent(context, url, title?)` factory in companion — creates an Intent
+  that opens a URL directly without requiring a saved custom-source entry (sourceId = -1)
+- `onCreate()` detects the `KEY_DIRECT_URL` extra and loads the URL immediately, skipping
+  the `browserSourceRepository.getLastUrl()` lookup that only applies to saved sources
+- `onCreateOptionsMenu()` now inflates `opt_browser_source.xml` (was defined in res but never wired up)
+- `onOptionsItemSelected()` handles all 5 menu items:
+  - **Open in External Browser** → `router.openExternalBrowser(url)` (Step 6: gives users the choice)
+  - **AdBlock toggle** → mirrors the toolbar AdBlock button
+  - **JavaScript toggle** → toggles `webViewSettings.isJavaScriptEnabled` + reloads
+  - **Desktop mode** → toggles `webViewSettings.isDesktopMode` + reloads
+  - **Clear cookies** → `CookieManager.removeAllCookies` + flush
+
+---
+
+### Flow after this fix
+```
+Source error → "Open in browser" → ExceptionResolver.openInBrowser()
+  → router.openBrowser(url, null, null)
+  → AppRouter.openBrowser()
+  → browserIntent() → BrowserSourceActivity.createDirectIntent()   ✓ WebView
+```
+
+### Files changed
+| File | Change |
+|---|---|
+| `core/nav/TsukiBrowser.kt` | **New** — central WebView-launcher utility |
+| `core/nav/AppRouter.kt` | `browserIntent()` now returns `BrowserSourceActivity.createDirectIntent()` |
+| `browsersource/ui/BrowserSourceActivity.kt` | Direct-URL mode; `createDirectIntent()`; overflow menu inflated & handled |
+
+### DO NOT TOUCH (unchanged)
+- `BrowserClient.kt` — OAuth redirect to Chrome (correct, keep)
+- `CloudflareBypassManager.kt` — CF captcha Custom Tab (correct, keep)
+- `AppRouter.openExternalBrowser()` — deliberate external-browser launcher (keep)
+- TemplateHtmlParser.kt, applicationId in build.gradle, built-in Kotatsu sources
+
+### Commit & CI
+- Branch: `devel` (direct push)
+- CI: `Build Alpha APK` — see GitHub Actions.

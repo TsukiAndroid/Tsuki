@@ -29,6 +29,7 @@ import io.github.landwarderer.futon.backups.ui.backup.BackupDialogFragment
 import io.github.landwarderer.futon.backups.ui.restore.RestoreDialogFragment
 import io.github.landwarderer.futon.bookmarks.ui.AllBookmarksActivity
 import io.github.landwarderer.futon.browser.cloudflare.CloudFlareActivity
+import io.github.landwarderer.futon.browsersource.ui.BrowserSourceActivity
 import io.github.landwarderer.futon.core.exceptions.CloudFlareProtectedException
 import io.github.landwarderer.futon.core.image.CoilMemoryCacheKey
 import io.github.landwarderer.futon.core.model.FavouriteCategory
@@ -736,7 +737,7 @@ class AppRouter private constructor(
             url: String,
             source: MangaSource?,
             title: String?
-        ): Intent = Intent(Intent.ACTION_VIEW, url.toUri())
+        ): Intent = BrowserSourceActivity.createDirectIntent(context, url, title)
 
         fun suggestionsIntent(context: Context) = Intent(context, SuggestionsActivity::class.java)
 
