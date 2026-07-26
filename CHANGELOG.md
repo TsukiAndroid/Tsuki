@@ -1,3 +1,11 @@
+## Alpha 1.726 (Build [#298](https://github.com/Space4414/Tsuki/actions/runs/30192328865))
+
+_2026-07-26 07:10 UTC_
+
+- Add auto-update workflow for kotatsu-parsers-redo (605027e)
+- fix: MangaFire 403, MangaReader.to UA, RavenScans domain + misdetection (7ff8255)
+
+
 ## Alpha 1.724 (Build [#297](https://github.com/Space4414/Tsuki/actions/runs/30057847240))
 
 _2026-07-24 01:02 UTC_
