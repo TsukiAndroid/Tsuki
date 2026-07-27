@@ -2,14 +2,9 @@ package io.github.landwarderer.futon.plugins.ui
 
 import android.os.Bundle
 import android.view.LayoutInflater
-import android.view.Menu
-import android.view.MenuInflater
-import android.view.MenuItem
-import android.view.View
 import android.view.ViewGroup
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
-import androidx.core.view.MenuProvider
 import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -47,8 +42,10 @@ class ManagePluginsFragment : BaseFragment<FragmentManagePluginsBinding>() {
     ): FragmentManagePluginsBinding =
         FragmentManagePluginsBinding.inflate(inflater, container, false)
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
+    override fun onViewBindingCreated(
+        binding: FragmentManagePluginsBinding,
+        savedInstanceState: Bundle?,
+    ) {
 
         // Adapter
         adapter = PluginsAdapter(
@@ -56,13 +53,13 @@ class ManagePluginsFragment : BaseFragment<FragmentManagePluginsBinding>() {
             onUpdate  = { plugin -> showGithubSheet(plugin.githubRepo ?: "") },
             onDelete  = { plugin -> confirmDelete(plugin) },
         )
-        viewBinding.recyclerPlugins.apply {
+        binding.recyclerPlugins.apply {
             layoutManager = LinearLayoutManager(requireContext())
             adapter       = this@ManagePluginsFragment.adapter
         }
 
         // FAB → Add Plugin
-        viewBinding.fabAddPlugin.setOnClickListener {
+        binding.fabAddPlugin.setOnClickListener {
             showAddPluginOptions()
         }
 
@@ -71,18 +68,18 @@ class ManagePluginsFragment : BaseFragment<FragmentManagePluginsBinding>() {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.plugins.collect { plugins ->
                     adapter?.submitList(plugins)
-                    viewBinding.emptyView.isVisible = plugins.isEmpty()
-                    viewBinding.recyclerPlugins.isVisible = plugins.isNotEmpty()
+                    binding.emptyView.isVisible = plugins.isEmpty()
+                    binding.recyclerPlugins.isVisible = plugins.isNotEmpty()
                 }
             }
         }
 
         viewModel.onError.observeEvent(viewLifecycleOwner) { msg ->
-            Snackbar.make(viewBinding.root, msg, Snackbar.LENGTH_LONG).show()
+            Snackbar.make(binding.root, msg.message ?: "Unknown error", Snackbar.LENGTH_LONG).show()
         }
         viewModel.onPluginRemoved.observeEvent(viewLifecycleOwner) { name ->
             Snackbar.make(
-                viewBinding.root,
+                binding.root,
                 getString(R.string.plugin_removed, name),
                 Snackbar.LENGTH_SHORT,
             ).show()

@@ -29,7 +29,6 @@ class ManagePluginsViewModel @Inject constructor(
     val plugins: StateFlow<List<Plugin>> = pluginRepository.plugins
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
-    val onError = MutableEventFlow<String>()
     val onPluginRemoved = MutableEventFlow<String>() // plugin name
 
     fun setEnabled(pluginId: String, enabled: Boolean) {
@@ -43,7 +42,7 @@ class ManagePluginsViewModel @Inject constructor(
                 }
             }.getOrElse { e ->
                 Log.e(TAG, "setEnabled failed: ${e.message}", e)
-                onError.call(e.message ?: "Unknown error")
+                errorEvent.call(e)
             }
         }
     }
@@ -57,7 +56,7 @@ class ManagePluginsViewModel @Inject constructor(
                 onPluginRemoved.call(plugin?.name ?: pluginId)
             }.getOrElse { e ->
                 Log.e(TAG, "removePlugin failed: ${e.message}", e)
-                onError.call(e.message ?: "Unknown error")
+                errorEvent.call(e)
             }
         }
     }

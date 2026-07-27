@@ -2113,3 +2113,40 @@ The plugin system lives entirely in a new package:
 ### DO NOT TOUCH
 - Existing parsers, TemplateHtmlParser, KotatsuParserMatcher, USB/Universal Source Beta, BrowserSource, Universal Parser Detection, kotatsu-parsers-redo, `applicationId`
 
+---
+
+## CI Repair — July 27 2026
+
+### Failed workflows investigated
+
+The three failed Alpha builds were consecutive runs for commits `629b9b3`, `feff01f`,
+and `4a219e8`. Their logs were inspected through GitHub Actions:
+
+1. **`629b9b3` — duplicate classes**
+   Adding `com.github.UsagiApp:core-exts:1.0.3` to the application dependency graph
+   bundled classes also provided by `com.github.clquwu:kotatsu-parsers-redo`, causing
+   `checkAlphaReleaseDuplicateClasses` to fail with hundreds of duplicate-class errors.
+   The dependency was removed in `feff01f`. The plugin loader is reflection-based and
+   does not need `core-exts` at application compile time.
+
+2. **`feff01f` — missing drawable**
+   `sheet_add_plugin.xml` referenced the non-existent `@drawable/ic_content_copy`.
+   This was removed in `4a219e8`; no replacement icon is required for the repository
+   input.
+
+3. **`4a219e8` — plugin screen Kotlin compilation**
+   `ManagePluginsFragment` overrode `onViewCreated`, which is final in `BaseFragment`,
+   and accessed nullable `viewBinding` directly. It now initializes through
+   `onViewBindingCreated(binding, savedInstanceState)` and uses the non-null binding
+   supplied by that callback. `ManagePluginsViewModel` also attempted to redeclare
+   `BaseViewModel.onError` with an incompatible event type; it now emits failures
+   through the inherited `errorEvent`, preserving the repository's standard
+   `EventFlow<Throwable>` error path.
+
+### Verification
+
+- `git diff --check` passes.
+- The matching local Gradle task was attempted, but this environment has no Android
+  SDK (`ANDROID_HOME`/`sdk.dir` is unavailable). Final verification is delegated to
+  the pushed `Build Alpha APK` workflow.
+
