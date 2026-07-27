@@ -1,3 +1,16 @@
+## Alpha 1.738 (Build [#307](https://github.com/Space4414/Tsuki/actions/runs/30260273395))
+
+_2026-07-27 11:01 UTC_
+
+- fix: qualify plugin notification context (3a35ca2)
+- fix: handle plugin screen window insets (b32e1e1)
+- fix: complete plugin screen compilation (68137b2)
+- fix: remove non-existent ic_content_copy drawable reference (4a219e8)
+- fix: remove core-exts compile dependency to resolve duplicate class conflict (feff01f)
+- feat: implement JAR Plugin System (Usagi/UMA compatible) (629b9b3)
+- fix: open-in-browser always uses Tsuki WebView (never Chrome) (6d9789d)
+
+
 ## Alpha 1.731 (Build [#301](https://github.com/Space4414/Tsuki/actions/runs/30204923046))
 
 _2026-07-26 13:52 UTC_
