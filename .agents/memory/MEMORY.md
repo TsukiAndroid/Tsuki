@@ -1,0 +1,1 @@
+- [Android plugin CI](plugin-ci.md) — new Hilt services need explicit application-context qualifiers; BaseFragment screens must implement its inset-listener contract.
