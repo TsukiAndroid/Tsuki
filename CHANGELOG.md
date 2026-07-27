@@ -1,3 +1,16 @@
+## Alpha 1.741 (Build [#308](https://github.com/Space4414/Tsuki/actions/runs/30260982045))
+
+_2026-07-27 11:11 UTC_
+
+- docs: record successful plugin CI repair (7abc82b)
+- fix: qualify plugin notification context (3a35ca2)
+- fix: handle plugin screen window insets (b32e1e1)
+- fix: complete plugin screen compilation (68137b2)
+- fix: remove non-existent ic_content_copy drawable reference (4a219e8)
+- fix: remove core-exts compile dependency to resolve duplicate class conflict (feff01f)
+- feat: implement JAR Plugin System (Usagi/UMA compatible) (629b9b3)
+
+
 ## Alpha 1.738 (Build [#307](https://github.com/Space4414/Tsuki/actions/runs/30260273395))
 
 _2026-07-27 11:01 UTC_
