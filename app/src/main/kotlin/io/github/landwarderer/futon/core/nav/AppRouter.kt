@@ -296,6 +296,12 @@ class AppRouter private constructor(
         startActivity(sourcesSettingsIntent(contextOrNull() ?: return))
     }
 
+    fun openManagePlugins() {
+        startActivity(
+            Intent(contextOrNull() ?: return, io.github.landwarderer.futon.plugins.ui.ManagePluginsActivity::class.java)
+        )
+    }
+
     fun openDiscordSettings() {
         startActivity(discordSettingsIntent(contextOrNull() ?: return))
     }

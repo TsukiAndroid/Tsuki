@@ -2035,3 +2035,81 @@ Source error → "Open in browser" → ExceptionResolver.openInBrowser()
 ### Commit & CI
 - Branch: `devel` (direct push)
 - CI: `Build Alpha APK` — see GitHub Actions.
+
+---
+
+## JAR Plugin System — July 2026
+
+### Summary
+
+Implemented a complete JAR plugin system for Tsuki, compatible with the Usagi/UMA plugin ecosystem (`com.github.UsagiApp:core-exts:1.0.3`). This is a **pure addition** — no existing sources, parsers, or `applicationId` were touched.
+
+---
+
+### Architecture
+
+The plugin system lives entirely in a new package:
+`app/src/main/kotlin/io/github/landwarderer/futon/plugins/`
+
+| Layer | Files |
+|---|---|
+| **domain** | `Plugin.kt` — `@Serializable` data class (id, name, version, author, description, jarPath, githubRepo, isEnabled, installedAt, lastUpdated, sourceCount) |
+| | `PluginMangaSource.kt` — implements `MangaSource`; name prefix `PLUGIN_<pluginId>_<sourceName>` |
+| | `LoadedPlugin.kt` — in-memory representation: metadata + sources + pluginInstance (Any?) + classLoader |
+| **data** | `PluginRepository.kt` — `@Singleton`; persists plugin list to SharedPreferences as JSON; manages `filesDir/plugins/` |
+| | `PluginLoader.kt` — `@Singleton`; DexClassLoader wrapper; reads `META-INF/plugin.json`; reflection-based entry-class discovery (Usagi ecosystem naming) |
+| | `PluginDownloader.kt` — `@Singleton`; OkHttp-based GitHub Releases downloader; `@MangaHttpClient` qualifier; `downloadFromGithub()`, `fetchLatestReleaseInfo()`, `checkForUpdate()` |
+| | `PluginMangaRepository.kt` — implements `MangaRepository`; delegates all calls via reflection; every call in `runCatching` |
+| | `PluginManager.kt` — `@Singleton`; coordinates loader + repository; exposes `StateFlow<List<PluginMangaSource>>`; reloads on `PluginRepository.plugins` change |
+| **work** | `PluginUpdateNotificationHelper.kt` — `plugin_updates` notification channel; per-plugin update notifications |
+| | `PluginUpdateWorker.kt` — `@HiltWorker`; daily `PeriodicWork`; checks each plugin GitHub repo; nested `Scheduler` class |
+| **ui** | `ManagePluginsActivity.kt` — `BaseActivity<ActivityManagePluginsBinding>`; `@AndroidEntryPoint`; hosts fragment |
+| | `ManagePluginsFragment.kt` — RecyclerView plugin list; FAB to add; file picker for `.jar` via `OpenDocument`; delete confirm dialog |
+| | `ManagePluginsViewModel.kt` — `@HiltViewModel`; exposes plugins StateFlow; `setEnabled()`, `removePlugin()` |
+| | `AddPluginSheet.kt` — `BottomSheetDialogFragment`; GitHub repo mode (pre-fills `InvalidDavid/UMA`) + file URI mode; download progress; preview step before confirm |
+| | `AddPluginViewModel.kt` — `@HiltViewModel`; `previewFromUri()`, `previewFromGithub()`, `confirmInstall()`, `reset()`; sealed `AddPluginUiState` |
+| | `PluginsAdapter.kt` — `ListAdapter<Plugin>`; toggle switch; three-dot popup menu (Update, Delete) via `opt_plugin_item.xml` |
+
+---
+
+### New resource files
+
+| File | Purpose |
+|---|---|
+| `res/layout/activity_manage_plugins.xml` | `FrameLayout` container for fragment host |
+| `res/layout/fragment_manage_plugins.xml` | `CoordinatorLayout` with RecyclerView + empty-state view + FAB |
+| `res/layout/item_plugin.xml` | `MaterialCardView` plugin row: name/version/author/sources, enable switch, three-dot menu |
+| `res/layout/sheet_add_plugin.xml` | Bottom sheet: GitHub repo input, progress bar, preview card, action buttons |
+| `res/menu/opt_plugin_item.xml` | Per-item three-dot popup: Update, Delete |
+| `res/drawable/ic_more_vert.xml` | Vector drawable — Material Design vertical three-dot icon |
+| `res/values/strings.xml` (additions) | 20+ new strings: `manage_plugins`, `add_plugin`, `no_plugins_installed`, `plugin_install`, `plugin_update_available`, etc. |
+| `res/values/plurals.xml` (addition) | `plugin_sources_count` plural |
+
+---
+
+### Modifications to existing files
+
+| File | Change |
+|---|---|
+| `app/build.gradle` | Added `implementation("com.github.UsagiApp:core-exts:1.0.3")` |
+| `res/menu/opt_explore.xml` | Added `action_manage_plugins` item ("Manage Plugins") |
+| `explore/ui/ExploreMenuProvider.kt` | Handle `action_manage_plugins` → `router.openManagePlugins()` |
+| `core/parser/MangaRepository.kt` Factory | Added `PluginManager?` to constructor; handles `PluginMangaSource` branch and `PLUGIN_` name prefix fallback |
+| `explore/data/MangaSourcesRepository.kt` | Injected `PluginManager?`; `pluginSources` flow combined into `observeEnabledSources()`; `getExternalSources()` appends plugin sources |
+| `res/xml/pref_sources.xml` | Added "Manage Plugins" preference screen + `plugin_auto_update` switch + `plugin_clear_cache` preference |
+| `settings/sources/SourcesSettingsFragment.kt` | `onPreferenceTreeClick` handles `"manage_plugins"` → `router.openManagePlugins()` |
+| `core/nav/AppRouter.kt` | Added `fun openManagePlugins()` |
+| `AndroidManifest.xml` | Registered `ManagePluginsActivity` |
+
+---
+
+### Important notes for future agents
+
+- **Reflection-based loader**: `PluginLoader` uses reflection to find the plugin entry class (tries known Usagi ecosystem class names). The core-exts interface was not directly readable at implementation time; revisit once `UsagiApp/core-exts` is accessible.
+- **`PluginManager` is `Optional`**: Injected as `? = null` in `MangaRepository.Factory` and `MangaSourcesRepository` so Hilt's optional injection works without extra `@BindsOptionalOf` boilerplate. Hilt resolves `@Singleton` classes automatically.
+- **OkHttpClient qualifier**: `PluginDownloader` uses `@MangaHttpClient` (defined in `core/network/HttpClients.kt`) — required for the OkHttp client bound in `NetworkModule`.
+- **ic_notification drawable**: `PluginUpdateNotificationHelper` uses `R.drawable.ic_notification` which already exists in the repo.
+
+### DO NOT TOUCH
+- Existing parsers, TemplateHtmlParser, KotatsuParserMatcher, USB/Universal Source Beta, BrowserSource, Universal Parser Detection, kotatsu-parsers-redo, `applicationId`
+

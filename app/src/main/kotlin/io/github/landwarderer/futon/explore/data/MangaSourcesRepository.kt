@@ -56,6 +56,7 @@ class MangaSourcesRepository @Inject constructor(
     private val mihonExtensionManager: MihonExtensionManager,
     private val customSourcesRepository: CustomSourcesRepository,
     private val extensionRepository: ExtensionRepository? = null,
+    private val pluginManager: io.github.landwarderer.futon.plugins.data.PluginManager? = null,
 ) {
 
         private val isNewSourcesAssimilated = AtomicBoolean(false)
@@ -235,6 +236,12 @@ class MangaSourcesRepository @Inject constructor(
                         val list = ArrayList<MangaSourceInfo>(enabled.size + external.size)
                         external.mapTo(list) { MangaSourceInfo(it, isEnabled = true, isPinned = true) }
                         list.addAll(enabled)
+                        list
+                }
+                .combine(pluginManager?.pluginSources ?: kotlinx.coroutines.flow.MutableStateFlow(emptyList())) { sources, pluginSources ->
+                        val list = ArrayList<MangaSourceInfo>(sources.size + pluginSources.size)
+                        pluginSources.mapTo(list) { MangaSourceInfo(it, isEnabled = true, isPinned = true) }
+                        list.addAll(sources)
                         list
                 }
                 .combine(observeLanguageFilter()) { sources, langFilter ->
@@ -431,7 +438,8 @@ class MangaSourcesRepository @Inject constructor(
                 val mihon = mihonExtensionManager.getMihonMangaSources()
                 val custom = getCustomSources()
                 val extensions = getExtensionSources()
-                return external + mihon + custom + extensions
+                val plugins = pluginManager?.pluginSources?.value ?: emptyList()
+                return external + mihon + custom + extensions + plugins
         }
 
         /** Enabled multi-language extensions surfaced as first-class [MangaSource]s. */

@@ -65,6 +65,24 @@
         app:useSimpleSummaryProvider="true" />
 
 
+    <PreferenceScreen
+        android:key="manage_plugins"
+        android:persistent="false"
+        android:title="@string/manage_plugins"
+        android:summary="@string/manage_plugins_summary"
+        app:allowDividerAbove="true" />
+
+    <SwitchPreferenceCompat
+        android:defaultValue="true"
+        android:key="plugin_auto_update"
+        android:title="@string/plugin_auto_update"
+        android:summary="@string/plugin_auto_update_summary" />
+
+    <Preference
+        android:key="plugin_clear_cache"
+        android:persistent="false"
+        android:title="@string/plugin_clear_cache" />
+
     <SwitchPreferenceCompat
         android:defaultValue="false"
         android:key="mirror_switching"

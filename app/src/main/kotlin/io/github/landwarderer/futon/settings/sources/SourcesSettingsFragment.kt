@@ -88,6 +88,11 @@ class SourcesSettingsFragment : BasePreferenceFragment(R.string.remote_sources),
 			true
 		}
 
+		"manage_plugins" -> {
+			router.openManagePlugins()
+			true
+		}
+
 		else -> super.onPreferenceTreeClick(preference)
 	}
 

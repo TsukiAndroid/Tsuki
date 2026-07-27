@@ -81,6 +81,7 @@ interface MangaRepository {
                 private val dartExtensionRunner: DartExtensionRunner,
                 private val mihonBridgeExtensionRunner: MihonBridgeExtensionRunner,
                 private val jsonTemplateExtensionRunner: JsonTemplateExtensionRunner,
+                private val pluginManager: io.github.landwarderer.futon.plugins.data.PluginManager? = null,
         ) {
 
                 private val cache = ArrayMap<MangaSource, WeakReference<MangaRepository>>()
@@ -214,6 +215,10 @@ interface MangaRepository {
                                 CustomMangaRepository(customSource = source)
                         }
 
+                        is io.github.landwarderer.futon.plugins.domain.PluginMangaSource -> {
+                                pluginManager?.createRepositoryForSource(source)
+                        }
+
                         else -> {
                                 if (source.name.startsWith("mihon:") || source.name.startsWith("MIHON_")) {
                                         mihonExtensionManager.getMihonMangaSourceByName(source.name)?.let {
@@ -222,6 +227,9 @@ interface MangaRepository {
                                                         cache = contentCache,
                                                 )
                                         }
+                                }
+                                if (io.github.landwarderer.futon.plugins.domain.PluginMangaSource.isPluginSourceName(source.name)) {
+                                        return EmptyMangaRepository(source)
                                 }
                                 null
                         }

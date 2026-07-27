@@ -37,4 +37,9 @@
             android:title="@string/visual_rule_builder_add_source_visually"
             android:titleCondensed="@string/visual_rule_builder_title" />
 
+    <item
+            android:id="@+id/action_manage_plugins"
+            android:title="@string/manage_plugins"
+            android:titleCondensed="@string/plugins" />
+
 </menu>

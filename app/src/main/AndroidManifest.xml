@@ -328,6 +328,12 @@
                         android:name="io.github.landwarderer.futon.extensions.ui.ExtensionRepoActivity"
                         android:label="@string/ext_repos"
                         android:exported="false" />
+
+                <!-- JAR Plugin System -->
+                <activity
+                        android:name="io.github.landwarderer.futon.plugins.ui.ManagePluginsActivity"
+                        android:label="@string/manage_plugins"
+                        android:exported="false" />
                 <activity
                         android:name="io.github.landwarderer.futon.extensions.ui.CreateExtensionActivity"
                         android:label="@string/ext_create_extension"

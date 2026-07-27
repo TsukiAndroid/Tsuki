@@ -1456,4 +1456,31 @@
     <string name="visual_rule_builder_test_failure">⚠️ %1$s</string>
     <string name="visual_rule_builder_saved">"%1$s" added via Visual Rule Builder</string>
 
+
+    <!-- JAR Plugin System -->
+    <string name="manage_plugins">Manage Plugins</string>
+    <string name="manage_plugins_summary">Install and manage JAR plugins for additional manga sources</string>
+    <string name="plugins">Plugins</string>
+    <string name="add_plugin">Add Plugin</string>
+    <string name="no_plugins_installed">No plugins installed</string>
+    <string name="no_plugins_installed_hint">Tap + to add a plugin from GitHub or import a .jar file</string>
+    <string name="plugin_import_from_file">Import from file (.jar)</string>
+    <string name="plugin_import_from_github">Import from GitHub</string>
+    <string name="plugin_github_repo_hint">GitHub repo (e.g. InvalidDavid/UMA)</string>
+    <string name="plugin_uma_helper">UMA is a popular plugin compatible with Tsuki containing hundreds of manga sources</string>
+    <string name="plugin_fetch_info">Fetch Info</string>
+    <string name="plugin_install">Install</string>
+    <string name="plugin_installed_success">Plugin installed successfully</string>
+    <string name="plugin_removed">Plugin \"%s\" removed</string>
+    <string name="plugin_delete_confirm">Remove plugin \"%s\" and all its sources?</string>
+    <string name="plugin_update_available">Plugin update available</string>
+    <string name="plugin_update_version">%1$s: %2$s → %3$s</string>
+    <string name="plugin_auto_update">Auto-update plugins</string>
+    <string name="plugin_auto_update_summary">Check for plugin updates daily and show notifications</string>
+    <string name="plugin_clear_cache">Clear plugin cache</string>
+    <string name="plugin_author">By %s</string>
+    <string name="plugin_repo_required">Please enter a GitHub repository</string>
+    <string name="plugin_notif_channel">Plugin Updates</string>
+    <string name="version_format">v%s</string>
+
 </resources>

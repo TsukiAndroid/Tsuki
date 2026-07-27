@@ -56,6 +56,11 @@ class ExploreMenuProvider(
                                 true
                         }
 
+                        R.id.action_manage_plugins -> {
+                                router.openManagePlugins()
+                                true
+                        }
+
                         else -> false
                 }
         }
