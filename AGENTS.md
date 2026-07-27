@@ -2150,3 +2150,9 @@ and `4a219e8`. Their logs were inspected through GitHub Actions:
   SDK (`ANDROID_HOME`/`sdk.dir` is unavailable). Final verification is delegated to
   the pushed `Build Alpha APK` workflow.
 
+The first repair workflow cleared the duplicate-class, resource-linking, and plugin
+screen lifecycle errors, but CI then reported that `BaseFragment` also requires its
+`OnApplyWindowInsetsListener` contract. The fragment now applies the system-bar top
+inset to its root view and consumes the system-bar insets, matching the behavior of
+the surrounding fragment implementations.
+

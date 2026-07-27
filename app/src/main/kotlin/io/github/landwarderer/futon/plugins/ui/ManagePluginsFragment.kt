@@ -2,19 +2,24 @@ package io.github.landwarderer.futon.plugins.ui
 
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.core.view.isVisible
+import androidx.core.view.updatePadding
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.landwarderer.futon.R
 import io.github.landwarderer.futon.core.ui.BaseFragment
+import io.github.landwarderer.futon.core.util.ext.consumeAllSystemBarsInsets
+import io.github.landwarderer.futon.core.util.ext.systemBarsInsets
 import io.github.landwarderer.futon.core.util.ext.observeEvent
 import io.github.landwarderer.futon.databinding.FragmentManagePluginsBinding
 import io.github.landwarderer.futon.plugins.domain.Plugin
@@ -41,6 +46,12 @@ class ManagePluginsFragment : BaseFragment<FragmentManagePluginsBinding>() {
         container: ViewGroup?,
     ): FragmentManagePluginsBinding =
         FragmentManagePluginsBinding.inflate(inflater, container, false)
+
+    override fun onApplyWindowInsets(v: View, insets: WindowInsetsCompat): WindowInsetsCompat {
+        val bars = insets.systemBarsInsets
+        viewBinding?.root?.updatePadding(top = bars.top)
+        return insets.consumeAllSystemBarsInsets()
+    }
 
     override fun onViewBindingCreated(
         binding: FragmentManagePluginsBinding,
