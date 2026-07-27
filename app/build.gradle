@@ -295,8 +295,6 @@ dependencies {
 
         implementation libs.conscrypt.android
 
-        // JAR Plugin System — Usagi/UMA compatible (https://github.com/UsagiApp/core-exts)
-        implementation("com.github.UsagiApp:core-exts:1.0.3")
         implementation libs.sentry.android
 
         debugImplementation libs.leakcanary.android
