@@ -6,6 +6,7 @@ import android.content.Intent
 import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.landwarderer.futon.R
 import io.github.landwarderer.futon.plugins.domain.Plugin
 import io.github.landwarderer.futon.plugins.ui.ManagePluginsActivity
@@ -18,6 +19,7 @@ import javax.inject.Inject
  * Tapping any notification opens [ManagePluginsActivity].
  */
 class PluginUpdateNotificationHelper @Inject constructor(
+    @ApplicationContext
     private val context: Context,
 ) {
     companion object {

@@ -2156,3 +2156,8 @@ screen lifecycle errors, but CI then reported that `BaseFragment` also requires 
 inset to its root view and consumes the system-bar insets, matching the behavior of
 the surrounding fragment implementations.
 
+The next workflow compiled the plugin screen and reached Hilt generation, where
+`PluginUpdateNotificationHelper` failed with a missing unqualified `Context` binding.
+Its constructor now uses `@ApplicationContext`, matching the other application-scoped
+plugin services.
+
