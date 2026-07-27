@@ -2161,3 +2161,8 @@ The next workflow compiled the plugin screen and reached Hilt generation, where
 Its constructor now uses `@ApplicationContext`, matching the other application-scoped
 plugin services.
 
+### Final CI result
+
+- Commit `3a35ca2` — `Build Alpha APK` run `30260273395`: **success**
+- Successful run: https://github.com/TsukiAndroid/Tsuki/actions/runs/30260273395
+
