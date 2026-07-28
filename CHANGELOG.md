@@ -1,3 +1,11 @@
+## Alpha 1.746 (Build [#311](https://github.com/Space4414/Tsuki/actions/runs/30318492318))
+
+_2026-07-28 00:50 UTC_
+
+- Update screenshot links to new repository (0a48051)
+- Update GitHub links to new repository (de56c1a)
+
+
 ## Alpha 1.744 (Build [#310](https://github.com/Space4414/Tsuki/actions/runs/30287828925))
 
 _2026-07-27 17:07 UTC_
