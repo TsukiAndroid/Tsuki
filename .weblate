@@ -1,3 +1,21 @@
 [weblate]
 url = https://hosted.weblate.org/api
-translation = futon/strings
+translation = tsuki/strings
+
+[weblate "strings"]
+component = tsuki/strings
+filemask = app/src/main/res/values-*/strings.xml
+template = app/src/main/res/values/strings.xml
+file_format = aresource
+
+[weblate "plurals"]
+component = tsuki/plurals
+filemask = app/src/main/res/values-*/plurals.xml
+template = app/src/main/res/values/plurals.xml
+file_format = aresource
+
+[weblate "arrays"]
+component = tsuki/arrays
+filemask = app/src/main/res/values-*/arrays.xml
+template = app/src/main/res/values/arrays.xml
+file_format = aresource
