@@ -1,3 +1,11 @@
+## Alpha 1.748 (Build [#312](https://github.com/Space4414/Tsuki/actions/runs/30433841295))
+
+_2026-07-29 08:01 UTC_
+
+- Fix formatting issues in README.md (7198fb1)
+- Update screenshot links to new repository (0a48051)
+
+
 ## Alpha 1.746 (Build [#311](https://github.com/Space4414/Tsuki/actions/runs/30318492318))
 
 _2026-07-28 00:50 UTC_
