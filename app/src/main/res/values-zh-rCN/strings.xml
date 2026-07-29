@@ -886,4 +886,6 @@
     <string name="download_default_directory">下载漫画的默认目录</string>
     <string name="private_app_directory_warning">卸载本应用，此目录内的所有数据会被删除</string>
     <string name="available_pattern">%1$s 可用</string>
+    <string name="browser_source_cloudflare_detected">🛡️ 检测到Cloudflare保护。当出现验证时，请点击复选框。</string>
+    <string name="browser_source_cloudflare_verified">✓已验证！此资源现在已解锁。</string>
 </resources>
