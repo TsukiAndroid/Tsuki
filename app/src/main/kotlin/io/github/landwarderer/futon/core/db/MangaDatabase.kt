@@ -42,6 +42,9 @@ import io.github.landwarderer.futon.core.db.migrations.Migration24To25
 import io.github.landwarderer.futon.core.db.migrations.Migration25To26
 import io.github.landwarderer.futon.core.db.migrations.Migration26To27
 import io.github.landwarderer.futon.core.db.migrations.Migration27To28
+import io.github.landwarderer.futon.core.db.migrations.Migration28To29
+import io.github.landwarderer.futon.core.db.dao.WebViewSourceDao
+import io.github.landwarderer.futon.core.db.entity.WebViewSourceEntity
 import io.github.landwarderer.futon.core.db.migrations.Migration2To3
 import io.github.landwarderer.futon.core.db.migrations.Migration3To4
 import io.github.landwarderer.futon.core.db.migrations.Migration4To5
@@ -73,7 +76,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
-const val DATABASE_VERSION = 28
+const val DATABASE_VERSION = 29
 
 @Database(
 	entities = [
@@ -81,6 +84,7 @@ const val DATABASE_VERSION = 28
 		FavouriteCategoryEntity::class, FavouriteEntity::class, MangaPrefsEntity::class, TrackEntity::class,
 		TrackLogEntity::class, SuggestionEntity::class, BookmarkEntity::class, ScrobblingEntity::class,
 		MangaSourceEntity::class, StatsEntity::class, LocalMangaIndexEntity::class, ExternalExtensionRepoEntity::class,
+		WebViewSourceEntity::class,
 	],
 	version = DATABASE_VERSION,
 )
@@ -117,6 +121,8 @@ abstract class MangaDatabase : RoomDatabase() {
 	abstract fun getChaptersDao(): ChaptersDao
 
 	abstract fun getExternalExtensionRepoDao(): ExternalExtensionRepoDao
+
+	abstract fun webViewSourceDao(): WebViewSourceDao
 }
 
 fun getDatabaseMigrations(context: Context): Array<Migration> = arrayOf(
@@ -148,6 +154,7 @@ fun getDatabaseMigrations(context: Context): Array<Migration> = arrayOf(
 	Migration25To26(),
 	Migration26To27(),
 	Migration27To28(),
+	Migration28To29(),
 )
 
 fun MangaDatabase(context: Context): MangaDatabase = Room
