@@ -1494,4 +1494,5 @@
     <string name="webview_source_fetch_error">Couldn\'t load page. Check the URL.</string>
     <string name="webview_source_url_required">Please enter a URL</string>
     <string name="webview_source_cover_desc">Cover image</string>
+    <string name="webview_sources_title">My WebView Sources</string>
 </resources>

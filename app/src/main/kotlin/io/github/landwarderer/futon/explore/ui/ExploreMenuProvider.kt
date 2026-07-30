@@ -69,6 +69,11 @@ class ExploreMenuProvider(
                                 true
                         }
 
+                        R.id.action_view_webview_sources -> {
+                                router.openWebViewSourceList()
+                                true
+                        }
+
                         else -> false
                 }
         }

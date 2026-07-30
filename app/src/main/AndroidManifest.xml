@@ -1765,6 +1765,12 @@
               android:configChanges="orientation|screenSize|keyboardHidden"
               android:windowSoftInputMode="adjustResize"
               android:exported="false" />
+
+          <activity
+              android:name=".webviewsource.ui.list.WebViewSourceActivity"
+              android:theme="@style/Theme.Tsuki"
+              android:exported="false"
+              android:label="@string/webview_sources_title" />
     </application>
 
 </manifest>

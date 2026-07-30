@@ -2372,3 +2372,114 @@ app/src/main/AndroidManifest.xml       ← MODIFIED (activity registration)
 app/src/main/kotlin/io/github/landwarderer/futon/main/ui/
     MainNavigationDelegate.kt          ← MODIFIED (openWebViewReader + import)
 ```
+
+---
+
+## Session — July 30 2026 — WebView-as-Source Phase 4
+
+### Context
+
+Continuing the **WebView-as-Source** system. Phases 1–3 are merged and CI-green.
+Phase 4 delivers the Library/Explore integration so users can browse all their
+WebView sources and tap into the reader from a dedicated list screen.
+
+---
+
+### Phase 4 — Library and Recent Tab Integration
+
+**Goal:** A dedicated list screen showing all WebView sources, sorted by recently
+read, with cover/title/progress display. Tapping an item opens the reader at the
+last saved position. Long-press context menu for edit and delete.
+
+---
+
+#### New files
+
+| File | Purpose |
+|---|---|
+| `webviewsource/ui/list/WebViewSourceAdapter.kt` | `ListAdapter<WebViewSourceEntity, ViewHolder>` with `DiffUtil.ItemCallback`; renders cover (`CoilImageView.setImageAsync`), title, chapter label, progress bar, and "N chapters behind" badge; handles click and long-click callbacks |
+| `webviewsource/ui/list/WebViewSourceListViewModel.kt` | `@HiltViewModel` extending `BaseViewModel`; exposes `sources: StateFlow` from `repository.observeAll()` with `SharingStarted.WhileSubscribed(5_000)`; provides `delete()`, `updateTitle()`, `updatePattern()` |
+| `webviewsource/ui/list/WebViewSourceListFragment.kt` | `@AndroidEntryPoint BaseFragment<FragmentWebviewSourceListBinding>`; uses `onViewBindingCreated`; `LinearLayoutManager` RecyclerView; `repeatOnLifecycle(STARTED)` collector; item click → `startActivity(WebViewReaderActivity.createIntent(...))`; long-click → context menu with edit-title, edit-pattern, delete (each using `buildAlertDialog` + `setEditText`) |
+| `webviewsource/ui/list/WebViewSourceActivity.kt` | Thin `@AndroidEntryPoint AppCompatActivity` host; inflates `activity_container.xml`; commits `WebViewSourceListFragment` into `R.id.container` on `savedInstanceState == null` |
+| `res/layout/item_webview_source.xml` | `MaterialCardView` row: `CoilImageView` (56×80dp) + title + chapter label + `LinearProgressIndicator` + optional "N chapters behind" error-colour `TextView` |
+| `res/layout/fragment_webview_source_list.xml` | `FrameLayout`: full-height `RecyclerView` + centred `emptyView` `TextView` |
+
+#### Modified files
+
+| File | Change |
+|---|---|
+| `core/nav/AppRouter.kt` | Added `fun openWebViewSourceList()` using `startActivity(WebViewSourceActivity::class.java)` — consistent with `openHistory()`, `openFavorites()` pattern; fully-qualified class reference avoids a new import in the large AppRouter file |
+| `res/menu/opt_explore.xml` | Added `action_view_webview_sources` menu item with label `@string/webview_sources_title` |
+| `explore/ui/ExploreMenuProvider.kt` | Handles `action_view_webview_sources` → `router.openWebViewSourceList()` |
+| `AndroidManifest.xml` | Registered `WebViewSourceActivity` with `Theme.Tsuki`, `exported="false"` |
+| `res/values/strings.xml` | Added `webview_sources_title = "My WebView Sources"` |
+
+---
+
+#### Architecture decisions for Phase 4
+
+- **Standalone `WebViewSourceActivity` hosts the fragment.** The same pattern used
+  by `HistoryActivity`, `FavouritesActivity`, `AllBookmarksActivity`. Avoids needing
+  to know the main container ID from a `MenuProvider` context; keeps navigation
+  consistent with the rest of the app.
+
+- **Navigation entry point is `AppRouter.openWebViewSourceList()`.** Adding to
+  `AppRouter` keeps all navigation in one place. Used a fully-qualified class name
+  instead of an import to avoid touching unrelated import blocks in the large file.
+
+- **Image loading via `CoilImageView.setImageAsync(url: String?)`.** `CoilImageView`
+  is the project's standard lifecycle-aware image view. It handles null URLs gracefully
+  (shows nothing), so no extra null check is needed in the adapter.
+
+- **`buildAlertDialog` + `setEditText` pattern for edit dialogs.** This matches the
+  existing pattern used throughout the project (e.g. `HistoryListFragment`,
+  `AppRouter` dialogs). No custom dialog layouts needed.
+
+- **`SharingStarted.WhileSubscribed(5_000)` on the `StateFlow`.** Standard Tsuki
+  pattern for ViewModels that expose Room flows — the 5-second grace period survives
+  configuration changes without restarting the upstream collection.
+
+---
+
+#### Key decisions to remember
+
+- `WebViewSourceActivity` uses `activity_container.xml` which provides a
+  `CollapsingToolbar` + `R.id.container` as `FragmentContainerView`. If a toolbar
+  title is needed, set it via `supportActionBar?.title` in the Fragment's
+  `onViewBindingCreated`.
+
+- The "N chapters behind" badge is only shown when `latestKnownChapter > lastReadChapter`
+  (both non-null). Phase 6 (notification worker) populates `latestKnownChapter`.
+
+- `opt_explore.xml` now has two WebView-source entries: `action_add_webview_source`
+  (opens the add sheet) and `action_view_webview_sources` (opens the list). Do not
+  consolidate them — they serve different user intents.
+
+---
+
+#### DO NOT TOUCH
+
+- `kotatsu-parsers-redo`, existing parsers, `BrowserSource` system, `core-exts`
+- `DATABASE_VERSION` — Phase 4 adds no schema changes; version stays at 29.
+
+---
+
+#### Files created/modified (relative to repo root)
+
+```
+app/src/main/kotlin/io/github/landwarderer/futon/webviewsource/ui/list/
+    WebViewSourceAdapter.kt              ← NEW
+    WebViewSourceListViewModel.kt        ← NEW
+    WebViewSourceListFragment.kt         ← NEW
+    WebViewSourceActivity.kt             ← NEW
+
+app/src/main/res/layout/
+    item_webview_source.xml              ← NEW
+    fragment_webview_source_list.xml     ← NEW
+
+app/src/main/AndroidManifest.xml         ← MODIFIED (activity registration)
+app/src/main/kotlin/io/github/landwarderer/futon/core/nav/AppRouter.kt   ← MODIFIED (openWebViewSourceList)
+app/src/main/kotlin/io/github/landwarderer/futon/explore/ui/ExploreMenuProvider.kt  ← MODIFIED
+app/src/main/res/menu/opt_explore.xml    ← MODIFIED
+app/src/main/res/values/strings.xml      ← MODIFIED
+```

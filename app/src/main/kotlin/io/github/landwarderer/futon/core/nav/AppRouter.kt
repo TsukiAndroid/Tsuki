@@ -240,6 +240,10 @@ class AppRouter private constructor(
 
     fun openHistory() = startActivity(HistoryActivity::class.java)
 
+    fun openWebViewSourceList() = startActivity(
+        io.github.landwarderer.futon.webviewsource.ui.list.WebViewSourceActivity::class.java,
+    )
+
     fun openFavorites() = startActivity(FavouritesActivity::class.java)
 
     fun openFavorites(category: FavouriteCategory) {
