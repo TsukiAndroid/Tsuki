@@ -1,3 +1,11 @@
+## Alpha 1.775 (Build [#328](https://github.com/Space4414/Tsuki/actions/runs/30514757189))
+
+_2026-07-30 04:46 UTC_
+
+- Fix: replace NULLS LAST with CASE WHEN for SQLite < 3.30 compatibility (e4aa75f)
+- docs: document opt_reader.xml shared-menu rule in AGENTS.md (5b1ecc7)
+
+
 ## Alpha 1.773 (Build [#327](https://github.com/Space4414/Tsuki/actions/runs/30513856646))
 
 _2026-07-30 04:26 UTC_
