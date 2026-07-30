@@ -2823,3 +2823,17 @@ APIs, wrapped in `@Suppress("DEPRECATION")`.
   calling it before `document.head` exists will silently fail.
 - `WebViewReaderViewModel.currentChapter` is `private set` — read it from the Activity
   directly; do not expose a StateFlow for it (it changes too frequently for UI binding).
+
+### Fix (same session) — opt_reader.xml action_info removal
+
+**Error:** `Unresolved reference 'action_info'` in `reader/ui/ReaderMenuProvider.kt:19`
+
+**Root cause:** The native reader's `ReaderMenuProvider` references `R.id.action_info` from
+`opt_reader.xml`. Phase 7 replaced the full menu XML and removed that item.
+
+**Fix:** Restored `<item android:id="@+id/action_info" ... android:visible="false" />` to
+`opt_reader.xml`. It stays invisible in the WebView reader; the native reader makes it visible
+when it needs it via `menu.findItem(R.id.action_info)?.isVisible = true`.
+
+**Rule for future phases:** Never remove existing items from `opt_reader.xml`. The menu is
+shared between the WebView reader and the native manga reader. Add new items; never delete old ones.
