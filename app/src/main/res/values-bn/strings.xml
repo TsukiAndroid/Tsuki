@@ -258,4 +258,24 @@
     <string name="text_clear_updates_feed_prompt">সমস্ত আপডেট হিস্টরি কি স্থায়ীভাবে মুছে ফেলা হবে?</string>
     <string name="check_for_new_chapters">নতুন চ্যাপ্টার আছে কি না দেখুন</string>
     <string name="reverse">রিভার্স</string>
+    <string name="chapters_grid_view">গ্রিড ভিউ</string>
+    <string name="sign_in">সাইন ইন</string>
+    <string name="auth_required">এই কনটেন্ট দেখতে সাইন ইন করুন</string>
+    <string name="default_s">%s</string>
+    <string name="next">পরবর্তী</string>
+    <string name="protect_application_subtitle">অ্যাপটি চালু করার জন্য একটি পাসওয়ার্ড দিন</string>
+    <string name="confirm">নিশ্চিত করুন</string>
+    <string name="password_length_hint">পাসওয়ার্ডটি অবশ্যই ৪ বা তার বেশি অক্ষরের হতে হবে</string>
+    <string name="text_clear_search_history_prompt">সাম্প্রতিক সমস্ত অনুসন্ধানের বিষয় কি স্থায়ীভাবে মুছে ফেলবেন?</string>
+    <string name="welcome">স্বাগতম</string>
+    <string name="backup_saved">ব্যাকআপ সেভ করা হয়েছে</string>
+    <string name="tracker_warning">কিছু ডিভাইসে সিস্টেমের আচরণ ভিন্ন হয়, যার ফলে ব্যাকগ্রাউন্ড টাস্কগুলো ব্যাহত হতে পারে।</string>
+    <string name="read_more">আরও পড়ুন</string>
+    <string name="queued">অপেক্ষমাণ</string>
+    <string name="chapter_is_missing">চ্যাপ্টারটি নেই</string>
+    <string name="about_app_translation_summary">অ্যাপটি অনুবাদ করুন</string>
+    <string name="about_app_translation">অনুবাদ</string>
+    <string name="auth_complete">অনুমোদিত</string>
+    <string name="auth_not_supported_by">%s-এ লগ ইন করা সাপোর্টেড নয়</string>
+    <string name="text_clear_cookies_prompt">আপনাকে সমস্ত সোর্স থেকে লগ আউট করা হবে</string>
 </resources>
