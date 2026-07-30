@@ -9,7 +9,7 @@ interface WebViewSourceDao {
 
     // ── Queries ──────────────────────────────────────────────────────────
 
-    @Query("SELECT * FROM webview_sources ORDER BY last_read_at DESC NULLS LAST")
+    @Query("SELECT * FROM webview_sources ORDER BY CASE WHEN last_read_at IS NULL THEN 1 ELSE 0 END, last_read_at DESC")
     fun observeAll(): Flow<List<WebViewSourceEntity>>
 
     @Query("SELECT * FROM webview_sources WHERE id = :id")
