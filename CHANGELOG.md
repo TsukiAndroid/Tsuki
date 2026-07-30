@@ -1,3 +1,12 @@
+## Alpha 1.766 (Build [#323](https://github.com/Space4414/Tsuki/actions/runs/30511647036))
+
+_2026-07-30 03:37 UTC_
+
+- Fix Phase 6: qualify OkHttpClient with @BaseHttpClient (24091b5)
+- Phase 6: New chapter notifications (WorkManager) (45739d2)
+- docs: document Phase 5 fix in AGENTS.md (c22b44e)
+
+
 ## Alpha 1.763 (Build [#321](https://github.com/Space4414/Tsuki/actions/runs/30511100241))
 
 _2026-07-30 03:24 UTC_
