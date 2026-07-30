@@ -92,4 +92,12 @@ data class WebViewSourceEntity(
      */
     @ColumnInfo(name = "last_read_at")
     val lastReadAt: Long?,
+
+    /**
+     * Optional CSS injected into the page after the default cleanup CSS.
+     * Power-user feature — allows hiding site-specific elements.
+     * Example: "div.chapter-warning { display: none !important; }"
+     */
+    @ColumnInfo(name = "custom_css")
+    val customCss: String? = null,
 )

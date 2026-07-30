@@ -2760,3 +2760,66 @@ to `@BaseHttpClient private val okHttpClient: OkHttpClient`.
 `@BaseHttpClient` (generic HTTPS), `@MangaHttpClient` (adds common headers + cache),
 or `@ScrobblerType(ScrobblerService.ANILIST/MAL/SHIKIMORI)` (adds auth interceptor).
 Never inject the bare unqualified type.
+
+---
+
+## Phase 7 — Reader Polish — July 2026
+
+### Summary
+
+Implemented all Phase 7 reader polish features for the WebView reader:
+tap zones, injected CSS cleanup, chapter navigation, immersive fullscreen,
+brightness overlay, volume key scroll, and per-source custom CSS.
+
+---
+
+### Files changed
+
+| File | Change |
+|---|---|
+| `core/db/entity/WebViewSourceEntity.kt` | Added `custom_css: String?` field |
+| `core/db/migrations/Migration30To31.kt` | **New** — ALTER TABLE adds `custom_css TEXT` |
+| `core/db/MangaDatabase.kt` | Version 29 → 31, added `Migration30To31` import + entry |
+| `webviewsource/ui/reader/ReaderCssHelper.kt` | **New** — `DEFAULT_CLEANUP_CSS` constant + `injectCss()` helper |
+| `webviewsource/ui/reader/TapOrScrollOverlay.kt` | **New** — single custom View: taps routed left/centre/right, scroll/fling forwarded to WebView |
+| `webviewsource/ui/reader/WebViewReaderActivity.kt` | Full Phase 7 rewrite: CSS injection, tap overlay wiring, chapter nav, toolbar auto-hide (3 s), immersive fullscreen, volume key scroll, Custom CSS dialog, overflow menu items |
+| `webviewsource/ui/reader/WebViewReaderViewModel.kt` | Exposed `currentChapter: Float?`, added `toggleNotifications()`, `saveCustomCss()`, `currentUrlForBrowser()` |
+| `webviewsource/ui/list/WebViewSourceListFragment.kt` | Added "Custom CSS" to long-press context menu; extracted string resources |
+| `webviewsource/ui/list/WebViewSourceListViewModel.kt` | Added `updateCustomCss()` |
+| `res/layout/activity_webview_reader.xml` | Added `TapOrScrollOverlay` and `brightnessOverlay` View siblings to WebView |
+| `res/menu/opt_reader.xml` | Replaced `action_info` stub with: Link AniList, Custom CSS, Toggle notifications, Open in browser |
+| `res/values/strings.xml` | Added 9 new string resources for Phase 7 UI |
+
+---
+
+### Architecture decisions
+
+**Single overlay instead of three Views** — `TapOrScrollOverlay` is one custom View that uses
+`GestureDetectorCompat` to distinguish single taps from scroll/fling events. Taps are zone-split
+(left ⅓ / centre / right ⅓); scroll and fling events are forwarded to the WebView via
+`scrollBy` / `flingScroll`. Three transparent Views would have blocked all WebView touch routing.
+
+**CSS injection order** — default cleanup CSS (`DEFAULT_CLEANUP_CSS`) is injected first in
+`onPageFinished`, then the per-source `customCss` is injected as a second `<style>` element.
+This lets user rules override the defaults via normal CSS cascade (later rules win).
+
+**Brightness overlay** — pure Android `View` with `#00000000` background; alpha is adjusted
+by `setDimAmount()` in the Activity. No JS injection. The `brightnessOverlay` sits above everything
+(including the tap overlay) but has `clickable=false` so touches still reach the overlay below it.
+
+**Toolbar auto-hide** — `postDelayed({ toggleToolbar() }, 3_000)` in `onCreate`. The toolbar
+starts visible, hides to immersive fullscreen after 3 s. Centre tap always re-toggles both the
+toolbar and system bars together.
+
+**Fullscreen API** — `WindowInsetsController` on API 30+, `systemUiVisibility` flags on older
+APIs, wrapped in `@Suppress("DEPRECATION")`.
+
+### Key rules for future phases
+
+- `DATABASE_VERSION` is now **31**. Any new column must be a `Migration31To32`.
+- `TapOrScrollOverlay` must have `webView` set before the view receives touch events
+  (set in `setupTapOverlay()` immediately after `setupWebView()`).
+- CSS injection via `injectCss()` is safe to call after `onPageFinished` only;
+  calling it before `document.head` exists will silently fail.
+- `WebViewReaderViewModel.currentChapter` is `private set` — read it from the Activity
+  directly; do not expose a StateFlow for it (it changes too frequently for UI binding).

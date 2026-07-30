@@ -41,4 +41,10 @@ class WebViewSourceListViewModel @Inject constructor(
             )
         }
     }
+
+    fun updateCustomCss(source: WebViewSourceEntity, css: String?) {
+        viewModelScope.launch {
+            repository.save(source.copy(customCss = css))
+        }
+    }
 }

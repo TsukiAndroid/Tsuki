@@ -4,15 +4,23 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
-        android:id="@+id/action_info"
-        android:icon="@drawable/ic_info_outline"
-        android:title="@string/details"
-        android:visible="false"
-        app:showAsAction="always" />
-
-    <item
         android:id="@+id/action_link_anilist"
         android:title="@string/action_link_anilist"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_custom_css"
+        android:title="@string/action_custom_css"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_notifications_toggle"
+        android:title="@string/action_notifications_toggle"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_open_in_browser"
+        android:title="@string/action_open_in_browser"
         app:showAsAction="never" />
 
 </menu>

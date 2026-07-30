@@ -4,9 +4,15 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.text.InputType
+import android.view.KeyEvent
 import android.view.Menu
 import android.view.MenuItem
+import android.view.WindowInsets
+import android.view.WindowInsetsController
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -16,6 +22,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.isVisible
 import androidx.core.view.updatePadding
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -23,6 +30,8 @@ import androidx.lifecycle.repeatOnLifecycle
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.landwarderer.futon.R
 import io.github.landwarderer.futon.core.db.entity.WebViewSourceEntity
+import io.github.landwarderer.futon.core.ui.dialog.buildAlertDialog
+import io.github.landwarderer.futon.core.ui.dialog.setEditText
 import io.github.landwarderer.futon.databinding.ActivityWebviewReaderBinding
 import io.github.landwarderer.futon.webviewsource.ui.anilist.LinkAniListSheet
 import kotlinx.coroutines.launch
@@ -30,15 +39,15 @@ import kotlinx.coroutines.launch
 /**
  * Full-screen WebView reader for WebView-as-Source entries.
  *
- * Responsibilities:
- *  - Loads the source's last-read URL (or base URL if never opened)
- *  - Injects [PROGRESS_JS] to report scroll position back via [ProgressJsBridge]
- *  - Restores scroll position on first page load
- *  - Auto-saves progress every 5 s and immediately on pause
- *  - Syncs chapter progress to AniList when chapter number advances
- *  - Back button navigates within the WebView before closing the Activity
- *
- * Entry point: [createIntent]
+ * Phase 7 additions:
+ *  - [TapOrScrollOverlay] intercepts taps: left = prev chapter, right = next, centre = toolbar
+ *  - Default cleanup CSS hides headers/footers/ads on every page
+ *  - Per-source [WebViewSourceEntity.customCss] injected after default CSS
+ *  - Immersive fullscreen via [WindowInsetsController] (API 30+) / legacy flags
+ *  - Brightness/dim overlay [binding.brightnessOverlay]
+ *  - Volume keys mapped to WebView scroll
+ *  - Toolbar auto-hides after 3 seconds; centre tap toggles it
+ *  - Overflow menu: Link AniList, Custom CSS, Notifications toggle, Open in browser
  */
 @AndroidEntryPoint
 class WebViewReaderActivity : AppCompatActivity() {
@@ -51,6 +60,8 @@ class WebViewReaderActivity : AppCompatActivity() {
 
     /** Ensures we only trigger the initial URL load once. */
     private var urlLoaded = false
+
+    private var toolbarVisible = true
 
     private val webBackCallback = object : OnBackPressedCallback(true) {
         override fun handleOnBackPressed() {
@@ -85,12 +96,31 @@ class WebViewReaderActivity : AppCompatActivity() {
         onBackPressedDispatcher.addCallback(this, webBackCallback)
 
         setupWebView()
+        setupTapOverlay()
         observeSource()
+
+        // Auto-hide toolbar after 3 seconds
+        binding.root.postDelayed({
+            if (!isFinishing) toggleToolbar()
+        }, 3_000)
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.opt_reader, menu)
         return true
+    }
+
+    override fun onPrepareOptionsMenu(menu: Menu): Boolean {
+        val source = viewModel.source.value
+        val notifItem = menu.findItem(R.id.action_notifications_toggle)
+        if (source != null) {
+            notifItem?.title = if (source.notificationsEnabled) {
+                getString(R.string.action_notifications_off)
+            } else {
+                getString(R.string.action_notifications_on)
+            }
+        }
+        return super.onPrepareOptionsMenu(menu)
     }
 
     override fun onResume() {
@@ -112,30 +142,43 @@ class WebViewReaderActivity : AppCompatActivity() {
             true
         }
         R.id.action_link_anilist -> {
-            val source = viewModel.source.value
-            if (source != null) {
-                LinkAniListSheet.newInstance(source.id, source.title)
-                    .show(supportFragmentManager, LinkAniListSheet.TAG)
+            val source = viewModel.source.value ?: return true
+            LinkAniListSheet.newInstance(source.id, source.title)
+                .show(supportFragmentManager, LinkAniListSheet.TAG)
+            true
+        }
+        R.id.action_custom_css -> {
+            showCustomCssDialog()
+            true
+        }
+        R.id.action_notifications_toggle -> {
+            viewModel.toggleNotifications()
+            invalidateOptionsMenu()
+            true
+        }
+        R.id.action_open_in_browser -> {
+            val url = viewModel.currentUrlForBrowser()
+            if (url != null) {
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
             }
             true
         }
         else -> super.onOptionsItemSelected(item)
     }
 
-    // ── Source observation ────────────────────────────────────────────────────
-
-    private fun observeSource() {
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.source.collect { source ->
-                    source ?: return@collect
-                    supportActionBar?.title = source.title
-                    if (!urlLoaded) {
-                        urlLoaded = true
-                        loadSource(source)
-                    }
-                }
+    // Volume keys scroll the WebView
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        val scrollAmount = binding.webView.height / 3
+        return when (keyCode) {
+            KeyEvent.KEYCODE_VOLUME_DOWN -> {
+                binding.webView.scrollBy(0, scrollAmount)
+                true
             }
+            KeyEvent.KEYCODE_VOLUME_UP -> {
+                binding.webView.scrollBy(0, -scrollAmount)
+                true
+            }
+            else -> super.onKeyDown(keyCode, event)
         }
     }
 
@@ -143,11 +186,11 @@ class WebViewReaderActivity : AppCompatActivity() {
 
     @SuppressLint("SetJavaScriptEnabled")
     private fun setupWebView() {
-        with(binding.webView) {
+        binding.webView.apply {
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
-            settings.loadWithOverviewMode = true
             settings.useWideViewPort = true
+            settings.loadWithOverviewMode = true
 
             addJavascriptInterface(
                 ProgressJsBridge { percent -> viewModel.onScrollChanged(percent) },
@@ -161,6 +204,10 @@ class WebViewReaderActivity : AppCompatActivity() {
 
                 override fun onPageFinished(view: WebView, url: String) {
                     evaluateJavascript(PROGRESS_JS, null)
+                    injectCss(this@apply, DEFAULT_CLEANUP_CSS)
+                    viewModel.source.value?.customCss?.takeIf { it.isNotBlank() }?.let { css ->
+                        injectCss(this@apply, css)
+                    }
                     restoreScrollIfNeeded()
                 }
             }
@@ -169,13 +216,137 @@ class WebViewReaderActivity : AppCompatActivity() {
         }
     }
 
+    // ── Tap overlay ───────────────────────────────────────────────────────────
+
+    private fun setupTapOverlay() {
+        binding.tapOverlay.webView = binding.webView
+        binding.tapOverlay.onTapLeft = { navigatePreviousChapter() }
+        binding.tapOverlay.onTapRight = { navigateNextChapter() }
+        binding.tapOverlay.onTapCenter = { toggleToolbar() }
+    }
+
+    // ── Chapter navigation ────────────────────────────────────────────────────
+
+    private fun navigateNextChapter() {
+        val source = viewModel.source.value ?: return
+        val current = viewModel.currentChapter ?: return
+        val next = if (current == current.toLong().toFloat()) {
+            current.toLong() + 1f
+        } else {
+            current + 1f
+        }
+        val url = io.github.landwarderer.futon.webviewsource.data.ChapterPatternDetector
+            .buildUrl(source.chapterUrlPattern, next) ?: return
+        binding.webView.loadUrl(url)
+    }
+
+    private fun navigatePreviousChapter() {
+        val source = viewModel.source.value ?: return
+        val current = viewModel.currentChapter ?: return
+        if (current <= 1f) return
+        val prev = (current - 1f).coerceAtLeast(1f)
+        val url = io.github.landwarderer.futon.webviewsource.data.ChapterPatternDetector
+            .buildUrl(source.chapterUrlPattern, prev) ?: return
+        binding.webView.loadUrl(url)
+    }
+
+    // ── Toolbar toggle ────────────────────────────────────────────────────────
+
+    private fun toggleToolbar() {
+        toolbarVisible = !toolbarVisible
+        binding.toolbar.isVisible = toolbarVisible
+        if (toolbarVisible) {
+            showSystemBars()
+        } else {
+            hideSystemBars()
+        }
+    }
+
+    // ── Immersive fullscreen ──────────────────────────────────────────────────
+
+    @Suppress("DEPRECATION")
+    private fun hideSystemBars() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            window.insetsController?.let {
+                it.systemBarsBehavior =
+                    WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                it.hide(WindowInsets.Type.systemBars())
+            }
+        } else {
+            window.decorView.systemUiVisibility = (
+                android.view.View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                    or android.view.View.SYSTEM_UI_FLAG_FULLSCREEN
+                    or android.view.View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                )
+        }
+    }
+
+    @Suppress("DEPRECATION")
+    private fun showSystemBars() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            window.insetsController?.show(WindowInsets.Type.systemBars())
+        } else {
+            window.decorView.systemUiVisibility = android.view.View.SYSTEM_UI_FLAG_VISIBLE
+        }
+    }
+
+    // ── Custom CSS dialog ─────────────────────────────────────────────────────
+
+    private fun showCustomCssDialog() {
+        val source = viewModel.source.value ?: return
+        val ctx = this
+        val dialog = buildAlertDialog(ctx, isCentered = true) {
+            setTitle(getString(R.string.action_custom_css))
+            setMessage(getString(R.string.custom_css_hint))
+            val et = setEditText(
+                InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE,
+                singleLine = false,
+            )
+            et.setText(source.customCss.orEmpty())
+            et.hint = "/* Example: div.chapter-warning { display: none !important; } */"
+            et.minLines = 5
+            setNegativeButton(android.R.string.cancel, null)
+            setPositiveButton(android.R.string.ok) { _, _ ->
+                val css = et.text?.toString().orEmpty().trim().takeIf { it.isNotBlank() }
+                viewModel.saveCustomCss(css)
+            }
+        }
+        dialog.show()
+    }
+
     // ── Load & resume ─────────────────────────────────────────────────────────
 
     private fun loadSource(source: WebViewSourceEntity) {
+        if (urlLoaded) return
+        urlLoaded = true
         // Notifications pass a specific chapter URL via "start_url"; use it if present.
         val overrideUrl = intent.getStringExtra("start_url")
         val startUrl = overrideUrl ?: source.lastReadUrl ?: source.baseUrl
         binding.webView.loadUrl(startUrl)
+        // Update toolbar subtitle
+        supportActionBar?.title = source.title
+    }
+
+    private fun observeSource() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.source.collect { source ->
+                    if (source != null && !urlLoaded) {
+                        loadSource(source)
+                    }
+                    // Keep toolbar title in sync with chapter info
+                    if (source != null) {
+                        val chapterStr = viewModel.currentChapter
+                            ?.let { ch ->
+                                val n = if (ch == ch.toLong().toFloat()) ch.toLong().toString()
+                                else ch.toString()
+                                " · Ch. $n"
+                            }.orEmpty()
+                        supportActionBar?.title = source.title + chapterStr
+                    }
+                }
+            }
+        }
     }
 
     private fun restoreScrollIfNeeded() {

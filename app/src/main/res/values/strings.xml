@@ -1506,4 +1506,15 @@
     <string name="link_anilist_confirm_title">Link AniList entry?</string>
     <string name="link_anilist_confirm_message">Link \"%1$s\" to \"%2$s\"?</string>
 
+    <!-- Phase 7 — Reader Polish -->
+    <string name="action_custom_css">Custom CSS</string>
+    <string name="action_notifications_toggle">Toggle notifications</string>
+    <string name="action_notifications_on">Enable notifications</string>
+    <string name="action_notifications_off">Disable notifications</string>
+    <string name="action_open_in_browser">Open in browser</string>
+    <string name="custom_css_hint">CSS injected into the page. Overrides default cleanup styles.</string>
+    <string name="edit_title">Edit title</string>
+    <string name="edit_chapter_pattern">Edit chapter URL pattern</string>
+    <string name="chapter_pattern_hint">Use {N} as placeholder for chapter number</string>
+    <string name="delete_source_confirm">Remove \"%1$s\" and all saved progress? This cannot be undone.</string>
 </resources>

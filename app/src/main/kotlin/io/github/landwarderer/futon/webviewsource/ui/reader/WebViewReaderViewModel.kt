@@ -35,7 +35,13 @@ class WebViewReaderViewModel @Inject constructor(
     // Current in-memory progress (flushed to DB periodically and on pause)
     private var currentUrl: String? = null
     private var currentScrollPercent: Float = 0f
-    private var currentChapter: Float? = null
+
+    /**
+     * The chapter number currently loaded in the WebView.
+     * Exposed so the Activity can build prev/next chapter URLs.
+     */
+    var currentChapter: Float? = null
+        private set
 
     /** Last chapter number that was successfully synced to AniList. */
     private var lastSyncedChapter: Int = -1
@@ -71,6 +77,9 @@ class WebViewReaderViewModel @Inject constructor(
         currentScrollPercent = percent.coerceIn(0f, 1f)
     }
 
+    /** Returns the current URL for the "Open in browser" action. */
+    fun currentUrlForBrowser(): String? = currentUrl ?: _source.value?.lastReadUrl ?: _source.value?.baseUrl
+
     /** Start the 5-second auto-save loop. Call from onResume. */
     fun startAutoSave() {
         autoSaveJob?.cancel()
@@ -97,6 +106,26 @@ class WebViewReaderViewModel @Inject constructor(
                 scrollPercent = currentScrollPercent,
                 chapter = currentChapter,
             )
+        }
+    }
+
+    /** Toggle the notifications_enabled flag for this source. */
+    fun toggleNotifications() {
+        val source = _source.value ?: return
+        val newValue = !source.notificationsEnabled
+        viewModelScope.launch {
+            repository.setNotificationsEnabled(sourceId, newValue)
+            _source.value = source.copy(notificationsEnabled = newValue)
+        }
+    }
+
+    /** Save per-source custom CSS (null = clear). */
+    fun saveCustomCss(css: String?) {
+        val source = _source.value ?: return
+        viewModelScope.launch {
+            val updated = source.copy(customCss = css)
+            repository.save(updated)
+            _source.value = updated
         }
     }
 }

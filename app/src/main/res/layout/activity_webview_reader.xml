@@ -8,7 +8,23 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <!-- Minimal toolbar — shown/hidden on centre tap (Phase 7 adds gestures) -->
+    <!-- Tap / scroll intercept overlay — sits above WebView, below toolbar -->
+    <io.github.landwarderer.futon.webviewsource.ui.reader.TapOrScrollOverlay
+        android:id="@+id/tapOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@android:color/transparent" />
+
+    <!-- Brightness / tint dim overlay — above everything, pointer passes through -->
+    <View
+        android:id="@+id/brightnessOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#00000000"
+        android:clickable="false"
+        android:focusable="false" />
+
+    <!-- Toolbar shown/hidden on centre tap -->
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"

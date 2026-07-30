@@ -15,6 +15,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import dagger.hilt.android.AndroidEntryPoint
+import io.github.landwarderer.futon.R
 import io.github.landwarderer.futon.core.db.entity.WebViewSourceEntity
 import io.github.landwarderer.futon.core.ui.BaseFragment
 import io.github.landwarderer.futon.core.ui.dialog.buildAlertDialog
@@ -77,10 +78,11 @@ class WebViewSourceListFragment : BaseFragment<FragmentWebviewSourceListBinding>
     private fun showContextMenu(source: WebViewSourceEntity) {
         val ctx = requireContext()
         val options = arrayOf(
-            "Edit title",
-            "Edit chapter pattern",
-            "Link AniList",
-            "Delete",
+            getString(R.string.edit_title),
+            getString(R.string.edit_chapter_pattern),
+            getString(R.string.action_link_anilist),
+            getString(R.string.action_custom_css),
+            getString(R.string.delete),
         )
         buildAlertDialog(ctx) {
             setTitle(source.title)
@@ -89,7 +91,8 @@ class WebViewSourceListFragment : BaseFragment<FragmentWebviewSourceListBinding>
                     0 -> showEditTitleDialog(source)
                     1 -> showEditPatternDialog(source)
                     2 -> showLinkAniListSheet(source)
-                    3 -> showDeleteConfirmation(source)
+                    3 -> showCustomCssDialog(source)
+                    4 -> showDeleteConfirmation(source)
                 }
             }
         }.show()
@@ -103,7 +106,7 @@ class WebViewSourceListFragment : BaseFragment<FragmentWebviewSourceListBinding>
     private fun showEditTitleDialog(source: WebViewSourceEntity) {
         val ctx = requireContext()
         val dialog = buildAlertDialog(ctx, isCentered = true) {
-            setTitle("Edit title")
+            setTitle(getString(R.string.edit_title))
             val et = setEditText(InputType.TYPE_CLASS_TEXT, singleLine = true)
             et.setText(source.title)
             setNegativeButton(android.R.string.cancel, null)
@@ -120,8 +123,8 @@ class WebViewSourceListFragment : BaseFragment<FragmentWebviewSourceListBinding>
     private fun showEditPatternDialog(source: WebViewSourceEntity) {
         val ctx = requireContext()
         val dialog = buildAlertDialog(ctx, isCentered = true) {
-            setTitle("Edit chapter URL pattern")
-            setMessage("Use {N} as placeholder for chapter number")
+            setTitle(getString(R.string.edit_chapter_pattern))
+            setMessage(getString(R.string.chapter_pattern_hint))
             val et = setEditText(InputType.TYPE_CLASS_TEXT, singleLine = true)
             et.setText(source.chapterUrlPattern.orEmpty())
             setNegativeButton(android.R.string.cancel, null)
@@ -133,10 +136,31 @@ class WebViewSourceListFragment : BaseFragment<FragmentWebviewSourceListBinding>
         dialog.show()
     }
 
+    private fun showCustomCssDialog(source: WebViewSourceEntity) {
+        val ctx = requireContext()
+        val dialog = buildAlertDialog(ctx, isCentered = true) {
+            setTitle(getString(R.string.action_custom_css))
+            setMessage(getString(R.string.custom_css_hint))
+            val et = setEditText(
+                InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE,
+                singleLine = false,
+            )
+            et.setText(source.customCss.orEmpty())
+            et.hint = "/* Example: div.chapter-warning { display: none !important; } */"
+            et.minLines = 5
+            setNegativeButton(android.R.string.cancel, null)
+            setPositiveButton(android.R.string.ok) { _, _ ->
+                val css = et.text?.toString().orEmpty().trim().takeIf { it.isNotBlank() }
+                viewModel.updateCustomCss(source, css)
+            }
+        }
+        dialog.show()
+    }
+
     private fun showDeleteConfirmation(source: WebViewSourceEntity) {
         buildAlertDialog(requireContext(), isCentered = true) {
-            setTitle("Delete source")
-            setMessage("Remove \"${source.title}\" and all saved progress? This cannot be undone.")
+            setTitle(getString(R.string.delete))
+            setMessage(getString(R.string.delete_source_confirm, source.title))
             setNegativeButton(android.R.string.cancel, null)
             setPositiveButton(android.R.string.ok) { _, _ ->
                 viewModel.delete(source.id)
