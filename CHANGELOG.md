@@ -1,3 +1,12 @@
+## Alpha 1.771 (Build [#326](https://github.com/Space4414/Tsuki/actions/runs/30513407989))
+
+_2026-07-30 04:16 UTC_
+
+- Fix: restore action_info in opt_reader.xml (referenced by ReaderMenuProvider) (039d6fd)
+- Phase 7: Reader Polish — tap zones, CSS injection, fullscreen, brightness, volume scroll, custom CSS (24c8f0e)
+- docs: document Phase 6 in AGENTS.md (d6978b7)
+
+
 ## Alpha 1.768 (Build [#324](https://github.com/Space4414/Tsuki/actions/runs/30512115902))
 
 _2026-07-30 03:47 UTC_
