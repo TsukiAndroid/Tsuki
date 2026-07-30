@@ -1,3 +1,11 @@
+## Alpha 1.768 (Build [#324](https://github.com/Space4414/Tsuki/actions/runs/30512115902))
+
+_2026-07-30 03:47 UTC_
+
+- docs: document Phase 6 in AGENTS.md (d6978b7)
+- Fix Phase 6: qualify OkHttpClient with @BaseHttpClient (24091b5)
+
+
 ## Alpha 1.766 (Build [#323](https://github.com/Space4414/Tsuki/actions/runs/30511647036))
 
 _2026-07-30 03:37 UTC_
