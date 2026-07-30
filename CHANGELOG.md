@@ -1,3 +1,10 @@
+## Alpha 1.751 (Build [#314](https://github.com/Space4414/Tsuki/actions/runs/30505787368))
+
+_2026-07-30 01:29 UTC_
+
+- Phase 1: WebView-as-Source data foundation (c9a1852)
+
+
 ## Alpha 1.748 (Build [#312](https://github.com/Space4414/Tsuki/actions/runs/30433841295))
 
 _2026-07-29 08:01 UTC_
