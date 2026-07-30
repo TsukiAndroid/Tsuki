@@ -2483,3 +2483,90 @@ app/src/main/kotlin/io/github/landwarderer/futon/explore/ui/ExploreMenuProvider.
 app/src/main/res/menu/opt_explore.xml    ← MODIFIED
 app/src/main/res/values/strings.xml      ← MODIFIED
 ```
+
+---
+
+## Session — Phase 4: Library and Recent Tab Integration (WebView Source List)
+
+### What Phase 4 delivers
+
+A dedicated list screen (`WebViewSourceListFragment`) that shows all WebView
+sources the user has added. Accessible from Explore → menu → "WebView Sources".
+Each row shows cover, title, last chapter, and a progress bar. Long-press shows
+Edit/Delete options.
+
+### Files created
+
+| File | Purpose |
+|---|---|
+| `app/src/main/kotlin/.../webviewsource/ui/list/WebViewSourceAdapter.kt` | `ListAdapter` for WebView source rows; uses `DiffUtil` keyed on `id` |
+| `app/src/main/kotlin/.../webviewsource/ui/list/WebViewSourceListViewModel.kt` | `@HiltViewModel`; exposes `sources: StateFlow` from Room; `delete`, `updateTitle`, `updatePattern` |
+| `app/src/main/kotlin/.../webviewsource/ui/list/WebViewSourceListFragment.kt` | `BaseFragment` subclass; hosts the RecyclerView; context-menu dialogs via `buildAlertDialog` |
+| `app/src/main/kotlin/.../webviewsource/ui/list/WebViewSourceActivity.kt` | Single-fragment `FragmentContainerActivity` wrapper to host the list |
+| `app/src/main/res/layout/item_webview_source.xml` | Item layout: `ShapeableImageView` cover + title + chapter label + `LinearProgressIndicator` |
+| `app/src/main/res/layout/fragment_webview_source_list.xml` | Fragment layout: `RecyclerView` + empty-state `TextView` |
+
+### Files modified
+
+| File | Change |
+|---|---|
+| `app/src/main/AndroidManifest.xml` | Registered `WebViewSourceActivity` |
+| `.../core/nav/AppRouter.kt` | Added `openWebViewSourceList()` |
+| `.../explore/ui/ExploreMenuProvider.kt` | Added "WebView Sources" menu item |
+| `app/src/main/res/menu/opt_explore.xml` | Added `action_view_webview_sources` menu entry |
+| `app/src/main/res/values/strings.xml` | Added string resources for the new screen |
+
+### CI failure on first push (commit `188afda`) and fix
+
+**Root cause:** `BaseFragment<B>` implements `OnApplyWindowInsetsListener`, which
+has one abstract method `onApplyWindowInsets(View, WindowInsetsCompat): WindowInsetsCompat`.
+The generated `WebViewSourceListFragment` did not override this method, causing a
+Kotlin compiler error:
+
+```
+e: WebViewSourceListFragment.kt:23:1 Class 'WebViewSourceListFragment' is not abstract
+and does not implement abstract member:
+fun onApplyWindowInsets(p0: View, p1: WindowInsetsCompat): WindowInsetsCompat
+```
+
+**Fix:** Added the override. Applies the system-bar bottom inset to the RecyclerView's
+bottom padding and consumes the system-bar insets so the parent does not double-apply them:
+
+```kotlin
+override fun onApplyWindowInsets(v: View, insets: WindowInsetsCompat): WindowInsetsCompat {
+    val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+    viewBinding?.recyclerView?.updatePadding(bottom = bars.bottom + v.paddingBottom)
+    return WindowInsetsCompat.Builder(insets)
+        .setInsets(WindowInsetsCompat.Type.systemBars(), Insets.NONE)
+        .build()
+}
+```
+
+**Imports added** to `WebViewSourceListFragment.kt`:
+- `android.view.View`
+- `androidx.core.view.WindowInsetsCompat`
+- `androidx.core.view.updatePadding`
+- `androidx.core.graphics.Insets`
+
+### Hard rule reminder (for future phases)
+
+Every concrete class that extends `BaseFragment<B>` **must** override
+`onApplyWindowInsets(v: View, insets: WindowInsetsCompat): WindowInsetsCompat`.
+The base class provides no default implementation. Minimum safe stub:
+```kotlin
+override fun onApplyWindowInsets(v: View, insets: WindowInsetsCompat): WindowInsetsCompat = insets
+```
+Prefer applying the bottom inset to any scrollable view and consuming it so the
+activity does not apply it twice.
+
+### Database
+
+Phase 4 adds **no schema changes**. `DATABASE_VERSION` stays at 29.
+
+### Navigation entry point
+
+The list is reached via `Explore` → toolbar overflow menu → **"WebView Sources"**.
+This is `action_view_webview_sources` in `opt_explore.xml`, handled by
+`ExploreMenuProvider`, which calls `router.openWebViewSourceList()` → `AppRouter`
+starts `WebViewSourceActivity`.
+

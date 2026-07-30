@@ -3,8 +3,11 @@ package io.github.landwarderer.futon.webviewsource.ui.list
 import android.os.Bundle
 import android.text.InputType
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
+import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
+import androidx.core.view.updatePadding
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -29,6 +32,14 @@ class WebViewSourceListFragment : BaseFragment<FragmentWebviewSourceListBinding>
         inflater: LayoutInflater,
         container: ViewGroup?,
     ) = FragmentWebviewSourceListBinding.inflate(inflater, container, false)
+
+    override fun onApplyWindowInsets(v: View, insets: WindowInsetsCompat): WindowInsetsCompat {
+        val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+        viewBinding?.recyclerView?.updatePadding(bottom = bars.bottom + v.paddingBottom)
+        return WindowInsetsCompat.Builder(insets)
+            .setInsets(WindowInsetsCompat.Type.systemBars(), androidx.core.graphics.Insets.NONE)
+            .build()
+    }
 
     override fun onViewBindingCreated(
         binding: FragmentWebviewSourceListBinding,
