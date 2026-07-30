@@ -44,6 +44,7 @@ import io.github.landwarderer.futon.local.ui.LocalListFragment
 import io.github.landwarderer.futon.suggestions.ui.SuggestionsFragment
 import io.github.landwarderer.futon.tracker.ui.feed.FeedFragment
 import io.github.landwarderer.futon.tracker.ui.updates.UpdatesFragment
+import io.github.landwarderer.futon.webviewsource.ui.reader.WebViewReaderActivity
 import java.util.LinkedList
 import com.google.android.material.R as materialR
 
@@ -323,6 +324,16 @@ class MainNavigationDelegate(
 				root.setPadding(horizontalPadding, 0, horizontalPadding, 0)
 			}
 		}
+	}
+
+	/**
+	 * Opens [WebViewReaderActivity] for the given WebView source.
+	 * Called from the Library / History integration (Phase 4).
+	 */
+	fun openWebViewReader(sourceId: Long) {
+		navBar.context.startActivity(
+			WebViewReaderActivity.createIntent(navBar.context, sourceId),
+		)
 	}
 
 	fun interface OnFragmentChangedListener {

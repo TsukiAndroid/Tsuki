@@ -2254,3 +2254,121 @@ cover, detects the chapter URL pattern, user confirms and saves.
 
 #### DO NOT TOUCH
 - `kotatsu-parsers-redo`, existing parsers, `BrowserSource` system, `core-exts` dependency
+
+---
+
+## Session — July 30 2026 — WebView-as-Source Phase 3
+
+### Context
+
+Continuing the **WebView-as-Source** system. Phase 1 (data layer) and Phase 2 (Add
+Source UI) are merged and CI-green. Phase 3 delivers the full-screen WebView reader
+with JavaScript-driven progress tracking and resume.
+
+Full spec lives in `CONTEXT.md`, `ROADMAP.md`, and `Phase-3.md` at the repo root.
+
+---
+
+### Phase 3 — WebView Reader + Progress Tracking
+
+**Goal:** A full-screen `Activity` that opens any URL in a WebView. A JavaScript
+bridge reports scroll position back to Kotlin every 2 s. Progress is saved to Room
+every 5 s and on pause. Resume: reloads `lastReadUrl` and scrolls to the saved
+percentage.
+
+---
+
+#### New files
+
+| File | Purpose |
+|---|---|
+| `webviewsource/ui/reader/WebViewReaderViewModel.kt` | `@HiltViewModel` extending `BaseViewModel`; loads source by ID from `SavedStateHandle`; tracks `currentUrl`, `currentScrollPercent`, `currentChapter` in memory; provides `onUrlChanged()`, `onScrollChanged()`, `startAutoSave()`, `stopAutoSave()`, `flushProgress()` |
+| `webviewsource/ui/reader/ProgressJsBridge.kt` | `JavascriptInterface` injected as `window.TsukiBridge`; single method `reportScroll(percent: Int)` called by the JS every 2 s; also contains the `PROGRESS_JS` constant that is `evaluateJavascript()`-ed after every page load |
+| `webviewsource/ui/reader/WebViewReaderActivity.kt` | `@AndroidEntryPoint AppCompatActivity`; ViewBinding on `ActivityWebviewReaderBinding`; `OnBackPressedCallback` navigates back in WebView history before closing; `WindowCompat.setDecorFitsSystemWindows(window, false)` + insets applied to toolbar; `observeSource()` loads URL once on first emission; auto-save / flush wired to `onResume` / `onPause`; `createIntent(context, sourceId)` factory method |
+| `res/layout/activity_webview_reader.xml` | `FrameLayout` root; full-screen `WebView` (`@+id/webView`) + `Toolbar` (`@+id/toolbar`) anchored to top |
+
+#### Modified files
+
+| File | Change |
+|---|---|
+| `app/src/main/AndroidManifest.xml` | Registered `WebViewReaderActivity` with `Theme.Tsuki`, `configChanges="orientation|screenSize|keyboardHidden"`, `windowSoftInputMode="adjustResize"`, `exported="false"` |
+| `main/ui/MainNavigationDelegate.kt` | Added import + `openWebViewReader(sourceId: Long)` method using `navBar.context.startActivity(...)` — called by the Library integration in Phase 4 |
+
+---
+
+#### Architecture decisions for Phase 3
+
+- **Activity, not Fragment.** The reader is full-screen with its own back-stack management
+  (WebView history). Using a Fragment inside `MainActivity` would complicate back-press
+  handling with the existing `NavigationDelegate`. Matches `VisualRuleBuilderActivity`
+  precedent in the same codebase.
+
+- **`OnBackPressedCallback` for WebView back navigation.** Preferred over overriding
+  `onBackPressed()` which is deprecated in API 33+. Pattern copied from
+  `VisualRuleBuilderActivity`.
+
+- **URL load guard (`urlLoaded` flag).** The `source` `StateFlow` is collected with
+  `repeatOnLifecycle(STARTED)`, which re-subscribes on each resume. The flag prevents
+  reloading the URL (and losing the user's position) when the Activity returns to
+  foreground.
+
+- **`scrollRestored` flag.** `restoreScrollIfNeeded()` is called from `onPageFinished`.
+  Without the flag it would fire again on every in-reader navigation (chapter→chapter),
+  always jumping back to the first saved position.
+
+- **URL-change tracking via `WebViewClient.onPageStarted`.** No JavaScript needed.
+  `onPageStarted` fires reliably for every new page, including SPA navigations that
+  trigger a `pushState`. This is simpler and more reliable than injecting a
+  `popstate` listener.
+
+- **`PROGRESS_JS` guard (`window._tsukiTracker`).** Prevents duplicate `setInterval`
+  loops if the script is re-injected on soft reloads or SPA route changes.
+
+- **`openWebViewReader` in `MainNavigationDelegate` uses `navBar.context`.** The
+  delegate has no explicit `Context` in its constructor; `navBar` is a `View` whose
+  `context` is the host `Activity`. This is the same approach used by other
+  delegate-level navigation calls in this codebase.
+
+---
+
+#### Key decisions to remember
+
+- `WebViewReaderViewModel` reads `source_id: Long` from `SavedStateHandle` —
+  matches the `Intent.putExtra("source_id", sourceId)` key in the factory method.
+  Changing either one without the other breaks the reader at startup.
+
+- `flushProgress()` is non-blocking (launches a new coroutine). It is safe to call
+  from `onPause()` even after `stopAutoSave()` cancels the loop.
+
+- The `PROGRESS_JS` constant lives in `ProgressJsBridge.kt` alongside the bridge
+  class. Both are imported from the same file in the Activity — do not split them.
+
+- `Theme.Tsuki` is used in the manifest because there is no dedicated reader theme
+  yet. Phase 7 may introduce a `Theme.Tsuki.Reader` if a fully immersive experience
+  (no action bar, edge-to-edge) is required.
+
+---
+
+#### DO NOT TOUCH
+
+- `kotatsu-parsers-redo`, existing parsers, `BrowserSource` system, `core-exts`
+- `DATABASE_VERSION` — Phase 3 adds no new columns; the version stays at 29.
+
+---
+
+#### Files created/modified (relative to repo root)
+
+```
+app/src/main/kotlin/io/github/landwarderer/futon/webviewsource/ui/reader/
+    WebViewReaderViewModel.kt          ← NEW
+    ProgressJsBridge.kt                ← NEW (includes PROGRESS_JS constant)
+    WebViewReaderActivity.kt           ← NEW
+
+app/src/main/res/layout/
+    activity_webview_reader.xml        ← NEW
+
+app/src/main/AndroidManifest.xml       ← MODIFIED (activity registration)
+
+app/src/main/kotlin/io/github/landwarderer/futon/main/ui/
+    MainNavigationDelegate.kt          ← MODIFIED (openWebViewReader + import)
+```

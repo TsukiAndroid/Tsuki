@@ -1758,6 +1758,13 @@
               android:exported="false"
               android:label="@string/universal_source_title"
               android:windowSoftInputMode="adjustResize" />
+
+          <activity
+              android:name=".webviewsource.ui.reader.WebViewReaderActivity"
+              android:theme="@style/Theme.Tsuki"
+              android:configChanges="orientation|screenSize|keyboardHidden"
+              android:windowSoftInputMode="adjustResize"
+              android:exported="false" />
     </application>
 
 </manifest>
