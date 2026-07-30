@@ -21,8 +21,8 @@ class LinkAniListViewModel @Inject constructor(
     private val _results = MutableStateFlow<List<ScrobblerManga>>(emptyList())
     val results: StateFlow<List<ScrobblerManga>> = _results.asStateFlow()
 
-    private val _isLoading = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+    // NOTE: isLoading is inherited from BaseViewModel (driven by loadingCounter).
+    // Do NOT redeclare it here — that causes a "hides member of supertype" compile error.
 
     private val _linked = MutableStateFlow(false)
     val linked: StateFlow<Boolean> = _linked.asStateFlow()
@@ -30,12 +30,14 @@ class LinkAniListViewModel @Inject constructor(
     val isLoggedIn: Boolean
         get() = aniListRepository.isLoggedIn
 
+    /**
+     * Search AniList for manga matching [query].
+     * Uses [launchLoadingJob] so the inherited [isLoading] state is updated automatically.
+     */
     fun search(query: String) {
         if (query.isBlank()) return
-        viewModelScope.launch {
-            _isLoading.value = true
+        launchLoadingJob {
             _results.value = aniListRepository.searchManga(query)
-            _isLoading.value = false
         }
     }
 
