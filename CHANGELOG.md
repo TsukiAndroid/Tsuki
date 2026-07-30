@@ -1,3 +1,12 @@
+## Alpha 1.783 (Build [#331](https://github.com/Space4414/Tsuki/actions/runs/30557450720))
+
+_2026-07-30 15:36 UTC_
+
+- chore(l10n): update Bengali translation (522852f)
+- chore(l10n): update Chinese (Simplified Han script) translation (6d854bc)
+- chore(l10n): update Bengali translation (270c9c9)
+
+
 ## Alpha 1.781 (Build [#330](https://github.com/Space4414/Tsuki/actions/runs/30555689818))
 
 _2026-07-30 15:14 UTC_
