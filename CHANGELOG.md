@@ -1,3 +1,12 @@
+## Alpha 1.758 (Build [#318](https://github.com/Space4414/Tsuki/actions/runs/30509152971))
+
+_2026-07-30 02:42 UTC_
+
+- Fix Phase 4 CI: add onApplyWindowInsets to WebViewSourceListFragment (0fd723c)
+- Phase 4: Library and Recent Tab integration (WebView source list) (188afda)
+- Phase 3: WebView reader + JS progress tracking + resume (cdaa4d9)
+
+
 ## Alpha 1.755 (Build [#316](https://github.com/Space4414/Tsuki/actions/runs/30507839727))
 
 _2026-07-30 02:13 UTC_
