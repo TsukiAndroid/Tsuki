@@ -1,3 +1,12 @@
+## Alpha 1.781 (Build [#330](https://github.com/Space4414/Tsuki/actions/runs/30555689818))
+
+_2026-07-30 15:14 UTC_
+
+- chore(l10n): update Chinese (Simplified Han script) translation (6d854bc)
+- chore(l10n): update Bengali translation (270c9c9)
+- fix: add @JvmOverloads constructors to TapOrScrollOverlay (74c8a3c)
+
+
 ## Beta 1.5.2 (Build [#7](https://github.com/Space4414/Tsuki/actions/runs/30522578700))
 
 _2026-07-30 07:20 UTC_
