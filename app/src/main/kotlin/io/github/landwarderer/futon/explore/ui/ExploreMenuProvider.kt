@@ -11,6 +11,8 @@ import io.github.landwarderer.futon.customsource.ui.AddCustomSourceSheet
 import io.github.landwarderer.futon.browsersource.ui.AddBrowserSourceSheet
 import io.github.landwarderer.futon.customsource.ui.ImportParserSheet
 import io.github.landwarderer.futon.customsource.ui.visualpicker.VisualRuleBuilderActivity
+import io.github.landwarderer.futon.webviewsource.ui.AddWebViewSourceSheet
+
 class ExploreMenuProvider(
         private val router: AppRouter,
         private val fragmentManager: FragmentManager,
@@ -58,6 +60,12 @@ class ExploreMenuProvider(
 
                         R.id.action_manage_plugins -> {
                                 router.openManagePlugins()
+                                true
+                        }
+
+                        R.id.action_add_webview_source -> {
+                                AddWebViewSourceSheet.newInstance()
+                                        .show(fragmentManager, AddWebViewSourceSheet.TAG)
                                 true
                         }
 

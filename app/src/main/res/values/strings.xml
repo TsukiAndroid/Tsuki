@@ -1483,4 +1483,15 @@
     <string name="plugin_notif_channel">Plugin Updates</string>
     <string name="version_format">v%s</string>
 
+
+    <!-- WebView Source Phase 2 -->
+    <string name="add_webview_source">Add WebView Source</string>
+    <string name="webview_source_url_hint">Manga page URL</string>
+    <string name="webview_source_fetch">Fetch</string>
+    <string name="webview_source_title_hint">Title</string>
+    <string name="webview_source_pattern_hint">Chapter URL pattern</string>
+    <string name="webview_source_pattern_info">Use {N} in place of the chapter number</string>
+    <string name="webview_source_fetch_error">Couldn\'t load page. Check the URL.</string>
+    <string name="webview_source_url_required">Please enter a URL</string>
+    <string name="webview_source_cover_desc">Cover image</string>
 </resources>

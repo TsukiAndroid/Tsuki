@@ -2166,3 +2166,91 @@ plugin services.
 - Commit `3a35ca2` — `Build Alpha APK` run `30260273395`: **success**
 - Successful run: https://github.com/TsukiAndroid/Tsuki/actions/runs/30260273395
 
+
+---
+
+## Session — July 30 2026 — WebView-as-Source Phase 1 & Phase 2
+
+### Context
+
+Implementing the **WebView-as-Source** system: a parallel data layer that lets users add
+any manga site URL as a source, read it in an embedded WebView, and get the full
+meta-layer (library, progress, AniList sync, notifications) without any HTML parsing.
+
+Full spec lives in `CONTEXT.md` and `ROADMAP.md` at the repo root.
+
+---
+
+### Phase 1 — Data Foundation
+
+**Goal:** Pure data layer. No UI. Every later phase depends on this.
+
+#### New files
+
+| File | Purpose |
+|---|---|
+| `core/db/entity/WebViewSourceEntity.kt` | Room entity (`webview_sources` table) — 14 columns covering URL, title, cover, chapter pattern, progress, AniList/MAL IDs, timestamps |
+| `core/db/dao/WebViewSourceDao.kt` | Full DAO: observe all/by-id, get all, insert/update/upsert/delete, `updateProgress()`, `updateLatestKnownChapter()`, `updateAnilistLink()` |
+| `core/db/migrations/Migration28To29.kt` | Creates `webview_sources` table; follows the project's class-based migration pattern |
+| `webviewsource/data/WebViewSourceRepository.kt` | Business-logic wrapper over the DAO; `idFromUrl()` hashes URLs to stable `Long` IDs |
+| `webviewsource/data/WebViewSourceModule.kt` | Hilt `@Module` providing `WebViewSourceDao` from `MangaDatabase` |
+
+#### Modified files
+
+| File | Change |
+|---|---|
+| `core/db/MangaDatabase.kt` | `DATABASE_VERSION` 28 → 29; `WebViewSourceEntity::class` added to `@Database` entities list; `abstract fun webViewSourceDao(): WebViewSourceDao` added; `Migration28To29()` added to `getDatabaseMigrations()` |
+
+#### Key decisions
+
+- `WebViewSourceEntity` is a **parallel** entity — it does NOT extend or modify `MangaEntity`.
+- Migration follows the class-based pattern (`class Migration28To29 : Migration(28, 29)`) in a dedicated file under `core/db/migrations/`, consistent with all prior migrations.
+- DAO accessor is named `webViewSourceDao()` (no `get` prefix) to match the Phase 1 spec; all other DAOs use `get` prefix — keep this inconsistency in mind.
+- `DATABASE_VERSION` constant lives at the top of `MangaDatabase.kt` as a standalone `const val`.
+
+#### CI result
+
+- Commit `c9a1852` — `Build Alpha APK`: **success** (~9 min)
+
+---
+
+### Phase 2 — Add WebView Source UI
+
+**Goal:** Bottom sheet where the user pastes a manga URL. App auto-fetches OG title +
+cover, detects the chapter URL pattern, user confirms and saves.
+
+#### New files
+
+| File | Purpose |
+|---|---|
+| `webviewsource/data/OgTagFetcher.kt` | OkHttp-based OG tag scraper; regex extracts `og:title`, `og:image`, `<title>`; returns `OgData(title, imageUrl, siteUrl)`; uses `@BaseHttpClient` qualifier; blocking `execute()` wrapped in `withContext(Dispatchers.IO)` |
+| `webviewsource/data/ChapterPatternDetector.kt` | Detects chapter URL pattern from a single URL; replaces chapter number with `{N}`; also provides `buildUrl()` and `extractChapter()` helpers used by later phases |
+| `webviewsource/ui/AddWebViewSourceViewModel.kt` | `@HiltViewModel` extending `BaseViewModel`; `fetchUrl()` calls `OgTagFetcher` then `ChapterPatternDetector`; `save()` builds and upserts a `WebViewSourceEntity`; state is a `StateFlow<AddSourceUiState>` |
+| `webviewsource/ui/AddWebViewSourceSheet.kt` | `@AndroidEntryPoint BottomSheetDialogFragment`; ViewBinding on `SheetAddWebviewSourceBinding`; observes ViewModel state with `repeatOnLifecycle(STARTED)`; shows progress, populates title/cover/pattern fields, shows error Snackbar, dismisses on save |
+| `res/layout/sheet_add_webview_source.xml` | Sheet layout: URL field + Fetch button, `LinearProgressIndicator`, collapsible details section (cover `CoilImageView` + title field + pattern field + pattern hint), Cancel + Save buttons |
+
+#### Modified files
+
+| File | Change |
+|---|---|
+| `res/menu/opt_explore.xml` | Added `action_add_webview_source` menu item ("Add WebView Source") |
+| `explore/ui/ExploreMenuProvider.kt` | Import + `R.id.action_add_webview_source` handler → shows `AddWebViewSourceSheet` |
+| `res/values/strings.xml` | Added 9 new strings: `add_webview_source`, `webview_source_url_hint`, `webview_source_fetch`, `webview_source_title_hint`, `webview_source_pattern_hint`, `webview_source_pattern_info`, `webview_source_fetch_error`, `webview_source_url_required`, `webview_source_cover_desc` |
+
+#### Key decisions
+
+- **Sheet extends `BottomSheetDialogFragment` directly** (not `BaseFragment`). The `onViewCreated` is final only in `BaseFragment`; `BottomSheetDialogFragment` has no such restriction, so `onViewCreated` is used normally here.
+- **`@BaseHttpClient` qualifier** for `OgTagFetcher`'s `OkHttpClient` injection — the correct qualifier is defined in `core/network/HttpClients.kt` alongside `@MangaHttpClient` and `@ContentHttpClient`.
+- **`OgTagFetcher` is `@Singleton`** and does not hold state — safe to inject everywhere.
+- **`ChapterPatternDetector` is an `object`** (no injection needed) — pure utility called from both ViewModel and later phases (Phase 3 reader, Phase 6 notification worker).
+- Entry point is `ExploreMenuProvider` → overflow menu item. Later phases may promote this to a FAB or dedicated button once the Library tab is integrated (Phase 4).
+
+#### Important notes for future agents
+
+- The `DetailSection` (`layout_details`) starts `GONE` and becomes `VISIBLE` when `state.title` is non-empty — do not remove this toggling logic.
+- `etTitle` and `etPattern` are only pre-filled **once** (when empty) to allow user edits to persist across recompositions.
+- `OgTagFetcher.fetch()` returns `null` on any network/parse error — the ViewModel sets `fetchError = true` and the sheet shows a Snackbar. No crash.
+- `R.string.save` and `R.string.cancel` already exist — do not add duplicates.
+
+#### DO NOT TOUCH
+- `kotatsu-parsers-redo`, existing parsers, `BrowserSource` system, `core-exts` dependency

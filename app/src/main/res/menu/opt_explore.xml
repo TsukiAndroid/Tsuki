@@ -42,4 +42,9 @@
             android:title="@string/manage_plugins"
             android:titleCondensed="@string/plugins" />
 
+    <item
+            android:id="@+id/action_add_webview_source"
+            android:title="@string/add_webview_source"
+            android:titleCondensed="@string/add_webview_source" />
+
 </menu>
