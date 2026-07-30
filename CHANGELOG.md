@@ -1,3 +1,12 @@
+## Alpha 1.763 (Build [#321](https://github.com/Space4414/Tsuki/actions/runs/30511100241))
+
+_2026-07-30 03:24 UTC_
+
+- docs: document Phase 5 fix in AGENTS.md (c22b44e)
+- Fix Phase 5: remove duplicate isLoading that hides BaseViewModel member (ce0d755)
+- Phase 5: AniList search, link, and progress sync (d55c031)
+
+
 ## Alpha 1.761 (Build [#320](https://github.com/Space4414/Tsuki/actions/runs/30510654751))
 
 _2026-07-30 03:15 UTC_
