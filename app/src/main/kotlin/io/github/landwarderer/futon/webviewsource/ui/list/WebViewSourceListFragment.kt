@@ -5,6 +5,7 @@ import android.text.InputType
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.graphics.Insets
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
 import androidx.core.view.updatePadding
@@ -19,6 +20,7 @@ import io.github.landwarderer.futon.core.ui.BaseFragment
 import io.github.landwarderer.futon.core.ui.dialog.buildAlertDialog
 import io.github.landwarderer.futon.core.ui.dialog.setEditText
 import io.github.landwarderer.futon.databinding.FragmentWebviewSourceListBinding
+import io.github.landwarderer.futon.webviewsource.ui.anilist.LinkAniListSheet
 import io.github.landwarderer.futon.webviewsource.ui.reader.WebViewReaderActivity
 import kotlinx.coroutines.launch
 
@@ -37,7 +39,7 @@ class WebViewSourceListFragment : BaseFragment<FragmentWebviewSourceListBinding>
         val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
         viewBinding?.recyclerView?.updatePadding(bottom = bars.bottom + v.paddingBottom)
         return WindowInsetsCompat.Builder(insets)
-            .setInsets(WindowInsetsCompat.Type.systemBars(), androidx.core.graphics.Insets.NONE)
+            .setInsets(WindowInsetsCompat.Type.systemBars(), Insets.NONE)
             .build()
     }
 
@@ -74,17 +76,28 @@ class WebViewSourceListFragment : BaseFragment<FragmentWebviewSourceListBinding>
 
     private fun showContextMenu(source: WebViewSourceEntity) {
         val ctx = requireContext()
-        val options = arrayOf("Edit title", "Edit chapter pattern", "Delete")
+        val options = arrayOf(
+            "Edit title",
+            "Edit chapter pattern",
+            "Link AniList",
+            "Delete",
+        )
         buildAlertDialog(ctx) {
             setTitle(source.title)
             setItems(options) { _, which ->
                 when (which) {
                     0 -> showEditTitleDialog(source)
                     1 -> showEditPatternDialog(source)
-                    2 -> showDeleteConfirmation(source)
+                    2 -> showLinkAniListSheet(source)
+                    3 -> showDeleteConfirmation(source)
                 }
             }
         }.show()
+    }
+
+    private fun showLinkAniListSheet(source: WebViewSourceEntity) {
+        LinkAniListSheet.newInstance(source.id, source.title)
+            .show(parentFragmentManager, LinkAniListSheet.TAG)
     }
 
     private fun showEditTitleDialog(source: WebViewSourceEntity) {

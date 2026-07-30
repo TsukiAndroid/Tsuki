@@ -7,6 +7,7 @@ import io.github.landwarderer.futon.core.ui.BaseViewModel
 import io.github.landwarderer.futon.core.db.entity.WebViewSourceEntity
 import io.github.landwarderer.futon.webviewsource.data.ChapterPatternDetector
 import io.github.landwarderer.futon.webviewsource.data.WebViewSourceRepository
+import io.github.landwarderer.futon.webviewsource.data.anilist.WebViewAniListRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,6 +22,7 @@ import javax.inject.Inject
 @HiltViewModel
 class WebViewReaderViewModel @Inject constructor(
     private val repository: WebViewSourceRepository,
+    private val aniListRepository: WebViewAniListRepository,
     savedStateHandle: SavedStateHandle,
 ) : BaseViewModel() {
 
@@ -34,6 +36,9 @@ class WebViewReaderViewModel @Inject constructor(
     private var currentUrl: String? = null
     private var currentScrollPercent: Float = 0f
     private var currentChapter: Float? = null
+
+    /** Last chapter number that was successfully synced to AniList. */
+    private var lastSyncedChapter: Int = -1
 
     private var autoSaveJob: Job? = null
 
@@ -49,6 +54,16 @@ class WebViewReaderViewModel @Inject constructor(
         currentUrl = url
         val source = _source.value ?: return
         currentChapter = ChapterPatternDetector.extractChapter(url, source.chapterUrlPattern)
+
+        // Sync to AniList when chapter advances
+        val chapterInt = currentChapter?.toInt() ?: return
+        val anilistId = source.anilistId ?: return
+        if (chapterInt > lastSyncedChapter) {
+            lastSyncedChapter = chapterInt
+            viewModelScope.launch {
+                aniListRepository.syncProgress(anilistId, chapterInt)
+            }
+        }
     }
 
     /** Called by the JS bridge with a scroll percentage 0.0–1.0. */

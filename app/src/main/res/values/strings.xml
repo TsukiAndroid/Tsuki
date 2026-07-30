@@ -1495,4 +1495,15 @@
     <string name="webview_source_url_required">Please enter a URL</string>
     <string name="webview_source_cover_desc">Cover image</string>
     <string name="webview_sources_title">My WebView Sources</string>
+
+    <!-- Phase 5 — AniList linking -->
+    <string name="action_link_anilist">Link AniList</string>
+    <string name="link_anilist_title">Link to AniList</string>
+    <string name="link_anilist_search_hint">Search by manga title…</string>
+    <string name="link_anilist_search_btn">Search</string>
+    <string name="link_anilist_no_results">No results. Try a different title.</string>
+    <string name="link_anilist_login_notice">Log in to AniList via Settings → Scrobbling to sync read progress.</string>
+    <string name="link_anilist_confirm_title">Link AniList entry?</string>
+    <string name="link_anilist_confirm_message">Link \"%1$s\" to \"%2$s\"?</string>
+
 </resources>

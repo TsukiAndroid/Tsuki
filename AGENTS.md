@@ -2570,3 +2570,81 @@ This is `action_view_webview_sources` in `opt_explore.xml`, handled by
 `ExploreMenuProvider`, which calls `router.openWebViewSourceList()` → `AppRouter`
 starts `WebViewSourceActivity`.
 
+
+---
+
+## Session — Phase 5: AniList / MAL Sync
+
+### What Phase 5 delivers
+
+Search AniList by title, link a result to a WebView source, and automatically
+sync read progress when the chapter number advances in the reader.
+MAL support is a clearly-marked TODO stub (AniList is fully implemented first
+as specified in the Phase 5 roadmap).
+
+### Reuse decision (Step 1 of the spec)
+
+The project already has a full AniList integration in
+`io.github.landwarderer.futon.scrobbling.anilist.data.AniListRepository`.
+
+| Reused piece | What we use it for |
+|---|---|
+| `AniListRepository.findManga(query, 0)` | Search — no token required |
+| `AniListRepository.isAuthorized` / `oauthUrl` | Login-state check / OAuth entry point |
+| `@ScrobblerType(ANILIST) OkHttpClient` | Raw GraphQL mutations (has `AniListInterceptor` + `AniListAuthenticator` already wired) |
+| `ScrobblerStorage` (via the interceptor) | Token is injected automatically by `AniListInterceptor` |
+
+A second AniList HTTP client was **not** created. The existing scrobbling
+infrastructure handles auth transparently.
+
+### New files
+
+| File | Purpose |
+|---|---|
+| `.../webviewsource/data/anilist/WebViewAniListRepository.kt` | Thin wrapper: `searchManga`, `syncProgress`, `getListEntry`. Delegates search to the existing `AniListRepository`; uses the scrobbler `OkHttpClient` for mutations. |
+| `.../webviewsource/ui/anilist/AniListSearchAdapter.kt` | `ListAdapter<ScrobblerManga>` for search results; cover via `CoilImageView.setImageAsync`. |
+| `.../webviewsource/ui/anilist/LinkAniListViewModel.kt` | `@HiltViewModel`; `search(query)`, `link(sourceId, media)`. |
+| `.../webviewsource/ui/anilist/LinkAniListSheet.kt` | `BottomSheetDialogFragment`; search field → results → confirmation dialog → saves `anilistId` to Room. |
+| `res/layout/sheet_link_anilist.xml` | Sheet layout: title, login-notice card, search row, progress indicator, RecyclerView. |
+| `res/layout/item_anilist_result.xml` | Result row: `CoilImageView` cover (48×64dp) + romaji title + alt title. |
+
+### Modified files
+
+| File | Change |
+|---|---|
+| `WebViewReaderViewModel.kt` | Injected `WebViewAniListRepository`; added `lastSyncedChapter: Int = -1`; `onUrlChanged` triggers `syncProgress` when chapter number exceeds last synced value. |
+| `WebViewSourceListFragment.kt` | Context menu gains "Link AniList" option (index 2); Delete shifts to index 3. Calls `LinkAniListSheet.newInstance(source.id, source.title)`. |
+| `WebViewReaderActivity.kt` | Added `onCreateOptionsMenu` inflating `opt_reader.xml`; added `action_link_anilist` case in `onOptionsItemSelected`. |
+| `res/menu/opt_reader.xml` | Added `action_link_anilist` overflow menu item. |
+| `res/values/strings.xml` | Added 8 Phase 5 strings (`action_link_anilist`, `link_anilist_*`). |
+
+### Progress sync logic
+
+In `WebViewReaderViewModel.onUrlChanged`:
+```kotlin
+val chapterInt = currentChapter?.toInt() ?: return
+val anilistId = source.anilistId ?: return
+if (chapterInt > lastSyncedChapter) {
+    lastSyncedChapter = chapterInt
+    viewModelScope.launch { aniListRepository.syncProgress(anilistId, chapterInt) }
+}
+```
+`lastSyncedChapter` resets to -1 each time the Activity is created, so the
+first chapter read in a session always triggers a sync — even if the chapter
+hasn't "advanced" relative to last session. This is intentional: it keeps
+AniList in sync after the app is killed and relaunched.
+
+### MAL stub
+
+`WebViewSourceEntity.malId` column already exists (Phase 1). MAL sync is
+**not implemented in this phase**. A full MAL implementation follows the same
+pattern: wrap `MALRepository` (already in `scrobbling/mal/`) in a
+`WebViewMALRepository`, add a `LinkMALSheet`, and hook into `onUrlChanged`.
+
+### Key rules for future phases
+
+- `WebViewSourceEntity.anilistId` is `Int?`; `ScrobblerManga.id` is `Long` — always cast `.toInt()` when saving.
+- `AniListRepository.findManga(query, offset)` — `offset` is a page offset (0-based), not a page number.
+- The `@ScrobblerType(ScrobblerService.ANILIST)` qualifier must appear on both the `OkHttpClient` and `ScrobblerStorage` parameters; without it Hilt will fail with a binding error.
+- Do NOT add `core-exts` as a dependency (see CONTEXT.md hard rule #4).
+- `DATABASE_VERSION` stays at 29 — Phase 5 adds no schema changes.

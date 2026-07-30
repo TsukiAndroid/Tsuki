@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.os.Bundle
+import android.view.Menu
 import android.view.MenuItem
 import android.webkit.WebChromeClient
 import android.webkit.WebView
@@ -20,8 +21,10 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import dagger.hilt.android.AndroidEntryPoint
+import io.github.landwarderer.futon.R
 import io.github.landwarderer.futon.core.db.entity.WebViewSourceEntity
 import io.github.landwarderer.futon.databinding.ActivityWebviewReaderBinding
+import io.github.landwarderer.futon.webviewsource.ui.anilist.LinkAniListSheet
 import kotlinx.coroutines.launch
 
 /**
@@ -32,6 +35,7 @@ import kotlinx.coroutines.launch
  *  - Injects [PROGRESS_JS] to report scroll position back via [ProgressJsBridge]
  *  - Restores scroll position on first page load
  *  - Auto-saves progress every 5 s and immediately on pause
+ *  - Syncs chapter progress to AniList when chapter number advances
  *  - Back button navigates within the WebView before closing the Activity
  *
  * Entry point: [createIntent]
@@ -84,6 +88,11 @@ class WebViewReaderActivity : AppCompatActivity() {
         observeSource()
     }
 
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.opt_reader, menu)
+        return true
+    }
+
     override fun onResume() {
         super.onResume()
         binding.webView.onResume()
@@ -98,7 +107,18 @@ class WebViewReaderActivity : AppCompatActivity() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean = when (item.itemId) {
-        android.R.id.home -> { finish(); true }
+        android.R.id.home -> {
+            finish()
+            true
+        }
+        R.id.action_link_anilist -> {
+            val source = viewModel.source.value
+            if (source != null) {
+                LinkAniListSheet.newInstance(source.id, source.title)
+                    .show(supportFragmentManager, LinkAniListSheet.TAG)
+            }
+            true
+        }
         else -> super.onOptionsItemSelected(item)
     }
 
