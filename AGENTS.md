@@ -2648,3 +2648,48 @@ pattern: wrap `MALRepository` (already in `scrobbling/mal/`) in a
 - The `@ScrobblerType(ScrobblerService.ANILIST)` qualifier must appear on both the `OkHttpClient` and `ScrobblerStorage` parameters; without it Hilt will fail with a binding error.
 - Do NOT add `core-exts` as a dependency (see CONTEXT.md hard rule #4).
 - `DATABASE_VERSION` stays at 29 — Phase 5 adds no schema changes.
+
+---
+
+## Session (Jul 30 2026) — Fix Phase 5 CI failure
+
+### Root cause
+
+`LinkAniListViewModel` declared its own `isLoading: StateFlow<Boolean>` backed by a
+`MutableStateFlow(false)`.  `BaseViewModel` already exposes a **non-open** property
+with the exact same name:
+
+```kotlin
+val isLoading: StateFlow<Boolean> = loadingCounter.map { it > 0 }
+    .stateIn(viewModelScope, SharingStarted.Lazily, loadingCounter.value > 0)
+```
+
+Kotlin treats this as a *hiding* error — not a warning — causing the Kotlin compiler
+to emit:
+
+```
+e: LinkAniListViewModel.kt:25:9 'isLoading' hides member of supertype
+   'BaseViewModel' and needs an 'override' modifier.
+```
+
+This failed the `Build Alpha APK` CI workflow on the Phase 5 commit.
+
+### Fix
+
+**File changed:** `webviewsource/ui/anilist/LinkAniListViewModel.kt`
+
+| Before | After |
+|---|---|
+| `private val _isLoading = MutableStateFlow(false)` | *removed* |
+| `val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()` | *removed* |
+| `search()` sets `_isLoading.value = true/false` manually | `search()` uses `launchLoadingJob { … }` |
+
+`launchLoadingJob` (defined in `BaseViewModel`) increments/decrements `loadingCounter`
+around the block, which automatically drives the inherited `isLoading` state.
+`LinkAniListSheet` already observed `viewModel.isLoading` — no UI changes needed.
+
+### Key rule for future phases
+
+**Never declare `isLoading` in a `BaseViewModel` subclass.** Use `launchLoadingJob`
+to drive the inherited `loadingCounter` → `isLoading` path instead.
+This is identical to the existing `errorEvent` / `onError` rule in CONTEXT.md.
