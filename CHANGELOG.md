@@ -1,3 +1,13 @@
+## Alpha 1.761 (Build [#320](https://github.com/Space4414/Tsuki/actions/runs/30510654751))
+
+_2026-07-30 03:15 UTC_
+
+- Fix Phase 5: remove duplicate isLoading that hides BaseViewModel member (ce0d755)
+- Phase 5: AniList search, link, and progress sync (d55c031)
+- Fix Phase 4 CI: add onApplyWindowInsets to WebViewSourceListFragment (0fd723c)
+- Phase 4: Library and Recent Tab integration (WebView source list) (188afda)
+
+
 ## Alpha 1.758 (Build [#318](https://github.com/Space4414/Tsuki/actions/runs/30509152971))
 
 _2026-07-30 02:42 UTC_
