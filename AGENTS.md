@@ -2693,3 +2693,70 @@ around the block, which automatically drives the inherited `isLoading` state.
 **Never declare `isLoading` in a `BaseViewModel` subclass.** Use `launchLoadingJob`
 to drive the inherited `loadingCounter` → `isLoading` path instead.
 This is identical to the existing `errorEvent` / `onError` rule in CONTEXT.md.
+
+---
+
+## Session (Jul 30 2026) — Phase 6: New chapter notifications
+
+### What was delivered
+
+| Deliverable | File |
+|---|---|
+| Room migration 29→30 | `core/db/migrations/Migration29To30.kt` |
+| `notificationsEnabled` field on entity | `core/db/entity/WebViewSourceEntity.kt` |
+| `setNotificationsEnabled` DAO method | `core/db/dao/WebViewSourceDao.kt` |
+| Database version bumped to 30 | `core/db/MangaDatabase.kt` |
+| `fetchLatestChapterCount(mediaId)` | `webviewsource/data/anilist/WebViewAniListRepository.kt` |
+| `setNotificationsEnabled` repo wrapper | `webviewsource/data/WebViewSourceRepository.kt` |
+| `WebViewSourceNotificationHelper` | `webviewsource/work/WebViewSourceNotificationHelper.kt` |
+| `WebViewSourceUpdateWorker` + `Scheduler` | `webviewsource/work/WebViewSourceUpdateWorker.kt` |
+| `start_url` extra in reader | `webviewsource/ui/reader/WebViewReaderActivity.kt` |
+| Worker scheduled on app start | `settings/work/WorkScheduleManager.kt` |
+| One-time check on source save | `webviewsource/ui/AddWebViewSourceViewModel.kt` |
+
+### Architecture decisions
+
+**Worker pattern** — `WebViewSourceUpdateWorker` follows the `TrackWorker` reference exactly:
+`@HiltWorker` + `@AssistedInject`, inner `Scheduler` class implementing `PeriodicWorkScheduler`,
+registered in `WorkScheduleManager.init()` via `updateWorkerImpl(webViewUpdateScheduler, true, false)`.
+Do NOT use a static `schedulePeriodicWork()` helper — that bypasses `WorkScheduleManager`.
+
+**AniList chapter count** — added `fetchLatestChapterCount(mediaId: Int): Float?` to
+`WebViewAniListRepository`. Uses the public GraphQL endpoint with no auth token.
+Returns null gracefully on network error or if AniList has no chapter count.
+
+**HTML polling regex** — the chapter URL pattern uses `{N}` as placeholder.
+The regex is built as `Regex.escape(pattern).replace(Regex.escape("{N}"), "(\d+(?:\.\d+)?)")`.
+This correctly handles patterns that contain regex metacharacters (dots, slashes, etc.).
+
+**Notification deep-link** — `WebViewSourceNotificationHelper.notify()` passes a `start_url`
+extra in the `WebViewReaderActivity` intent. The reader reads this in `loadSource()` before
+falling back to `lastReadUrl` / `baseUrl`. Priority order: `start_url` > `lastReadUrl` > `baseUrl`.
+
+**POST_NOTIFICATIONS** — already declared in `AndroidManifest.xml` from a prior phase.
+`checkNotificationPermission(CHANNEL_ID)` from `core/util/ext/Android.kt` guards all `notify()` calls.
+
+### Key rules for future phases
+
+- `DATABASE_VERSION` is now **30**. Any new column must be a `Migration30To31`.
+- `notificationsEnabled` defaults to `true`; the worker already filters with `filter { it.notificationsEnabled }`.
+- The worker is always-on (never unscheduled). If a per-user toggle is added later, route it through `WorkScheduleManager` the same way `trackerScheduler` is gated on `settings.isTrackerEnabled`.
+- `WebViewSourceUpdateWorker.TAG = "webview_source_update"` — use this constant when enqueueing one-time runs from dev/debug UI; do not hardcode the string.
+
+### Fix (same session) — @BaseHttpClient qualifier
+
+**Error:** `Dagger/MissingBinding] okhttp3.OkHttpClient cannot be provided without
+an @Inject constructor or an @Provides-annotated method.`
+
+**Root cause:** `NetworkModule` registers four distinct `OkHttpClient` bindings, each with
+its own qualifier (`@BaseHttpClient`, `@MangaHttpClient`, plus scrobbler variants with
+`@ScrobblerType`). Injecting a bare unqualified `OkHttpClient` into the worker left Hilt
+unable to pick one, causing a compile-time binding error.
+
+**Fix:** Changed the worker constructor parameter from `private val okHttpClient: OkHttpClient`
+to `@BaseHttpClient private val okHttpClient: OkHttpClient`.
+
+**Key rule for future phases:** Any injection of `OkHttpClient` must use one of
+`@BaseHttpClient` (generic HTTPS), `@MangaHttpClient` (adds common headers + cache),
+or `@ScrobblerType(ScrobblerService.ANILIST/MAL/SHIKIMORI)` (adds auth interceptor).
+Never inject the bare unqualified type.
