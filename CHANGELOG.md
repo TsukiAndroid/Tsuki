@@ -1,3 +1,11 @@
+## Alpha 1.777 (Build [#329](https://github.com/Space4414/Tsuki/actions/runs/30516627201))
+
+_2026-07-30 05:26 UTC_
+
+- fix: add @JvmOverloads constructors to TapOrScrollOverlay (74c8a3c)
+- Fix: replace NULLS LAST with CASE WHEN for SQLite < 3.30 compatibility (e4aa75f)
+
+
 ## Alpha 1.775 (Build [#328](https://github.com/Space4414/Tsuki/actions/runs/30514757189))
 
 _2026-07-30 04:46 UTC_
