@@ -63,6 +63,11 @@ interface WebViewSourceDao {
     @Query("UPDATE webview_sources SET latest_known_chapter = :chapter WHERE id = :id")
     suspend fun updateLatestKnownChapter(id: Long, chapter: Float)
 
+    // ── Notification opt-out ────────────────────────────────────
+
+    @Query("UPDATE webview_sources SET notifications_enabled = :enabled WHERE id = :id")
+    suspend fun setNotificationsEnabled(id: Long, enabled: Boolean)
+
     // ── AniList linking ──────────────────────────────────────────────────
 
     @Query("""

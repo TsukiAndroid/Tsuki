@@ -9,6 +9,7 @@ import io.github.landwarderer.futon.core.util.ext.processLifecycleScope
 import io.github.landwarderer.futon.suggestions.ui.SuggestionsWorker
 import io.github.landwarderer.futon.sync.work.SyncHealthWorker
 import io.github.landwarderer.futon.tracker.work.TrackWorker
+import io.github.landwarderer.futon.webviewsource.work.WebViewSourceUpdateWorker
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -20,6 +21,7 @@ class WorkScheduleManager @Inject constructor(
         private val appUpdateScheduler: AppUpdateWorker.Scheduler,
         private val syncHealthScheduler: SyncHealthWorker.Scheduler,
         private val remoteTemplateSyncScheduler: io.github.landwarderer.futon.customsource.work.RemoteTemplateSyncWorker.Scheduler,
+        private val webViewUpdateScheduler: WebViewSourceUpdateWorker.Scheduler,
 ) : SharedPreferences.OnSharedPreferenceChangeListener {
 
         override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
@@ -56,6 +58,7 @@ class WorkScheduleManager @Inject constructor(
                         updateWorkerImpl(appUpdateScheduler, true, false)
                         updateWorkerImpl(syncHealthScheduler, true, false)
                         updateWorkerImpl(remoteTemplateSyncScheduler, true, false)
+                        updateWorkerImpl(webViewUpdateScheduler, true, false)
                 }
         }
 

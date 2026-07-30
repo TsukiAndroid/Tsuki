@@ -172,7 +172,9 @@ class WebViewReaderActivity : AppCompatActivity() {
     // ── Load & resume ─────────────────────────────────────────────────────────
 
     private fun loadSource(source: WebViewSourceEntity) {
-        val startUrl = source.lastReadUrl ?: source.baseUrl
+        // Notifications pass a specific chapter URL via "start_url"; use it if present.
+        val overrideUrl = intent.getStringExtra("start_url")
+        val startUrl = overrideUrl ?: source.lastReadUrl ?: source.baseUrl
         binding.webView.loadUrl(startUrl)
     }
 

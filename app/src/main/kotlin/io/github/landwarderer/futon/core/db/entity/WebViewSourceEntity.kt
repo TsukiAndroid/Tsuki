@@ -75,6 +75,13 @@ data class WebViewSourceEntity(
     @ColumnInfo(name = "reading_status")
     val readingStatus: String?,
 
+    /**
+     * When false, the update worker skips this source and fires no notifications.
+     * Defaults to true so newly added sources are checked automatically.
+     */
+    @ColumnInfo(name = "notifications_enabled")
+    val notificationsEnabled: Boolean = true,
+
     /** Unix timestamp (ms) when this source was added. */
     @ColumnInfo(name = "added_at")
     val addedAt: Long,

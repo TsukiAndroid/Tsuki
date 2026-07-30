@@ -43,6 +43,9 @@ class WebViewSourceRepository @Inject constructor(
     suspend fun updateAnilistLink(id: Long, anilistId: Int, status: String?) =
         dao.updateAnilistLink(id, anilistId, status)
 
+    suspend fun setNotificationsEnabled(id: Long, enabled: Boolean) =
+        dao.setNotificationsEnabled(id, enabled)
+
     /**
      * Generates a stable Long ID from a URL string.
      * Use this whenever you need to create or look up a source by URL.

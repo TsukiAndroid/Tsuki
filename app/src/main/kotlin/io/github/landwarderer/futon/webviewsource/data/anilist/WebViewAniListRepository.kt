@@ -93,6 +93,29 @@ class WebViewAniListRepository @Inject constructor(
         )
     }.getOrNull()
 
+    /**
+     * Fetches the total chapter count for a given AniList media entry.
+     * Uses the public endpoint — no token required.
+     * Returns null on error or if AniList does not have a chapter count.
+     */
+    suspend fun fetchLatestChapterCount(mediaId: Int): Float? = runCatching {
+        val query = """
+            query (${'$'}id: Int) {
+              Media(id: ${'$'}id, type: MANGA) {
+                chapters
+              }
+            }
+        """.trimIndent()
+        val variables = JSONObject().put("id", mediaId)
+        val response = graphqlPost(query, variables)
+        response
+            .getJSONObject("data")
+            .getJSONObject("Media")
+            .optInt("chapters", -1)
+            .takeIf { it > 0 }
+            ?.toFloat()
+    }.getOrNull()
+
     // ── Internal ──────────────────────────────────────────────────────────────
 
     private suspend fun graphqlPost(query: String, variables: JSONObject): JSONObject {

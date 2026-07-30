@@ -1,12 +1,17 @@
 package io.github.landwarderer.futon.webviewsource.ui
 
+import android.content.Context
 import androidx.lifecycle.viewModelScope
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.landwarderer.futon.core.db.entity.WebViewSourceEntity
 import io.github.landwarderer.futon.core.ui.BaseViewModel
 import io.github.landwarderer.futon.webviewsource.data.ChapterPatternDetector
 import io.github.landwarderer.futon.webviewsource.data.OgTagFetcher
 import io.github.landwarderer.futon.webviewsource.data.WebViewSourceRepository
+import io.github.landwarderer.futon.webviewsource.work.WebViewSourceUpdateWorker
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -26,6 +31,7 @@ data class AddSourceUiState(
 class AddWebViewSourceViewModel @Inject constructor(
     private val repository: WebViewSourceRepository,
     private val ogFetcher: OgTagFetcher,
+    @ApplicationContext private val context: Context,
 ) : BaseViewModel() {
 
     private val _state = MutableStateFlow(AddSourceUiState())
@@ -69,6 +75,10 @@ class AddWebViewSourceViewModel @Inject constructor(
                 lastReadAt = null,
             )
             repository.save(entity)
+            // Kick off an immediate chapter check so the user sees accurate info right away.
+            WorkManager.getInstance(context).enqueue(
+                OneTimeWorkRequestBuilder<WebViewSourceUpdateWorker>().build(),
+            )
             _state.value = _state.value.copy(saved = true)
         }
     }
