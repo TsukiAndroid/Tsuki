@@ -14,6 +14,7 @@ import androidx.work.await
 import dagger.Reusable
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import io.github.landwarderer.futon.core.network.BaseHttpClient
 import io.github.landwarderer.futon.core.util.ext.awaitUniqueWorkInfoByName
 import io.github.landwarderer.futon.settings.work.PeriodicWorkScheduler
 import io.github.landwarderer.futon.webviewsource.data.WebViewSourceRepository
@@ -43,7 +44,7 @@ class WebViewSourceUpdateWorker @AssistedInject constructor(
     @Assisted workerParams: WorkerParameters,
     private val repository: WebViewSourceRepository,
     private val aniListRepository: WebViewAniListRepository,
-    private val okHttpClient: OkHttpClient,
+    @BaseHttpClient private val okHttpClient: OkHttpClient,
     private val notificationHelper: WebViewSourceNotificationHelper,
 ) : CoroutineWorker(context, workerParams) {
 
