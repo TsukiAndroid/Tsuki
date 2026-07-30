@@ -2837,3 +2837,53 @@ when it needs it via `menu.findItem(R.id.action_info)?.isVisible = true`.
 
 **Rule for future phases:** Never remove existing items from `opt_reader.xml`. The menu is
 shared between the WebView reader and the native manga reader. Add new items; never delete old ones.
+
+---
+
+## Constructor Fix — TapOrScrollOverlay — July 30 2026
+
+### Error
+
+```
+java.lang.NoSuchMethodException: <init> [class android.content.Context, interface android.util.AttributeSet]
+    at LayoutInflater.createView → WebViewReaderActivity.onCreate
+```
+
+### Root cause
+
+`TapOrScrollOverlay` was declared with only a single-argument constructor:
+
+```kotlin
+class TapOrScrollOverlay(context: Context) : View(context)
+```
+
+Android's `LayoutInflater` always calls the two-argument `(Context, AttributeSet)` constructor when it inflates a custom `View` from XML. Because that overload did not exist, inflation crashed with `NoSuchMethodException` every time `WebViewReaderActivity` was created.
+
+### Fix
+
+**File changed:** `app/src/main/kotlin/io/github/landwarderer/futon/webviewsource/ui/reader/TapOrScrollOverlay.kt`
+
+Replaced the single-arg constructor with the standard `@JvmOverloads` three-arg pattern:
+
+```kotlin
+class TapOrScrollOverlay @JvmOverloads constructor(
+    context: Context,
+    attrs: AttributeSet? = null,
+    defStyleAttr: Int = 0,
+) : View(context, attrs, defStyleAttr)
+```
+
+Added `import android.util.AttributeSet`.
+
+No other code was changed — all gesture-detector logic, callbacks, and `onTouchEvent` are identical to before.
+
+### Why `@JvmOverloads`
+
+Kotlin default parameters are invisible to Java callers (including `LayoutInflater`, which is Java). `@JvmOverloads` generates all three JVM constructor overloads:
+- `(Context)` — for programmatic instantiation
+- `(Context, AttributeSet)` — required by `LayoutInflater`
+- `(Context, AttributeSet, Int)` — required when the view is inside a styled context
+
+### Rule for future phases
+
+`TapOrScrollOverlay` is referenced in an XML layout. Any custom `View` used in a layout file **must** use `@JvmOverloads` (or manually declare all three constructors). Never declare a custom View with only `(context: Context)` if it will ever appear in XML.

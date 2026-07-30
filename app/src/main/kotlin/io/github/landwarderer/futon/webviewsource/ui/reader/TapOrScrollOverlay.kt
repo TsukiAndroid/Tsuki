@@ -1,6 +1,7 @@
 package io.github.landwarderer.futon.webviewsource.ui.reader
 
 import android.content.Context
+import android.util.AttributeSet
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
@@ -15,7 +16,11 @@ import androidx.core.view.GestureDetectorCompat
  * - Single tap in centre      → [onTapCenter]
  * - Scroll / fling            → forwarded to [webView] so the page still scrolls
  */
-class TapOrScrollOverlay(context: Context) : View(context) {
+class TapOrScrollOverlay @JvmOverloads constructor(
+    context: Context,
+    attrs: AttributeSet? = null,
+    defStyleAttr: Int = 0,
+) : View(context, attrs, defStyleAttr) {
 
     var onTapLeft: () -> Unit = {}
     var onTapRight: () -> Unit = {}
