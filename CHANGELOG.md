@@ -1,3 +1,11 @@
+## Alpha 1.785 (Build [#332](https://github.com/Space4414/Tsuki/actions/runs/30593809610))
+
+_2026-07-31 00:32 UTC_
+
+- remove: delete TapOrScrollOverlay and tap-zone chapter navigation (8a63873)
+- chore(l10n): update Bengali translation (522852f)
+
+
 ## Alpha 1.783 (Build [#331](https://github.com/Space4414/Tsuki/actions/runs/30557450720))
 
 _2026-07-30 15:36 UTC_
