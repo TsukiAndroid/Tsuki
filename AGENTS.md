@@ -2887,3 +2887,35 @@ Kotlin default parameters are invisible to Java callers (including `LayoutInflat
 ### Rule for future phases
 
 `TapOrScrollOverlay` is referenced in an XML layout. Any custom `View` used in a layout file **must** use `@JvmOverloads` (or manually declare all three constructors). Never declare a custom View with only `(context: Context)` if it will ever appear in XML.
+
+---
+
+## TapOrScrollOverlay Removal — July 30 2026
+
+### Motivation
+
+The tap-zone overlay (`TapOrScrollOverlay`) covered the entire WebView screen and consumed every touch event before they reached the page. This broke native link taps, in-page ads, dropdowns, and all interactive site elements on real manga sites like comick.live. The feature was removed entirely so the WebView gets 100% native touch handling with nothing on top of it.
+
+### Files changed
+
+| File | Change |
+|---|---|
+| `app/src/main/kotlin/…/reader/TapOrScrollOverlay.kt` | **Deleted** |
+| `app/src/main/res/layout/activity_webview_reader.xml` | Removed `<io.github.landwarderer.futon.webviewsource.ui.reader.TapOrScrollOverlay>` block (`android:id="@+id/tapOverlay"`) |
+| `app/src/main/kotlin/…/reader/WebViewReaderActivity.kt` | Removed `setupTapOverlay()` call from `onCreate`; deleted `setupTapOverlay()`, `navigateNextChapter()`, and `navigatePreviousChapter()` methods; updated KDoc |
+
+### What was kept
+
+- `toggleToolbar()` — still called by the 3-second auto-hide `postDelayed` in `onCreate`; that behaviour is unrelated to the tap overlay and was left intact.
+- `toolbarVisible` field — still needed by `toggleToolbar()`.
+- `ProgressJsBridge`, scroll-percent tracking, resume logic, AniList sync, notifications, `DEFAULT_CLEANUP_CSS`, custom CSS injection — untouched.
+
+### What was removed
+
+- `TapOrScrollOverlay` class (the custom `View` with `GestureDetectorCompat`).
+- `setupTapOverlay()` — wired `tapOverlay.onTapLeft → navigatePreviousChapter`, `onTapRight → navigateNextChapter`, `onTapCenter → toggleToolbar`.
+- `navigateNextChapter()` and `navigatePreviousChapter()` — were exclusively called from the tap-zone wiring; no toolbar buttons or other entry points existed for them.
+
+### Rule for future phases
+
+Do **not** re-add any full-screen transparent overlay above the WebView. If chapter navigation is re-introduced, wire it to explicit toolbar buttons or swipe gestures that do not intercept WebView touch events.

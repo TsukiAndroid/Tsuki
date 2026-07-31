@@ -40,13 +40,12 @@ import kotlinx.coroutines.launch
  * Full-screen WebView reader for WebView-as-Source entries.
  *
  * Phase 7 additions:
- *  - [TapOrScrollOverlay] intercepts taps: left = prev chapter, right = next, centre = toolbar
  *  - Default cleanup CSS hides headers/footers/ads on every page
  *  - Per-source [WebViewSourceEntity.customCss] injected after default CSS
  *  - Immersive fullscreen via [WindowInsetsController] (API 30+) / legacy flags
  *  - Brightness/dim overlay [binding.brightnessOverlay]
  *  - Volume keys mapped to WebView scroll
- *  - Toolbar auto-hides after 3 seconds; centre tap toggles it
+ *  - Toolbar auto-hides after 3 seconds
  *  - Overflow menu: Link AniList, Custom CSS, Notifications toggle, Open in browser
  */
 @AndroidEntryPoint
@@ -96,7 +95,6 @@ class WebViewReaderActivity : AppCompatActivity() {
         onBackPressedDispatcher.addCallback(this, webBackCallback)
 
         setupWebView()
-        setupTapOverlay()
         observeSource()
 
         // Auto-hide toolbar after 3 seconds
@@ -216,39 +214,7 @@ class WebViewReaderActivity : AppCompatActivity() {
         }
     }
 
-    // ── Tap overlay ───────────────────────────────────────────────────────────
 
-    private fun setupTapOverlay() {
-        binding.tapOverlay.webView = binding.webView
-        binding.tapOverlay.onTapLeft = { navigatePreviousChapter() }
-        binding.tapOverlay.onTapRight = { navigateNextChapter() }
-        binding.tapOverlay.onTapCenter = { toggleToolbar() }
-    }
-
-    // ── Chapter navigation ────────────────────────────────────────────────────
-
-    private fun navigateNextChapter() {
-        val source = viewModel.source.value ?: return
-        val current = viewModel.currentChapter ?: return
-        val next = if (current == current.toLong().toFloat()) {
-            current.toLong() + 1f
-        } else {
-            current + 1f
-        }
-        val url = io.github.landwarderer.futon.webviewsource.data.ChapterPatternDetector
-            .buildUrl(source.chapterUrlPattern, next) ?: return
-        binding.webView.loadUrl(url)
-    }
-
-    private fun navigatePreviousChapter() {
-        val source = viewModel.source.value ?: return
-        val current = viewModel.currentChapter ?: return
-        if (current <= 1f) return
-        val prev = (current - 1f).coerceAtLeast(1f)
-        val url = io.github.landwarderer.futon.webviewsource.data.ChapterPatternDetector
-            .buildUrl(source.chapterUrlPattern, prev) ?: return
-        binding.webView.loadUrl(url)
-    }
 
     // ── Toolbar toggle ────────────────────────────────────────────────────────
 

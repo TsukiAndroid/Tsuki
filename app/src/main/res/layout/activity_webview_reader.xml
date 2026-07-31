@@ -8,13 +8,6 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <!-- Tap / scroll intercept overlay — sits above WebView, below toolbar -->
-    <io.github.landwarderer.futon.webviewsource.ui.reader.TapOrScrollOverlay
-        android:id="@+id/tapOverlay"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@android:color/transparent" />
-
     <!-- Brightness / tint dim overlay — above everything, pointer passes through -->
     <View
         android:id="@+id/brightnessOverlay"
