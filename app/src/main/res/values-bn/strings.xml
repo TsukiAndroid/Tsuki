@@ -278,4 +278,25 @@
     <string name="auth_complete">অনুমোদিত</string>
     <string name="auth_not_supported_by">%s-এ লগ ইন করা সাপোর্টেড নয়</string>
     <string name="text_clear_cookies_prompt">আপনাকে সমস্ত সোর্স থেকে লগ আউট করা হবে</string>
+    <string name="genres">ধরন</string>
+    <string name="state_finished">শেষ হয়েছে</string>
+    <string name="state_ongoing">চলমান</string>
+    <string name="system_default">ডিফল্ট</string>
+    <string name="exclude_nsfw_from_history">হিস্ট্রি থেকে NSFW মাঙ্গা বাদ দিন</string>
+    <string name="show_pages_numbers">নম্বরযুক্ত পৃষ্ঠা</string>
+    <string name="screenshots_policy">স্ক্রিনশট পলিসি</string>
+    <string name="screenshots_allow">অনুমতি দিন</string>
+    <string name="screenshots_block_nsfw">NSFW ব্লক করুন</string>
+    <string name="screenshots_block_all">সবসময়ের জন্য ব্লক করুন</string>
+    <string name="suggestions">সাজেশনস</string>
+    <string name="suggestions_enable">সাজেশনস এনাবল করুন</string>
+    <string name="suggestions_summary">আপনার পছন্দের ওপর ভিত্তি করে মাঙ্গার সাজেশন নিন</string>
+    <string name="suggestions_info">সমস্ত ডেটা শুধুমাত্র এই ডিভাইসেই বিশ্লেষণ করা হয় এবং কখনোই অন্য কোথাও পাঠানো হয় না।</string>
+    <string name="text_suggestion_holder">মাঙ্গা পড়া শুরু করুন এবং আপনি আপনার পছন্দ অনুযায়ী সাজেশনস পাবেন।</string>
+    <string name="exclude_nsfw_from_suggestions">NSFW মাঙ্গা সাজেস্ট করবেন না</string>
+    <string name="enabled">Enabled</string>
+    <string name="disabled">Disabled</string>
+    <string name="reset_filter">ফিল্টার রিসেট</string>
+    <string name="enter_name">নাম লিখুন</string>
+    <string name="pinned_sources_only">শুধুমাত্র পিন করা উৎসসমূহ</string>
 </resources>
