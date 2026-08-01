@@ -10,7 +10,10 @@ import androidx.core.view.MenuProvider
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
 import androidx.core.view.updatePadding
+import android.content.Intent
 import dagger.hilt.android.AndroidEntryPoint
+import io.github.landwarderer.futon.extensions.ui.CreateExtensionActivity
+import io.github.landwarderer.futon.extensions.ui.ExtensionRepoActivity
 import io.github.landwarderer.futon.R
 import io.github.landwarderer.futon.core.ui.BaseActivity
 import io.github.landwarderer.futon.core.util.ext.observe
@@ -70,7 +73,19 @@ class ExtensionDownloaderActivity : BaseActivity<ActivityExtensionDownloaderBind
             searchView.queryHint = searchMenuItem.title
         }
 
-        override fun onMenuItemSelected(menuItem: MenuItem): Boolean = false
+        override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
+            return when (menuItem.itemId) {
+                R.id.action_create_extension -> {
+                    startActivity(Intent(this@ExtensionDownloaderActivity, CreateExtensionActivity::class.java))
+                    true
+                }
+                R.id.action_manage_repos -> {
+                    startActivity(Intent(this@ExtensionDownloaderActivity, ExtensionRepoActivity::class.java))
+                    true
+                }
+                else -> false
+            }
+        }
 
         override fun onMenuItemActionExpand(item: MenuItem): Boolean {
             return true

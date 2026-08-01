@@ -120,42 +120,61 @@ class ExtensionRepoService @Inject constructor(
 		}
 	}
 
-	suspend fun fetchAvailableExtensions(repo: ExternalExtensionRepo): List<RepoAvailableExtension> {
-		val indexUrl = "${repo.baseUrl}/index.min.json"
-		val requestUrl = applyMirror(indexUrl)
-		val startedAt = System.currentTimeMillis()
-		Log.d(TAG, "fetchAvailableExtensions:start type=${repo.type} url=$requestUrl")
-		return runCatching {
-			withTimeout(CATALOG_TIMEOUT_MS) {
-				val body = httpClient.newCall(GET(requestUrl)).awaitSuccess().use { response ->
-					response.body.string()
-				}
-				if (repo.type == ExternalExtensionType.IREADER) {
-					val dto = json.decodeFromString<List<IReaderExtensionIndexDto>>(body)
-					dto.asSequence()
-						.mapNotNull { item -> item.toAvailableExtension(repo) }
-						.toList()
-				} else {
-					val dto = json.decodeFromString<List<ExtensionIndexDto>>(body)
-					dto.asSequence()
-						.mapNotNull { item -> item.toAvailableExtension(repo) }
-						.toList()
-				}
-			}
-		}.onSuccess { extensions ->
-			Log.d(
-				TAG,
-				"fetchAvailableExtensions:success type=${repo.type} baseUrl=${repo.baseUrl} count=${extensions.size} elapsedMs=${System.currentTimeMillis() - startedAt}",
-			)
-		}.onFailure { error ->
-			Log.e(
-				TAG,
-				"fetchAvailableExtensions:failed type=${repo.type} baseUrl=${repo.baseUrl} elapsedMs=${System.currentTimeMillis() - startedAt} message=${error.message}",
-				error,
-			)
-		}.getOrDefault(emptyList())
-	}
-
+suspend fun fetchAvailableExtensions(repo: ExternalExtensionRepo): List<RepoAvailableExtension> {
+val startedAt = System.currentTimeMillis()
+// --- Keiyoushi v2: try index.json with the new extensionList.extensions schema first ---
+if (repo.type == ExternalExtensionType.MIHON || repo.type == ExternalExtensionType.ANIYOMI) {
+val newIndexUrl = applyMirror("${repo.baseUrl}/index.json")
+Log.d(TAG, "fetchAvailableExtensions:tryNewFormat type=${repo.type} url=$newIndexUrl")
+val newResult = runCatching {
+withTimeout(CATALOG_TIMEOUT_MS) {
+val body = httpClient.newCall(GET(newIndexUrl)).awaitSuccess().use { it.body.string() }
+val wrapper = json.decodeFromString<KeyyoushiIndexWrapperDto>(body)
+wrapper.extensionList?.extensions
+?.mapNotNull { it.toAvailableExtension(repo) }
+?.takeIf { it.isNotEmpty() }
+}
+}.getOrNull()
+if (newResult != null) {
+Log.d(TAG, "fetchAvailableExtensions:newFormatSuccess type=${repo.type} baseUrl=${repo.baseUrl} count=${newResult.size} elapsedMs=${System.currentTimeMillis() - startedAt}")
+return newResult
+}
+Log.d(TAG, "fetchAvailableExtensions:newFormatMissOrEmpty type=${repo.type} — falling back to index.min.json")
+}
+// --- Legacy format: index.min.json flat array ---
+val indexUrl = "${repo.baseUrl}/index.min.json"
+val requestUrl = applyMirror(indexUrl)
+Log.d(TAG, "fetchAvailableExtensions:start type=${repo.type} url=$requestUrl")
+return runCatching {
+withTimeout(CATALOG_TIMEOUT_MS) {
+val body = httpClient.newCall(GET(requestUrl)).awaitSuccess().use { response ->
+response.body.string()
+}
+if (repo.type == ExternalExtensionType.IREADER) {
+val dto = json.decodeFromString<List<IReaderExtensionIndexDto>>(body)
+dto.asSequence()
+.mapNotNull { item -> item.toAvailableExtension(repo) }
+.toList()
+} else {
+val dto = json.decodeFromString<List<ExtensionIndexDto>>(body)
+dto.asSequence()
+.mapNotNull { item -> item.toAvailableExtension(repo) }
+.toList()
+}
+}
+}.onSuccess { extensions ->
+Log.d(
+TAG,
+"fetchAvailableExtensions:success type=${repo.type} baseUrl=${repo.baseUrl} count=${extensions.size} elapsedMs=${System.currentTimeMillis() - startedAt}",
+)
+}.onFailure { error ->
+Log.e(
+TAG,
+"fetchAvailableExtensions:failed type=${repo.type} baseUrl=${repo.baseUrl} elapsedMs=${System.currentTimeMillis() - startedAt} message=${error.message}",
+error,
+)
+}.getOrDefault(emptyList())
+}
 	fun normalizeIndexUrl(input: String): String? {
 		val processUrl = input.trim()
 
@@ -292,6 +311,79 @@ class ExtensionRepoService @Inject constructor(
 		val version: String = "1.0",
 		val nsfw: Boolean = false,
 	)
+
+
+@Keep
+@Serializable
+private data class KeyyoushiIndexWrapperDto(
+val extensionList: KeyyoushiExtensionListDto? = null,
+)
+
+@Keep
+@Serializable
+private data class KeyyoushiExtensionListDto(
+val extensions: List<KeyyoushiExtensionItemDto> = emptyList(),
+)
+
+@Keep
+@Serializable
+private data class KeyyoushiExtensionItemDto(
+val name: String,
+val packageName: String,
+val resources: KeyyoushiResourcesDto,
+val extensionLib: String,
+val versionCode: String,
+val versionName: String,
+val contentWarning: String? = null,
+val sources: List<KeyyoushiSourceDto>? = null,
+)
+
+@Keep
+@Serializable
+private data class KeyyoushiResourcesDto(
+val apkUrl: String,
+val iconUrl: String,
+val jarUrl: String? = null,
+)
+
+@Keep
+@Serializable
+private data class KeyyoushiSourceDto(
+val name: String,
+val language: String,
+val id: String? = null,
+val homeUrl: String? = null,
+)
+
+private fun KeyyoushiExtensionItemDto.toAvailableExtension(repo: ExternalExtensionRepo): RepoAvailableExtension? {
+val lib = runCatching { extensionLib.toDouble() }.getOrNull() ?: return null
+val code = versionCode.toLongOrNull() ?: return null
+val supported = when (repo.type) {
+ExternalExtensionType.MIHON -> lib in MihonExtensionLoader.LIB_VERSION_MIN..MihonExtensionLoader.LIB_VERSION_MAX
+ExternalExtensionType.ANIYOMI -> lib in (1.2)..(1.9)
+else -> false
+}
+val displayName = name.removePrefix("Tachiyomi: ").removePrefix("Aniyomi: ")
+val apkFileName = resources.apkUrl  // full CDN URL; ExtensionInstallService detects https:// prefix
+val primaryLang = sources?.firstOrNull()?.language ?: "all"
+return RepoAvailableExtension(
+type = repo.type,
+name = displayName,
+pkgName = packageName,
+versionName = versionName,
+versionCode = code,
+libVersion = lib,
+lang = primaryLang,
+isNsfw = contentWarning?.contains("NSFW", ignoreCase = true) == true,
+sourceNames = sources.orEmpty().map { it.name },
+apkName = apkFileName,  // full URL for Keiyoushi v2
+iconUrl = applyMirror(resources.iconUrl),
+repoUrl = repo.baseUrl,
+repoName = repo.displayName,
+signatureHash = repo.signingKeyFingerprint,
+isCompatible = supported,
+)
+}
 
 	private companion object {
 		const val TAG = "ExtensionRepo"

@@ -2919,3 +2919,99 @@ The tap-zone overlay (`TapOrScrollOverlay`) covered the entire WebView screen an
 ### Rule for future phases
 
 Do **not** re-add any full-screen transparent overlay above the WebView. If chapter navigation is re-introduced, wire it to explicit toolbar buttons or swipe gestures that do not intercept WebView touch events.
+
+---
+
+## Keiyoushi Extension Fix + Dropdown Menu Fix — August 1 2026
+
+### Problems fixed
+
+#### 1. Extensions manager shows only "Outdated App / Update to Mihon 0.20.1+"
+
+Keiyoushi migrated their extension index to a new schema. The `repo` branch
+`index.min.json` (the URL the app was configured to fetch) now returns only two
+stub entries as a forced upgrade notice. The real 1,367 extensions are served from
+a brand-new `index.json` on the `main` branch with a completely different JSON schema.
+
+**Old URL (stub):**
+`https://raw.githubusercontent.com/keiyoushi/extensions/refs/heads/repo/index.min.json`
+
+**New URL (real extensions):**
+`https://raw.githubusercontent.com/keiyoushi/extensions/main/index.json`
+
+**Old schema (flat array):**
+```json
+[{ "pkg": "eu.kanade…", "apk": "tachiyomi-all.x.apk", "code": 4, "version": "1.6.4", "nsfw": 0, "sources": [{"name":"…"}] }]
+```
+
+**New schema (wrapped object, full URLs):**
+```json
+{
+  "extensionList": {
+    "extensions": [{
+      "packageName": "eu.kanade…",
+      "resources": { "apkUrl": "https://cdn.jsdelivr.net/…", "iconUrl": "https://…" },
+      "extensionLib": "1.6", "versionCode": "4", "versionName": "1.6.4",
+      "contentWarning": "CONTENT_WARNING_NSFW",
+      "sources": [{ "name": "…", "language": "all", "id": "…", "homeUrl": "…" }]
+    }]
+  }
+}
+```
+
+#### 2. Three-dot dropdown menu items ("Create Extension", "Manage Repos") did nothing
+
+`ExtensionDownloaderActivity`'s `ExtensionManagerMenuProvider.onMenuItemSelected`
+returned `false` unconditionally, so neither `action_create_extension` nor
+`action_manage_repos` ever fired.
+
+---
+
+### Files changed
+
+| File | Change |
+|---|---|
+| `mihon/extensions/repo/ExtensionRepoService.kt` | Added `KeyyoushiIndexWrapperDto` + 4 supporting DTOs; added `KeyyoushiExtensionItemDto.toAvailableExtension()`; updated `fetchAvailableExtensions` to try `index.json` (new format) first for MIHON/ANIYOMI, fall back to legacy `index.min.json` |
+| `mihon/extensions/install/ExtensionInstallService.kt` | APK URL construction now detects if `apkName` is already a full `https://` URL (Keiyoushi v2 CDN URLs) and skips the `${repoUrl}/apk/` prefix |
+| `core/db/DatabasePrePopulateCallback.kt` | Keiyoushi base URL updated to `main` branch; signing key updated to `9add655a…` |
+| `core/db/migrations/Migration31To32.kt` | **New** — updates any existing `external_extension_repos` row with the old `refs/heads/repo` URL to the new `main` URL + new signing key fingerprint |
+| `core/db/MangaDatabase.kt` | `DATABASE_VERSION` bumped 31 → 32; `Migration31To32` added to migrations array |
+| `settings/sources/extension/ExtensionDownloaderActivity.kt` | `onMenuItemSelected` now handles `action_create_extension` → `CreateExtensionActivity` and `action_manage_repos` → `ExtensionRepoActivity`; added missing `Intent`, `CreateExtensionActivity`, `ExtensionRepoActivity` imports |
+
+---
+
+### How the fetch fallback works
+
+```
+fetchAvailableExtensions(repo):
+  if type is MIHON or ANIYOMI:
+    GET ${baseUrl}/index.json
+    if response has extensionList.extensions (non-empty) → parse with new DTOs, return
+    else → log "falling back"
+  GET ${baseUrl}/index.min.json  ← legacy path for other repo types or repos without index.json
+  parse with old flat-array DTOs, return
+```
+
+For Keiyoushi's new `main` base URL, `index.json` is present and returns the full list →
+new path taken. For third-party repos that only have `index.min.json`, the fallback
+path is taken unchanged.
+
+### APK URL handling
+
+Old format: `apkName` was a filename (e.g. `tachiyomi-all.ahottie-v1.6.4.apk`).
+Install service prepended `${repoUrl}/apk/`.
+
+New format: `apkName` stores the full CDN URL from `resources.apkUrl`
+(e.g. `https://cdn.jsdelivr.net/gh/keiyoushi/extensions@repo/apk/…`).
+Install service now checks `apkName.startsWith("https://")` and uses it verbatim.
+
+### Rules for future phases
+
+- `DATABASE_VERSION` is now **32**. Any new column must use `Migration32To33`.
+- Keiyoushi base URL is `https://raw.githubusercontent.com/keiyoushi/extensions/main`.
+  Do **not** revert to `refs/heads/repo` — that branch now serves the stub only.
+- For any new extension repo type, add both a new DTO set and a new branch in
+  `fetchAvailableExtensions`. The fallback to `index.min.json` remains as the
+  last resort for third-party repos that haven't adopted the new schema.
+- `ExtensionDownloaderActivity` and `ExtensionsActivity` share `opt_extensions.xml`.
+  Both activities must handle all menu items in their own `onMenuItemSelected`.

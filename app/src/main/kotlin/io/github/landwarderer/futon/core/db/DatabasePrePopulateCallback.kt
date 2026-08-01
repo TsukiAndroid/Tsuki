@@ -27,11 +27,11 @@ class DatabasePrePopulateCallback(private val resources: Resources) : RoomDataba
 			"INSERT INTO external_extension_repos (type, baseUrl, name, shortName, website, signingKeyFingerprint, createdAt, updatedAt, lastSuccessAt) VALUES (?,?,?,?,?,?,?,?,?)",
 			arrayOf(
 				"MIHON",
-				"https://raw.githubusercontent.com/keiyoushi/extensions/refs/heads/repo",
+				"https://raw.githubusercontent.com/keiyoushi/extensions/main",
 				"Keiyoushi",
 				"Keiyoushi",
 				"https://keiyoushi.github.io/extensions",
-				"508c909405615d0234a41316b230230559f6b9a89c3f15c13b306b38c2306f50",
+				"9add655a78e96c4ec7a53ef89dccb557cb5d767489fac5e785d671a5a75d4da2",
 				now,
 				now,
 				now,

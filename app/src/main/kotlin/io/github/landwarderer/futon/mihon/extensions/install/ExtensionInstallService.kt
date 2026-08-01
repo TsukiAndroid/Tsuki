@@ -55,7 +55,11 @@ class ExtensionInstallService @Inject constructor(
 	val downloadStates: StateFlow<Map<String, ExtensionInstallDownloadState>> = _downloadStates.asStateFlow()
 
 	suspend fun createInstallIntent(extension: RepoAvailableExtension): Intent? = withContext(Dispatchers.IO) {
-		val apkUrl = applyMirror("${extension.repoUrl}/apk/${extension.apkName}")
+		val apkUrl = if (extension.apkName.startsWith("https://") || extension.apkName.startsWith("http://")) {
+            applyMirror(extension.apkName)
+        } else {
+            applyMirror("${extension.repoUrl}/apk/${extension.apkName}")
+        }
 		val outputDir = File(context.cacheDir, "extension-installs").apply { mkdirs() }
 		val outputFile = File(outputDir, "${extension.pkgName}-${extension.versionCode}.apk")
 		val call = httpClient.newCachelessCallWithProgress(GET(apkUrl), ExtensionInstallProgressListener(extension.pkgName))
