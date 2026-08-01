@@ -1,3 +1,15 @@
+## Beta 1.5.4 (Build [#10](https://github.com/Space4414/Tsuki/actions/runs/30722207317))
+
+_2026-08-01 22:53 UTC_
+
+- fix: update Keiyoushi extension index to new v2 schema + fix dropdown menu (387c44d)
+- chore(l10n): update Bengali translation (62e043c)
+- remove: delete TapOrScrollOverlay and tap-zone chapter navigation (8a63873)
+- chore(l10n): update Bengali translation (522852f)
+- chore(l10n): update Chinese (Simplified Han script) translation (6d854bc)
+- chore(l10n): update Bengali translation (270c9c9)
+
+
 ## Alpha 1.790 (Build [#334](https://github.com/Space4414/Tsuki/actions/runs/30721513738))
 
 _2026-08-01 22:33 UTC_
