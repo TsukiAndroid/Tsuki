@@ -1,3 +1,11 @@
+## Alpha 1.793 (Build [#335](https://github.com/Space4414/Tsuki/actions/runs/30723530965))
+
+_2026-08-01 23:32 UTC_
+
+- fix(plugins): support tsuki/UMA factory format in PluginLoader (cd97d47)
+- fix: update Keiyoushi extension index to new v2 schema + fix dropdown menu (387c44d)
+
+
 ## Beta 1.5.4 (Build [#10](https://github.com/Space4414/Tsuki/actions/runs/30722207317))
 
 _2026-08-01 22:53 UTC_
