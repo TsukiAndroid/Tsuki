@@ -3015,3 +3015,89 @@ Install service now checks `apkName.startsWith("https://")` and uses it verbatim
   last resort for third-party repos that haven't adopted the new schema.
 - `ExtensionDownloaderActivity` and `ExtensionsActivity` share `opt_extensions.xml`.
   Both activities must handle all menu items in their own `onMenuItemSelected`.
+
+---
+
+## Session — August 1 2026 — Fix JAR Plugin Loading (UMA / tsuki format)
+
+### Problem
+
+Both import paths showed errors:
+- **GitHub import** (`InvalidDavid/UMA`): "Downloaded file is not a valid plugin JAR"
+- **File picker import**: "File does not appear to be a valid plugin JAR"
+
+Both errors were thrown when `PluginLoader.loadPlugin()` returned `null`.
+
+### Root cause analysis
+
+Inspection of the UMA `.jar` file revealed the following structure:
+```
+classes.dex                       ← DEX bytecode (pre-compiled, loadable by DexClassLoader)
+META-INF/plugins.kotlin_module    ← Kotlin module metadata (NOT plugin.json)
+tsuki/site/...                    ← parser resource directories
+assets/i18n/...                   ← i18n strings
+```
+
+Key findings:
+1. **No `META-INF/plugin.json`** — `readManifest()` returned null; `entryClass` not found.
+2. **Wrong entry class names** — `KNOWN_ENTRY_CLASSES` listed `uma.plugin.PluginFactory`, `com.invalidd.uma.Plugin`, etc. None of these exist in the UMA jar.
+3. **UMA uses the KSP factory pattern**, not a plugin singleton with `getSources()`. The plugin has:
+   - `tsuki.MangaParserFactoryKt` — static factory class with `newParser(MangaParserSource, MangaLoaderContext): MangaParser`
+   - `tsuki.model.MangaParserSource` — enum whose constants each represent one manga source
+   - `tsuki.MangaLoaderContext` — interface for the network/http context
+4. **Wrong context class lookup** — `tryInstantiate()` tried `classLoader.loadClass("org.koitharu.kotatsu.parsers.MangaLoaderContext")` but UMA uses the `tsuki.*` package; the class does not exist under the `org.koitharu.*` name in the plugin classloader.
+
+This was confirmed by reading Usagi's `MangaDynamicRepository.kt`, which is the reference implementation for loading these plugins.
+
+### Fix
+
+Three files were changed:
+
+#### `PluginLoader.kt` — complete rewrite of the loading strategy
+
+- Added **Strategy 1: tsuki/UMA factory format** (`tryLoadTsukiFormat()`):
+  - Tries `tsuki.MangaParserFactoryKt` + `tsuki.model.MangaParserSource` + `tsuki.MangaLoaderContext` first.
+  - Falls back to the older `org.koitharu.kotatsu.parsers.*` package names.
+  - Resolves the static `newParser(enumClass, ctxClass)` method via reflection.
+  - Creates a `java.lang.reflect.Proxy` wrapping the host's `MangaLoaderContext` so it appears as the plugin's `tsuki.MangaLoaderContext` interface. This bridges the classloader boundary.
+  - Enumerates `MangaParserSource.values()` to discover all sources; reads `title` and `locale` via reflection.
+  - Returns a `LoadedPlugin` with `newParserMethod`, `sourceEnumClass`, and `loaderContextProxy` populated.
+- **Strategy 2: legacy reflection format** (`tryLoadLegacyFormat()`) is unchanged in behaviour; it's now a fallback after Strategy 1.
+- Renamed `KNOWN_ENTRY_CLASSES` → `LEGACY_ENTRY_CLASSES` to clarify scope.
+- `tryInstantiate()` renamed to `tryInstantiateLegacy()` and now also tries `MangaLoaderContext::class.java` (the host's type) directly before the classloader lookup.
+
+#### `LoadedPlugin.kt` — added UMA/tsuki format fields
+
+Added three nullable fields (default null = legacy format):
+- `newParserMethod: java.lang.reflect.Method?` — the static factory method
+- `sourceEnumClass: Class<*>?` — the `MangaParserSource` enum class from the plugin classloader
+- `loaderContextProxy: Any?` — the Proxy wrapping the host's `MangaLoaderContext`
+- Added `isTsukiFormat: Boolean` computed property (`newParserMethod != null && sourceEnumClass != null`)
+
+#### `PluginMangaRepository.kt` — two-path parser resolution
+
+- `getParserForSource()` now dispatches to:
+  - `getParserViaTsukiFactory()` when `loadedPlugin.isTsukiFormat`
+  - `getParserViaLegacyReflection()` for legacy plugins (identical to previous code)
+- `getParserViaTsukiFactory()` calls `newParserMethod.invoke(null, enumConstant, loaderContextProxy)` to create a fresh parser per call.
+
+### Architecture decisions
+
+- **Proxy bridge for MangaLoaderContext**: The host app uses `org.koitharu.kotatsu.parsers.MangaLoaderContext`; UMA uses `tsuki.MangaLoaderContext`. Since both classloaders are separate, direct casting is impossible. A `java.lang.reflect.Proxy` bridges them by forwarding method calls by name+arity. This pattern is consistent with how Usagi wraps plugin parsers back into its own `MangaParser` interface.
+- **Strategy ordering**: tsuki format is tried first because UMA and all modern Usagi-compatible plugins use it. Legacy format is the fallback for any pre-KSP plugins.
+- **No change to download logic**: The GitHub download (`PluginDownloader.downloadFromGithub`) already fetches the first `.jar` asset from the latest release, which is correct for UMA. The failure was purely in the validation/loading step.
+
+### Rules for future agents
+
+- UMA and similar Usagi-ecosystem plugins use the KSP-generated factory pattern. **Do not** expect `META-INF/plugin.json` or a root plugin class with `getSources()` from these plugins.
+- The three required classes are `tsuki.MangaParserFactoryKt`, `tsuki.model.MangaParserSource`, and `tsuki.MangaLoaderContext`. Older variants use `org.koitharu.kotatsu.parsers.*` equivalents.
+- `LoadedPlugin.isTsukiFormat` is the canonical check for which loading path was used.
+- Never try to pass the host's `MangaLoaderContext` directly to a plugin method; always use `loaderContextProxy` which was created from the plugin's own classloader.
+
+### Files changed
+
+| File | Change |
+|---|---|
+| `app/src/main/kotlin/.../plugins/data/PluginLoader.kt` | Added tsuki/UMA factory loading strategy; refactored legacy strategy as fallback |
+| `app/src/main/kotlin/.../plugins/domain/LoadedPlugin.kt` | Added `newParserMethod`, `sourceEnumClass`, `loaderContextProxy`, `isTsukiFormat` |
+| `app/src/main/kotlin/.../plugins/data/PluginMangaRepository.kt` | Two-path `getParserForSource()` dispatching on `isTsukiFormat` |

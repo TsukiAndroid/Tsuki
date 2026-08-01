@@ -16,9 +16,20 @@ import io.github.landwarderer.futon.core.parser.MangaRepository
 /**
  * Bridges a loaded JAR plugin source to the app's [MangaRepository] interface.
  *
- * All calls are delegated to the underlying plugin instance via reflection.
- * Every call is wrapped in [runCatching] so a misbehaving plugin can never
- * crash the app — errors are logged and empty/default values are returned.
+ * Supports two plugin formats:
+ *
+ * **Tsuki/UMA factory format** ([LoadedPlugin.isTsukiFormat] == true):
+ * - Each call creates a fresh parser via `MangaParserFactoryKt.newParser(source, ctx)`.
+ * - The `source` enum constant is looked up from [LoadedPlugin.sourceEnumClass] by
+ *   matching [source.sourceName] to the enum constant's `name()`.
+ * - All method calls on the parser are made by reflection, bridging the host's model
+ *   types to the plugin's types by matching on method name + parameter count.
+ *
+ * **Legacy reflection format** ([LoadedPlugin.isTsukiFormat] == false):
+ * - Calls `getSources()` / `getParsers()` on [LoadedPlugin.pluginInstance] and picks
+ *   the source matching [sourceName].
+ *
+ * Every call is wrapped in [runCatching] so a misbehaving plugin can never crash the app.
  */
 class PluginMangaRepository(
     override val source: PluginMangaSource,
@@ -99,17 +110,56 @@ class PluginMangaRepository(
     override suspend fun getRelated(seed: Manga): List<Manga> = emptyList()
 
     // -------------------------------------------------------------------------
-    // Reflection helpers
+    // Parser resolution — two paths based on plugin format
     // -------------------------------------------------------------------------
 
     /**
-     * Finds the parser/source object within the loaded plugin that corresponds
-     * to this repository's [sourceName].
+     * Returns the live parser object for [sourceName].
+     *
+     * For tsuki/UMA format plugins, this creates a fresh parser via the factory method.
+     * For legacy format plugins, this locates the matching source from the plugin instance.
      */
     private fun getParserForSource(): Any? {
+        return if (loadedPlugin.isTsukiFormat) {
+            getParserViaTsukiFactory()
+        } else {
+            getParserViaLegacyReflection()
+        }
+    }
+
+    /**
+     * Creates a parser for [sourceName] using the factory method stored in [LoadedPlugin].
+     *
+     * Calls `MangaParserFactoryKt.newParser(enumConstant, loaderContextProxy)` via reflection.
+     */
+    private fun getParserViaTsukiFactory(): Any? {
+        val method  = loadedPlugin.newParserMethod   ?: return null
+        val enumCls = loadedPlugin.sourceEnumClass   ?: return null
+        val ctx     = loadedPlugin.loaderContextProxy
+
+        val enumConstant = enumCls.enumConstants
+            ?.firstOrNull { (it as? Enum<*>)?.name == sourceName }
+            ?: run {
+                Log.w(TAG, "getParserViaTsukiFactory: enum constant '$sourceName' not found")
+                return null
+            }
+
+        return runCatching {
+            // newParser is a static Kotlin extension function compiled to a static JVM method
+            method.invoke(null, enumConstant, ctx)
+        }.getOrElse { e ->
+            Log.e(TAG, "getParserViaTsukiFactory failed for $sourceName: ${e.message}", e)
+            null
+        }
+    }
+
+    /**
+     * Finds the parser/source object within the loaded plugin that corresponds
+     * to this repository's [sourceName]. Used for legacy-format plugins.
+     */
+    private fun getParserViaLegacyReflection(): Any? {
         val plugin = loadedPlugin.pluginInstance ?: return null
         return runCatching {
-            // Try to get a named source from the plugin
             for (getter in listOf("getSource", "getParser", "getSources", "getParsers")) {
                 val raw = runCatching {
                     plugin.javaClass.getMethod(getter).invoke(plugin)
@@ -117,7 +167,6 @@ class PluginMangaRepository(
 
                 when (raw) {
                     is List<*> -> {
-                        // Find the source matching our name
                         val match = raw.firstOrNull { src ->
                             src != null && reflectName(src) == sourceName
                         }
@@ -129,10 +178,14 @@ class PluginMangaRepository(
             }
             plugin
         }.getOrElse { e ->
-            Log.w(TAG, "getParserForSource failed: ${e.message}")
+            Log.w(TAG, "getParserViaLegacyReflection failed: ${e.message}")
             null
         }
     }
+
+    // -------------------------------------------------------------------------
+    // Reflection helpers
+    // -------------------------------------------------------------------------
 
     private fun reflectName(obj: Any): String? =
         runCatching { obj.javaClass.getMethod("name").invoke(obj) as? String }.getOrNull()
