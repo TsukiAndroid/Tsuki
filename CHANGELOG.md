@@ -1,3 +1,11 @@
+## Alpha 1.790 (Build [#334](https://github.com/Space4414/Tsuki/actions/runs/30721513738))
+
+_2026-08-01 22:33 UTC_
+
+- fix: update Keiyoushi extension index to new v2 schema + fix dropdown menu (387c44d)
+- chore(l10n): update Bengali translation (62e043c)
+
+
 ## Alpha 1.788 (Build [#333](https://github.com/Space4414/Tsuki/actions/runs/30686986275))
 
 _2026-08-01 06:03 UTC_
