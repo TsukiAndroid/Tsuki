@@ -1,3 +1,11 @@
+## Alpha 1.788 (Build [#333](https://github.com/Space4414/Tsuki/actions/runs/30686986275))
+
+_2026-08-01 06:03 UTC_
+
+- chore(l10n): update Bengali translation (62e043c)
+- remove: delete TapOrScrollOverlay and tap-zone chapter navigation (8a63873)
+
+
 ## Beta 1.5.3 (Build [#8](https://github.com/Space4414/Tsuki/actions/runs/30595715126))
 
 _2026-07-31 01:12 UTC_
