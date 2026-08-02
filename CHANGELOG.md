@@ -1,3 +1,11 @@
+## Alpha 1.795 (Build [#336](https://github.com/Space4414/Tsuki/actions/runs/30745440964))
+
+_2026-08-02 11:17 UTC_
+
+- Fix plugin sources: names, icons, navigation, explore tab section (18c5f0c)
+- fix(plugins): support tsuki/UMA factory format in PluginLoader (cd97d47)
+
+
 ## Alpha 1.793 (Build [#335](https://github.com/Space4414/Tsuki/actions/runs/30723530965))
 
 _2026-08-01 23:32 UTC_
