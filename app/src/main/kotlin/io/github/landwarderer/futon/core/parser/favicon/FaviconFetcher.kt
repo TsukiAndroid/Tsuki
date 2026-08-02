@@ -68,6 +68,11 @@ class FaviconFetcher(
 			is LocalMangaRepository -> imageLoader.fetch(R.drawable.ic_storage, options)
 			is MihonMangaRepository -> fetchMihonIcon(repo)
 
+			// JAR plugin sources don't have a network favicon — throw so FaviconView
+			// falls back to the letter-avatar FaviconDrawable using the source's display name.
+			is io.github.landwarderer.futon.plugins.data.PluginMangaRepository ->
+				throw NoSuchElementException("Plugin source has no favicon: ${mangaSource.name}")
+
 			else -> throw IllegalArgumentException("Unsupported repo ${repo.javaClass.simpleName}")
 		}
 	}

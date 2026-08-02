@@ -149,12 +149,12 @@ class ExploreFragment :
         }
 
         override fun onListHeaderClick(item: ListHeader, view: View) {
-                if (item.payload == R.id.nav_suggestions) {
-                        router.openSuggestions()
-                } else if (viewModel.isAllSourcesEnabled.value) {
-                        router.openManageSources()
-                } else {
-                        router.openSourcesCatalog()
+                when {
+                        item.payload == R.id.nav_suggestions -> router.openSuggestions()
+                        // "Plugin Sources" section header — opens the plugin manager screen
+                        item.payload == R.string.manage_plugins -> router.openManagePlugins()
+                        viewModel.isAllSourcesEnabled.value -> router.openManageSources()
+                        else -> router.openSourcesCatalog()
                 }
         }
 

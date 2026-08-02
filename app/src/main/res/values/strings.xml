@@ -1460,6 +1460,8 @@
     <!-- JAR Plugin System -->
     <string name="manage_plugins">Manage Plugins</string>
     <string name="manage_plugins_summary">Install and manage JAR plugins for additional manga sources</string>
+    <string name="plugin_sources">Plugin Sources</string>
+    <string name="plugin_sources_empty">No JAR plugins installed.\nUse Manage Plugins to add one.</string>
     <string name="plugins">Plugins</string>
     <string name="add_plugin">Add Plugin</string>
     <string name="no_plugins_installed">No plugins installed</string>

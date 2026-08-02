@@ -157,21 +157,33 @@ class ExploreViewModel @Inject constructor(
 		allSourcesEnabled: Boolean,
 		hasNewSources: Boolean,
 	): List<ListModel> {
-		android.util.Log.d("TsukiSourceDebug", "ExploreViewModel.buildList: sources.size=${sources.size}")
-		val result = ArrayList<ListModel>(sources.size + 3)
+		// Separate JAR plugin sources from built-in / external sources so they get
+		// their own labelled section, making it clear to the user which sources come
+		// from installed plugins vs the built-in Kotatsu-parsers catalogue.
+		val pluginSources = sources.filter {
+			it.mangaSource is io.github.landwarderer.futon.plugins.domain.PluginMangaSource
+		}
+		val regularSources = sources.filter {
+			it.mangaSource !is io.github.landwarderer.futon.plugins.domain.PluginMangaSource
+		}
+
+		val result = ArrayList<ListModel>(sources.size + 5)
 		result += ExploreButtons(randomLoading)
 		if (recommendation.isNotEmpty()) {
 			result += ListHeader(R.string.suggestions, R.string.more, R.id.nav_suggestions)
 			result += RecommendationsItem(recommendation.toRecommendationList())
 		}
-		if (sources.isNotEmpty()) {
+
+		// ── Built-in / external sources section ──────────────────────────────────
+		if (regularSources.isNotEmpty()) {
 			result += ListHeader(
 				textRes = R.string.remote_sources,
 				buttonTextRes = if (allSourcesEnabled) R.string.manage else R.string.catalog,
 				badge = if (!allSourcesEnabled && hasNewSources) "" else null,
 			)
-			sources.mapTo(result) { MangaSourceItem(it, isGrid) }
-		} else {
+			regularSources.mapTo(result) { MangaSourceItem(it, isGrid) }
+		} else if (pluginSources.isEmpty()) {
+			// Only show empty-state when there are no sources at all
 			result += EmptyHint(
 				icon = R.drawable.ic_empty_common,
 				textPrimary = R.string.no_manga_sources,
@@ -179,6 +191,19 @@ class ExploreViewModel @Inject constructor(
 				actionStringRes = R.string.catalog,
 			)
 		}
+
+		// ── JAR plugin sources section ────────────────────────────────────────────
+		if (pluginSources.isNotEmpty()) {
+			result += ListHeader(
+				textRes = R.string.plugin_sources,
+				buttonTextRes = R.string.manage_plugins,
+				// Payload lets ExploreFragment distinguish this button from
+				// the built-in sources "Manage / Catalog" button.
+				payload = R.string.manage_plugins,
+			)
+			pluginSources.mapTo(result) { MangaSourceItem(it, isGrid) }
+		}
+
 		return result
 	}
 

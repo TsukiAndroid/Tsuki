@@ -42,8 +42,12 @@ class FaviconView @JvmOverloads constructor(
 	}
 
 	fun setImageAsync(mangaSource: MangaSource): Disposable {
+		// Use the human-readable display name as the letter seed for JAR plugin sources
+		// so the avatar shows e.g. "S" (Sugar Daddy) rather than "P" (PLUGIN_…).
+		val letterSeed = (mangaSource as? io.github.landwarderer.futon.plugins.domain.PluginMangaSource)
+			?.displayName ?: mangaSource.name
 		val fallbackFactory: (ImageRequest) -> Image? = {
-			FaviconDrawable(context, iconStyle, mangaSource.name).asImage()
+			FaviconDrawable(context, iconStyle, letterSeed).asImage()
 		}
 		val placeholderFactory: (ImageRequest) -> Image? = if (context.isAnimationsEnabled) {
 			{ AnimatedFaviconDrawable(context, iconStyle, mangaSource.name).asImage() }

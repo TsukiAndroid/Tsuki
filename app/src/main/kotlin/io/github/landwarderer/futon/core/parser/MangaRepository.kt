@@ -228,7 +228,16 @@ interface MangaRepository {
                                                 )
                                         }
                                 }
+                                // Source was serialised by name (e.g. via Intent extra) and
+                                // reconstructed as AnonymousMangaSource. Try to find the live
+                                // PluginMangaSource from pluginManager so we can serve it properly.
                                 if (io.github.landwarderer.futon.plugins.domain.PluginMangaSource.isPluginSourceName(source.name)) {
+                                        val liveSource = pluginManager?.pluginSources?.value
+                                                ?.firstOrNull { it.name == source.name }
+                                        if (liveSource != null) {
+                                                return pluginManager?.createRepositoryForSource(liveSource)
+                                                        ?: EmptyMangaRepository(source)
+                                        }
                                         return EmptyMangaRepository(source)
                                 }
                                 null

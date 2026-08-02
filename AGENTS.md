@@ -3101,3 +3101,70 @@ Added three nullable fields (default null = legacy format):
 | `app/src/main/kotlin/.../plugins/data/PluginLoader.kt` | Added tsuki/UMA factory loading strategy; refactored legacy strategy as fallback |
 | `app/src/main/kotlin/.../plugins/domain/LoadedPlugin.kt` | Added `newParserMethod`, `sourceEnumClass`, `loaderContextProxy`, `isTsukiFormat` |
 | `app/src/main/kotlin/.../plugins/data/PluginMangaRepository.kt` | Two-path `getParserForSource()` dispatching on `isTsukiFormat` |
+
+---
+
+## Session 3 — Plugin sources: names, icons, "not supported" error, explore tab section
+
+### Problems reported
+
+1. **"Unknown" source names** — all plugin sources displayed as "Unknown" in the explore tab and manga details.
+2. **Blank white icons** — plugin source icons were solid white squares instead of letter-avatar placeholders.
+3. **"This manga source is not supported"** — tapping a plugin source showed the unsupported error screen.
+
+### Root causes
+
+#### Bug 1 — "Unknown" names
+`MangaSource.getTitle()` (`core/model/MangaSource.kt`) had no `when` branch for `PluginMangaSource`; it fell through to `else → R.string.unknown`. Similarly `getSummary()` had no branch for it.
+
+#### Bug 2 — White icons
+`FaviconFetcher.fetch()` reconstructs the source from the URI scheme-specific part by calling `MangaSource("PLUGIN_...")`. The `MangaSource(name)` factory had no `PLUGIN_` case, so it returned `UnknownMangaSource`. `MangaRepository.Factory.create(UnknownMangaSource)` returns `EmptyMangaRepository` immediately (line 110). Back in `FaviconFetcher`, the `EmptyMangaRepository` branch returned `ColorImage(Color.WHITE)` — a raw white image. Because fetch "succeeded", the `FaviconView` fallback drawable (`FaviconDrawable`) was never invoked.
+
+Additionally, even when the fallback did fire, it used `mangaSource.name` (`PLUGIN_uma_SUGAR_DADDY`) as the letter seed, producing "P" instead of the actual source initial.
+
+#### Bug 3 — "Not supported" when tapping
+`AppRouter.openList()` serialises the source as `source.name` string via `putExtra(KEY_SOURCE, source.name)`. The receiving activity reconstructs it with `MangaSource("PLUGIN_...")`. Because the factory returned `UnknownMangaSource`, `MangaRepository.Factory.create()` hit the `UnknownMangaSource → EmptyMangaRepository` path at line 110 — then `EmptyMangaRepository.getList()` throws `UnsupportedSourceException` → "This manga source is not supported".
+
+### Fixes applied
+
+#### `core/model/MangaSource.kt`
+- **`MangaSource(name)` factory**: added a `PLUGIN_` prefix check that returns `AnonymousMangaSource(name)` (name preserved) instead of falling through to `UnknownMangaSource`. This ensures the name survives deserialization and reaches `MangaRepository.Factory.createRepository()` for proper routing.
+- **`getTitle()`**: added `is PluginMangaSource -> source.displayName`.
+- **`getSummary()`**: added `is PluginMangaSource -> source.pluginDisplayName` (shows the plugin name, e.g. "UMA", as subtitle).
+
+#### `core/parser/MangaRepository.kt` (Factory.createRepository — else branch)
+When `isPluginSourceName(source.name)` matches an `AnonymousMangaSource` (deserialized from Intent), the code now looks up the live `PluginMangaSource` from `pluginManager.pluginSources.value` by exact name match, then calls `createRepositoryForSource()` on it. Falls back to `EmptyMangaRepository` only if the plugin is no longer installed.
+
+#### `core/parser/favicon/FaviconFetcher.kt`
+Added `is PluginMangaRepository -> throw NoSuchElementException("Plugin source has no favicon")` before the catch-all `throw`. Throwing causes Coil to invoke the `error` handler in `FaviconView`, which renders the `FaviconDrawable` letter avatar — the correct behaviour.
+
+#### `core/ui/image/FaviconView.kt`
+Changed the `fallbackFactory` to derive `letterSeed` from `(mangaSource as? PluginMangaSource)?.displayName ?: mangaSource.name`. Plugin sources now show their display-name initial (e.g. "S" for "Sugar Daddy") not "P" from the `PLUGIN_` prefix.
+
+#### Explore tab — separate plugin sources section (`explore/ui/ExploreViewModel.kt`)
+`buildList()` now partitions `sources` into `pluginSources` (where `mangaSource is PluginMangaSource`) and `regularSources`. Regular sources are shown under "Manga sources" as before. Plugin sources are shown under a new **"Plugin Sources"** section header with a "Manage Plugins" button that navigates to `ManagePluginsActivity`.
+
+#### `explore/ui/ExploreFragment.kt`
+`onListHeaderClick()` updated with a `when` block: payload `R.string.manage_plugins` → `router.openManagePlugins()`, payload `R.id.nav_suggestions` → `router.openSuggestions()`, otherwise → existing manage/catalog logic.
+
+#### `app/src/main/res/values/strings.xml`
+Added `plugin_sources` ("Plugin Sources") and `plugin_sources_empty` strings.
+
+### Architecture rules for future agents
+
+- **Never call `MangaSource(name)` and expect a `PluginMangaSource`** — the factory returns `AnonymousMangaSource`. Use `pluginManager.pluginSources.value.firstOrNull { it.name == name }` to get the live object.
+- **`PluginMangaSource` is not Parcelable** — it cannot survive Intent serialization directly. Always reconstruct from `pluginManager` on the receiving end.
+- `FaviconFetcher` must have a case for every `MangaRepository` subtype; an unhandled type throws `IllegalArgumentException` at fetch time, not at startup.
+- The explore tab "Plugin Sources" section is driven purely from `observeEnabledSources()` (which already includes plugin sources). No additional flow injection into `ExploreViewModel` was needed.
+
+### Files changed
+
+| File | Change |
+|---|---|
+| `app/src/main/kotlin/.../core/model/MangaSource.kt` | `MangaSource()` factory: `PLUGIN_` → `AnonymousMangaSource`; `getTitle()` + `getSummary()` plugin branches |
+| `app/src/main/kotlin/.../core/parser/MangaRepository.kt` | else branch: reconstruct live `PluginMangaSource` from `pluginManager` for deserialized sources |
+| `app/src/main/kotlin/.../core/parser/favicon/FaviconFetcher.kt` | `PluginMangaRepository` case: throw → triggers `FaviconDrawable` fallback |
+| `app/src/main/kotlin/.../core/ui/image/FaviconView.kt` | Use `displayName` as letter seed for `PluginMangaSource` |
+| `app/src/main/kotlin/.../explore/ui/ExploreViewModel.kt` | Partition sources; add "Plugin Sources" section header |
+| `app/src/main/kotlin/.../explore/ui/ExploreFragment.kt` | `onListHeaderClick`: route `manage_plugins` payload to `openManagePlugins()` |
+| `app/src/main/res/values/strings.xml` | Added `plugin_sources`, `plugin_sources_empty` |

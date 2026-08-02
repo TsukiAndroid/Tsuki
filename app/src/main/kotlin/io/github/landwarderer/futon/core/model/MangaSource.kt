@@ -63,6 +63,11 @@ fun MangaSource(name: String?): MangaSource {
                 if (ext != null) return ExtensionMangaSource(ext)
                 return AnonymousMangaSource(name)
         }
+        if (name.startsWith(io.github.landwarderer.futon.plugins.domain.PluginMangaSource.NAME_PREFIX)) {
+                // Preserve the serialised name so MangaRepository.Factory can reconstruct
+                // a PluginMangaRepository from pluginManager.pluginSources at call time.
+                return AnonymousMangaSource(name)
+        }
         MangaParserSource.entries.forEach {
                 if (it.name == name) return it
         }
@@ -115,6 +120,8 @@ fun MangaSource.getSummary(context: Context): String? = when (val source = unwra
 
         is ExternalMangaSource -> context.getString(R.string.external_source)
 
+        is io.github.landwarderer.futon.plugins.domain.PluginMangaSource -> source.pluginDisplayName
+
         is CustomMangaSource -> {
                 val domain = runCatching {
                         java.net.URI(source.source.baseUrl).host?.removePrefix("www.")
@@ -160,6 +167,7 @@ fun MangaSource.getTitle(context: Context): String = when (val source = unwrap()
         is MihonMangaSource -> source.displayName
         is CustomMangaSource -> source.displayTitle
         is ExtensionMangaSource -> source.displayTitle
+        is io.github.landwarderer.futon.plugins.domain.PluginMangaSource -> source.displayName
         else -> context.getString(R.string.unknown)
 }
 
