@@ -1,3 +1,12 @@
+## Alpha 1.798 (Build [#337](https://github.com/Space4414/Tsuki/actions/runs/30904020376))
+
+_2026-08-04 11:15 UTC_
+
+- chore(deps): bump kotatsu-parsers-redo bdd275e7b1 → 204c9ee032 [auto] (f13f153)
+- chore(deps): bump kotatsu-parsers-redo dbd62fbd7c → bdd275e7b1 [auto] (a420064)
+- Fix plugin sources: names, icons, navigation, explore tab section (18c5f0c)
+
+
 ## Alpha 1.795 (Build [#336](https://github.com/Space4414/Tsuki/actions/runs/30745440964))
 
 _2026-08-02 11:17 UTC_
