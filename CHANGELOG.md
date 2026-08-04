@@ -1,3 +1,15 @@
+## Beta 1.5.5 (Build [#11](https://github.com/Space4414/Tsuki/actions/runs/30908685986))
+
+_2026-08-04 12:21 UTC_
+
+- chore(deps): bump kotatsu-parsers-redo bdd275e7b1 → 204c9ee032 [auto] (f13f153)
+- chore(deps): bump kotatsu-parsers-redo dbd62fbd7c → bdd275e7b1 [auto] (a420064)
+- Fix plugin sources: names, icons, navigation, explore tab section (18c5f0c)
+- fix(plugins): support tsuki/UMA factory format in PluginLoader (cd97d47)
+- fix: update Keiyoushi extension index to new v2 schema + fix dropdown menu (387c44d)
+- chore(l10n): update Bengali translation (62e043c)
+
+
 ## Alpha 1.798 (Build [#337](https://github.com/Space4414/Tsuki/actions/runs/30904020376))
 
 _2026-08-04 11:15 UTC_
