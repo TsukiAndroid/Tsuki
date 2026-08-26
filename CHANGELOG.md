@@ -1,3 +1,13 @@
+## Alpha 1.803 (Build [#338](https://github.com/Space4414/Tsuki/actions/runs/32996707873))
+
+_2026-08-26 17:54 UTC_
+
+- chore(deps): bump kotatsu-parsers-redo 95454b1d61 → 434030d481 [auto] (863b03d)
+- chore(deps): bump kotatsu-parsers-redo 204c9ee032 → 95454b1d61 [auto] (c81053a)
+- chore(deps): bump kotatsu-parsers-redo bdd275e7b1 → 204c9ee032 [auto] (f13f153)
+- chore(deps): bump kotatsu-parsers-redo dbd62fbd7c → bdd275e7b1 [auto] (a420064)
+
+
 ## Stable 1.5.0 (Build [#9](https://github.com/Space4414/Tsuki/actions/runs/30909351806))
 
 _2026-08-04 12:30 UTC_
