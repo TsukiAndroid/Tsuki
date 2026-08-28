@@ -1,3 +1,10 @@
+## Alpha 1.809 (Build [#342](https://github.com/Space4414/Tsuki/actions/runs/33150951857))
+
+_2026-08-28 07:18 UTC_
+
+- Update user manual URL in constants.xml (60af518)
+
+
 ## Alpha 1.805 (Build [#339](https://github.com/Space4414/Tsuki/actions/runs/33149425059))
 
 _2026-08-28 06:53 UTC_
