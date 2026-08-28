@@ -1,3 +1,11 @@
+## Alpha 1.812 (Build [#343](https://github.com/Space4414/Tsuki/actions/runs/33170427983))
+
+_2026-08-28 12:17 UTC_
+
+- Fix generated manga share links for organization Pages (2d88847)
+- Update user manual URL in constants.xml (60af518)
+
+
 ## Stable 1.5.1 (Build [#10](https://github.com/Space4414/Tsuki/actions/runs/33153698183))
 
 _2026-08-28 08:02 UTC_
