@@ -1,3 +1,19 @@
+## Stable 1.5.1 (Build [#10](https://github.com/Space4414/Tsuki/actions/runs/33153698183))
+
+_2026-08-28 08:02 UTC_
+
+- Update user manual URL in constants.xml (60af518)
+- fix: update release lookup repository (c8d3894)
+- fix: point release checks to TsukiAndroid repository (eb87ca4)
+- fix: update Tsuki About links (5bf7d41)
+- chore(deps): bump kotatsu-parsers-redo 95454b1d61 → 434030d481 [auto] (863b03d)
+- chore(deps): bump kotatsu-parsers-redo 204c9ee032 → 95454b1d61 [auto] (c81053a)
+- chore(deps): bump kotatsu-parsers-redo bdd275e7b1 → 204c9ee032 [auto] (f13f153)
+- chore(deps): bump kotatsu-parsers-redo dbd62fbd7c → bdd275e7b1 [auto] (a420064)
+- Fix plugin sources: names, icons, navigation, explore tab section (18c5f0c)
+- fix(plugins): support tsuki/UMA factory format in PluginLoader (cd97d47)
+
+
 ## Alpha 1.809 (Build [#342](https://github.com/Space4414/Tsuki/actions/runs/33150951857))
 
 _2026-08-28 07:18 UTC_
