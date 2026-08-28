@@ -28,7 +28,8 @@ class MangaLinkResolver @Inject constructor(
         suspend fun resolve(uri: Uri): Manga {
                 return if (uri.scheme == "futon" || uri.scheme == "tsuki"
                         || uri.host == "futonapp.pages.dev"
-                        || uri.host == "space4414.github.io") {
+                        || uri.host == "space4414.github.io"
+                        || uri.host == "tsukiandroid.github.io") {
                         resolveAppLink(uri)
                 } else {
                         resolveExternalLink(uri.toString())
@@ -38,7 +39,8 @@ class MangaLinkResolver @Inject constructor(
         private suspend fun resolveAppLink(uri: Uri): Manga? {
                 // tsuki://manga?...          → host="manga", path empty
                 // https://futonapp.pages.dev/manga?... → pathSegments=["manga"]
-                // https://space4414.github.io/Tsuki/open?... → pathSegments=["Tsuki","open"]
+                // https://tsukiandroid.github.io/Tsuki/open?... → pathSegments=["Tsuki","open"]
+                // The old space4414.github.io host remains accepted for existing links.
                 require(
                         uri.host == "manga" ||
                         uri.pathSegments.singleOrNull() == "manga" ||
