@@ -1,3 +1,18 @@
+## Stable 1.5.2 (Build [#11](https://github.com/Space4414/Tsuki/actions/runs/33172371799))
+
+_2026-08-28 12:45 UTC_
+
+- Register organization Pages host for app links (15961a2)
+- Support organization host for manga deep links (cd9120c)
+- Fix generated manga share links for organization Pages (2d88847)
+- Update user manual URL in constants.xml (60af518)
+- fix: update release lookup repository (c8d3894)
+- fix: point release checks to TsukiAndroid repository (eb87ca4)
+- fix: update Tsuki About links (5bf7d41)
+- chore(deps): bump kotatsu-parsers-redo 95454b1d61 → 434030d481 [auto] (863b03d)
+- chore(deps): bump kotatsu-parsers-redo 204c9ee032 → 95454b1d61 [auto] (c81053a)
+
+
 ## Alpha 1.812 (Build [#343](https://github.com/Space4414/Tsuki/actions/runs/33170427983))
 
 _2026-08-28 12:17 UTC_
