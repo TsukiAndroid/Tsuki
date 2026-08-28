@@ -44,7 +44,7 @@ class AppUpdateRepository @Inject constructor(
         private val releasesUrl = BuildConfig.RELEASES_URL + "?per_page=50"
 
         private val changelogUrl =
-                "https://raw.githubusercontent.com/Space4414/Tsuki/refs/heads/devel/CHANGELOG.md"
+                "https://raw.githubusercontent.com/TsukiAndroid/Tsuki/refs/heads/devel/CHANGELOG.md"
 
         val isUpdateAvailable: Boolean
                 get() = availableUpdate.value != null
@@ -170,7 +170,7 @@ class AppUpdateRepository @Inject constructor(
                                 else    -> "stable-latest"
                         }
 
-                        val tagUrl = "https://api.github.com/repos/Space4414/Tsuki/releases/tags/$floatingTag"
+                        val tagUrl = "https://api.github.com/repos/TsukiAndroid/Tsuki/releases/tags/$floatingTag"
                         val request = Request.Builder().get().url(tagUrl).build()
                         val body = okHttp.newCall(request).await().body?.string() ?: return@runCatchingCancellable null
 
