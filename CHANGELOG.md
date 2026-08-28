@@ -1,3 +1,12 @@
+## Alpha 1.805 (Build [#339](https://github.com/Space4414/Tsuki/actions/runs/33149425059))
+
+_2026-08-28 06:53 UTC_
+
+- fix: update Tsuki About links (5bf7d41)
+- chore(deps): bump kotatsu-parsers-redo 95454b1d61 → 434030d481 [auto] (863b03d)
+- chore(deps): bump kotatsu-parsers-redo 204c9ee032 → 95454b1d61 [auto] (c81053a)
+
+
 ## Alpha 1.803 (Build [#338](https://github.com/Space4414/Tsuki/actions/runs/32996707873))
 
 _2026-08-26 17:54 UTC_
