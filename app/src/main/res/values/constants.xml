@@ -4,7 +4,7 @@
 <string name="url_telegram_web" translatable="false"></string>
 <string name="url_telegram" translatable="false"></string>
 <string name="url_weblate" translatable="false">https://hosted.weblate.org/engage/tsuki/</string>
-<string name="url_user_manual" translatable="false">https://github.com/TsukiAndroid/Tsuki/tree/devel/app</string>
+<string name="url_user_manual" translatable="false">https://github.com/TsukiAndroid/Tsuki/tree/devel</string>
 <string name="account_type_sync" translatable="false">io.github.landwarderer.futon.sync</string>
 <string name="github_updates_repo" translatable="false">TsukiAndroid/Tsuki</string>
 <string name="shikimori_clientId" translatable="false">Mw6F0tPEOgyV7F9U9Twg50Q8SndMY7hzIOfXg0AX_XU</string>
