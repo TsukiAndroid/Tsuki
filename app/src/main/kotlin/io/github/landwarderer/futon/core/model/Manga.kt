@@ -131,7 +131,7 @@ val Manga.isBroken: Boolean
 val Manga.appUrl: Uri
         get() = Uri.Builder()
                 .scheme("https")
-                .authority("space4414.github.io")
+                .authority("tsukiandroid.github.io")
                 .path("/Tsuki/open")
                 .appendQueryParameter("source", source.name)
                 .appendQueryParameter("name", title)
