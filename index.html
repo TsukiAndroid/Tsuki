@@ -1,0 +1,1547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tsuki — Manga Reader That Refuses to Break</title>
+  <meta name="description" content="Free and open-source Android manga/manhwa/manhua reader with 1200+ sources, auto parser detection, and Android 6+ support." />
+  <meta property="og:title" content="Tsuki — Manga Reader That Refuses to Break" />
+  <meta property="og:description" content="Free and open-source Android manga reader with 1200+ sources and auto parser detection." />
+  <meta property="og:type" content="website" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #070710;
+      --bg2: #0d0d1a;
+      --surface: rgba(255,255,255,0.03);
+      --border: rgba(255,255,255,0.07);
+      --moon: #c8b8ff;
+      --moon-glow: #9d7fff;
+      --neon: #7c5cff;
+      --neon-soft: rgba(124,92,255,0.15);
+      --silver: #d4cfff;
+      --text: #e8e4ff;
+      --muted: #7a75a0;
+      --stable: #5cffb0;
+      --beta: #ffb85c;
+      --alpha: #ff5c8a;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 300;
+      /* NOTE: overflow-x is intentionally NOT set here. On some older Android
+         WebViews, giving <body> a non-visible overflow makes it (instead of
+         the viewport) the containing block for position:fixed descendants —
+         which breaks the fixed nav on tall pages. Horizontal clipping is
+         handled by .page-content below instead. */
+    }
+
+    .page-content {
+      position: relative;
+      z-index: 1;
+      overflow-x: hidden;
+    }
+
+    /* ── Starfield ── */
+    #stars {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Nav ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.2rem 2.5rem;
+      background: rgba(9,9,18,0.96);
+      border-bottom: 1px solid var(--border);
+      /* Force a stable GPU compositing layer — on older Android WebViews,
+         fixed-position elements can vanish/flicker on repaint without this. */
+      transform: translateZ(0);
+      -webkit-transform: translateZ(0);
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+    }
+
+    .nav-logo {
+      font-family: 'Cinzel', serif;
+      font-weight: 900;
+      font-size: 1.3rem;
+      color: var(--moon);
+      text-decoration: none;
+      letter-spacing: 0.15em;
+      text-shadow: 0 0 20px rgba(200,184,255,0.5);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+      letter-spacing: 0.05em;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover { color: var(--moon); }
+    .nav-links a.active { color: var(--moon); }
+
+    /* ── Hamburger (mobile) ── */
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 6px;
+      z-index: 101;
+    }
+    .hamburger span {
+      display: block;
+      width: 22px;
+      height: 2px;
+      background: var(--moon);
+      border-radius: 2px;
+      transition: transform 0.25s ease, opacity 0.25s ease;
+    }
+    .hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .hamburger.open span:nth-child(2) { opacity: 0; }
+    .hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+    .mobile-menu {
+      position: fixed;
+      top: 0; right: 0;
+      height: 100vh;
+      width: min(78vw, 300px);
+      background: rgba(9,9,18,0.98);
+      border-left: 1px solid var(--border);
+      z-index: 99;
+      display: flex;
+      flex-direction: column;
+      gap: 1.75rem;
+      padding: 6rem 2.2rem 2rem;
+      transform: translateX(100%);
+      transition: transform 0.3s ease;
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
+    }
+    .mobile-menu.open { transform: translateX(0) translateZ(0); }
+    .mobile-menu a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 1rem;
+      letter-spacing: 0.05em;
+    }
+    .mobile-menu a:hover { color: var(--moon); }
+
+    /* ── Section dividers (legacy, unused with view routing but harmless) ── */
+    .divider {
+      position: relative;
+      z-index: 1;
+      height: 1px;
+      max-width: 700px;
+      margin: 0 auto;
+      background: linear-gradient(90deg, transparent, var(--neon) 50%, transparent);
+      opacity: 0.35;
+    }
+
+    /* ── View routing (hamburger/nav switches between these) ── */
+    .view {
+      display: none;
+      position: relative;
+      z-index: 1;
+    }
+    .view.active {
+      display: block;
+      animation: viewEnter 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+    @keyframes viewEnter {
+      from { opacity: 0; transform: translateY(22px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .view.leaving {
+      animation: viewLeave 0.25s ease both;
+    }
+    @keyframes viewLeave {
+      from { opacity: 1; transform: translateY(0); }
+      to   { opacity: 0; transform: translateY(-14px); }
+    }
+
+    /* ── Nav active state + underline transition ── */
+    .nav-links a {
+      position: relative;
+      padding-bottom: 2px;
+    }
+    .nav-links a::after {
+      content: '';
+      position: absolute;
+      left: 0; bottom: -4px;
+      width: 0; height: 1px;
+      background: var(--neon);
+      transition: width 0.25s ease;
+    }
+    .nav-links a:hover::after,
+    .nav-links a.active::after { width: 100%; }
+    .mobile-menu a.active { color: var(--moon); }
+
+    /* ── Staggered card entrance within an active view ── */
+    .view.active .feature-card,
+    .view.active .arch-card,
+    .view.active .dl-card {
+      animation: cardEnter 0.5s ease both;
+    }
+    @keyframes cardEnter {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .view.active .feature-card:nth-child(1), .view.active .arch-card:nth-child(1), .view.active .dl-card:nth-child(1) { animation-delay: 0.05s; }
+    .view.active .feature-card:nth-child(2), .view.active .arch-card:nth-child(2), .view.active .dl-card:nth-child(2) { animation-delay: 0.11s; }
+    .view.active .feature-card:nth-child(3), .view.active .arch-card:nth-child(3), .view.active .dl-card:nth-child(3) { animation-delay: 0.17s; }
+    .view.active .feature-card:nth-child(4), .view.active .arch-card:nth-child(4) { animation-delay: 0.23s; }
+    .view.active .feature-card:nth-child(5), .view.active .arch-card:nth-child(5) { animation-delay: 0.29s; }
+    .view.active .feature-card:nth-child(6), .view.active .arch-card:nth-child(6) { animation-delay: 0.35s; }
+    .view.active .feature-card:nth-child(7) { animation-delay: 0.41s; }
+    .view.active .feature-card:nth-child(8) { animation-delay: 0.47s; }
+
+    .view.active .faq-item {
+      animation: cardEnter 0.45s ease both;
+    }
+    .view.active .faq-item:nth-child(1) { animation-delay: 0.05s; }
+    .view.active .faq-item:nth-child(2) { animation-delay: 0.1s; }
+    .view.active .faq-item:nth-child(3) { animation-delay: 0.15s; }
+    .view.active .faq-item:nth-child(4) { animation-delay: 0.2s; }
+    .view.active .faq-item:nth-child(5) { animation-delay: 0.25s; }
+
+    .view.active .changelog-entry {
+      animation: cardEnter 0.5s ease both;
+    }
+    .view.active .changelog-entry:nth-child(1) { animation-delay: 0.08s; }
+    .view.active .changelog-entry:nth-child(2) { animation-delay: 0.16s; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .view.active,
+      .view.active .feature-card,
+      .view.active .arch-card,
+      .view.active .dl-card,
+      .view.active .faq-item,
+      .view.active .changelog-entry {
+        animation: none !important;
+      }
+    }
+
+    /* ── Hero ── */
+    .hero {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 6rem 2rem 4rem;
+    }
+
+    .moon-glyph {
+      font-size: 5rem;
+      margin-bottom: 1.5rem;
+      filter: drop-shadow(0 0 30px rgba(200,184,255,0.6));
+      animation: float 4s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-12px); }
+    }
+
+    .hero-title {
+      font-family: 'Cinzel', serif;
+      font-weight: 900;
+      font-size: clamp(3.5rem, 10vw, 7rem);
+      letter-spacing: 0.2em;
+      color: var(--moon);
+      text-shadow:
+        0 0 40px rgba(200,184,255,0.4),
+        0 0 80px rgba(124,92,255,0.2);
+      animation: fadein 1s ease both;
+    }
+
+    .hero-sub {
+      margin-top: 0.5rem;
+      font-family: 'Cinzel', serif;
+      font-size: clamp(0.75rem, 2vw, 1rem);
+      letter-spacing: 0.4em;
+      color: var(--muted);
+      text-transform: uppercase;
+      animation: fadein 1s 0.2s ease both;
+    }
+
+    .hero-desc {
+      margin-top: 2rem;
+      max-width: 560px;
+      font-size: 1.05rem;
+      line-height: 1.8;
+      color: var(--silver);
+      opacity: 0.8;
+      animation: fadein 1s 0.4s ease both;
+    }
+
+    @keyframes fadein {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Download Section ── */
+    .download-section {
+      margin-top: 3.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      animation: fadein 1s 0.6s ease both;
+    }
+
+    .download-label {
+      font-size: 0.75rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.5rem;
+    }
+
+    .download-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      justify-content: center;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 500;
+      text-decoration: none;
+      letter-spacing: 0.03em;
+      transition: all 0.25s;
+      cursor: pointer;
+      border: none;
+    }
+
+    .btn-stable {
+      background: rgba(92,255,176,0.1);
+      border: 1px solid rgba(92,255,176,0.3);
+      color: var(--stable);
+    }
+    .btn-stable:hover {
+      background: rgba(92,255,176,0.18);
+      box-shadow: 0 0 20px rgba(92,255,176,0.2);
+      transform: translateY(-2px);
+    }
+
+    .btn-beta {
+      background: rgba(255,184,92,0.1);
+      border: 1px solid rgba(255,184,92,0.3);
+      color: var(--beta);
+    }
+    .btn-beta:hover {
+      background: rgba(255,184,92,0.18);
+      box-shadow: 0 0 20px rgba(255,184,92,0.2);
+      transform: translateY(-2px);
+    }
+
+    .btn-alpha {
+      background: rgba(255,92,138,0.1);
+      border: 1px solid rgba(255,92,138,0.3);
+      color: var(--alpha);
+    }
+    .btn-alpha:hover {
+      background: rgba(255,92,138,0.18);
+      box-shadow: 0 0 20px rgba(255,92,138,0.2);
+      transform: translateY(-2px);
+    }
+
+    .btn-github {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+    .btn-github:hover {
+      border-color: rgba(200,184,255,0.3);
+      color: var(--moon);
+      transform: translateY(-2px);
+    }
+
+    .release-note {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 0.25rem;
+    }
+
+    /* ── Stats bar ── */
+    .stats {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      justify-content: center;
+      gap: 3rem;
+      flex-wrap: wrap;
+      padding: 2.5rem 2rem;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+
+    .stat {
+      text-align: center;
+    }
+
+    .stat-number {
+      font-family: 'Cinzel', serif;
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--moon);
+      text-shadow: 0 0 20px rgba(200,184,255,0.3);
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-top: 0.25rem;
+    }
+
+    /* ── Section shared ── */
+    section {
+      position: relative;
+      z-index: 1;
+      padding: 6rem 2rem;
+    }
+
+    .section-tag {
+      display: inline-block;
+      font-size: 0.7rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--neon-soft);
+      color: var(--moon-glow);
+      border: 1px solid rgba(157,127,255,0.2);
+      padding: 0.3rem 0.8rem;
+      border-radius: 100px;
+      margin-bottom: 1rem;
+    }
+
+    .section-title {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(1.8rem, 5vw, 2.8rem);
+      font-weight: 700;
+      color: var(--moon);
+      margin-bottom: 1rem;
+    }
+
+    .section-desc {
+      color: var(--muted);
+      font-size: 1rem;
+      line-height: 1.7;
+      max-width: 500px;
+    }
+
+    /* ── Features page ── */
+    #features {
+      background: var(--bg2);
+    }
+
+    .features-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .features-header {
+      text-align: center;
+      margin-bottom: 4rem;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .feature-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--neon), transparent);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .feature-card:hover {
+      border-color: rgba(124,92,255,0.3);
+      transform: translateY(-4px);
+      box-shadow: 0 8px 40px rgba(124,92,255,0.1);
+    }
+
+    .feature-card:hover::before { opacity: 1; }
+
+    .feature-icon {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+      display: block;
+    }
+
+    .feature-title {
+      font-family: 'Cinzel', serif;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--moon);
+      margin-bottom: 0.75rem;
+      letter-spacing: 0.05em;
+    }
+
+    .feature-desc {
+      font-size: 0.9rem;
+      line-height: 1.7;
+      color: var(--muted);
+    }
+
+    .feature-highlight {
+      display: inline-block;
+      margin-top: 0.75rem;
+      font-size: 0.75rem;
+      color: var(--moon-glow);
+      letter-spacing: 0.05em;
+    }
+
+    /* ── Download section (dedicated) ── */
+    #download-section { background: var(--bg2); }
+
+    .download-inner { max-width: 1000px; margin: 0 auto; }
+
+    .download-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1.5rem;
+      margin-top: 2.5rem;
+    }
+
+    .dl-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem;
+      text-align: center;
+      transition: all 0.3s;
+    }
+    .dl-card:hover { transform: translateY(-4px); }
+    .dl-card.is-stable:hover { border-color: rgba(92,255,176,0.35); box-shadow: 0 8px 40px rgba(92,255,176,0.1); }
+    .dl-card.is-beta:hover { border-color: rgba(255,184,92,0.35); box-shadow: 0 8px 40px rgba(255,184,92,0.1); }
+    .dl-card.is-alpha:hover { border-color: rgba(255,92,138,0.35); box-shadow: 0 8px 40px rgba(255,92,138,0.1); }
+
+    .dl-badge {
+      display: inline-block;
+      font-size: 0.68rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      padding: 0.3rem 0.8rem;
+      border-radius: 100px;
+      margin-bottom: 1rem;
+    }
+    .dl-badge.is-stable { background: rgba(92,255,176,0.1); color: var(--stable); border: 1px solid rgba(92,255,176,0.3); }
+    .dl-badge.is-beta { background: rgba(255,184,92,0.1); color: var(--beta); border: 1px solid rgba(255,184,92,0.3); }
+    .dl-badge.is-alpha { background: rgba(255,92,138,0.1); color: var(--alpha); border: 1px solid rgba(255,92,138,0.3); }
+
+    .dl-card h3 {
+      font-family: 'Cinzel', serif;
+      color: var(--moon);
+      font-size: 1.2rem;
+      margin-bottom: 0.6rem;
+    }
+    .dl-version {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.78rem;
+      color: var(--muted);
+      letter-spacing: 0.03em;
+      margin-bottom: 0.9rem;
+      min-height: 1.1em;
+    }
+    .dl-version.is-loaded { color: var(--silver); }
+    .dl-card p { color: var(--muted); font-size: 0.88rem; margin-bottom: 1.4rem; line-height: 1.6; }
+
+    /* ── Architecture pills (per-flavor ARM64/ARM32/Universal links) ── */
+    .arch-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+    }
+    .arch-pill {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 7px 14px;
+      border-radius: 100px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.03);
+      color: var(--silver);
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    .arch-pill.is-stable:hover:not(.is-disabled) { border-color: var(--stable); color: var(--stable); background: rgba(92,255,176,0.08); }
+    .arch-pill.is-beta:hover:not(.is-disabled) { border-color: var(--beta); color: var(--beta); background: rgba(255,184,92,0.08); }
+    .arch-pill.is-alpha:hover:not(.is-disabled) { border-color: var(--alpha); color: var(--alpha); background: rgba(255,92,138,0.08); }
+    .arch-pill.is-disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+    .arch-legend {
+      max-width: 640px;
+      margin: 1.75rem auto 0;
+      text-align: center;
+      font-size: 0.82rem;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+    .arch-legend strong { color: var(--silver); }
+
+    .req-box {
+      margin-top: 2.5rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.5rem 1.75rem;
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.7;
+    }
+    .req-box strong { color: var(--silver); }
+
+    /* ── Architecture & Support section ── */
+    #architecture { background: var(--bg); }
+
+    .arch-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.5rem;
+      margin-top: 2.5rem;
+    }
+
+    .arch-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.75rem;
+      transition: all 0.3s;
+    }
+    .arch-card:hover { border-color: rgba(124,92,255,0.3); transform: translateY(-3px); }
+    .arch-card .arch-label {
+      font-family: 'Cinzel', serif;
+      color: var(--moon);
+      font-size: 0.95rem;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.6rem;
+    }
+    .arch-card p { color: var(--muted); font-size: 0.88rem; line-height: 1.7; }
+
+    .support-table {
+      margin-top: 2rem;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    .support-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.9rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.88rem;
+    }
+    .support-row:last-child { border-bottom: none; }
+    .support-row span:first-child { color: var(--silver); }
+    .support-row span:last-child { color: var(--muted); }
+
+    /* ── FAQ section ── */
+    #faq { background: var(--bg2); }
+
+    .faq-list { max-width: 780px; margin: 2.5rem auto 0; }
+
+    .faq-item {
+      border-bottom: 1px solid var(--border);
+    }
+    .faq-item summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 1.3rem 0;
+      font-family: 'Cinzel', serif;
+      color: var(--silver);
+      font-size: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
+    .faq-item summary::-webkit-details-marker { display: none; }
+    .faq-item summary::after {
+      content: '+';
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1.4rem;
+      color: var(--moon-glow);
+      transition: transform 0.25s ease;
+      flex-shrink: 0;
+    }
+    .faq-item[open] summary::after { transform: rotate(45deg); }
+    .faq-item[open] summary { color: var(--moon); }
+    .faq-answer { color: var(--muted); font-size: 0.92rem; line-height: 1.75; padding-bottom: 1.5rem; max-width: 680px; }
+
+    /* ── Changelog section ── */
+    #changelog { background: var(--bg); }
+
+    .changelog-list {
+      max-width: 700px;
+      margin: 2.5rem auto 0;
+      position: relative;
+    }
+    .changelog-list::before {
+      content: '';
+      position: absolute;
+      left: 6px; top: 8px; bottom: 8px;
+      width: 1px;
+      background: var(--border);
+    }
+    .changelog-entry {
+      position: relative;
+      padding-left: 2.2rem;
+      margin-bottom: 2rem;
+    }
+    .changelog-entry::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 6px;
+      width: 13px; height: 13px;
+      border-radius: 50%;
+      background: var(--bg2);
+      border: 2px solid var(--neon);
+    }
+    .changelog-version {
+      font-family: 'Cinzel', serif;
+      color: var(--moon);
+      font-size: 1rem;
+      margin-bottom: 0.3rem;
+    }
+    .changelog-date { font-size: 0.75rem; color: var(--muted); letter-spacing: 0.05em; margin-bottom: 0.6rem; display: block; }
+    .changelog-entry p { color: var(--muted); font-size: 0.88rem; line-height: 1.7; }
+    .changelog-link {
+      display: inline-block;
+      margin-top: 0.5rem;
+      font-size: 0.8rem;
+      color: var(--moon-glow);
+      text-decoration: none;
+    }
+    .changelog-link:hover { color: var(--moon); }
+    .changelog-loading, .changelog-error {
+      color: var(--muted);
+      font-size: 0.9rem;
+      padding: 1rem 0;
+    }
+    .changelog-note {
+      max-width: 700px;
+      margin: 0 auto 0;
+      background: var(--surface);
+      border: 1px dashed var(--border);
+      border-radius: 12px;
+      padding: 1.2rem 1.5rem;
+      color: var(--muted);
+      font-size: 0.85rem;
+      line-height: 1.6;
+    }
+
+    /* ── Philosophy section ── */
+    #philosophy {
+      background: var(--bg);
+    }
+
+    .philosophy-inner {
+      max-width: 800px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .quote {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(1.2rem, 3vw, 1.8rem);
+      color: var(--silver);
+      line-height: 1.6;
+      margin: 2rem 0;
+      padding: 2rem;
+      border-left: 2px solid var(--neon);
+      text-align: left;
+      background: var(--surface);
+      border-radius: 0 12px 12px 0;
+    }
+
+    /* ── Footer ── */
+    footer {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 3rem 2rem;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    footer a {
+      color: var(--moon-glow);
+      text-decoration: none;
+    }
+
+    footer a:hover { color: var(--moon); }
+
+    .footer-logo {
+      font-family: 'Cinzel', serif;
+      font-size: 1.5rem;
+      color: var(--moon);
+      letter-spacing: 0.2em;
+      margin-bottom: 1rem;
+      text-shadow: 0 0 20px rgba(200,184,255,0.3);
+    }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--neon); border-radius: 2px; }
+
+    /* ── Mobile ── */
+    @media (max-width: 780px) {
+      .nav-links { display: none; }
+      .hamburger { display: flex; }
+    }
+
+    @media (max-width: 640px) {
+      nav { padding: 1rem 1.5rem; }
+      .stats { gap: 2rem; }
+      .support-row { flex-direction: column; gap: 0.2rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Starfield canvas -->
+<canvas id="stars"></canvas>
+
+<!-- Nav -->
+<nav>
+  <a class="nav-logo" href="#home" data-nav="home">🌙 TSUKI</a>
+  <ul class="nav-links">
+    <li><a href="#home" data-nav="home">Home</a></li>
+    <li><a href="#download" data-nav="download">Download</a></li>
+    <li><a href="#features" data-nav="features">Features</a></li>
+    <li><a href="#architecture" data-nav="architecture">Architecture</a></li>
+    <li><a href="#faq" data-nav="faq">FAQ</a></li>
+    <li><a href="#changelog" data-nav="changelog">Changelog</a></li>
+    <li><a href="#about" data-nav="about">About</a></li>
+    <li><a href="#privacy" data-nav="privacy">Privacy</a></li>
+    <li><a href="https://github.com/TsukiAndroid/Tsuki" target="_blank">GitHub</a></li>
+  </ul>
+  <button class="hamburger" id="hamburgerBtn" aria-label="Toggle menu" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<div class="mobile-menu" id="mobileMenu">
+  <a href="#home" data-nav="home">Home</a>
+  <a href="#download" data-nav="download">Download</a>
+  <a href="#features" data-nav="features">Features</a>
+  <a href="#architecture" data-nav="architecture">Architecture</a>
+  <a href="#faq" data-nav="faq">FAQ</a>
+  <a href="#changelog" data-nav="changelog">Changelog</a>
+  <a href="#about" data-nav="about">About</a>
+  <a href="#privacy" data-nav="privacy">Privacy</a>
+  <a href="https://github.com/TsukiAndroid/Tsuki" target="_blank">GitHub</a>
+</div>
+
+<div class="page-content">
+
+<!-- ============ HOME VIEW ============ -->
+<div class="view active" data-view="home">
+
+<!-- Hero -->
+<section class="hero">
+  <div class="moon-glyph">🌙</div>
+  <h1 class="hero-title">TSUKI</h1>
+  <p class="hero-sub">Manga Reader · Android · Open Source</p>
+  <p class="hero-desc">
+    A manga reader that refuses to break. Tsuki was built from the ground up for readers stuck with old devices, disappearing extensions, and manga sites that vanish overnight — 1200+ built-in sources, automatic parser detection, and full support all the way back to Android 6.
+  </p>
+
+  <div class="download-section">
+    <div class="download-buttons">
+      <a class="btn btn-stable" href="#download" data-nav="download">
+        ↓ Get Tsuki
+      </a>
+      <a class="btn btn-github" href="https://github.com/TsukiAndroid/Tsuki" target="_blank">
+        ⌥ View on GitHub
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- Stats -->
+<div class="stats">
+  <div class="stat">
+    <div class="stat-number">1200+</div>
+    <div class="stat-label">Built-in Sources</div>
+  </div>
+  <div class="stat">
+    <div class="stat-number">17+</div>
+    <div class="stat-label">Parser Families</div>
+  </div>
+  <div class="stat">
+    <div class="stat-number">Android 6+</div>
+    <div class="stat-label">Supported</div>
+  </div>
+  <div class="stat">
+    <div class="stat-number">100%</div>
+    <div class="stat-label">Free & Open Source</div>
+  </div>
+</div>
+
+</div>
+<!-- ============ /HOME VIEW ============ -->
+
+<!-- ============ DOWNLOAD VIEW ============ -->
+<div class="view" data-view="download">
+
+<!-- Download (dedicated) -->
+<section id="download-section">
+
+  <div class="download-inner">
+    <span class="section-tag">Get started</span>
+    <h2 class="section-title">Download Tsuki</h2>
+    <p class="section-desc">Pick the build that's right for you. Stable is recommended for most readers — Beta and Alpha get new features first, in exchange for a rougher ride.</p>
+
+    <div class="download-cards">
+      <div class="dl-card is-stable">
+        <span class="dl-badge is-stable">Recommended</span>
+        <h3>Stable</h3>
+        <div class="dl-version" id="stableVersion">Checking version…</div>
+        <p>Thoroughly tested. Safe for daily use.</p>
+        <div class="arch-pills" id="stablePills">
+          <a class="arch-pill is-stable is-disabled" data-arch="arm64" href="#">ARM64</a>
+          <a class="arch-pill is-stable is-disabled" data-arch="arm32" href="#">ARM32</a>
+          <a class="arch-pill is-stable is-disabled" data-arch="universal" href="#">Universal</a>
+        </div>
+      </div>
+      <div class="dl-card is-beta">
+        <span class="dl-badge is-beta">Newer features</span>
+        <h3>Beta</h3>
+        <div class="dl-version" id="betaVersion">Checking version…</div>
+        <p>New features early. May contain minor bugs.</p>
+        <div class="arch-pills" id="betaPills">
+          <a class="arch-pill is-beta is-disabled" data-arch="arm64" href="#">ARM64</a>
+          <a class="arch-pill is-beta is-disabled" data-arch="arm32" href="#">ARM32</a>
+          <a class="arch-pill is-beta is-disabled" data-arch="universal" href="#">Universal</a>
+        </div>
+      </div>
+      <div class="dl-card is-alpha">
+        <span class="dl-badge is-alpha">Bleeding edge</span>
+        <h3>Alpha</h3>
+        <div class="dl-version" id="alphaVersion">Checking version…</div>
+        <p>Latest experimental builds. Expect rough edges.</p>
+        <div class="arch-pills" id="alphaPills">
+          <a class="arch-pill is-alpha is-disabled" data-arch="arm64" href="#">ARM64</a>
+          <a class="arch-pill is-alpha is-disabled" data-arch="arm32" href="#">ARM32</a>
+          <a class="arch-pill is-alpha is-disabled" data-arch="universal" href="#">Universal</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="arch-legend">Not sure which to pick? <strong>Universal</strong> works on any device. ARM64 is smaller and recommended for phones from the last ~8 years. ARM32 is for very old devices.</div>
+
+    <div class="req-box">
+      <strong>Requirements:</strong> Android 6.0 (Marshmallow) or newer. No account or login required — your library, history, and bookmarks all stay on your device.
+    </div>
+  </div>
+</section>
+
+</div>
+<!-- ============ /DOWNLOAD VIEW ============ -->
+
+<!-- ============ ARCHITECTURE VIEW ============ -->
+<div class="view" data-view="architecture">
+
+<!-- Architecture & Support -->
+<section id="architecture">
+  <div class="download-inner">
+    <span class="section-tag">Under the hood</span>
+    <h2 class="section-title">Architecture &amp; Support</h2>
+    <p class="section-desc">How Tsuki is built, and what it runs on.</p>
+
+    <div class="arch-grid">
+      <div class="arch-card">
+        <div class="arch-label">Kotlin + Jetpack Compose</div>
+        <p>The app itself is a native Android build on Kotlin and Jetpack Compose — a fork of Yukimi/Futon, extended for long-term stability.</p>
+      </div>
+      <div class="arch-card">
+        <div class="arch-label">kotatsu-parsers-redo</div>
+        <p>1200+ built-in sources are powered by the kotatsu-parsers-redo library, kept current so sources keep working as sites change.</p>
+      </div>
+      <div class="arch-card">
+        <div class="arch-label">Universal Source Beta (USB)</div>
+        <p>A Gemini AI-powered parser generator, paired with a visual point-and-click rule builder, for sites without a built-in parser.</p>
+      </div>
+      <div class="arch-card">
+        <div class="arch-label">QuickJS Extension Runtime</div>
+        <p>JS/Dart/Mihon-style extensions run through QuickJS. Note: some Mihon extensions have known compatibility limits on very old Android 7 devices — this is an upstream constraint, not something Tsuki can fully patch around.</p>
+      </div>
+      <div class="arch-card">
+        <div class="arch-label">Serverless Parser Generation</div>
+        <p>The AI parser generator runs on a Vercel serverless function using Gemini 2.5 Flash to turn a site URL into a working parser.</p>
+      </div>
+      <div class="arch-card">
+        <div class="arch-label">Custom Sources</div>
+        <p>50+ CMS types are auto-detected for custom source setup, on top of the Specialized Browser for adding any site manually.</p>
+      </div>
+    </div>
+
+    <div class="support-table">
+      <div class="support-row"><span>Minimum Android version</span><span>Android 6.0 (Marshmallow)</span></div>
+      <div class="support-row"><span>Fully tested on</span><span>Android 7 (Nougat)</span></div>
+      <div class="support-row"><span>Dynamic theming</span><span>Android 12+ (Material You)</span></div>
+      <div class="support-row"><span>License</span><span>Free &amp; Open Source</span></div>
+    </div>
+  </div>
+</section>
+
+</div>
+<!-- ============ /ARCHITECTURE VIEW ============ -->
+
+<!-- ============ FAQ VIEW ============ -->
+<div class="view" data-view="faq">
+
+<!-- FAQ -->
+<section id="faq">
+  <div class="download-inner">
+    <span class="section-tag">Questions</span>
+    <h2 class="section-title">Frequently Asked</h2>
+    <div class="faq-list">
+      <details class="faq-item">
+        <summary>Is Tsuki really free?</summary>
+        <div class="faq-answer">Yes — Tsuki is free and open source, with no accounts, subscriptions, or paywalls. It always will be.</div>
+      </details>
+      <details class="faq-item">
+        <summary>Why bother supporting Android 6/7 in 2026?</summary>
+        <div class="faq-answer">Most manga readers quietly dropped support for older devices. Tsuki was built specifically for people still using them — tested directly on a real Android 7 device rather than just an emulator.</div>
+      </details>
+      <details class="faq-item">
+        <summary>What happens if a source or extension breaks?</summary>
+        <div class="faq-answer">This is the core idea behind Tsuki — "app immortality." Between 1200+ built-in sources, auto parser detection, and the Specialized Browser for any URL, the app is designed to keep working even if one piece fails.</div>
+      </details>
+      <details class="faq-item">
+        <summary>Can I use Mihon extensions?</summary>
+        <div class="faq-answer">Tsuki supports JS/Dart/Mihon-style extensions through a QuickJS runtime. Some extensions have known compatibility limits on very old Android 7 devices — an upstream constraint, not a Tsuki-specific bug.</div>
+      </details>
+      <details class="faq-item">
+        <summary>Is my reading history private?</summary>
+        <div class="faq-answer">Everything is stored locally on your device, and Tsuki includes a built-in app lock so your library stays private.</div>
+      </details>
+    </div>
+  </div>
+</section>
+
+</div>
+<!-- ============ /FAQ VIEW ============ -->
+
+<!-- ============ CHANGELOG VIEW ============ -->
+<div class="view" data-view="changelog">
+
+<!-- Changelog -->
+<section id="changelog">
+  <div class="download-inner">
+    <span class="section-tag">History</span>
+    <h2 class="section-title">Changelog</h2>
+    <p class="section-desc">The latest updates, at a glance. Full release notes always live on GitHub.</p>
+
+    <div class="changelog-list" id="changelogList">
+      <div class="changelog-loading">Loading latest releases…</div>
+    </div>
+  </div>
+</section>
+
+</div>
+<!-- ============ /CHANGELOG VIEW ============ -->
+
+<!-- ============ FEATURES VIEW ============ -->
+<div class="view" data-view="features">
+
+<!-- Features -->
+<section id="features">
+  <div class="features-inner">
+    <div class="features-header">
+      <span class="section-tag">What makes Tsuki different</span>
+      <h2 class="section-title">Built to Last</h2>
+      <p class="section-desc" style="margin: 0 auto;">Every feature is designed with one goal — keep working, no matter what.</p>
+    </div>
+
+    <div class="features-grid">
+
+      <div class="feature-card">
+        <span class="feature-icon">🔍</span>
+        <div class="feature-title">Auto Parser Detection (Beta) </div>
+        <p class="feature-desc">Paste any manga site URL and Tsuki automatically identifies the CMS family — Madara, MangaDex, ComicK, and 14+ others — and reads it at full quality. No manual setup needed.</p>
+        <span class="feature-highlight">17 CMS families supported</span>
+      </div>
+
+      <div class="feature-card">
+        <span class="feature-icon">📚</span>
+        <div class="feature-title">1200+ Built-in Sources</div>
+        <p class="feature-desc">Powered by kotatsu-parsers-redo, Tsuki ships with over 1200 manga, manhwa, and manhua sources out of the box. Always updated, always working.</p>
+        <span class="feature-highlight">Manga · Manhwa · Manhua</span>
+      </div>
+
+      <div class="feature-card">
+        <span class="feature-icon">🌐</span>
+        <div class="feature-title">Specialized Browser</div>
+        <p class="feature-desc">Add any website as a custom source using the built-in specialized browser. If a site exists, Tsuki can read it.</p>
+        <span class="feature-highlight">Any URL, any site</span>
+      </div>
+
+      <div class="feature-card">
+        <span class="feature-icon">📱</span>
+        <div class="feature-title">Android 6+ Support</div>
+        <p class="feature-desc">Most modern readers dropped support for older devices. Tsuki was literally born to fix that — fully tested on Android 7, runs on anything from Android 6 and up.</p>
+        <span class="feature-highlight">No device left behind</span>
+      </div>
+
+      <div class="feature-card">
+        <span class="feature-icon">🎨</span>
+        <div class="feature-title">Material You UI</div>
+        <p class="feature-desc">Dynamic color theming on Android 12+, AMOLED dark mode, adjustable cover background transparency, and a clean modern interface built with Jetpack Compose.</p>
+        <span class="feature-highlight">AMOLED · Dynamic Colors</span>
+      </div>
+
+      <div class="feature-card">
+        <span class="feature-icon">📖</span>
+        <div class="feature-title">Flexible Reader</div>
+        <p class="feature-desc">Standard paged reading and vertical webtoon scroll mode. Offline downloads, bookmarks, history, and favorites — everything you need, nothing you don't.</p>
+        <span class="feature-highlight">Standard + Webtoon modes</span>
+      </div>
+
+      <div class="feature-card">
+        <span class="feature-icon">🔒</span>
+        <div class="feature-title">App Lock</div>
+        <p class="feature-desc">Keep your manga library private with built-in app lock support. Your reading habits are yours alone.</p>
+        <span class="feature-highlight">Privacy first</span>
+      </div>
+
+      <div class="feature-card">
+        <span class="feature-icon">♾️</span>
+        <div class="feature-title">Built for Immortality</div>
+        <p class="feature-desc">Tsuki's core philosophy — the app should keep working even if external sources fail. Auto detection, custom sources, and soon user-importable parser templates ensure Tsuki never truly dies.</p>
+        <span class="feature-highlight">Always alive</span>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+</div>
+<!-- ============ /FEATURES VIEW ============ -->
+
+<!-- ============ ABOUT VIEW ============ -->
+<div class="view" data-view="about">
+
+<!-- Philosophy -->
+<section id="philosophy">
+  <div class="philosophy-inner">
+    <span class="section-tag">The story</span>
+    <h2 class="section-title">Why Tsuki Exists</h2>
+    <div class="quote">
+      "I went through Kotatsu, Yukimi, Usagi, Yumemi... until Futon finally worked. Then I built on top of it. Because sometimes if you want something that doesn't break, you have to build it yourself."
+    </div>
+    <p class="section-desc" style="margin: 0 auto; text-align: center;">
+      Built by a solo developer with an AI — for every reader still on an old device, tired of apps disappearing overnight.
+    </p>
+  </div>
+</section>
+
+</div>
+<!-- ============ /ABOUT VIEW ============ -->
+
+<!-- ============ PRIVACY VIEW ============ -->
+<div class="view" data-view="privacy">
+
+<!-- Privacy Policy -->
+<section id="privacy">
+  <div class="download-inner">
+    <span class="section-tag">Your Data</span>
+    <h2 class="section-title">Privacy Policy</h2>
+    <p class="section-desc">The short version. For the complete, legally-worded policy, see the link below.</p>
+
+    <div class="arch-grid">
+      <div class="arch-card">
+        <div class="arch-label">Everything stays on your device</div>
+        <p>Your library, reading history, bookmarks, and favorites are stored locally on your device. Tsuki doesn't require an account or login.</p>
+      </div>
+      <div class="arch-card">
+        <div class="arch-label">App Lock</div>
+        <p>Tsuki includes a built-in app lock so your library stays private even if someone else picks up your device.</p>
+      </div>
+      <div class="arch-card">
+        <div class="arch-label">Open Source</div>
+        <p>The full source code is public on GitHub, so you (or anyone) can verify exactly what the app does with your data.</p>
+      </div>
+      <div class="arch-card">
+        <div class="arch-label">Third-party sources</div>
+        <p>Tsuki reads manga from external sites and sources you choose to add. Those sites have their own privacy practices, separate from Tsuki itself.</p>
+      </div>
+    </div>
+
+    <div class="req-box" style="margin-top: 2.5rem;">
+      This page is a summary, not the full legal policy. Read the complete Privacy Policy at
+      <a href="https://tsukiapp.vercel.app/privacy" target="_blank" style="color: var(--moon-glow);">tsukiapp.vercel.app/privacy →</a>
+    </div>
+  </div>
+</section>
+
+</div>
+<!-- ============ /PRIVACY VIEW ============ -->
+
+<!-- Footer -->
+<footer>
+  <div class="footer-logo">🌙 TSUKI</div>
+  <p>
+    <a href="https://github.com/TsukiAndroid/Tsuki" target="_blank">GitHub</a> &nbsp;·&nbsp;
+    <a href="https://github.com/TsukiAndroid/Tsuki/releases" target="_blank">Releases</a> &nbsp;·&nbsp;
+    <a href="https://github.com/TsukiAndroid/Tsuki/issues" target="_blank">Report a Bug</a>
+  </p>
+  <p style="margin-top: 1rem;">Free and open source forever. Made with 🌙</p>
+</footer>
+
+</div>
+<!-- /.page-content -->
+
+<!-- Live Changelog (fetches from GitHub Releases) -->
+<script>
+  async function loadChangelog() {
+    const list = document.getElementById('changelogList');
+    if (!list) return;
+
+    try {
+      const res = await fetch('https://api.github.com/repos/TsukiAndroid/Tsuki/releases?per_page=5', {
+        headers: { 'Accept': 'application/vnd.github+json' }
+      });
+      if (!res.ok) throw new Error('GitHub API responded with ' + res.status);
+      const releases = await res.json();
+
+      if (!Array.isArray(releases) || releases.length === 0) {
+        list.innerHTML = '<div class="changelog-loading">No releases published yet — check back soon.</div>';
+        return;
+      }
+
+      list.innerHTML = '';
+      releases.forEach((rel, i) => {
+        const entry = document.createElement('div');
+        entry.className = 'changelog-entry';
+        entry.style.animationDelay = `${i * 0.08}s`;
+
+        const version = document.createElement('div');
+        version.className = 'changelog-version';
+        version.textContent = rel.name || rel.tag_name || 'Release';
+
+        const date = document.createElement('span');
+        date.className = 'changelog-date';
+        const d = rel.published_at ? new Date(rel.published_at) : null;
+        date.textContent = d ? d.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }) : '';
+
+        const desc = document.createElement('p');
+        const rawBody = (rel.body || '').trim();
+        const cleaned = rawBody
+          .split('\n')
+          .map(line => line.replace(/^#+\s*/, '').replace(/[*_`>-]/g, '').trim())
+          .filter(Boolean)
+          .slice(0, 3)
+          .join(' ');
+        desc.textContent = cleaned || 'No description provided for this release.';
+
+        const link = document.createElement('a');
+        link.className = 'changelog-link';
+        link.href = rel.html_url;
+        link.target = '_blank';
+        link.rel = 'noopener';
+        link.textContent = 'View full release notes →';
+
+        entry.appendChild(version);
+        entry.appendChild(date);
+        entry.appendChild(desc);
+        entry.appendChild(link);
+        list.appendChild(entry);
+      });
+    } catch (err) {
+      console.error('Changelog fetch failed:', err);
+      list.innerHTML = '<div class="changelog-error">Couldn\'t load the latest releases right now. <a href="https://github.com/TsukiAndroid/Tsuki/releases" target="_blank" style="color: var(--moon-glow);">View on GitHub →</a></div>';
+    }
+  }
+
+  loadChangelog();
+</script>
+
+<!-- Live Download versions + per-architecture links (fetches from GitHub Releases) -->
+<script>
+  // GitHub doesn't have native Stable/Beta/Alpha channels — we infer them:
+  // Stable = latest non-prerelease. Beta/Alpha = prereleases matched by
+  // "beta"/"alpha" appearing in the tag or release name. If your releases
+  // don't include those words, name them that way for accurate labeling here.
+  //
+  // Architecture detection is also a naming-convention guess, matched against
+  // each release asset's filename:
+  //   ARM64      → arm64, aarch64, arm64-v8a
+  //   ARM32      → armeabi-v7a, arm32, armv7
+  //   Universal  → universal, fat, "all abi" naming, or (if a release only
+  //                ships one .apk with no ABI tag at all) that single file.
+  // If your CI names APKs differently, adjust the regexes below to match.
+  async function loadDownloadVersions() {
+    const stableVersionEl = document.getElementById('stableVersion');
+    if (!stableVersionEl) return;
+
+    const betaVersionEl = document.getElementById('betaVersion');
+    const alphaVersionEl = document.getElementById('alphaVersion');
+
+    const setUnknown = (el) => { if (el) { el.textContent = 'Version unavailable'; } };
+
+    const ARCH_PATTERNS = {
+      arm64: /arm64|aarch64|arm64-v8a/i,
+      arm32: /armeabi-v7a|arm32|armv7/i,
+      universal: /universal|fat|all-?abi/i
+    };
+
+    function findArchAsset(rel, arch) {
+      const assets = (rel?.assets || []).filter(a => a.name && a.name.toLowerCase().endsWith('.apk'));
+      let match = assets.find(a => ARCH_PATTERNS[arch].test(a.name));
+      if (match) return match;
+      // Fallback: if this release ships exactly one APK with no ABI tag at
+      // all in its name, treat it as the Universal build.
+      if (arch === 'universal' && assets.length === 1) {
+        const name = assets[0].name.toLowerCase();
+        const taggedByOther = ARCH_PATTERNS.arm64.test(name) || ARCH_PATTERNS.arm32.test(name);
+        if (!taggedByOther) return assets[0];
+      }
+      return null;
+    }
+
+    function applyPills(rel, pillsContainerId) {
+      const container = document.getElementById(pillsContainerId);
+      if (!container) return;
+      container.querySelectorAll('.arch-pill').forEach(pill => {
+        const arch = pill.dataset.arch;
+        const asset = rel ? findArchAsset(rel, arch) : null;
+        if (asset) {
+          pill.href = asset.browser_download_url;
+          pill.target = '_blank';
+          pill.rel = 'noopener';
+          pill.classList.remove('is-disabled');
+          pill.title = asset.name;
+        } else {
+          pill.href = rel ? rel.html_url : 'https://github.com/TsukiAndroid/Tsuki/releases';
+          pill.classList.add('is-disabled');
+          pill.title = 'Not available for this build';
+        }
+      });
+    }
+
+    try {
+      const res = await fetch('https://api.github.com/repos/TsukiAndroid/Tsuki/releases?per_page=20', {
+        headers: { 'Accept': 'application/vnd.github+json' }
+      });
+      if (!res.ok) throw new Error('GitHub API responded with ' + res.status);
+      const releases = await res.json();
+
+      if (!Array.isArray(releases) || releases.length === 0) {
+        setUnknown(stableVersionEl); setUnknown(betaVersionEl); setUnknown(alphaVersionEl);
+        return;
+      }
+
+      const live = releases.filter(r => !r.draft);
+      const stable = live.find(r => !r.prerelease);
+      const prereleases = live.filter(r => r.prerelease);
+      const beta = prereleases.find(r => /beta/i.test(`${r.tag_name} ${r.name}`)) || prereleases[0];
+      const alpha = prereleases.find(r => /alpha/i.test(`${r.tag_name} ${r.name}`)) || prereleases.find(r => r !== beta) || beta;
+
+      const applyVersion = (rel, versionEl) => {
+        if (!rel) { setUnknown(versionEl); return; }
+        versionEl.textContent = rel.tag_name || rel.name || 'Unknown version';
+        versionEl.classList.add('is-loaded');
+      };
+
+      applyVersion(stable, stableVersionEl);
+      applyVersion(beta, betaVersionEl);
+      applyVersion(alpha, alphaVersionEl);
+
+      applyPills(stable, 'stablePills');
+      applyPills(beta, 'betaPills');
+      applyPills(alpha, 'alphaPills');
+    } catch (err) {
+      console.error('Version fetch failed:', err);
+      setUnknown(stableVersionEl); setUnknown(betaVersionEl); setUnknown(alphaVersionEl);
+    }
+  }
+
+  loadDownloadVersions();
+</script>
+
+<!-- View routing + nav interactions -->
+<script>
+  const views = document.querySelectorAll('.view');
+  const navLinks = document.querySelectorAll('[data-nav]');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const validViews = Array.from(views).map(v => v.dataset.view);
+
+  function setActiveNav(name) {
+    navLinks.forEach(a => a.classList.toggle('active', a.dataset.nav === name));
+  }
+
+  function showView(name, opts = {}) {
+    const { updateHash = true, skipAnim = false } = opts;
+    if (!validViews.includes(name)) name = 'home';
+
+    const current = document.querySelector('.view.active');
+    const next = document.querySelector(`.view[data-view="${name}"]`);
+    if (!next || next === current) { setActiveNav(name); return; }
+
+    setActiveNav(name);
+
+    if (updateHash) history.replaceState(null, '', `#${name}`);
+
+    if (reduceMotion || skipAnim || !current) {
+      if (current) { current.classList.remove('active', 'leaving'); }
+      next.classList.add('active');
+      window.scrollTo({ top: 0, behavior: 'auto' });
+      return;
+    }
+
+    current.classList.add('leaving');
+    current.classList.remove('active');
+    const cleanup = () => {
+      current.classList.remove('leaving');
+      current.removeEventListener('animationend', cleanup);
+    };
+    current.addEventListener('animationend', cleanup);
+
+    next.classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'auto' });
+  }
+
+  navLinks.forEach(link => {
+    if (!link.dataset.nav) return;
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      showView(link.dataset.nav);
+      mobileMenu.classList.remove('open');
+      hamburgerBtn.classList.remove('open');
+      hamburgerBtn.setAttribute('aria-expanded', 'false');
+    });
+  });
+
+  window.addEventListener('popstate', () => {
+    showView((location.hash || '#home').slice(1), { updateHash: false });
+  });
+
+  // Initial view from URL hash (direct-link support), default home
+  showView((location.hash || '#home').slice(1), { updateHash: false, skipAnim: true });
+
+  const hamburgerBtn = document.getElementById('hamburgerBtn');
+  const mobileMenu = document.getElementById('mobileMenu');
+
+  hamburgerBtn.addEventListener('click', () => {
+    const isOpen = mobileMenu.classList.toggle('open');
+    hamburgerBtn.classList.toggle('open', isOpen);
+    hamburgerBtn.setAttribute('aria-expanded', String(isOpen));
+  });
+</script>
+
+<!-- Starfield script -->
+<script>
+  const canvas = document.getElementById('stars');
+  const ctx = canvas.getContext('2d');
+  let stars = [];
+
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+
+  function initStars() {
+    stars = [];
+    for (let i = 0; i < 180; i++) {
+      stars.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        r: Math.random() * 1.2 + 0.2,
+        alpha: Math.random() * 0.7 + 0.1,
+        speed: Math.random() * 0.3 + 0.05,
+        drift: (Math.random() - 0.5) * 0.1
+      });
+    }
+  }
+
+  function drawStars() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    stars.forEach(s => {
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(200,184,255,${s.alpha})`;
+      ctx.fill();
+      s.y += s.speed;
+      s.x += s.drift;
+      s.alpha += (Math.random() - 0.5) * 0.02;
+      s.alpha = Math.max(0.05, Math.min(0.9, s.alpha));
+      if (s.y > canvas.height) { s.y = 0; s.x = Math.random() * canvas.width; }
+    });
+    requestAnimationFrame(drawStars);
+  }
+
+  window.addEventListener('resize', () => { resize(); initStars(); });
+  resize();
+  initStars();
+  drawStars();
+</script>
+
+</body>
+</html>
+
