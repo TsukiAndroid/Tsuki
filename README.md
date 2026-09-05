@@ -13,7 +13,7 @@
 ![Forked from Yukimi](https://img.shields.io/badge/forked%20from-Yukimi-orange)
 [![Discord](https://img.shields.io/badge/Discord-Join%20Us-5865F2?style=flat&logo=discord&logoColor=white)](https://discord.gg/gXsesG8G7H)
 <a href="https://hosted.weblate.org/engage/tsuki/"><img src="https://hosted.weblate.org/widget/tsuki/svg-badge.svg" alt="Translation status"></a>
-
+![Downloads](https://img.shields.io/github/downloads/TsukiAndroid/Tsuki/total?style=for-the-badge&color=c8b8ff&label=Total%20Downloads&logo=android)
 </div>
 
 ---
