@@ -1,3 +1,11 @@
+## Alpha 1.825 (Build [#350](https://github.com/Space4414/Tsuki/actions/runs/33997106722))
+
+_2026-09-05 22:52 UTC_
+
+- Add files via upload (f4d376e)
+- Add downloads badge to README (5aefd79)
+
+
 ## Alpha 1.823 (Build [#349](https://github.com/Space4414/Tsuki/actions/runs/33970919655))
 
 _2026-09-05 14:09 UTC_
