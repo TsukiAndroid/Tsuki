@@ -24,7 +24,6 @@ jobs:
   build:
     name: Build Stable APK
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -72,7 +71,6 @@ jobs:
           else
             RANGE="-50"
           fi
-
           VERSION="${{ steps.version.outputs.VERSION_NAME }}"
           BUILD_LINK="[#${{ github.run_number }}](https://github.com/Space4414/Tsuki/actions/runs/${{ github.run_id }})"
           HEADER="## Stable ${VERSION} (Build ${BUILD_LINK})"
@@ -157,6 +155,42 @@ jobs:
             git push -f origin refs/tags/stable-latest-prev || true
           fi
 
+      # --- NEW STEP: archive the download count before it gets wiped ---
+      - name: Archive stable-latest downloads before deletion
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          HISTORY_FILE=".github/download-history.json"
+          mkdir -p .github
+
+          if [ ! -f "$HISTORY_FILE" ]; then
+            echo '{"stable": 0, "alpha": 0, "beta": 0}' > "$HISTORY_FILE"
+          fi
+
+          CURRENT=$(gh release view "stable-latest" --json assets \
+            --jq '[.assets[].downloadCount] | add // 0' 2>/dev/null || echo 0)
+
+          PREV=$(grep -o '"stable": *[0-9]*' "$HISTORY_FILE" | grep -o '[0-9]*$' || echo 0)
+          NEW_TOTAL=$((PREV + CURRENT))
+
+          python3 -c "
+          import json
+          with open('$HISTORY_FILE') as f:
+              data = json.load(f)
+          data['stable'] = $NEW_TOTAL
+          with open('$HISTORY_FILE', 'w') as f:
+              json.dump(data, f, indent=2)
+          "
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$HISTORY_FILE"
+          git diff --quiet --cached || git commit -m "chore: archive stable-latest downloads (+${CURRENT}) [skip ci]"
+          git pull --rebase --no-edit origin ${{ github.ref_name }} \
+            && git push origin HEAD:${{ github.ref_name }} \
+            || echo "Download-history push skipped due to rebase conflict"
+
       - name: Delete old stable-latest release
         run: gh release delete "stable-latest" --yes || true
         env:
@@ -187,13 +221,17 @@ jobs:
           name: "Tsuki Stable ${{ steps.version.outputs.VERSION_NAME }} (Build #${{ github.run_number }})"
           body: |
             ## 🌙 Tsuki Stable ${{ steps.version.outputs.VERSION_NAME }}
+
             > Manually released · [Build #${{ github.run_number }}](https://github.com/Space4414/Tsuki/actions/runs/${{ github.run_id }})
 
             ${{ github.event.inputs.release_notes != '' && format('### Release notes\n{0}\n', github.event.inputs.release_notes) || '' }}
+
             ### What's new
+
             ${{ steps.changelog.outputs.BODY }}
 
             ### 📱 Pick the right APK for your device:
+
             | APK filename | Best for |
             |--------------|----------|
             | `Tsuki-stable-arm64-release.apk` | Most modern phones (2017+) ✅ recommended |
@@ -208,6 +246,47 @@ jobs:
           draft: ${{ github.event.inputs.draft == 'true' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # --- NEW STEP: recompute the all-time badge JSON ---
+      - name: Update total-downloads badge
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          HISTORY_FILE=".github/download-history.json"
+          BADGE_FILE=".github/badge-downloads.json"
+
+          HIST_STABLE=$(grep -o '"stable": *[0-9]*' "$HISTORY_FILE" | grep -o '[0-9]*$' || echo 0)
+          HIST_ALPHA=$(grep -o '"alpha": *[0-9]*' "$HISTORY_FILE" | grep -o '[0-9]*$' || echo 0)
+          HIST_BETA=$(grep -o '"beta": *[0-9]*' "$HISTORY_FILE" | grep -o '[0-9]*$' || echo 0)
+
+          LIVE_TOTAL=0
+          for tag in $(gh release list --limit 200 --json tagName --jq '.[].tagName'); do
+            COUNT=$(gh release view "$tag" --json assets --jq '[.assets[].downloadCount] | add // 0')
+            LIVE_TOTAL=$((LIVE_TOTAL + COUNT))
+          done
+
+          GRAND_TOTAL=$((HIST_STABLE + HIST_ALPHA + HIST_BETA + LIVE_TOTAL))
+
+          python3 -c "
+          import json
+          badge = {
+              'schemaVersion': 1,
+              'label': 'Total Downloads',
+              'message': f'{$GRAND_TOTAL:,}',
+              'color': 'c8b8ff'
+          }
+          with open('$BADGE_FILE', 'w') as f:
+              json.dump(badge, f, indent=2)
+          "
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$BADGE_FILE"
+          git diff --quiet --cached || git commit -m "chore: update total downloads badge [skip ci]"
+          git pull --rebase --no-edit origin ${{ github.ref_name }} \
+            && git push origin HEAD:${{ github.ref_name }} \
+            || echo "Badge push skipped due to rebase conflict"
 
       - name: Notify Discord — Stable release
         if: success() && startsWith('stable-latest', 'stable-')
