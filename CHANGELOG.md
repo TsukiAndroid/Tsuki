@@ -1,3 +1,10 @@
+## Alpha 1.829 (Build [#352](https://github.com/Space4414/Tsuki/actions/runs/33997901759))
+
+_2026-09-05 23:10 UTC_
+
+- chore: update total downloads badge [skip ci] (dc82a1a)
+
+
 ## Alpha 1.825 (Build [#350](https://github.com/Space4414/Tsuki/actions/runs/33997106722))
 
 _2026-09-05 22:52 UTC_
