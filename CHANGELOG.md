@@ -1,3 +1,10 @@
+## Alpha 1.820 (Build [#348](https://github.com/Space4414/Tsuki/actions/runs/33954993669))
+
+_2026-09-05 08:20 UTC_
+
+- chore(deps): bump kotatsu-parsers-redo 434030d481 → 2b25a6c861 [auto] (ea0719b)
+
+
 ## Alpha 1.817 (Build [#346](https://github.com/Space4414/Tsuki/actions/runs/33236030672))
 
 _2026-08-29 05:23 UTC_
