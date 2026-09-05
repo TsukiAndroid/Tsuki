@@ -1,3 +1,11 @@
+## Alpha 1.823 (Build [#349](https://github.com/Space4414/Tsuki/actions/runs/33970919655))
+
+_2026-09-05 14:09 UTC_
+
+- Add downloads badge to README (5aefd79)
+- chore(deps): bump kotatsu-parsers-redo 434030d481 → 2b25a6c861 [auto] (ea0719b)
+
+
 ## Stable 1.5.3 (Build [#12](https://github.com/Space4414/Tsuki/actions/runs/33957384688))
 
 _2026-09-05 09:13 UTC_
