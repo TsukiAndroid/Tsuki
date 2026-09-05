@@ -1,3 +1,15 @@
+## Stable 1.5.3 (Build [#12](https://github.com/Space4414/Tsuki/actions/runs/33957384688))
+
+_2026-09-05 09:13 UTC_
+
+- chore(deps): bump kotatsu-parsers-redo 434030d481 → 2b25a6c861 [auto] (ea0719b)
+- Add files via upload (393503a)
+- Delete index.html (caca044)
+- Register organization Pages host for app links (15961a2)
+- Support organization host for manga deep links (cd9120c)
+- Fix generated manga share links for organization Pages (2d88847)
+
+
 ## Alpha 1.820 (Build [#348](https://github.com/Space4414/Tsuki/actions/runs/33954993669))
 
 _2026-09-05 08:20 UTC_
