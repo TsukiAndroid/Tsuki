@@ -980,6 +980,7 @@ class AppSettings @Inject constructor(@ApplicationContext context: Context) {
                 const val KEY_TRACKER_DEBUG = "tracker_debug"
                 const val KEY_LINK_WEBLATE = "about_app_translation"
                 const val KEY_LINK_TELEGRAM = "about_telegram"
+                const val KEY_LINK_DISCORD = "about_discord"
                 const val KEY_LINK_GITHUB = "about_github"
                 const val KEY_LINK_MANUAL = "about_help"
                 const val KEY_PROXY_TEST = "proxy_test"
