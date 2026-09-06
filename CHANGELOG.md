@@ -1,3 +1,11 @@
+## Alpha 1.832 (Build [#353](https://github.com/TsukiAndroid/Tsuki/actions/runs/34023494486))
+
+_2026-09-06 09:02 UTC_
+
+- Add files via upload (8406dfe)
+- chore(deps): bump kotatsu-parsers-redo 2b25a6c861 → 38cfb00b0a [auto] (01bf291)
+
+
 ## Alpha 1.829 (Build [#352](https://github.com/Space4414/Tsuki/actions/runs/33997901759))
 
 _2026-09-05 23:10 UTC_
