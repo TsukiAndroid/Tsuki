@@ -66,7 +66,11 @@ class AboutSettingsFragment : BasePreferenceFragment(R.string.about) {
                                 true
                         }
 
-                        AppSettings.KEY_LINK_TELEGRAM -> {                        AppSettings.KEY_LINK_DISCORD -> {
+                        AppSettings.KEY_LINK_DISCORD -> {
+                                openLink(R.string.url_discord, preference.title)
+                        }
+
+                        AppSettings.KEY_LINK_TELEGRAM -> {
                                 openLink(R.string.url_discord, preference.title)
                         }
 
