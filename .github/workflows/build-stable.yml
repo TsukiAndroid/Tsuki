@@ -72,7 +72,7 @@ jobs:
             RANGE="-50"
           fi
           VERSION="${{ steps.version.outputs.VERSION_NAME }}"
-          BUILD_LINK="[#${{ github.run_number }}](https://github.com/Space4414/Tsuki/actions/runs/${{ github.run_id }})"
+          BUILD_LINK="[#${{ github.run_number }}](https://github.com/TsukiAndroid/Tsuki/actions/runs/${{ github.run_id }})"
           HEADER="## Stable ${VERSION} (Build ${BUILD_LINK})"
           DATE="$(date -u +'%Y-%m-%d %H:%M UTC')"
 
@@ -222,7 +222,7 @@ jobs:
           body: |
             ## 🌙 Tsuki Stable ${{ steps.version.outputs.VERSION_NAME }}
 
-            > Manually released · [Build #${{ github.run_number }}](https://github.com/Space4414/Tsuki/actions/runs/${{ github.run_id }})
+            > Manually released · [Build #${{ github.run_number }}](https://github.com/TsukiAndroid/Tsuki/actions/runs/${{ github.run_id }})
 
             ${{ github.event.inputs.release_notes != '' && format('### Release notes\n{0}\n', github.event.inputs.release_notes) || '' }}
 
@@ -240,7 +240,7 @@ jobs:
             | `Tsuki-stable-universal-release.apk` | Not sure? Grab this one |
 
             ---
-            🌙 **[Tsuki Project](https://github.com/Space4414/Tsuki)** — open-source manga reader for Android
+            🌙 **[Tsuki Project](https://github.com/TsukiAndroid/Tsuki)** — open-source manga reader for Android
           files: app/build/outputs/apk/stable/release/*.apk
           prerelease: false
           draft: ${{ github.event.inputs.draft == 'true' }}
@@ -304,7 +304,7 @@ jobs:
                 \"color\": 65280,
                 \"fields\": [{
                   \"name\": \"Download\",
-                  \"value\": \"Get it from [GitHub Releases](https://github.com/Space4414/Tsuki/releases/tag/stable-latest)\"
+                  \"value\": \"Get it from [GitHub Releases](https://github.com/TsukiAndroid/Tsuki/releases/tag/stable-latest)\"
                 }]
               }]
             }"
