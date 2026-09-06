@@ -44,6 +44,12 @@
                 android:title="@string/about_app_translation_summary" />
 
         <Preference
+                android:key="about_discord"
+                android:persistent="false"
+                android:summary="@string/url_discord"
+                android:title="@string/discord_group" />
+
+        <Preference
                 android:key="about_telegram"
                 android:persistent="false"
                 android:summary="@string/url_telegram_web"
