@@ -1,3 +1,14 @@
+## Alpha 1.836 (Build [#354](https://github.com/TsukiAndroid/Tsuki/actions/runs/34025035749))
+
+_2026-09-06 09:34 UTC_
+
+- Add files via upload (d2372cb)
+- chore: update total downloads badge [skip ci] (c5f31c4)
+- chore: archive alpha-latest downloads (+10) [skip ci] (3e4f59d)
+- Add files via upload (8406dfe)
+- chore(deps): bump kotatsu-parsers-redo 2b25a6c861 → 38cfb00b0a [auto] (01bf291)
+
+
 ## Alpha 1.832 (Build [#353](https://github.com/TsukiAndroid/Tsuki/actions/runs/34023494486))
 
 _2026-09-06 09:02 UTC_
