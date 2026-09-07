@@ -1,0 +1,4 @@
+Stable 1.5.3
+- Stable release for Android.
+- Includes the current Tsuki reader and source updates.
+
