@@ -1,0 +1,18 @@
+Tsuki is a free and open-source manga, manhwa, and manhua reader for Android.
+
+Features:
+- 1200+ built-in manga sources
+- Add custom sources directly in the app
+- Standard and Webtoon-optimized reader modes
+- Download manga for offline reading
+- Favorites, history, and bookmarks
+- Search by name, genre, and filters
+- Performance mode for older and low-spec devices
+- AMOLED dark theme support
+- App lock support
+- Material 3 interface
+
+Tsuki does not host, store, or distribute manga. Content is loaded from third-party websites through the configured sources.
+
+Source code: https://github.com/TsukiAndroid/Tsuki
+Community: https://discord.gg/gXsesG8G7H
