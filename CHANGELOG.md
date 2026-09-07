@@ -1,3 +1,14 @@
+## Alpha 1.852 (Build [#362](https://github.com/TsukiAndroid/Tsuki/actions/runs/34074886041))
+
+_2026-09-07 02:01 UTC_
+
+- Add title for Android app in English (57394e2)
+- chore: update total downloads badge [skip ci] (b4c3498)
+- chore: archive alpha-latest downloads (+7) [skip ci] (308a1b2)
+- Add files via upload (92fc8d8)
+- chore: update total downloads badge [skip ci] (10e2d4f)
+
+
 ## Alpha 1.848 (Build [#361](https://github.com/TsukiAndroid/Tsuki/actions/runs/34074229088))
 
 _2026-09-07 01:49 UTC_
