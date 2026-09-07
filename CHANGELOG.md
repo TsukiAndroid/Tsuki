@@ -1,3 +1,11 @@
+## Alpha 1.868 (Build [#374](https://github.com/TsukiAndroid/Tsuki/actions/runs/34087203049))
+
+_2026-09-07 05:32 UTC_
+
+- Add files via upload (8891d71)
+- chore: update total downloads badge [skip ci] (691af05)
+
+
 ## Alpha 1.865 (Build [#373](https://github.com/TsukiAndroid/Tsuki/actions/runs/34075912257))
 
 _2026-09-07 02:20 UTC_
