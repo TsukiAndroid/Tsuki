@@ -36,6 +36,10 @@ This is **Tsuki (月)** , the app that refused to die.
 
 🌐 **In-App Parsers** — add any website as a custom source directly inside the app. Favourite site got taken down? Add the mirror. New mirror appeared? Add that too. Works even if the app never gets another update. This is what makes Tsuki truly immortal. As development continues, more and more parsers will be added so Tsuki stays compatible with more sites over time.
 
+⚙️ **Keiyoushi Extension** Support
+
+📎 In-app Browser
+
 🖼️ **Adjustable cover background transparency** in Appearance settings
 
 📖 Standard and Webtoon-optimized reader modes
