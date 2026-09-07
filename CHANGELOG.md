@@ -1,3 +1,13 @@
+## Alpha 1.865 (Build [#373](https://github.com/TsukiAndroid/Tsuki/actions/runs/34075912257))
+
+_2026-09-07 02:20 UTC_
+
+- Delete fastlane/metadata/android/en-US/changelogs/10503.txt (be67f42)
+- Add changelog for stable release 1.5.3 (a55fb1a)
+- Delete metadata directory (9ce39d6)
+- chore: update total downloads badge [skip ci] (4db1e96)
+
+
 ## Alpha 1.852 (Build [#362](https://github.com/TsukiAndroid/Tsuki/actions/runs/34074886041))
 
 _2026-09-07 02:01 UTC_
