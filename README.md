@@ -3,7 +3,7 @@
 # 月 Tsuki
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/TsukiAndroid/Tsuki/refs/heads/devel/metadata/en-US/images/icon.png" width="120" alt="Tsuki Logo"/>
+  <img src="https://raw.githubusercontent.com/TsukiAndroid/Tsuki/refs/heads/devel/screenshots/icon.png" width="120" alt="Tsuki Logo"/>
 </p>
 
 **A free and open-source manga / manhwa / manhua reader for Android.**
