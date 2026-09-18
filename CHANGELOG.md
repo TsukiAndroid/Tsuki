@@ -1,3 +1,11 @@
+## Alpha 1.874 (Build [#377](https://github.com/TsukiAndroid/Tsuki/actions/runs/35407284522))
+
+_2026-09-18 23:51 UTC_
+
+- chore(deps): bump kotatsu-parsers-redo 38cfb00b0a → b3c0000245 [auto] (79ab4a1)
+- chore: update total downloads badge [skip ci] (9deb36d)
+
+
 ## Alpha 1.868 (Build [#374](https://github.com/TsukiAndroid/Tsuki/actions/runs/34087203049))
 
 _2026-09-07 05:32 UTC_
