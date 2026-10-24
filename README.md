@@ -6,7 +6,7 @@
   <img src="https://raw.githubusercontent.com/TsukiAndroid/Tsuki/refs/heads/devel/screenshots/icon.png" width="120" alt="Tsuki Logo"/>
 </p>
 
-**A free and open-source manga / manhwa / manhua reader for Android.**
+**A free and open-source manga / manhwa / manhua and novel reader for Android.**
 
 [![Tsuki Project](https://img.shields.io/badge/%F0%9F%8C%99%20Tsuki%20Project-TsukiAndroid%2FTsuki-6a0dad?style=flat&logo=github)](https://github.com/TsukiAndroid/Tsuki)
 ![Android 6.0+](https://img.shields.io/badge/android-6.0+-brightgreen)
@@ -43,6 +43,8 @@ This is **Tsuki (月)** , the app that refused to die.
 🖼️ **Adjustable cover background transparency** in Appearance settings
 
 📖 Standard and Webtoon-optimized reader modes
+
+📚 **Novel Reading Support** (Thanks to Futon)
 
 ⬇️ Download manga for offline reading
 
