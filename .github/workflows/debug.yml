@@ -31,14 +31,14 @@ jobs:
       - name: Build debug APK and run unit tests
         env:
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
-        run: ./gradlew assembleDebug testDebugUnitTest --stacktrace --no-build-cache --no-configuration-cache
+        run: ./gradlew assembleDebug testAlphaDebugUnitTest testBetaDebugUnitTest testStableDebugUnitTest --stacktrace --no-build-cache --no-configuration-cache
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
         if: success()
         with:
           name: debug-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
+          path: app/build/outputs/apk/*/debug/Tsuki-*-universal-debug.apk
           retention-days: 7
 
       - name: Comment PR with artifact link
