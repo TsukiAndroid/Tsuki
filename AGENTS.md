@@ -3168,3 +3168,18 @@ Added `plugin_sources` ("Plugin Sources") and `plugin_sources_empty` strings.
 | `app/src/main/kotlin/.../explore/ui/ExploreViewModel.kt` | Partition sources; add "Plugin Sources" section header |
 | `app/src/main/kotlin/.../explore/ui/ExploreFragment.kt` | `onListHeaderClick`: route `manage_plugins` payload to `openManagePlugins()` |
 | `app/src/main/res/values/strings.xml` | Added `plugin_sources`, `plugin_sources_empty` |
+
+## Session 4 — Port Futon novel reader into Tsuki
+
+### Changes made
+
+- Ported the novel feature modules from Futon: online source repositories (FreeWebNovel, Lnori, Royal Road, Scribble Hub, Ranobes, Wuxiaworld, and LNCrawler), EPUB parsing, local novel import/library support, and dedicated EPUB/text and PDF readers.
+- Added persistent manga/novel app mode, a toolbar toggle, novel-source registration and filtering, local novel navigation, reading-progress support, reader settings, and PDF/EPUB intent routing.
+- Integrated novel source types with manga-source metadata, search, history, favourites, details/pages, and source catalog flows; added Brotli response support for novel sites.
+- Registered reader activities and added the novel UI resources and focused settings, storage, parser, and PDF tests.
+- Kept Tsuki's existing UI, branding, plugin work, and source configuration. Futon's onboarding, home watermark fonts, and switcher spotlight were intentionally excluded.
+
+### Validation
+
+- `git diff --check` passed.
+- Android build and unit tests are to be verified by the pull-request CI run.

@@ -270,6 +270,7 @@ dependencies {
 
     implementation platform(libs.okhttp.bom)
         implementation libs.okhttp
+        implementation libs.okhttp.brotli
         implementation libs.okhttp.tls
         implementation libs.okhttp.dnsoverhttps
         implementation libs.okio
@@ -302,6 +303,7 @@ dependencies {
         debugImplementation libs.workinspector
 
         testImplementation libs.junit
+        testImplementation libs.mockito.core
         testImplementation libs.json
         testImplementation libs.kotlinx.coroutines.test
 

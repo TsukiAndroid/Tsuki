@@ -13,7 +13,21 @@ class CloudFlareInterceptor : Interceptor {
 	override fun intercept(chain: Interceptor.Chain): Response {
 		val request = chain.request()
 		val response = chain.proceed(request)
-		return when (CloudFlareHelper.checkResponseForProtection(response)) {
+		val detected = runCatching {
+			CloudFlareHelper.checkResponseForProtection(response)
+		}.getOrDefault(CloudFlareHelper.PROTECTION_NOT_DETECTED)
+		val protection = if (
+			detected == CloudFlareHelper.PROTECTION_NOT_DETECTED &&
+			(response.code == 403 || response.code == 503) &&
+			(response.header("cf-ray") != null ||
+				response.header("server")?.contains("cloudflare", ignoreCase = true) == true) &&
+			response.header("cf-mitigated")?.contains("challenge", ignoreCase = true) == true
+		) {
+			CloudFlareHelper.PROTECTION_CAPTCHA
+		} else {
+			detected
+		}
+		return when (protection) {
 			CloudFlareHelper.PROTECTION_BLOCKED -> response.closeThrowing(
 				CloudFlareBlockedException(
 					url = request.url.toString(),

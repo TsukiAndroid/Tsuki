@@ -31,6 +31,7 @@ leakcanary = "3.0-alpha-8"
 lifecycle = "2.9.4"
 markwon = "4.6.2"
 material = "1.14.0-alpha05"
+mockito = "5.24.0"
 moshi = "1.15.2"
 okhttp = "5.2.1"
 okio = "3.16.1"
@@ -112,11 +113,13 @@ lifecycle-service = { module = "androidx.lifecycle:lifecycle-service", version.r
 lifecycle-viewmodel = { module = "androidx.lifecycle:lifecycle-viewmodel-ktx", version.ref = "lifecycle" }
 markwon = { module = "io.noties.markwon:core", version.ref = "markwon" }
 material = { module = "com.google.android.material:material", version.ref = "material" }
+mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito" }
 moshi-kotlin = { module = "com.squareup.moshi:moshi-kotlin", version.ref = "moshi" }
 rxjava = { module = "io.reactivex:rxjava", version.ref = "rxjava" }
 rxandroid = { module = "io.reactivex:rxandroid", version.ref = "rxandroid" }
 okhttp-bom = { module = "com.squareup.okhttp3:okhttp-bom", version.ref = "okhttp" }
 okhttp = { module = "com.squareup.okhttp3:okhttp" }
+okhttp-brotli = { module = "com.squareup.okhttp3:okhttp-brotli" }
 okhttp-dnsoverhttps = { module = "com.squareup.okhttp3:okhttp-dnsoverhttps" }
 okhttp-tls = { module = "com.squareup.okhttp3:okhttp-tls" }
 okio = { module = "com.squareup.okio:okio", version.ref = "okio" }

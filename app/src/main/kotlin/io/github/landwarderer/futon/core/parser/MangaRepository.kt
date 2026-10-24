@@ -6,6 +6,7 @@ import androidx.collection.ArrayMap
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.landwarderer.futon.core.cache.MemoryContentCache
 import io.github.landwarderer.futon.core.model.LocalMangaSource
+import io.github.landwarderer.futon.core.model.LocalNovelSource
 import io.github.landwarderer.futon.core.model.MangaSourceInfo
 import io.github.landwarderer.futon.core.model.TestMangaSource
 import io.github.landwarderer.futon.core.model.UnknownMangaSource
@@ -71,6 +72,7 @@ interface MangaRepository {
         class Factory @Inject constructor(
                 @ApplicationContext private val context: Context,
                 private val localMangaRepository: LocalMangaRepository,
+                private val localNovelRepository: javax.inject.Provider<io.github.landwarderer.futon.novel.data.LocalNovelRepository>,
                 private val loaderContext: MangaLoaderContext,
                 private val contentCache: MemoryContentCache,
                 private val mirrorSwitcher: MirrorSwitcher,
@@ -107,6 +109,7 @@ interface MangaRepository {
                         when (source) {
                                 is MangaSourceInfo -> return create(source.mangaSource)
                                 LocalMangaSource -> return localMangaRepository
+                                LocalNovelSource -> return localNovelRepository.get()
                                 UnknownMangaSource -> return EmptyMangaRepository(source)
                         }
                         cache[source]?.get()?.let { return it }
@@ -129,6 +132,23 @@ interface MangaRepository {
                                 cache = contentCache,
                                 mirrorSwitcher = mirrorSwitcher,
                         )
+
+                        is io.github.landwarderer.futon.novel.data.source.NovelParserSource -> when (source) {
+                                io.github.landwarderer.futon.novel.data.source.NovelParserSource.FREEWEBNOVEL ->
+                                        io.github.landwarderer.futon.novel.data.source.FreeWebNovelRepository(contentCache, loaderContext.httpClient)
+                                io.github.landwarderer.futon.novel.data.source.NovelParserSource.LNORI ->
+                                        io.github.landwarderer.futon.novel.data.source.LnoriRepository(contentCache, loaderContext.httpClient)
+                                io.github.landwarderer.futon.novel.data.source.NovelParserSource.ROYALROAD ->
+                                        io.github.landwarderer.futon.novel.data.source.RoyalRoadRepository(contentCache, loaderContext.httpClient)
+                                io.github.landwarderer.futon.novel.data.source.NovelParserSource.SCRIBBLEHUB ->
+                                        io.github.landwarderer.futon.novel.data.source.ScribbleHubRepository(contentCache, loaderContext.httpClient)
+                                io.github.landwarderer.futon.novel.data.source.NovelParserSource.RANOBES ->
+                                        io.github.landwarderer.futon.novel.data.source.RanobesRepository(contentCache, loaderContext.httpClient)
+                                io.github.landwarderer.futon.novel.data.source.NovelParserSource.WUXIAWORLD ->
+                                        io.github.landwarderer.futon.novel.data.source.WuxiaworldRepository(contentCache, loaderContext.httpClient)
+                                io.github.landwarderer.futon.novel.data.source.NovelParserSource.LNCRAWLER ->
+                                        io.github.landwarderer.futon.novel.data.source.LNCrawlerRepository(contentCache, loaderContext.httpClient)
+                        }
 
                         TestMangaSource -> TestMangaRepository(
                                 loaderContext = loaderContext,
