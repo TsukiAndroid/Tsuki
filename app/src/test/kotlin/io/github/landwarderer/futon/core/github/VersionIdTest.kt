@@ -2,6 +2,7 @@ package io.github.landwarderer.futon.core.github
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Assume.assumeTrue
 import org.junit.Test
 import io.github.landwarderer.futon.BuildConfig
 
@@ -45,6 +46,11 @@ class VersionIdTest {
 
 	@Test
 	fun testCurrentVersion() {
+		assumeTrue(
+			"Version floor applies only to stable SemVer builds",
+			BuildConfig.UPDATE_CHANNEL == "stable" &&
+				BuildConfig.VERSION_NAME.matches(Regex("\\d+\\.\\d+\\.\\d+")),
+		)
 		val version1 = VersionId("2.4.6")
 		val version2 = VersionId(BuildConfig.VERSION_NAME)
 		assertTrue(version1 < version2)
