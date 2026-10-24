@@ -112,6 +112,7 @@ lifecycle-service = { module = "androidx.lifecycle:lifecycle-service", version.r
 lifecycle-viewmodel = { module = "androidx.lifecycle:lifecycle-viewmodel-ktx", version.ref = "lifecycle" }
 markwon = { module = "io.noties.markwon:core", version.ref = "markwon" }
 material = { module = "com.google.android.material:material", version.ref = "material" }
+mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito" }
 moshi-kotlin = { module = "com.squareup.moshi:moshi-kotlin", version.ref = "moshi" }
 rxjava = { module = "io.reactivex:rxjava", version.ref = "rxjava" }
 rxandroid = { module = "io.reactivex:rxandroid", version.ref = "rxandroid" }

@@ -303,6 +303,7 @@ dependencies {
         debugImplementation libs.workinspector
 
         testImplementation libs.junit
+        testImplementation libs.mockito.core
         testImplementation libs.json
         testImplementation libs.kotlinx.coroutines.test
 
