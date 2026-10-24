@@ -178,7 +178,7 @@ class SearchViewModel @Inject constructor(
 			val sources = if (pinnedOnly.value) {
 				sourcesRepository.getPinnedSources().filter { it.isNovelSource == settings.appMode.isNovel }
 			} else {
-				sourcesRepository.getEnabledSources().filter { it.mangaSource.isNovelSource == settings.appMode.isNovel }
+				sourcesRepository.getEnabledSources().filter { it.isNovelSource == settings.appMode.isNovel }
 			}
 			val semaphore = Semaphore(MAX_PARALLELISM)
 			sources.map { source ->
@@ -211,8 +211,8 @@ class SearchViewModel @Inject constructor(
 					source = source,
 					list = list,
 					error = null,
-					listFilter = result.listFilter,
-					sortOrder = result.sortOrder,
+					listFilter = result?.listFilter,
+					sortOrder = result?.sortOrder,
 				)
 			}
 		},
@@ -307,8 +307,8 @@ class SearchViewModel @Inject constructor(
 						flags = MangaListMapper.NO_SAVED,
 					),
 					error = null,
-					listFilter = result.listFilter,
-					sortOrder = result.sortOrder,
+					listFilter = result?.listFilter,
+					sortOrder = result?.sortOrder,
 				)
 			} else {
 				null
