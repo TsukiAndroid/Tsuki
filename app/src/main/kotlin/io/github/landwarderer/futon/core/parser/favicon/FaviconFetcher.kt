@@ -32,6 +32,8 @@ import io.github.landwarderer.futon.core.util.ext.printStackTraceDebug
 import io.github.landwarderer.futon.core.util.ext.toMimeTypeOrNull
 import io.github.landwarderer.futon.local.data.FaviconCache
 import io.github.landwarderer.futon.local.data.LocalMangaRepository
+import io.github.landwarderer.futon.novel.data.LocalNovelRepository
+import io.github.landwarderer.futon.novel.data.source.BaseNovelRepository
 import io.github.landwarderer.futon.local.data.LocalStorageCache
 import io.github.landwarderer.futon.mihon.MihonMangaRepository
 import kotlinx.coroutines.currentCoroutineContext
@@ -66,6 +68,8 @@ class FaviconFetcher(
 			)
 
 			is LocalMangaRepository -> imageLoader.fetch(R.drawable.ic_storage, options)
+			is LocalNovelRepository -> imageLoader.fetch(R.drawable.ic_novel, options)
+			is BaseNovelRepository -> fetchNovelFavicon(repo)
 			is MihonMangaRepository -> fetchMihonIcon(repo)
 
 			// JAR plugin sources don't have a network favicon — throw so FaviconView
@@ -74,6 +78,29 @@ class FaviconFetcher(
 				throw NoSuchElementException("Plugin source has no favicon: ${mangaSource.name}")
 
 			else -> throw IllegalArgumentException("Unsupported repo ${repo.javaClass.simpleName}")
+		}
+	}
+
+	private suspend fun fetchNovelFavicon(repository: BaseNovelRepository): FetchResult? {
+		val domain = repository.source.domain
+		val faviconUrl = "https://www.google.com/s2/favicons?domain=$domain&sz=128"
+		val cacheKey = options.diskCacheKey ?: "${repository.source.name}_favicon"
+		if (options.diskCachePolicy.readEnabled) {
+			localStorageCache[cacheKey]?.let { file ->
+				return SourceFetchResult(
+					source = ImageSource(file.toOkioPath(), FileSystem.SYSTEM),
+					mimeType = MimeTypes.probeMimeType(file)?.toString(),
+					dataSource = DataSource.DISK,
+				)
+			}
+		}
+		val result = runCatchingCancellable {
+			imageLoader.fetch(faviconUrl, options)
+		}.getOrNull()
+		return if (result != null && options.diskCachePolicy.writeEnabled) {
+			writeToCache(cacheKey, result)
+		} else {
+			result ?: imageLoader.fetch(R.drawable.ic_novel, options)
 		}
 	}
 

@@ -12,6 +12,7 @@ import com.google.android.material.tabs.TabLayoutMediator
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.landwarderer.futon.R
 import io.github.landwarderer.futon.core.exceptions.resolve.SnackbarErrorObserver
+import io.github.landwarderer.futon.core.model.isNovel
 import com.google.android.material.R as materialR
 import io.github.landwarderer.futon.core.nav.AppRouter
 import io.github.landwarderer.futon.core.nav.router
@@ -63,7 +64,8 @@ class ChaptersPagesSheet : BaseAdaptiveSheet<SheetChaptersPagesBinding>(),
 
                 val args = arguments ?: Bundle.EMPTY
                 var defaultTab = args.getInt(AppRouter.KEY_TAB, settings.defaultDetailsTab)
-                val adapter = ChaptersPagesAdapter(this, settings.isPagesTabEnabled)
+                val isNovel = viewModel.mangaDetails.value?.isNovel == true || viewModel.manga.value?.isNovel == true
+                val adapter = ChaptersPagesAdapter(this, settings.isPagesTabEnabled && !isNovel)
                 if (!adapter.isPagesTabEnabled) {
                         defaultTab = (defaultTab - 1).coerceAtLeast(TAB_CHAPTERS)
                 }

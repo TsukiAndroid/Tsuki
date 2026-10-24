@@ -13,12 +13,21 @@ class MainMenuProvider(
 ) : MenuProvider {
 
         override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
-                if (viewModel.appUpdate.value != null) {
-                        menuInflater.inflate(R.menu.opt_main, menu)
+                menuInflater.inflate(R.menu.opt_main, menu)
+                menu.findItem(R.id.action_app_update)?.isVisible = viewModel.appUpdate.value != null
+                val isNovel = viewModel.appMode.value.isNovel
+                menu.findItem(R.id.action_app_mode)?.run {
+                        setIcon(if (isNovel) R.drawable.ic_read else R.drawable.ic_novel)
+                        setTitle(if (isNovel) R.string.content_type_manga else R.string.content_type_novel)
                 }
         }
 
         override fun onMenuItemSelected(menuItem: MenuItem): Boolean = when (menuItem.itemId) {
+                R.id.action_app_mode -> {
+                        viewModel.toggleAppMode()
+                        true
+                }
+
                 R.id.action_app_update -> {
                         router.openAppUpdate()
                         true

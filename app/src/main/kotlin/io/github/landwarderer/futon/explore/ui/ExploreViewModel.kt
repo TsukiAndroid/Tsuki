@@ -14,7 +14,10 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.plus
 import io.github.landwarderer.futon.R
 import io.github.landwarderer.futon.core.model.MangaSourceInfo
+import io.github.landwarderer.futon.core.model.isNovel
+import io.github.landwarderer.futon.core.model.isNovelSource
 import io.github.landwarderer.futon.core.os.AppShortcutManager
+import io.github.landwarderer.futon.core.prefs.AppMode
 import io.github.landwarderer.futon.core.prefs.AppSettings
 import io.github.landwarderer.futon.core.prefs.observeAsFlow
 import io.github.landwarderer.futon.core.prefs.observeAsStateFlow
@@ -58,6 +61,12 @@ class ExploreViewModel @Inject constructor(
 		scope = viewModelScope + Dispatchers.IO,
 		key = AppSettings.KEY_SOURCES_ENABLED_ALL,
 		valueProducer = { isAllSourcesEnabled },
+	)
+
+	val appMode = settings.observeAsStateFlow(
+		scope = viewModelScope + Dispatchers.IO,
+		key = AppSettings.KEY_APP_MODE,
+		valueProducer = { appMode },
 	)
 
 	private val isSuggestionsEnabled = settings.observeAsFlow(
@@ -145,8 +154,12 @@ class ExploreViewModel @Inject constructor(
 		isRandomLoading,
 		isAllSourcesEnabled,
 		sourcesRepository.observeHasNewSourcesForBadge(),
-	) { content, suggestions, grid, randomLoading, allSourcesEnabled, newSources ->
-		buildList(content, suggestions, grid, randomLoading, allSourcesEnabled, newSources)
+		appMode,
+	) { content, suggestions, grid, randomLoading, allSourcesEnabled, newSources, mode ->
+		val isNovel = mode.isNovel
+		val filteredSources = content.filter { it.mangaSource.isNovelSource == isNovel }
+		val filteredSuggestions = suggestions.filter { it.isNovel == isNovel }
+		buildList(filteredSources, filteredSuggestions, grid, randomLoading, allSourcesEnabled, newSources)
 	}.withErrorHandling()
 
 	private fun buildList(

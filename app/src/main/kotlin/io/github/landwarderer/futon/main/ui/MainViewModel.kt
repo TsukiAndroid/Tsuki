@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.plus
 import io.github.landwarderer.futon.core.exceptions.EmptyHistoryException
 import io.github.landwarderer.futon.core.github.AppUpdateRepository
+import io.github.landwarderer.futon.core.prefs.AppMode
 import io.github.landwarderer.futon.core.prefs.AppSettings
 import io.github.landwarderer.futon.core.prefs.observeAsFlow
 import io.github.landwarderer.futon.core.prefs.observeAsStateFlow
@@ -65,6 +66,12 @@ class MainViewModel @Inject constructor(
                 valueProducer = { isIncognitoModeEnabled },
         )
 
+        val appMode = settings.observeAsStateFlow(
+                scope = viewModelScope + Dispatchers.IO,
+                key = AppSettings.KEY_APP_MODE,
+                valueProducer = { appMode },
+        )
+
         init {
                 launchJob(Dispatchers.IO) {
                         if (!settings.isCrashConsentShown) {
@@ -108,5 +115,9 @@ class MainViewModel @Inject constructor(
 
         fun setIncognitoMode(isEnabled: Boolean) {
                 settings.isIncognitoModeEnabled = isEnabled
+        }
+
+        fun toggleAppMode() {
+                settings.appMode = if (settings.appMode == AppMode.NOVEL) AppMode.MANGA else AppMode.NOVEL
         }
 }
