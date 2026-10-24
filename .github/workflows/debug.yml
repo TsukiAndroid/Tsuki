@@ -17,10 +17,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v6
         with:
           java-version: '21'
           distribution: 'temurin'
@@ -28,10 +28,10 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v4
 
-      - name: Build debug APK
+      - name: Build debug APK and run unit tests
         env:
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
-        run: ./gradlew assembleDebug --stacktrace --info --no-build-cache --no-configuration-cache
+        run: ./gradlew assembleDebug testDebugUnitTest --stacktrace --no-build-cache --no-configuration-cache
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
