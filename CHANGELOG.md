@@ -1,3 +1,29 @@
+## Stable 1.5.6 (Build [#15](https://github.com/TsukiAndroid/Tsuki/actions/runs/40273368297))
+
+_2026-10-26 05:17 UTC_
+
+- chore: update total downloads badge [skip ci] (bd14aa7)
+- chore: archive alpha-latest downloads (+1) [skip ci] (2f0a91c)
+- Enhance README with novel reading feature (6909f9a)
+- chore: update total downloads badge [skip ci] (e7043e5)
+- chore: archive beta-latest downloads (+28) [skip ci] (d6d07f5)
+- chore: update total downloads badge [skip ci] (7bdd134)
+- chore: archive alpha-latest downloads (+52) [skip ci] (74005e7)
+- test: skip release version guard for placeholder builds (5a3984b)
+- fix: declare Mockito version in catalog (5a19b79)
+- test: add Mockito dependency for novel reader tests (7cef9eb)
+- fix novel search source filtering and nullable results (8f5bb56)
+- fix: use Tsuki theme overlay in novel readers (f6bf2e4)
+- fix: apply Tsuki theme to novel reader activities (7b8017d)
+- ci: run debug tests for each product flavor (6688f00)
+- ci: run unit tests and improve build diagnostics (2da7988)
+- ci: update Android SDK setup action (9ad9242)
+- feat: port novel reader from Futon (d77ac35)
+- chore: update total downloads badge [skip ci] (89b8d9c)
+- chore: archive stable-latest downloads (+345) [skip ci] (daa1550)
+- chore(deps): bump kotatsu-parsers-redo b3c0000245 → dc223c3d80 [auto] (aacb31b)
+
+
 ## Alpha 1.899 (Build [#380](https://github.com/TsukiAndroid/Tsuki/actions/runs/40097735658))
 
 _2026-10-24 13:21 UTC_
