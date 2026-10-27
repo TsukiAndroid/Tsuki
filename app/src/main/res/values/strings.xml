@@ -551,6 +551,7 @@
     <string name="add_extension_repo">Add</string>
     <string name="add_extension_repo_hint">Repository URL</string>
     <string name="extension_repo_add_success">Repository added</string>
+    <string name="extension_repo_invalid_url">Enter a valid HTTPS repository index URL.</string>
     <string name="extension_repo_remove_confirm">Remove %s?</string>
     <string name="extension_repos_empty">No repositories added. Add a repository URL above to browse extensions.</string>
     <string name="installed_extensions_header">Installed</string>

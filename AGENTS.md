@@ -3207,11 +3207,11 @@ Added `plugin_sources` ("Plugin Sources") and `plugin_sources_empty` strings.
 |---|---|
 | `app/src/main/kotlin/.../mihon/extensions/repo/ExtensionRepoService.kt` | Normalize GitHub repository URLs and decode gzip/Protocol Buffer catalog indexes, retaining JSON fallbacks |
 | `app/src/main/kotlin/.../settings/sources/extension/ExtensionDownloaderViewModel.kt` | Expose repository state/actions and render repos plus installed/available catalog sections |
-| `app/src/main/kotlin/.../settings/sources/extension/ExtensionDownloaderActivity.kt` | Add repository feedback/removal flows; remove the link to the unrelated custom-repo screen |
+| `app/src/main/kotlin/.../settings/sources/extension/ExtensionDownloaderActivity.kt` | Add repository feedback/removal flows; hide the custom-repository menu item only in the Mihon manager while preserving it for the custom-extension screen |
 | `app/src/main/kotlin/.../settings/sources/extension/ExtensionDownloaderAdapter.kt` | Render add-repo form and repo rows in the extension catalog |
 | `app/src/main/res/layout/item_extension_repo*.xml` | Add repository list and URL-entry rows |
-| `app/src/main/res/values/strings.xml` | Add catalog/repository labels and status messages |
-| `app/src/main/res/menu/opt_extensions.xml` | Remove the misrouted repository menu item |
+| `app/src/main/res/values/strings.xml` | Add catalog/repository labels, status messages, and the invalid-repository URL message |
+| `app/src/main/res/menu/opt_extensions.xml` | Retain the custom repository action used by `ExtensionsActivity`; the Mihon manager hides it |
 | `app/src/main/kotlin/.../list/ui/adapter/{ListItemType,TypedListSpacingDecoration}.kt` | Register repository list item types and spacing |
 | `app/build.gradle`, `gradle/libs.versions.toml` | Add kotlinx serialization Protocol Buffer runtime |
 | `app/src/test/kotlin/.../mihon/extensions/repo/ExtensionRepoServiceTest.kt` | Add GitHub URL normalization tests |
@@ -3239,4 +3239,22 @@ Added `plugin_sources` ("Plugin Sources") and `plugin_sources_empty` strings.
 #### Follow-up validation
 
 - The failing run stopped during resource merging, so it did not validate Kotlin compilation or unit tests.
-- A fresh PR workflow run should be triggered by the fix commit; record its result here after it completes.
+- After removing the duplicate Russian resource, PR runs `40430485383` and `40430535991` reached Kotlin compilation but failed on two missing resource IDs; the APK upload step was skipped and both runs produced zero artifacts. See the follow-up below.
+
+### CI follow-up — Kotlin resource IDs and artifact generation (October 27 2026)
+
+#### Failure verified
+
+- Both post-cleanup PR Debug Build runs (`40430485383` on the resource-cleanup commit and `40430535991` on the subsequent documentation commit) passed resource merging and failed during Kotlin compilation.
+- The compiler reported unresolved `R.id.action_manage_repos` in `ExtensionsActivity.kt:135` and unresolved `R.string.invalid_repo_url` in `ExtensionDownloaderViewModel.kt:171`.
+- `opt_extensions.xml` is shared by the custom-extension and Mihon managers. Removing `action_manage_repos` from that shared menu broke the custom-extension activity, which still handles it. Since the Mihon manager must not navigate to the unrelated custom-repo screen, hide this action only in `ExtensionDownloaderActivity`.
+- `ExtensionDownloaderViewModel` referenced a string resource that did not exist. The failed build step caused the artifact upload step to be skipped; both Actions run artifact lists were empty. This was a compile failure, not an artifact-storage failure.
+
+#### Fix and reason
+
+- Restored the `action_manage_repos` item in the shared `opt_extensions.xml` menu so `ExtensionsActivity` retains its repository-management action; set it invisible only for the Mihon manager.
+- Added `extension_repo_invalid_url` in `values/strings.xml` and changed the view model to use that defined resource for invalid repository URLs.
+
+#### Follow-up validation
+
+- A fresh PR Debug Build is expected after this commit. Record its conclusion and artifact status here when available.

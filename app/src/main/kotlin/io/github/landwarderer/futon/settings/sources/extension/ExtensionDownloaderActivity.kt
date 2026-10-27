@@ -110,6 +110,7 @@ class ExtensionDownloaderActivity : BaseActivity<ActivityExtensionDownloaderBind
 
         override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
             menuInflater.inflate(R.menu.opt_extensions, menu)
+            menu.findItem(R.id.action_manage_repos)?.isVisible = false
             val searchMenuItem = menu.findItem(R.id.action_search)
             searchMenuItem.setOnActionExpandListener(this)
             val searchView = searchMenuItem.actionView as SearchView

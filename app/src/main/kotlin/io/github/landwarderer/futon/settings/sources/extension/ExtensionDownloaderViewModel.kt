@@ -168,7 +168,7 @@ class ExtensionDownloaderViewModel @Inject constructor(
                     )
                 }
                 ExternalExtensionRepoRepository.AddRepoResult.InvalidUrl -> {
-                    _onRepoEvent.call(RepoEvent.Error(app.getString(R.string.invalid_repo_url)))
+                    _onRepoEvent.call(RepoEvent.Error(app.getString(R.string.extension_repo_invalid_url)))
                 }
                 ExternalExtensionRepoRepository.AddRepoResult.RepoAlreadyExists -> {
                     _onRepoEvent.call(RepoEvent.Error(app.getString(R.string.repo_already_exists)))
