@@ -1,3 +1,11 @@
+## Alpha 1.916 (Build [#384](https://github.com/TsukiAndroid/Tsuki/actions/runs/40448618681))
+
+_2026-10-27 04:14 UTC_
+
+- fix: restore Keiyoushi extension repository (#5) (f7c53f8)
+- chore: update total downloads badge [skip ci] (7278e3c)
+
+
 ## Alpha 1.911 (Build [#382](https://github.com/TsukiAndroid/Tsuki/actions/runs/40433240173))
 
 _2026-10-27 01:33 UTC_
