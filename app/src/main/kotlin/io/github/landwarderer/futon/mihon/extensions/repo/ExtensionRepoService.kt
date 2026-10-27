@@ -2,6 +2,8 @@ package io.github.landwarderer.futon.mihon.extensions.repo
 
 import android.util.Log
 import androidx.annotation.Keep
+import java.io.ByteArrayInputStream
+import java.util.zip.GZIPInputStream
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.awaitSuccess
 import io.github.landwarderer.futon.core.network.MangaHttpClient
@@ -9,20 +11,30 @@ import io.github.landwarderer.futon.core.prefs.AppSettings
 import io.github.landwarderer.futon.core.prefs.GitHubMirror
 import io.github.landwarderer.futon.mihon.MihonExtensionLoader
 import kotlinx.coroutines.withTimeout
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromByteArray
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.protobuf.ProtoBuf
+import kotlinx.serialization.protobuf.ProtoNumber
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import javax.inject.Inject
 import javax.inject.Singleton
 
+@OptIn(ExperimentalSerializationApi::class)
 @Singleton
 class ExtensionRepoService @Inject constructor(
 	@MangaHttpClient private val httpClient: OkHttpClient,
 	private val json: Json,
 	private val settings: AppSettings,
 ) {
+
+	private val protoBuf = ProtoBuf {
+		@Suppress("OPT_IN_USAGE")
+		encodeDefaults = true
+	}
 
 	private fun applyMirror(url: String): String {
 		if (url.startsWith("https://raw.githubusercontent.com/")) {
@@ -35,6 +47,14 @@ class ExtensionRepoService @Inject constructor(
 					}
 				}
 				GitHubMirror.KKGITHUB -> url.replace("raw.githubusercontent.com", "raw.kkgithub.com")
+				GitHubMirror.GHPROXY -> "https://mirror.ghproxy.com/$url"
+				GitHubMirror.GHPROXY_NET -> "https://ghproxy.net/$url"
+				else -> url
+			}
+		}
+		if (url.startsWith("https://github.com/")) {
+			return when (settings.gitHubMirror) {
+				GitHubMirror.KKGITHUB -> url.replace("github.com", "kkgithub.com")
 				GitHubMirror.GHPROXY -> "https://mirror.ghproxy.com/$url"
 				GitHubMirror.GHPROXY_NET -> "https://ghproxy.net/$url"
 				else -> url
@@ -120,72 +140,143 @@ class ExtensionRepoService @Inject constructor(
 		}
 	}
 
-suspend fun fetchAvailableExtensions(repo: ExternalExtensionRepo): List<RepoAvailableExtension> {
-val startedAt = System.currentTimeMillis()
-// --- Keiyoushi v2: try index.json with the new extensionList.extensions schema first ---
-if (repo.type == ExternalExtensionType.MIHON || repo.type == ExternalExtensionType.ANIYOMI) {
-val newIndexUrl = applyMirror("${repo.baseUrl}/index.json")
-Log.d(TAG, "fetchAvailableExtensions:tryNewFormat type=${repo.type} url=$newIndexUrl")
-val newResult = runCatching {
-withTimeout(CATALOG_TIMEOUT_MS) {
-val body = httpClient.newCall(GET(newIndexUrl)).awaitSuccess().use { it.body.string() }
-val wrapper = json.decodeFromString<KeyyoushiIndexWrapperDto>(body)
-wrapper.extensionList?.extensions
-?.mapNotNull { it.toAvailableExtension(repo) }
-?.takeIf { it.isNotEmpty() }
-}
-}.getOrNull()
-if (newResult != null) {
-Log.d(TAG, "fetchAvailableExtensions:newFormatSuccess type=${repo.type} baseUrl=${repo.baseUrl} count=${newResult.size} elapsedMs=${System.currentTimeMillis() - startedAt}")
-return newResult
-}
-Log.d(TAG, "fetchAvailableExtensions:newFormatMissOrEmpty type=${repo.type} — falling back to index.min.json")
-}
-// --- Legacy format: index.min.json flat array ---
-val indexUrl = "${repo.baseUrl}/index.min.json"
-val requestUrl = applyMirror(indexUrl)
-Log.d(TAG, "fetchAvailableExtensions:start type=${repo.type} url=$requestUrl")
-return runCatching {
-withTimeout(CATALOG_TIMEOUT_MS) {
-val body = httpClient.newCall(GET(requestUrl)).awaitSuccess().use { response ->
-response.body.string()
-}
-if (repo.type == ExternalExtensionType.IREADER) {
-val dto = json.decodeFromString<List<IReaderExtensionIndexDto>>(body)
-dto.asSequence()
-.mapNotNull { item -> item.toAvailableExtension(repo) }
-.toList()
-} else {
-val dto = json.decodeFromString<List<ExtensionIndexDto>>(body)
-dto.asSequence()
-.mapNotNull { item -> item.toAvailableExtension(repo) }
-.toList()
-}
-}
-}.onSuccess { extensions ->
-Log.d(
-TAG,
-"fetchAvailableExtensions:success type=${repo.type} baseUrl=${repo.baseUrl} count=${extensions.size} elapsedMs=${System.currentTimeMillis() - startedAt}",
-)
-}.onFailure { error ->
-Log.e(
-TAG,
-"fetchAvailableExtensions:failed type=${repo.type} baseUrl=${repo.baseUrl} elapsedMs=${System.currentTimeMillis() - startedAt} message=${error.message}",
-error,
-)
-}.getOrDefault(emptyList())
-}
-	fun normalizeIndexUrl(input: String): String? {
-		val processUrl = input.trim()
+	suspend fun fetchAvailableExtensions(repo: ExternalExtensionRepo): List<RepoAvailableExtension> {
+		val startedAt = System.currentTimeMillis()
+		Log.d(TAG, "fetchAvailableExtensions:start type=${repo.type} baseUrl=${repo.baseUrl}")
 
-		val url = processUrl.toHttpUrlOrNull() ?: return null
+		if (repo.type == ExternalExtensionType.MIHON || repo.type == ExternalExtensionType.ANIYOMI) {
+			val protobufResult = runCatching {
+				val protobufUrl = applyMirror("${repo.baseUrl}/index.pb")
+				withTimeout(CATALOG_TIMEOUT_MS) {
+					val rawBytes = httpClient.newCall(GET(protobufUrl)).awaitSuccess().use { response ->
+						response.body.bytes()
+					}
+					val decodedBytes = if (
+						rawBytes.size >= 2 &&
+						rawBytes[0] == 0x1f.toByte() &&
+						rawBytes[1] == 0x8b.toByte()
+					) {
+						GZIPInputStream(ByteArrayInputStream(rawBytes)).use { it.readBytes() }
+					} else {
+						rawBytes
+					}
+					val store = protoBuf.decodeFromByteArray<NetworkExtensionStoreDto>(decodedBytes)
+					store.extensionList?.extensions.orEmpty()
+						.asSequence()
+						.filterNot { extension ->
+							extension.packageName == "eu.kanade.tachiyomi.extension.all.outdated" ||
+								extension.packageName.endsWith(".outdated") ||
+								extension.name.startsWith("Outdated App", ignoreCase = true) ||
+								extension.name.contains("Update to Mihon", ignoreCase = true)
+						}
+						.mapNotNull { extension -> extension.toAvailableExtension(repo) }
+						.toList()
+				}
+			}
+
+			protobufResult.getOrNull()
+				?.takeIf { it.isNotEmpty() }
+				?.let { extensions ->
+					Log.d(
+						TAG,
+						"fetchAvailableExtensions:success (protobuf) type=${repo.type} baseUrl=${repo.baseUrl} count=${extensions.size} elapsedMs=${System.currentTimeMillis() - startedAt}",
+					)
+					return extensions
+				}
+			protobufResult.exceptionOrNull()?.let { error ->
+				Log.d(TAG, "fetchAvailableExtensions:protobuf fallback to json: ${error.message}")
+			}
+
+			// Keiyoushi's index.json is a newer JSON schema. Keep it as a fallback for
+			// repositories which publish that format but not index.pb.
+			val newIndexUrl = applyMirror("${repo.baseUrl}/index.json")
+			val newResult = runCatching {
+				withTimeout(CATALOG_TIMEOUT_MS) {
+					val body = httpClient.newCall(GET(newIndexUrl)).awaitSuccess().use { it.body.string() }
+					val wrapper = json.decodeFromString<KeyyoushiIndexWrapperDto>(body)
+					wrapper.extensionList?.extensions
+						?.mapNotNull { it.toAvailableExtension(repo) }
+						?.takeIf { it.isNotEmpty() }
+				}
+			}.getOrNull()
+			if (newResult != null) {
+				Log.d(
+					TAG,
+					"fetchAvailableExtensions:success (index.json) type=${repo.type} baseUrl=${repo.baseUrl} count=${newResult.size} elapsedMs=${System.currentTimeMillis() - startedAt}",
+				)
+				return newResult
+			}
+		}
+
+		val requestUrl = applyMirror("${repo.baseUrl}/index.min.json")
+		return runCatching {
+			withTimeout(CATALOG_TIMEOUT_MS) {
+				val body = httpClient.newCall(GET(requestUrl)).awaitSuccess().use { response ->
+					response.body.string()
+				}
+				if (repo.type == ExternalExtensionType.IREADER) {
+					json.decodeFromString<List<IReaderExtensionIndexDto>>(body)
+						.mapNotNull { item -> item.toAvailableExtension(repo) }
+				} else {
+					json.decodeFromString<List<ExtensionIndexDto>>(body)
+						.mapNotNull { item -> item.toAvailableExtension(repo) }
+				}
+			}
+		}.onSuccess { extensions ->
+			Log.d(
+				TAG,
+				"fetchAvailableExtensions:success (json) type=${repo.type} baseUrl=${repo.baseUrl} count=${extensions.size} elapsedMs=${System.currentTimeMillis() - startedAt}",
+			)
+		}.onFailure { error ->
+			Log.e(
+				TAG,
+				"fetchAvailableExtensions:failed type=${repo.type} baseUrl=${repo.baseUrl} elapsedMs=${System.currentTimeMillis() - startedAt} message=${error.message}",
+				error,
+			)
+		}.getOrDefault(emptyList())
+	}
+	fun normalizeIndexUrl(input: String): String? {
+		var url = input.trim().toHttpUrlOrNull() ?: return null
 		if (url.scheme != "https") {
 			return null
 		}
+
+		// GitHub's blob/tree pages are HTML, not repository files. Convert them
+		// to the equivalent raw.githubusercontent.com path before saving the repo.
+		if (url.host == "github.com") {
+			val segments = url.pathSegments.filter { it.isNotEmpty() }
+			if (segments.size >= 3 && segments[2] in setOf("raw", "tree", "blob")) {
+				val remainder = segments.drop(3).let { path ->
+					if (path.size >= 3 && path[0] == "refs" && path[1] in setOf("heads", "tags")) {
+						path.drop(2)
+					} else {
+						path
+					}
+				}
+				if (remainder.isNotEmpty()) {
+					url = url.newBuilder()
+						.host("raw.githubusercontent.com")
+						.encodedPath("/${segments[0]}/${segments[1]}/${remainder.joinToString("/")}")
+						.build()
+				}
+			} else if (
+				segments.size >= 5 &&
+				segments[2] == "refs" &&
+				segments[3] in setOf("heads", "tags")
+			) {
+				url = url.newBuilder()
+					.host("raw.githubusercontent.com")
+					.encodedPath("/${segments[0]}/${segments[1]}/${segments.drop(4).joinToString("/")}")
+					.build()
+			}
+		}
+
 		val normalizedSegments = url.pathSegments
 			.filter { it.isNotEmpty() }
 			.toMutableList()
-		if (normalizedSegments.lastOrNull() != "index.min.json") {
+		if (normalizedSegments.lastOrNull() in setOf("index.min.json", "index.json", "index.pb", "repo.json")) {
+			normalizedSegments[normalizedSegments.lastIndex] = "index.min.json"
+		} else {
 			normalizedSegments += "index.min.json"
 		}
 		val normalizedPath = "/" + normalizedSegments.joinToString("/")
@@ -267,6 +358,8 @@ error,
 	@Keep
 	@Serializable
 	private data class RepoMetaWrapperDto(
+		@SerialName("index_v2")
+		val indexV2: String? = null,
 		val meta: RepoMetaDto,
 	)
 
@@ -312,6 +405,107 @@ error,
 		val nsfw: Boolean = false,
 	)
 
+	private fun ExtensionDto.toAvailableExtension(repo: ExternalExtensionRepo): RepoAvailableExtension? {
+		val libVersion = runCatching {
+			val parts = extensionLib.split('.')
+			if (parts.size >= 2) "${parts[0]}.${parts[1]}".toDouble() else parts[0].toDouble()
+		}.getOrNull() ?: return null
+
+		val supported = when (repo.type) {
+			ExternalExtensionType.MIHON -> libVersion in MihonExtensionLoader.LIB_VERSION_MIN..MihonExtensionLoader.LIB_VERSION_MAX
+			ExternalExtensionType.ANIYOMI -> libVersion in (1.2)..(2.5)
+			ExternalExtensionType.IREADER, ExternalExtensionType.JAR -> true
+		}
+		val displayName = when (repo.type) {
+			ExternalExtensionType.MIHON -> name.removePrefix("Tachiyomi: ")
+			ExternalExtensionType.ANIYOMI -> name.removePrefix("Aniyomi: ")
+			ExternalExtensionType.IREADER -> name.removePrefix("IReader: ")
+			ExternalExtensionType.JAR -> name
+		}
+		val languages = sources.map { it.language }.filter { it.isNotEmpty() }.toSet()
+		val language = languages.singleOrNull() ?: "all"
+		val iconUrl = when {
+			resources.iconUrl.startsWith("http://") || resources.iconUrl.startsWith("https://") ->
+				applyMirror(resources.iconUrl)
+			resources.iconUrl.isNotEmpty() ->
+				applyMirror("${repo.baseUrl}/${resources.iconUrl.trimStart('/')}")
+			else ->
+				applyMirror("${repo.baseUrl}/icon/${resources.apkUrl.substringAfterLast('/').replace(".apk", ".png")}")
+		}
+
+		return RepoAvailableExtension(
+			type = repo.type,
+			name = displayName,
+			pkgName = packageName,
+			versionName = versionName,
+			versionCode = versionCode,
+			libVersion = libVersion,
+			lang = language,
+			isNsfw = contentWarning >= 2,
+			sourceNames = sources.map { it.name },
+			apkName = resources.apkUrl,
+			iconUrl = iconUrl,
+			repoUrl = repo.baseUrl,
+			repoName = repo.displayName,
+			signatureHash = repo.signingKeyFingerprint,
+			isCompatible = supported,
+		)
+	}
+
+	@Keep
+	@Serializable
+	private data class NetworkExtensionStoreDto(
+		@ProtoNumber(1) val name: String = "",
+		@ProtoNumber(2) val badgeLabel: String = "",
+		@ProtoNumber(3) val signingKey: String = "",
+		@ProtoNumber(4) val contact: ContactDto? = null,
+		@ProtoNumber(101) val extensionList: ExtensionListDto? = null,
+		@ProtoNumber(102) val extensionListUrl: String? = null,
+	)
+
+	@Keep
+	@Serializable
+	private data class ContactDto(
+		@ProtoNumber(1) val website: String = "",
+		@ProtoNumber(2) val discord: String? = null,
+	)
+
+	@Keep
+	@Serializable
+	private data class ExtensionListDto(
+		@ProtoNumber(1) val extensions: List<ExtensionDto> = emptyList(),
+	)
+
+	@Keep
+	@Serializable
+	private data class ExtensionDto(
+		@ProtoNumber(1) val name: String = "",
+		@ProtoNumber(2) val packageName: String = "",
+		@ProtoNumber(3) val resources: ResourcesDto = ResourcesDto(),
+		@ProtoNumber(4) val extensionLib: String = "",
+		@ProtoNumber(5) val versionCode: Long = 0L,
+		@ProtoNumber(6) val versionName: String = "",
+		@ProtoNumber(7) val contentWarning: Int = 0,
+		@ProtoNumber(8) val sources: List<SourceDto> = emptyList(),
+	)
+
+	@Keep
+	@Serializable
+	private data class ResourcesDto(
+		@ProtoNumber(1) val apkUrl: String = "",
+		@ProtoNumber(2) val iconUrl: String = "",
+	)
+
+	@Keep
+	@Serializable
+	private data class SourceDto(
+		@ProtoNumber(1) val id: Long = 0L,
+		@ProtoNumber(2) val name: String = "",
+		@ProtoNumber(3) val language: String = "",
+		@ProtoNumber(4) val homeUrl: String = "",
+		@ProtoNumber(5) val mirrorUrls: List<String> = emptyList(),
+		@ProtoNumber(7) val message: String? = null,
+	)
 
 @Keep
 @Serializable

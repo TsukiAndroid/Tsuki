@@ -3183,3 +3183,41 @@ Added `plugin_sources` ("Plugin Sources") and `plugin_sources_empty` strings.
 
 - `git diff --check` passed.
 - Android build and unit tests are to be verified by the pull-request CI run.
+
+---
+
+## Session 5 (October 27 2026) — Keiyoushi repositories in the Mihon extension manager
+
+### Root cause
+
+- Tsuki has separate custom JS/Dart extension repositories and Mihon APK repositories. The extension manager was linking its repository action to the custom repository screen, while the APK catalog reads from a separate database.
+- The Mihon repo service could not normalize GitHub `blob`/`tree` URLs into raw repository URLs, so a pasted Keiyoushi `index.json` page was treated as a directory path.
+- The catalog did not support Keiyoushi's compressed Protocol Buffer `index.pb`, which is the current full catalog format.
+
+### Changes
+
+- Added HTTPS GitHub blob/tree/raw URL normalization and canonical index URL handling; the example `.../blob/repo/index.json` link now resolves to the branch's raw repository index.
+- Added gzip-aware Protocol Buffer index parsing with JSON `index.json` and legacy `index.min.json` fallbacks.
+- Added the repository URL input, configured-repository list, add/remove actions, and installed/available sections to the Mihon extension manager. Catalog entries continue to merge across configured repositories.
+- Added regression tests for Keiyoushi URL normalization and insecure URL rejection.
+
+### Files changed
+
+| File | Change |
+|---|---|
+| `app/src/main/kotlin/.../mihon/extensions/repo/ExtensionRepoService.kt` | Normalize GitHub repository URLs and decode gzip/Protocol Buffer catalog indexes, retaining JSON fallbacks |
+| `app/src/main/kotlin/.../settings/sources/extension/ExtensionDownloaderViewModel.kt` | Expose repository state/actions and render repos plus installed/available catalog sections |
+| `app/src/main/kotlin/.../settings/sources/extension/ExtensionDownloaderActivity.kt` | Add repository feedback/removal flows; remove the link to the unrelated custom-repo screen |
+| `app/src/main/kotlin/.../settings/sources/extension/ExtensionDownloaderAdapter.kt` | Render add-repo form and repo rows in the extension catalog |
+| `app/src/main/res/layout/item_extension_repo*.xml` | Add repository list and URL-entry rows |
+| `app/src/main/res/values/strings.xml` | Add catalog/repository labels and status messages |
+| `app/src/main/res/menu/opt_extensions.xml` | Remove the misrouted repository menu item |
+| `app/src/main/kotlin/.../list/ui/adapter/{ListItemType,TypedListSpacingDecoration}.kt` | Register repository list item types and spacing |
+| `app/build.gradle`, `gradle/libs.versions.toml` | Add kotlinx serialization Protocol Buffer runtime |
+| `app/src/test/kotlin/.../mihon/extensions/repo/ExtensionRepoServiceTest.kt` | Add GitHub URL normalization tests |
+
+### Validation
+
+- `git diff --check`: passed.
+- Local Android unit tests and debug build: in progress.
+- Pull-request CI: pending.
