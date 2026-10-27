@@ -1,3 +1,22 @@
+## Alpha 1.911 (Build [#382](https://github.com/TsukiAndroid/Tsuki/actions/runs/40433240173))
+
+_2026-10-27 01:33 UTC_
+
+- fix: resolve extension manager resource references (2026e61)
+- docs: record duplicate Russian resource CI fix (6124fb6)
+- fix: remove duplicate Russian resource (4de66e3)
+- Fix Keiyoushi extension repository support (7c9c169)
+- chore(l10n): update Russian translation (1678a85)
+- chore: update total downloads badge [skip ci] (a1507fc)
+- chore: archive stable-latest downloads (+560) [skip ci] (bd0ccb5)
+- chore: update total downloads badge [skip ci] (bd14aa7)
+- chore: archive alpha-latest downloads (+1) [skip ci] (2f0a91c)
+- Enhance README with novel reading feature (6909f9a)
+- chore: update total downloads badge [skip ci] (e7043e5)
+- chore: archive beta-latest downloads (+28) [skip ci] (d6d07f5)
+- chore: update total downloads badge [skip ci] (7bdd134)
+
+
 ## Stable 1.5.6 (Build [#15](https://github.com/TsukiAndroid/Tsuki/actions/runs/40273368297))
 
 _2026-10-26 05:17 UTC_
