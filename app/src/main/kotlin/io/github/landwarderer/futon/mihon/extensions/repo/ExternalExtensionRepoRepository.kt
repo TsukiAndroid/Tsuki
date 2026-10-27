@@ -136,7 +136,7 @@ class ExternalExtensionRepoRepository @Inject constructor(
 			val now = System.currentTimeMillis()
 			val keiyoushi = ExternalExtensionRepo(
 				type = ExternalExtensionType.MIHON,
-				baseUrl = "https://raw.githubusercontent.com/keiyoushi/extensions/refs/heads/repo",
+				baseUrl = "https://raw.githubusercontent.com/keiyoushi/extensions/repo",
 				name = "Keiyoushi",
 				shortName = "Keiyoushi",
 				website = "https://keiyoushi.github.io/extensions",

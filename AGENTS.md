@@ -3258,3 +3258,38 @@ Added `plugin_sources` ("Plugin Sources") and `plugin_sources_empty` strings.
 #### Follow-up validation
 
 - PR Debug Build run `40431716351` for head commit `2026e61c293cc959d31c4be40a9995bd3bf484cc` completed successfully: APK build and unit tests, artifact upload, and the PR artifact-comment step all succeeded. GitHub lists one non-expired `debug-apk` artifact.
+
+
+---
+
+## Session 6 (October 27 2026) — Keiyoushi live-branch and add-time timeout follow-up
+
+### Root cause
+
+- The built-in repository was seeded and migrated to https://raw.githubusercontent.com/keiyoushi/extensions/main, but the live keiyoushi/extensions repository currently has no main ref; its default branch is repo.
+- The live repo branch serves repo.json and the compressed index.pb catalog. The previous manager add flow always fetched repo.json before saving a repository, and its 15-second timeout matched the failure shown in the user's screenshot.
+- Pasted and already-stored URLs could retain a raw /refs/heads/repo path, which is not the canonical raw-content URL.
+
+### Changes
+
+- Canonicalized Keiyoushi main and raw /refs/heads/* URLs to the live /repo branch during repository URL normalization.
+- Used the Keiyoushi name, website, and signing-key fingerprint verified from its live repo.json locally, avoiding a network-only metadata request before the repo is saved.
+- Updated the new-database seed and auto-add fallback to /repo; added migration 32→33 to correct existing main/refs/heads/repo rows without duplicating an already-canonical entry.
+- Added regression tests for legacy URL normalization and metadata retrieval without a network request.
+
+### Files changed
+
+| File | Change |
+|---|---|
+| app/src/main/kotlin/.../mihon/extensions/repo/ExtensionRepoService.kt | Canonicalize stale/ref-prefixed Keiyoushi URLs and provide verified built-in repo metadata without the add-time HTTP call |
+| app/src/main/kotlin/.../mihon/extensions/repo/ExternalExtensionRepoRepository.kt | Point the automatic Keiyoushi fallback at the live repo branch |
+| app/src/main/kotlin/.../core/db/DatabasePrePopulateCallback.kt | Seed fresh databases with the live repo branch |
+| app/src/main/kotlin/.../core/db/migrations/Migration32To33.kt | Migrate existing Keiyoushi rows and avoid duplicate URLs |
+| app/src/main/kotlin/.../core/db/MangaDatabase.kt | Register migration 32→33 and increment database version |
+| app/src/test/kotlin/.../mihon/extensions/repo/ExtensionRepoServiceTest.kt | Cover stale/ref-prefixed URLs and no-network Keiyoushi metadata |
+| AGENTS.md | Record the root cause, remediation, and validation status |
+
+### Validation
+
+- GitHub API checks confirmed keiyoushi/extensions defaults to repo; repo.json and index.pb exist on that branch, while main is not a valid ref.
+- Regression tests were added. Android Gradle tests/build have not yet run in this environment; PR CI is the next verification step.
