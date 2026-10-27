@@ -3293,3 +3293,35 @@ Added `plugin_sources` ("Plugin Sources") and `plugin_sources_empty` strings.
 
 - GitHub API checks confirmed keiyoushi/extensions defaults to repo; repo.json and index.pb exist on that branch, while main is not a valid ref.
 - Regression tests were added. GitHub Actions PR Debug Build run `40447092444` for head commit `8beaf06bbd653622b7d931b0152f56b4b490ddf7` completed successfully; the Android debug APK build and unit tests passed. The PR was squash-merged into `devel` as `f7c53f81d71a8abb204a0862a7a321282fcc34d9`.
+
+---
+
+## Session 7 (October 27 2026) — Extension catalog loading and repository deletion follow-up
+
+### Confirmed behavior
+
+- `deleteRepo()` deletes the selected repository and calls `refresh()`. The refresh path then calls `getCatalogExtensions()`, whose empty-list fallback automatically inserted Keiyoushi again. This made deleting the last repository appear to do nothing.
+- The same fallback used a signing-key fingerprint that did not match the verified fingerprint in the live Keiyoushi `repo.json`.
+- `ExtensionDownloaderViewModel.init` started a catalog fetch directly and also called `refresh()`, which fetched the same catalog again. This duplicated startup requests, including the compressed index request.
+- Live Keiyoushi `repo` branch checks returned HTTP 200 for `repo.json`, `index.pb`, and `index.json`; the protobuf index is gzip-compressed and contains 1,431 extensions at the time of checking.
+
+### Changes
+
+- Removed the automatic Keiyoushi re-add from catalog retrieval. Fresh databases still receive the default repository from `DatabasePrePopulateCallback`, but deleting the final repository now remains effective.
+- Consolidated manager startup on the existing `refresh()` path so it performs one catalog load instead of two.
+- Added regression coverage for deleting the last repository, parsing a gzip-compressed protobuf catalog (including its optional `resources.jarUrl` field), and falling back to the current Keiyoushi JSON index schema.
+
+### Files changed
+
+| File | Change |
+|---|---|
+| `app/src/main/kotlin/.../mihon/extensions/repo/ExternalExtensionRepoRepository.kt` | Stop recreating Keiyoushi after the user deletes the last repository |
+| `app/src/main/kotlin/.../settings/sources/extension/ExtensionDownloaderViewModel.kt` | Remove the redundant startup catalog fetch |
+| `app/src/test/kotlin/.../mihon/extensions/repo/ExtensionRepoServiceTest.kt` | Verify gzip protobuf and Keiyoushi JSON catalog parsing |
+| `app/src/test/kotlin/.../mihon/extensions/repo/ExternalExtensionRepoRepositoryTest.kt` | Verify deleting the last repository leaves the repository list empty |
+| `AGENTS.md` | Record the confirmed behavior, changes, and validation status |
+
+### Validation
+
+- `git diff --check` passed.
+- The focused local Gradle test task could not complete: Gradle failed to download the KSP dependency from Maven Central because the TLS handshake was terminated. GitHub Actions validation is pending.

@@ -1,7 +1,6 @@
 package io.github.landwarderer.futon.settings.sources.extension
 
 import android.app.Application
-import android.util.Log
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.landwarderer.futon.R
@@ -51,10 +50,6 @@ class ExtensionDownloaderViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     init {
-        viewModelScope.launch {
-            Log.d("ExtensionDownloaderViewModel", "fetching extensions")
-            catalogExtensions.value = repoRepository.getCatalogExtensions(ExternalExtensionType.MIHON)
-        }
         refresh()
     }
 
