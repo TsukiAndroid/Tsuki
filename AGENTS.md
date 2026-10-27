@@ -3183,3 +3183,78 @@ Added `plugin_sources` ("Plugin Sources") and `plugin_sources_empty` strings.
 
 - `git diff --check` passed.
 - Android build and unit tests are to be verified by the pull-request CI run.
+
+---
+
+## Session 5 (October 27 2026) — Keiyoushi repositories in the Mihon extension manager
+
+### Root cause
+
+- Tsuki has separate custom JS/Dart extension repositories and Mihon APK repositories. The extension manager was linking its repository action to the custom repository screen, while the APK catalog reads from a separate database.
+- The Mihon repo service could not normalize GitHub `blob`/`tree` URLs into raw repository URLs, so a pasted Keiyoushi `index.json` page was treated as a directory path.
+- The catalog did not support Keiyoushi's compressed Protocol Buffer `index.pb`, which is the current full catalog format.
+
+### Changes
+
+- Added HTTPS GitHub blob/tree/raw URL normalization and canonical index URL handling; the example `.../blob/repo/index.json` link now resolves to the branch's raw repository index.
+- Added gzip-aware Protocol Buffer index parsing with JSON `index.json` and legacy `index.min.json` fallbacks.
+- Added the repository URL input, configured-repository list, add/remove actions, and installed/available sections to the Mihon extension manager. Catalog entries continue to merge across configured repositories.
+- Added regression tests for Keiyoushi URL normalization and insecure URL rejection.
+
+### Files changed
+
+| File | Change |
+|---|---|
+| `app/src/main/kotlin/.../mihon/extensions/repo/ExtensionRepoService.kt` | Normalize GitHub repository URLs and decode gzip/Protocol Buffer catalog indexes, retaining JSON fallbacks |
+| `app/src/main/kotlin/.../settings/sources/extension/ExtensionDownloaderViewModel.kt` | Expose repository state/actions and render repos plus installed/available catalog sections |
+| `app/src/main/kotlin/.../settings/sources/extension/ExtensionDownloaderActivity.kt` | Add repository feedback/removal flows; hide the custom-repository menu item only in the Mihon manager while preserving it for the custom-extension screen |
+| `app/src/main/kotlin/.../settings/sources/extension/ExtensionDownloaderAdapter.kt` | Render add-repo form and repo rows in the extension catalog |
+| `app/src/main/res/layout/item_extension_repo*.xml` | Add repository list and URL-entry rows |
+| `app/src/main/res/values/strings.xml` | Add catalog/repository labels, status messages, and the invalid-repository URL message |
+| `app/src/main/res/menu/opt_extensions.xml` | Retain the custom repository action used by `ExtensionsActivity`; the Mihon manager hides it |
+| `app/src/main/kotlin/.../list/ui/adapter/{ListItemType,TypedListSpacingDecoration}.kt` | Register repository list item types and spacing |
+| `app/build.gradle`, `gradle/libs.versions.toml` | Add kotlinx serialization Protocol Buffer runtime |
+| `app/src/test/kotlin/.../mihon/extensions/repo/ExtensionRepoServiceTest.kt` | Add GitHub URL normalization tests |
+| `app/src/main/res/values-ru/arrays.xml` | Removed because its only entry duplicated `github_mirror_keiyoushi` from the Russian strings resource |
+
+### Validation
+
+- `git diff --check`: passed.
+- The first PR Debug Build failed at `:app:mergeAlphaDebugResources`, before Kotlin compilation or unit tests, due to a pre-existing duplicate Russian resource; see the CI follow-up below.
+- A `devel` build at the PR merge base failed for the same resource-merger error, confirming the duplicate predated this PR.
+
+### CI follow-up — duplicate Russian resource (October 27 2026)
+
+#### Failure verified
+
+- PR Debug Build run `40426594014` failed at `:app:mergeAlphaDebugResources` because `github_mirror_keiyoushi` was defined in both `app/src/main/res/values-ru/strings.xml` and `app/src/main/res/values-ru/arrays.xml`.
+- The `devel` Build Alpha run `40344006924` failed with the identical error. Both Russian resource files had the same blob SHAs on `devel` and the PR head, so this was a base-branch defect exposed by the PR build, not a resource change introduced by this feature.
+
+#### Fix and reason
+
+- Deleted `app/src/main/res/values-ru/arrays.xml`; it contained only the duplicate `<string name="github_mirror_keiyoushi">` entry.
+- Kept the Russian translation in `app/src/main/res/values-ru/strings.xml`, the correct resource file for a string. This removes the duplicate resource identifier without changing the localized label or the extension repository feature.
+- Fix commit: `4de66e37f2e669a5a79b8dfe99dcd81a652c4ee5` (`fix: remove duplicate Russian resource`).
+
+#### Follow-up validation
+
+- The failing run stopped during resource merging, so it did not validate Kotlin compilation or unit tests.
+- After removing the duplicate Russian resource, PR runs `40430485383` and `40430535991` reached Kotlin compilation but failed on two missing resource IDs; the APK upload step was skipped and both runs produced zero artifacts. See the follow-up below.
+
+### CI follow-up — Kotlin resource IDs and artifact generation (October 27 2026)
+
+#### Failure verified
+
+- Both post-cleanup PR Debug Build runs (`40430485383` on the resource-cleanup commit and `40430535991` on the subsequent documentation commit) passed resource merging and failed during Kotlin compilation.
+- The compiler reported unresolved `R.id.action_manage_repos` in `ExtensionsActivity.kt:135` and unresolved `R.string.invalid_repo_url` in `ExtensionDownloaderViewModel.kt:171`.
+- `opt_extensions.xml` is shared by the custom-extension and Mihon managers. Removing `action_manage_repos` from that shared menu broke the custom-extension activity, which still handles it. Since the Mihon manager must not navigate to the unrelated custom-repo screen, hide this action only in `ExtensionDownloaderActivity`.
+- `ExtensionDownloaderViewModel` referenced a string resource that did not exist. The failed build step caused the artifact upload step to be skipped; both Actions run artifact lists were empty. This was a compile failure, not an artifact-storage failure.
+
+#### Fix and reason
+
+- Restored the `action_manage_repos` item in the shared `opt_extensions.xml` menu so `ExtensionsActivity` retains its repository-management action; set it invisible only for the Mihon manager.
+- Added `extension_repo_invalid_url` in `values/strings.xml` and changed the view model to use that defined resource for invalid repository URLs.
+
+#### Follow-up validation
+
+- A fresh PR Debug Build is expected after this commit. Record its conclusion and artifact status here when available.

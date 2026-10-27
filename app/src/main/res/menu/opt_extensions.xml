@@ -18,5 +18,4 @@
                 android:id="@+id/action_manage_repos"
                 android:title="@string/ext_repos"
                 android:titleCondensed="@string/ext_repos_short" />
-
 </menu>
