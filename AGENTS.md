@@ -3215,9 +3215,28 @@ Added `plugin_sources` ("Plugin Sources") and `plugin_sources_empty` strings.
 | `app/src/main/kotlin/.../list/ui/adapter/{ListItemType,TypedListSpacingDecoration}.kt` | Register repository list item types and spacing |
 | `app/build.gradle`, `gradle/libs.versions.toml` | Add kotlinx serialization Protocol Buffer runtime |
 | `app/src/test/kotlin/.../mihon/extensions/repo/ExtensionRepoServiceTest.kt` | Add GitHub URL normalization tests |
+| `app/src/main/res/values-ru/arrays.xml` | Removed because its only entry duplicated `github_mirror_keiyoushi` from the Russian strings resource |
 
 ### Validation
 
 - `git diff --check`: passed.
-- Local Android unit tests and debug build: in progress.
-- Pull-request CI: pending.
+- The first PR Debug Build failed at `:app:mergeAlphaDebugResources`, before Kotlin compilation or unit tests, due to a pre-existing duplicate Russian resource; see the CI follow-up below.
+- A `devel` build at the PR merge base failed for the same resource-merger error, confirming the duplicate predated this PR.
+
+### CI follow-up — duplicate Russian resource (October 27 2026)
+
+#### Failure verified
+
+- PR Debug Build run `40426594014` failed at `:app:mergeAlphaDebugResources` because `github_mirror_keiyoushi` was defined in both `app/src/main/res/values-ru/strings.xml` and `app/src/main/res/values-ru/arrays.xml`.
+- The `devel` Build Alpha run `40344006924` failed with the identical error. Both Russian resource files had the same blob SHAs on `devel` and the PR head, so this was a base-branch defect exposed by the PR build, not a resource change introduced by this feature.
+
+#### Fix and reason
+
+- Deleted `app/src/main/res/values-ru/arrays.xml`; it contained only the duplicate `<string name="github_mirror_keiyoushi">` entry.
+- Kept the Russian translation in `app/src/main/res/values-ru/strings.xml`, the correct resource file for a string. This removes the duplicate resource identifier without changing the localized label or the extension repository feature.
+- Fix commit: `4de66e37f2e669a5a79b8dfe99dcd81a652c4ee5` (`fix: remove duplicate Russian resource`).
+
+#### Follow-up validation
+
+- The failing run stopped during resource merging, so it did not validate Kotlin compilation or unit tests.
+- A fresh PR workflow run should be triggered by the fix commit; record its result here after it completes.
