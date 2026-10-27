@@ -3292,4 +3292,4 @@ Added `plugin_sources` ("Plugin Sources") and `plugin_sources_empty` strings.
 ### Validation
 
 - GitHub API checks confirmed keiyoushi/extensions defaults to repo; repo.json and index.pb exist on that branch, while main is not a valid ref.
-- Regression tests were added. Android Gradle tests/build have not yet run in this environment; PR CI is the next verification step.
+- Regression tests were added. GitHub Actions PR Debug Build run `40447092444` for head commit `8beaf06bbd653622b7d931b0152f56b4b490ddf7` completed successfully; the Android debug APK build and unit tests passed. The PR was squash-merged into `devel` as `f7c53f81d71a8abb204a0862a7a321282fcc34d9`.
