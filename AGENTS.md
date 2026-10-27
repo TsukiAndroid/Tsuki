@@ -3257,4 +3257,4 @@ Added `plugin_sources` ("Plugin Sources") and `plugin_sources_empty` strings.
 
 #### Follow-up validation
 
-- A fresh PR Debug Build is expected after this commit. Record its conclusion and artifact status here when available.
+- PR Debug Build run `40431716351` for head commit `2026e61c293cc959d31c4be40a9995bd3bf484cc` completed successfully: APK build and unit tests, artifact upload, and the PR artifact-comment step all succeeded. GitHub lists one non-expired `debug-apk` artifact.
