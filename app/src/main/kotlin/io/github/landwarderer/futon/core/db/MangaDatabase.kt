@@ -46,6 +46,7 @@ import io.github.landwarderer.futon.core.db.migrations.Migration28To29
 import io.github.landwarderer.futon.core.db.migrations.Migration29To30
 import io.github.landwarderer.futon.core.db.migrations.Migration30To31
 import io.github.landwarderer.futon.core.db.migrations.Migration31To32
+import io.github.landwarderer.futon.core.db.migrations.Migration32To33
 import io.github.landwarderer.futon.core.db.dao.WebViewSourceDao
 import io.github.landwarderer.futon.core.db.entity.WebViewSourceEntity
 import io.github.landwarderer.futon.core.db.migrations.Migration2To3
@@ -79,7 +80,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
-const val DATABASE_VERSION = 32
+const val DATABASE_VERSION = 33
 
 @Database(
 	entities = [
@@ -161,6 +162,7 @@ fun getDatabaseMigrations(context: Context): Array<Migration> = arrayOf(
 Migration29To30(),
 Migration30To31(),
 Migration31To32(),
+Migration32To33(),
 )
 
 fun MangaDatabase(context: Context): MangaDatabase = Room

@@ -76,7 +76,35 @@ class ExtensionRepoService @Inject constructor(
 		return url.host
 	}
 
+	private fun isKeiyoushiRepository(baseUrl: String): Boolean {
+		val url = baseUrl.toHttpUrlOrNull() ?: return false
+		val segments = url.pathSegments.filter { it.isNotEmpty() }
+		return url.scheme == "https" &&
+			url.host == "raw.githubusercontent.com" &&
+			segments.size >= 2 &&
+			segments[0] == "keiyoushi" &&
+			segments[1] == "extensions"
+	}
+
 	suspend fun fetchRepoDetails(baseUrl: String, type: ExternalExtensionType): ExternalExtensionRepo {
+		// Keiyoushi's verified metadata is part of this app's built-in repository config.
+		// Avoid a separate repo.json round trip that can time out before the repo is saved.
+		if (type == ExternalExtensionType.MIHON && isKeiyoushiRepository(baseUrl)) {
+			val now = System.currentTimeMillis()
+			return ExternalExtensionRepo(
+				type = type,
+				baseUrl = baseUrl,
+				name = "Keiyoushi",
+				shortName = "Keiyoushi",
+				website = "https://keiyoushi.github.io",
+				signingKeyFingerprint = KEIYOUSHI_SIGNING_KEY_FINGERPRINT,
+				createdAt = now,
+				updatedAt = now,
+				lastSuccessAt = now,
+				lastError = null,
+			)
+		}
+
 		if (type == ExternalExtensionType.IREADER || type == ExternalExtensionType.JAR) {
 			val now = System.currentTimeMillis()
 			val derived = deriveRepoName(baseUrl, if (type == ExternalExtensionType.IREADER) "IReader" else "Futon")
@@ -274,6 +302,27 @@ class ExtensionRepoService @Inject constructor(
 		val normalizedSegments = url.pathSegments
 			.filter { it.isNotEmpty() }
 			.toMutableList()
+
+		// Strip the refs/heads prefix sometimes copied from GitHub's web URLs.
+		if (
+			url.host == "raw.githubusercontent.com" &&
+			normalizedSegments.size >= 5 &&
+			normalizedSegments[2] == "refs" &&
+			normalizedSegments[3] in setOf("heads", "tags")
+		) {
+			normalizedSegments.removeAt(2)
+			normalizedSegments.removeAt(2)
+		}
+
+		// Keiyoushi currently publishes its catalog on repo, not main.
+		if (
+			url.host == "raw.githubusercontent.com" &&
+			normalizedSegments.take(2) == listOf("keiyoushi", "extensions") &&
+			normalizedSegments.getOrNull(2) == "main"
+		) {
+			normalizedSegments[2] = "repo"
+		}
+
 		if (normalizedSegments.lastOrNull() in setOf("index.min.json", "index.json", "index.pb", "repo.json")) {
 			normalizedSegments[normalizedSegments.lastIndex] = "index.min.json"
 		} else {
@@ -581,6 +630,7 @@ isCompatible = supported,
 
 	private companion object {
 		const val TAG = "ExtensionRepo"
+		const val KEIYOUSHI_SIGNING_KEY_FINGERPRINT = "9add655a78e96c4ec7a53ef89dccb557cb5d767489fac5e785d671a5a75d4da2"
 		const val REPO_DETAILS_TIMEOUT_MS = 15_000L
 		const val CATALOG_TIMEOUT_MS = 20_000L
 	}
