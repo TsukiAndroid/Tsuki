@@ -3324,4 +3324,6 @@ Added `plugin_sources` ("Plugin Sources") and `plugin_sources_empty` strings.
 ### Validation
 
 - `git diff --check` passed.
-- The focused local Gradle test task could not complete: Gradle failed to download the KSP dependency from Maven Central because the TLS handshake was terminated. GitHub Actions validation is pending.
+- The first GitHub Actions run (`40464906593`) reached `:app:testAlphaDebugUnitTest` but failed four tests: both new catalog tests, the new repository deletion test, and an existing `NovelStorageManagerTest`. The APK upload step was skipped because the build-and-test step failed.
+- The test fixtures were corrected: catalog tests now use a real `AppSettings` with mocked Android preferences, and the repository test no longer passes a null `Mockito.any()` matcher to a Kotlin non-null parameter. CI rerun is pending.
+- The focused local Gradle task could not complete in this workspace because Gradle's TLS handshake to Maven Central failed while downloading a KSP dependency.

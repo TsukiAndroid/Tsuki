@@ -19,8 +19,6 @@ class ExternalExtensionRepoRepositoryTest {
         val database = Mockito.mock(MangaDatabase::class.java)
         Mockito.`when`(database.getExternalExtensionRepoDao()).thenReturn(dao)
         val service = Mockito.mock(ExtensionRepoService::class.java)
-        Mockito.`when`(service.fetchAvailableExtensions(Mockito.any(ExternalExtensionRepo::class.java)))
-            .thenReturn(emptyList())
         val repository = ExternalExtensionRepoRepository(
             appContext = Mockito.mock(Context::class.java),
             db = database,

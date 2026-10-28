@@ -1,7 +1,8 @@
 package io.github.landwarderer.futon.mihon.extensions.repo
 
+import android.content.Context
+import android.content.SharedPreferences
 import io.github.landwarderer.futon.core.prefs.AppSettings
-import io.github.landwarderer.futon.core.prefs.GitHubMirror
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
@@ -19,8 +20,10 @@ import java.util.zip.GZIPOutputStream
 class ExtensionRepoServiceTest {
 
     private fun createService(httpClient: OkHttpClient = OkHttpClient()): ExtensionRepoService {
-        val settings = Mockito.mock(AppSettings::class.java)
-        Mockito.`when`(settings.gitHubMirror).thenReturn(GitHubMirror.NATIVE)
+        val settings = AppSettings(
+            Mockito.mock(Context::class.java),
+            Mockito.mock(SharedPreferences::class.java),
+        )
         return ExtensionRepoService(
             httpClient = httpClient,
             json = Json { ignoreUnknownKeys = true },
