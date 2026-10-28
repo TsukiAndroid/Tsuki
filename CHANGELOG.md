@@ -1,3 +1,13 @@
+## Alpha 1.924 (Build [#386](https://github.com/TsukiAndroid/Tsuki/actions/runs/40614402285))
+
+_2026-10-28 01:20 UTC_
+
+- test: mock Android logging in extension tests (6e743f8)
+- test: fix extension repository regression fixtures (3d69019)
+- fix: honor extension repo deletion and avoid duplicate catalog fetch (cfda77d)
+- chore: update total downloads badge [skip ci] (1734258)
+
+
 ## Alpha 1.916 (Build [#384](https://github.com/TsukiAndroid/Tsuki/actions/runs/40448618681))
 
 _2026-10-27 04:14 UTC_
