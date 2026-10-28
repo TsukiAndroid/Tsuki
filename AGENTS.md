@@ -3325,5 +3325,6 @@ Added `plugin_sources` ("Plugin Sources") and `plugin_sources_empty` strings.
 
 - `git diff --check` passed.
 - The first GitHub Actions run (`40464906593`) reached `:app:testAlphaDebugUnitTest` but failed four tests: both new catalog tests, the new repository deletion test, and an existing `NovelStorageManagerTest`. The APK upload step was skipped because the build-and-test step failed.
-- The test fixtures were corrected: catalog tests now use a real `AppSettings` with mocked Android preferences, and the repository test no longer passes a null `Mockito.any()` matcher to a Kotlin non-null parameter. CI rerun is pending.
+- The second run (`40606998598`) passed the existing `NovelStorageManagerTest`; the three new tests still failed because Android's `Log` methods throw from their plain JVM stubs.
+- The test fixtures now use a real `AppSettings` with mocked Android preferences, avoid a null Mockito matcher for a Kotlin non-null parameter, and statically mock Android `Log` during calls that exercise production logging. A third CI run is pending.
 - The focused local Gradle task could not complete in this workspace because Gradle's TLS handshake to Maven Central failed while downloading a KSP dependency.

@@ -1,6 +1,7 @@
 package io.github.landwarderer.futon.mihon.extensions.repo
 
 import android.content.Context
+import android.util.Log
 import io.github.landwarderer.futon.core.db.MangaDatabase
 import io.github.landwarderer.futon.core.db.dao.ExternalExtensionRepoDao
 import io.github.landwarderer.futon.core.db.entity.ExternalExtensionRepoEntity
@@ -12,6 +13,15 @@ import org.junit.Test
 import org.mockito.Mockito
 
 class ExternalExtensionRepoRepositoryTest {
+
+    private suspend fun <T> withMockedAndroidLog(block: suspend () -> T): T {
+        val mockedLog = Mockito.mockStatic(Log::class.java)
+        return try {
+            block()
+        } finally {
+            mockedLog.close()
+        }
+    }
 
     @Test
     fun deletingLastRepositoryDoesNotAddKeiyoushiAgain() = runBlocking {
@@ -38,8 +48,10 @@ class ExternalExtensionRepoRepositoryTest {
         )
         dao.add(keiyoushi.toEntity())
 
-        repository.delete(keiyoushi)
-        val catalog = repository.getCatalogExtensions(ExternalExtensionType.MIHON)
+        val catalog = withMockedAndroidLog {
+            repository.delete(keiyoushi)
+            repository.getCatalogExtensions(ExternalExtensionType.MIHON)
+        }
 
         assertTrue(catalog.isEmpty())
         assertTrue(dao.entities.isEmpty())

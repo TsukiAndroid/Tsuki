@@ -2,6 +2,7 @@ package io.github.landwarderer.futon.mihon.extensions.repo
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.util.Log
 import io.github.landwarderer.futon.core.prefs.AppSettings
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
@@ -18,6 +19,15 @@ import java.io.ByteArrayOutputStream
 import java.util.zip.GZIPOutputStream
 
 class ExtensionRepoServiceTest {
+
+    private suspend fun <T> withMockedAndroidLog(block: suspend () -> T): T {
+        val mockedLog = Mockito.mockStatic(Log::class.java)
+        return try {
+            block()
+        } finally {
+            mockedLog.close()
+        }
+    }
 
     private fun createService(httpClient: OkHttpClient = OkHttpClient()): ExtensionRepoService {
         val settings = AppSettings(
@@ -165,9 +175,11 @@ class ExtensionRepoServiceTest {
 
     @Test
     fun fetchKeiyoushiGzipProtobufCatalog() = runBlocking {
-        val extensions = createService(
-            stubCatalogClient(protobufBytes = keiyoushiProtobufIndex()),
-        ).fetchAvailableExtensions(keiyoushiRepo())
+        val extensions = withMockedAndroidLog {
+            createService(
+                stubCatalogClient(protobufBytes = keiyoushiProtobufIndex()),
+            ).fetchAvailableExtensions(keiyoushiRepo())
+        }
 
         assertEquals(1, extensions.size)
         assertEquals("AHottie", extensions.single().name)
@@ -198,9 +210,11 @@ class ExtensionRepoServiceTest {
               }
             }
         """.trimIndent()
-        val extensions = createService(
-            stubCatalogClient(jsonBody = json),
-        ).fetchAvailableExtensions(keiyoushiRepo())
+        val extensions = withMockedAndroidLog {
+            createService(
+                stubCatalogClient(jsonBody = json),
+            ).fetchAvailableExtensions(keiyoushiRepo())
+        }
 
         assertEquals(1, extensions.size)
         assertEquals("AHottie", extensions.single().name)
