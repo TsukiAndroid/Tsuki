@@ -1,3 +1,16 @@
+## Alpha 1.929 (Build [#387](https://github.com/TsukiAndroid/Tsuki/actions/runs/41478970875))
+
+_2026-11-02 16:11 UTC_
+
+- Update README to include 'Vibe Coded' description (6c0c482)
+- chore(deps): bump kotatsu-parsers-redo dc223c3d80 → 68f3fed395 [auto] (e024611)
+- chore: update total downloads badge [skip ci] (549ef6e)
+- chore: archive alpha-latest downloads (+8) [skip ci] (7f28b50)
+- test: mock Android logging in extension tests (6e743f8)
+- test: fix extension repository regression fixtures (3d69019)
+- fix: honor extension repo deletion and avoid duplicate catalog fetch (cfda77d)
+
+
 ## Alpha 1.924 (Build [#386](https://github.com/TsukiAndroid/Tsuki/actions/runs/40614402285))
 
 _2026-10-28 01:20 UTC_
