@@ -24,7 +24,7 @@ Tsuki means Moon in Japanese. The moon disappears sometimes, but it always comes
 
 It started as a personal mission, just wanting to read manga on an old Android 7 device that kept breaking every app I tried. What followed was a long road through SSL handshake errors, dead parser repos, and a graveyard of apps that kept getting taken down one by one.
 
-I don't have any professional dev experience. No Android Studio knowledge. Just stubbornness, curiosity, and a lot of trial and error. Eventually I used AI to help fix, fork, and ship something that would actually survive. This is the era of AI and I used it to make it happen.
+This is a fully **Vibe Coded** app so nothing is promised. I don't have any professional dev experience. No Android Studio knowledge. Just stubbornness, curiosity, and a lot of trial and error. Eventually I used AI to help fix, fork, and ship something that would actually survive. This is the era of AI and I used it to make it happen.
 
 This is **Tsuki (月)** , the app that refused to die.
 
