@@ -24,6 +24,7 @@ import io.github.landwarderer.futon.core.util.ext.toMimeType
 import io.github.landwarderer.futon.core.util.ext.use
 import org.koitharu.kotatsu.parsers.MangaLoaderContext
 import org.koitharu.kotatsu.parsers.MangaParser
+import org.koitharu.kotatsu.parsers.ParsersBundle
 import org.koitharu.kotatsu.parsers.bitmap.Bitmap
 import org.koitharu.kotatsu.parsers.config.MangaSourceConfig
 import org.koitharu.kotatsu.parsers.model.MangaSource
@@ -47,6 +48,8 @@ class MangaLoaderContextImpl @Inject constructor(
     private val webViewExecutor: WebViewExecutor,
     private val webViewRequestInterceptorExecutor: WebViewRequestInterceptorExecutor,
 ) : MangaLoaderContext() {
+
+    override val parsers: ParsersBundle get() = AppParsers.bundle
 
     private val webViewUserAgent by lazy { obtainWebViewUserAgent() }
 
@@ -166,7 +169,7 @@ class MangaLoaderContextImpl @Inject constructor(
             var allMatch = true
             for (term in andTerms) {
                 // Only support url.includes('<text>') terms for now
-                val m = Regex("""url\.includes\(\s*(['"])(.*?)\1\s*\)""").find(term)
+                val m = Regex("""url\.includes\(\s*(['\"])\(.*?\)\1\s*\)""").find(term)
                 if (m != null) {
                     val needle = m.groupValues[2]
                     if (!requestUrl.contains(needle)) {
