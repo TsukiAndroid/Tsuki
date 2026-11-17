@@ -16,9 +16,9 @@ import io.github.landwarderer.futon.core.util.ext.toLocale
 import io.github.landwarderer.futon.explore.data.MangaSourcesRepository
 import io.github.landwarderer.futon.filter.ui.model.FilterProperty
 import org.koitharu.kotatsu.parsers.model.ContentType
-import org.koitharu.kotatsu.parsers.model.MangaParserSource
+import org.koitharu.kotatsu.parsers.model.ParserMangaSource
 import org.koitharu.kotatsu.parsers.util.mapToSet
-import java.util.EnumSet
+import java.util.LinkedHashSet
 import java.util.Locale
 import javax.inject.Inject
 
@@ -109,7 +109,7 @@ class WelcomeViewModel @Inject constructor(
 	private suspend fun commit() {
 		val languages = locales.value.selectedItems.mapToSet { it.language }
 		val types = types.value.selectedItems
-		val enabledSources = allSources.filterTo(EnumSet.noneOf(MangaParserSource::class.java)) { x ->
+		val enabledSources = allSources.filterTo(LinkedHashSet<ParserMangaSource>()) { x ->
 			x.contentType in types && x.locale in languages
 		}
 		repository.setSourcesEnabledExclusive(enabledSources)
