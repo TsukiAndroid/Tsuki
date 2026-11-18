@@ -10,6 +10,7 @@ import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
 import androidx.core.text.inSpans
 import io.github.landwarderer.futon.R
+import io.github.landwarderer.futon.core.parser.AppParsers
 import io.github.landwarderer.futon.core.parser.external.ExternalMangaSource
 import io.github.landwarderer.futon.customsource.data.CustomSourcesRepository
 import io.github.landwarderer.futon.customsource.domain.CustomMangaSource
@@ -21,8 +22,8 @@ import io.github.landwarderer.futon.extensions.data.ExtensionRepository
 import io.github.landwarderer.futon.mihon.model.MihonMangaSource
 import io.github.landwarderer.futon.mihon.parsers.model.ContentType as MihonContentType
 import org.koitharu.kotatsu.parsers.model.ContentType
-import org.koitharu.kotatsu.parsers.model.MangaParserSource
 import org.koitharu.kotatsu.parsers.model.MangaSource
+import org.koitharu.kotatsu.parsers.model.ParserMangaSource
 import org.koitharu.kotatsu.parsers.util.splitTwoParts
 import java.util.Locale
 
@@ -74,9 +75,7 @@ fun MangaSource(name: String?): MangaSource {
                 // a PluginMangaRepository from pluginManager.pluginSources at call time.
                 return AnonymousMangaSource(name)
         }
-        MangaParserSource.entries.forEach {
-                if (it.name == name) return it
-        }
+        AppParsers.bundle.findSource(name)?.let { return it }
         io.github.landwarderer.futon.novel.data.source.NovelParserSource.fromName(name)?.let { return it }
         return UnknownMangaSource
 }
@@ -87,7 +86,7 @@ fun Collection<String>.toMangaSources() = map(::MangaSource)
 
 fun MangaSource.isNsfw(): Boolean = when (val source = unwrap()) {
         is MangaSourceInfo -> source.mangaSource.isNsfw()
-        is MangaParserSource -> source.contentType == ContentType.HENTAI
+        is ParserMangaSource -> source.contentType == ContentType.HENTAI
         is MihonMangaSource -> source.isNsfw
         is CustomMangaSource -> false
         else -> false
@@ -117,13 +116,13 @@ tailrec fun MangaSource.unwrap(): MangaSource = if (this is MangaSourceInfo) {
 }
 
 fun MangaSource.getLocale(): Locale? = when (val source = unwrap()) {
-        is MangaParserSource -> source.locale.toLocaleOrNull()
+        is ParserMangaSource -> source.locale.toLocaleOrNull()
         is io.github.landwarderer.futon.novel.data.source.NovelParserSource -> source.locale.toLocaleOrNull()
         else -> null
 }
 
 fun MangaSource.getSummary(context: Context): String? = when (val source = unwrap()) {
-        is MangaParserSource -> {
+        is ParserMangaSource -> {
                 val type = context.getString(source.contentType.titleResId)
                 val locale = source.locale.toLocale().getDisplayName(context)
                 context.getString(R.string.source_summary_pattern, type, locale)
@@ -177,7 +176,7 @@ fun MangaSource.getSummary(context: Context): String? = when (val source = unwra
 }
 
 fun MangaSource.getTitle(context: Context): String = when (val source = unwrap()) {
-        is MangaParserSource -> source.title
+        is ParserMangaSource -> source.title
         is io.github.landwarderer.futon.novel.data.source.NovelParserSource -> source.title
         LocalMangaSource -> context.getString(R.string.local_storage)
         LocalNovelSource -> context.getString(R.string.light_novels)
@@ -191,7 +190,7 @@ fun MangaSource.getTitle(context: Context): String = when (val source = unwrap()
 }
 
 val MangaSource.isBroken: Boolean
-        get() = (this as? MangaParserSource)?.isBroken == true
+        get() = (this as? ParserMangaSource)?.isBroken == true
 
 fun SpannableStringBuilder.appendIcon(textView: TextView, @DrawableRes resId: Int): SpannableStringBuilder {
         val icon = ContextCompat.getDrawable(textView.context, resId) ?: return this

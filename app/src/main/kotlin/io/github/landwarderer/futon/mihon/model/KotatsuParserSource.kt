@@ -2,10 +2,10 @@ package io.github.landwarderer.futon.mihon.model
 
 import io.github.landwarderer.futon.mihon.parsers.model.ContentSource
 import io.github.landwarderer.futon.mihon.parsers.model.ContentType
-import org.koitharu.kotatsu.parsers.model.MangaParserSource
+import org.koitharu.kotatsu.parsers.model.ParserMangaSource
 
 data class KotatsuParserSource(
-    val mangaSource: MangaParserSource
+    val mangaSource: ParserMangaSource
 ) : ContentSource {
     override val name: String get() = mangaSource.name
     override val locale: String get() = mangaSource.locale

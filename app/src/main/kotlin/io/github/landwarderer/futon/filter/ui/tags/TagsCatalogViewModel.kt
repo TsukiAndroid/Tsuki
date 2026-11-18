@@ -23,10 +23,10 @@ import io.github.landwarderer.futon.list.ui.model.ListModel
 import io.github.landwarderer.futon.list.ui.model.LoadingState
 import io.github.landwarderer.futon.list.ui.model.toErrorFooter
 import io.github.landwarderer.futon.list.ui.model.toErrorState
-import org.koitharu.kotatsu.parsers.model.MangaParserSource
+import org.koitharu.kotatsu.parsers.model.ParserMangaSource
 import org.koitharu.kotatsu.parsers.model.MangaTag
 
-@HiltViewModel(assistedFactory = TagsCatalogViewModel.Factory::class)
+@HiltViewModel(assistedFactory: TagsCatalogViewModel.Factory::class)
 class TagsCatalogViewModel @AssistedInject constructor(
 	@Assisted private val filter: FilterCoordinator,
 	@Assisted private val isExcluded: Boolean,
@@ -90,7 +90,7 @@ class TagsCatalogViewModel @AssistedInject constructor(
 			}
 		}
 		if (result.isNotEmpty()) {
-			val locale = (filter.mangaSource as? MangaParserSource)?.locale
+			val locale = (filter.mangaSource as? ParserMangaSource)?.locale
 			result.sortWith(compareBy(TagTitleComparator(locale)) { (it as TagCatalogItem).tag })
 		}
 		available.exceptionOrNull()?.let { error ->

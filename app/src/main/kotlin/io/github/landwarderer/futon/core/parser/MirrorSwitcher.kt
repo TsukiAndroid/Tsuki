@@ -8,10 +8,10 @@ import okhttp3.Request
 import io.github.landwarderer.futon.BuildConfig
 import io.github.landwarderer.futon.core.network.MangaHttpClient
 import io.github.landwarderer.futon.core.prefs.AppSettings
-import org.koitharu.kotatsu.parsers.model.MangaParserSource
+import org.koitharu.kotatsu.parsers.model.ParserMangaSource
 import org.koitharu.kotatsu.parsers.util.await
 import org.koitharu.kotatsu.parsers.util.runCatchingCancellable
-import java.util.EnumSet
+import java.util.LinkedHashSet
 import javax.inject.Inject
 
 class MirrorSwitcher @Inject constructor(
@@ -19,7 +19,7 @@ class MirrorSwitcher @Inject constructor(
 	@MangaHttpClient private val okHttpClient: OkHttpClient,
 ) {
 
-	private val blacklist = EnumSet.noneOf(MangaParserSource::class.java)
+	private val blacklist: MutableSet<ParserMangaSource> = LinkedHashSet()
 	private val mutex: Mutex = Mutex()
 
 	val isEnabled: Boolean

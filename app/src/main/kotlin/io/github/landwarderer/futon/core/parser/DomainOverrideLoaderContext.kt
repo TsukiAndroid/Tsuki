@@ -4,11 +4,12 @@ import okhttp3.OkHttpClient
 import okhttp3.Response
 import org.koitharu.kotatsu.parsers.MangaLoaderContext
 import org.koitharu.kotatsu.parsers.MangaParser
+import org.koitharu.kotatsu.parsers.ParsersBundle
 import org.koitharu.kotatsu.parsers.bitmap.Bitmap
 import org.koitharu.kotatsu.parsers.config.ConfigKey
 import org.koitharu.kotatsu.parsers.config.MangaSourceConfig
-import org.koitharu.kotatsu.parsers.model.MangaParserSource
 import org.koitharu.kotatsu.parsers.model.MangaSource
+import org.koitharu.kotatsu.parsers.model.ParserMangaSource
 import org.koitharu.kotatsu.parsers.webview.InterceptedRequest
 import org.koitharu.kotatsu.parsers.webview.InterceptionConfig
 import java.util.Locale
@@ -26,12 +27,13 @@ import java.util.Locale
  */
 class DomainOverrideLoaderContext(
     private val delegate: MangaLoaderContext,
-    private val templateSource: MangaParserSource,
+    private val templateSource: ParserMangaSource,
     private val customDomain: String,
 ) : MangaLoaderContext() {
 
     override val httpClient: OkHttpClient get() = delegate.httpClient
     override val cookieJar get() = delegate.cookieJar
+    override val parsers: ParsersBundle get() = delegate.parsers
 
     /**
      * For [templateSource] return a config that answers [customDomain] on any

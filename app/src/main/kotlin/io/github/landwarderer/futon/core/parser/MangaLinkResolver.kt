@@ -7,6 +7,7 @@ import io.github.landwarderer.futon.core.model.MangaSource
 import io.github.landwarderer.futon.core.model.UnknownMangaSource
 import io.github.landwarderer.futon.core.model.isNsfw
 import io.github.landwarderer.futon.core.util.ext.isHttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.koitharu.kotatsu.parsers.MangaLoaderContext
 import org.koitharu.kotatsu.parsers.exception.NotFoundException
 import org.koitharu.kotatsu.parsers.model.Manga
@@ -64,7 +65,8 @@ class MangaLinkResolver @Inject constructor(
                 dataRepository.findMangaByPublicUrl(uri)?.let {
                         return it
                 }
-                return context.newLinkResolver(uri).getManga()
+                val url = uri.toHttpUrlOrNull() ?: return null
+                return context.resolveLink(url)
         }
 
         private suspend fun MangaRepository.findExact(url: String?, title: String?): Manga? {
