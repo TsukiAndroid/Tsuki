@@ -7,7 +7,7 @@ package io.github.landwarderer.futon.core.image
   import io.github.landwarderer.futon.core.model.unwrap
   import io.github.landwarderer.futon.core.network.CommonHeaders
   import io.github.landwarderer.futon.core.util.ext.mangaSourceKey
-  import org.koitharu.kotatsu.parsers.model.MangaParserSource
+  import org.koitharu.kotatsu.parsers.model.ParserMangaSource
 
   /**
    * Coil3 interceptor that injects HTTP headers required by hotlink-protected
@@ -21,7 +21,7 @@ package io.github.landwarderer.futon.core.image
    *    real cover image. We force the browser UA here even if Coil has already
    *    set one, because Coil's default UA is also non-browser.
    *
-   * For [MangaParserSource] (built-in kotatsu sources):
+   * For [ParserMangaSource] (built-in kotatsu sources):
    *  - Adds the MANGA_SOURCE header used by the kotatsu network layer.
    */
   class MangaSourceHeaderInterceptor : Interceptor {
@@ -32,7 +32,7 @@ package io.github.landwarderer.futon.core.image
           val headersBuilder = request.httpHeaders.newBuilder()
 
           when (source) {
-              is MangaParserSource -> {
+              is ParserMangaSource -> {
                   headersBuilder.set(CommonHeaders.MANGA_SOURCE, source.name)
               }
               is CustomMangaSource -> {

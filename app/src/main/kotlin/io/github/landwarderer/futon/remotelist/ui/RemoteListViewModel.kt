@@ -29,7 +29,7 @@ import io.github.landwarderer.futon.list.ui.model.toErrorState
 import io.github.landwarderer.futon.local.data.LocalStorageChanges
 import io.github.landwarderer.futon.local.domain.model.LocalManga
 import org.koitharu.kotatsu.parsers.model.Manga
-import org.koitharu.kotatsu.parsers.model.MangaParserSource
+import org.koitharu.kotatsu.parsers.model.ParserMangaSource
 import org.koitharu.kotatsu.parsers.util.sizeOrZero
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -120,7 +120,7 @@ open class RemoteListViewModel @Inject constructor(
 			sourcesRepository.trackUsage(source)
 		}
 
-        if (source is MangaParserSource && source.isBroken) {
+        if (source is ParserMangaSource && source.isBroken) {
             // Just notify one. Will show reason in future
             onSourceBroken.call(Unit)
         }

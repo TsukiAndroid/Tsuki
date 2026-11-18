@@ -11,7 +11,7 @@ import io.github.landwarderer.futon.core.parser.MangaRepository
 import io.github.landwarderer.futon.core.util.ext.toLocale
 import io.github.landwarderer.futon.explore.data.MangaSourcesRepository
 import org.koitharu.kotatsu.parsers.model.Manga
-import org.koitharu.kotatsu.parsers.model.MangaParserSource
+import org.koitharu.kotatsu.parsers.model.ParserMangaSource
 import org.koitharu.kotatsu.parsers.model.MangaSource
 import org.koitharu.kotatsu.parsers.util.runCatchingCancellable
 import io.github.landwarderer.futon.search.domain.SearchKind
@@ -66,7 +66,7 @@ class AlternativesUseCase @Inject constructor(
 
 	private fun MangaSource.priority(ref: MangaSource): Int {
 		var res = 0
-		if (this is MangaParserSource && ref is MangaParserSource) {
+		if (this is ParserMangaSource && ref is ParserMangaSource) {
 			if (locale == ref.locale) {
 				res += 4
 			} else if (locale.toLocale() == Locale.getDefault()) {
