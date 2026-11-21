@@ -1,3 +1,13 @@
+## Alpha 1.965 (Build [#397](https://github.com/TsukiAndroid/Tsuki/actions/runs/44937329057))
+
+_2026-11-21 18:46 UTC_
+
+- Add Google Search Console verification meta tag (cef1852)
+- chore: update total downloads badge [skip ci] (c26271f)
+- chore: archive alpha-latest downloads (+4) [skip ci] (fd4282f)
+- chore(deps): bump kotatsu-parsers-redo 9f1b46a9e0 → b049587f96 [auto] (0dfa9be)
+
+
 ## Alpha 1.960 (Build [#396](https://github.com/TsukiAndroid/Tsuki/actions/runs/44930092317))
 
 _2026-11-21 17:27 UTC_
