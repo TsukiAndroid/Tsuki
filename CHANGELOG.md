@@ -1,3 +1,16 @@
+## Alpha 1.956 (Build [#395](https://github.com/TsukiAndroid/Tsuki/actions/runs/44928205162))
+
+_2026-11-21 17:06 UTC_
+
+- Bump kotatsu-parsers-redo version in workflow (97cbafc)
+- chore: update total downloads badge [skip ci] (926fcdd)
+- chore: archive beta-latest downloads (+51) [skip ci] (71d058a)
+- chore: update total downloads badge [skip ci] (8c0bf74)
+- chore: archive alpha-latest downloads (+9) [skip ci] (fe9b2cb)
+- Migrate to ParserMangaSource and ParsersBundle API (1d0add7)
+- chore: update total downloads badge [skip ci] (7830de5)
+
+
 ## Beta 1.6.2 (Build [#19](https://github.com/TsukiAndroid/Tsuki/actions/runs/44927120352))
 
 _2026-11-21 16:54 UTC_
