@@ -1,3 +1,26 @@
+## Alpha 1.949 (Build [#394](https://github.com/TsukiAndroid/Tsuki/actions/runs/44925721514))
+
+_2026-11-21 16:39 UTC_
+
+- Migrate to ParserMangaSource and ParsersBundle API (1d0add7)
+- chore: update total downloads badge [skip ci] (7830de5)
+- chore: archive alpha-latest downloads (+107) [skip ci] (a1d2a71)
+- refactor: migrate to ParserMangaSource and ParsersBundle API of kotatsu-parsers-redo (1cff97f)
+- Add files via upload (7653a91)
+- chore(deps): bump kotatsu-parsers-redo 172b68d776 → 9f1b46a9e0 [auto] (273af3a)
+- chore(deps): bump kotatsu-parsers-redo 3373d3a48f → 172b68d776 [auto] (c906dba)
+- chore(deps): bump kotatsu-parsers-redo 74cd77a3ac → 3373d3a48f [auto] (90fa804)
+- chore(deps): bump kotatsu-parsers-redo 9cfb2d7002 → 74cd77a3ac [auto] (aa9b690)
+- chore(deps): bump kotatsu-parsers-redo c429dceb0a → 9cfb2d7002 [auto] (8be69e7)
+- Update parsers version in libs.versions.toml (8ffa6a8)
+- Update parsers version in libs.versions.toml (97a7f4c)
+- chore(deps): bump kotatsu-parsers-redo d8589131c9 → cf385938f1 [auto] (7e4c5fc)
+- chore(deps): bump kotatsu-parsers-redo c429dceb0a → d8589131c9 [auto] (f410269)
+- chore(deps): bump kotatsu-parsers-redo 4a163d88c7 → c429dceb0a [auto] (912ef94)
+- chore(deps): bump kotatsu-parsers-redo 68f3fed395 → 4a163d88c7 [auto] (17d2945)
+- chore: update total downloads badge [skip ci] (264d7d6)
+
+
 ## Alpha 1.945 (Build [#393](https://github.com/TsukiAndroid/Tsuki/actions/runs/44921675088))
 
 _2026-11-21 15:57 UTC_
