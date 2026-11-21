@@ -48,7 +48,7 @@ import io.github.landwarderer.futon.explore.ui.model.MangaSourceItem
 import io.github.landwarderer.futon.list.ui.adapter.TypedListSpacingDecoration
 import io.github.landwarderer.futon.list.ui.model.ListHeader
 import org.koitharu.kotatsu.parsers.model.Manga
-import org.koitharu.kotatsu.parsers.model.MangaParserSource
+import org.koitharu.kotatsu.parsers.model.ParserMangaSource
 import io.github.landwarderer.futon.customsource.domain.CustomMangaSource
 import io.github.landwarderer.futon.browsersource.ui.BrowserSourceActivity
 import io.github.landwarderer.futon.customsource.domain.CustomSourceType
@@ -232,7 +232,7 @@ class ExploreFragment :
                 menu.findItem(R.id.action_pin).isVisible = selectedSources.all { !it.isPinned }
                 menu.findItem(R.id.action_unpin).isVisible = selectedSources.all { it.isPinned }
                 menu.findItem(R.id.action_disable)?.isVisible = !viewModel.isAllSourcesEnabled.value &&
-                        selectedSources.all { it.mangaSource is MangaParserSource }
+                        selectedSources.all { it.mangaSource is ParserMangaSource }
                 menu.findItem(R.id.action_delete)?.isVisible = selectedSources.all { it.mangaSource is ExternalMangaSource }
                 menu.findItem(R.id.action_fix_visually)?.isVisible = isSingleSelection &&
                         selectedSources.any { (it.mangaSource as? CustomMangaSource)?.source?.type == CustomSourceType.CUSTOM_TEMPLATE }
@@ -337,7 +337,7 @@ class ExploreFragment :
         }
 
         private fun showLanguageFilterDialog() {
-                val allLocales = org.koitharu.kotatsu.parsers.model.MangaParserSource.entries
+                val allLocales = io.github.landwarderer.futon.core.parser.AppParsers.bundle.sources
                         .map { it.locale }
                         .filter { it.isNotEmpty() }
                         .distinct()

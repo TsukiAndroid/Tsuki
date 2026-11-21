@@ -278,7 +278,7 @@ class SourcesManageFragment :
 	}
 
 	private fun showLanguageFilterDialog() {
-		val allLocales = org.koitharu.kotatsu.parsers.model.MangaParserSource.entries
+		val allLocales = io.github.landwarderer.futon.core.parser.AppParsers.bundle.sources
 			.map { it.locale }
 			.filter { it.isNotEmpty() }
 			.distinct()

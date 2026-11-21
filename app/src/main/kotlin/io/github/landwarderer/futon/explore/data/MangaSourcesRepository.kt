@@ -39,7 +39,8 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import org.koitharu.kotatsu.parsers.model.ContentType
-import org.koitharu.kotatsu.parsers.model.MangaParserSource
+import io.github.landwarderer.futon.core.parser.AppParsers
+import org.koitharu.kotatsu.parsers.model.ParserMangaSource
 import org.koitharu.kotatsu.parsers.model.MangaSource
 import org.koitharu.kotatsu.parsers.network.CloudFlareHelper
 import org.koitharu.kotatsu.parsers.util.mapNotNullToSet
@@ -65,10 +66,8 @@ class MangaSourcesRepository @Inject constructor(
         private val dao: MangaSourcesDao
                 get() = db.getSourcesDao()
 
-        val allMangaSources: Set<MangaParserSource> = Collections.unmodifiableSet(
-                EnumSet.noneOf<MangaParserSource>(MangaParserSource::class.java).also {
-            MangaParserSource.entries.filterNotTo(it, MangaParserSource::isBroken)
-        }
+        val allMangaSources: Set<ParserMangaSource> = Collections.unmodifiableSet(
+                AppParsers.bundle.sources.filterNotTo(LinkedHashSet<ParserMangaSource>()) { it.isBroken }
         )
 
         suspend fun getEnabledSources(): List<MangaSource> {
@@ -150,7 +149,7 @@ class MangaSourcesRepository @Inject constructor(
                 if (locale != null) {
                         sources.retainAll { 
                                 when (it) {
-                                        is MangaParserSource -> it.locale == locale
+                                        is ParserMangaSource -> it.locale == locale
                                         is NovelParserSource -> it.locale == locale
                                         is io.github.landwarderer.futon.mihon.parsers.model.ContentSource -> it.locale == locale
                                         else -> true
@@ -158,12 +157,12 @@ class MangaSourcesRepository @Inject constructor(
                         }
                 }
                 if (excludeBroken) {
-                        sources.removeAll { (it as? MangaParserSource)?.isBroken == true }
+                        sources.removeAll { (it as? ParserMangaSource)?.isBroken == true }
                 }
                 if (types.isNotEmpty()) {
                         sources.retainAll { 
                                 when (it) {
-                                        is MangaParserSource -> it.contentType in types
+                                        is ParserMangaSource -> it.contentType in types
                                         is NovelParserSource -> it.contentType in types
                                         is io.github.landwarderer.futon.mihon.model.MihonMangaSource -> {
                                                 val mihonType = it.contentType
@@ -374,7 +373,7 @@ class MangaSourcesRepository @Inject constructor(
         private suspend fun getNewSources(): MutableSet<out MangaSource> {
                 val entities = dao.findAll()
                 val result = HashSet<MangaSource>()
-        result.addAll(MangaParserSource.entries)
+        result.addAll(AppParsers.bundle.sources)
         result.addAll(NovelParserSource.entries)
         result.addAll(mihonExtensionManager.getMihonMangaSources())
                 for (e in entities) {
@@ -470,7 +469,7 @@ class MangaSourcesRepository @Inject constructor(
                         if (source.isBroken) {
                                 continue
                         }
-                        if (source is MangaParserSource || source is NovelParserSource || source.name.startsWith("mihon:") || source.name.startsWith("MIHON_")) {
+                        if (source is ParserMangaSource || source is NovelParserSource || source.name.startsWith("mihon:") || source.name.startsWith("MIHON_")) {
                                 result.add(
                                         MangaSourceInfo(
                                                 mangaSource = source,
@@ -505,7 +504,7 @@ class MangaSourcesRepository @Inject constructor(
         private fun passesLanguageFilter(source: MangaSource, filter: Set<String>): Boolean {
                 if (filter.isEmpty()) return true
                 val localeTag: String? = when (source) {
-                        is MangaParserSource -> source.locale.takeIf { it.isNotEmpty() }
+                        is ParserMangaSource -> source.locale.takeIf { it.isNotEmpty() }
                         is NovelParserSource -> source.locale.takeIf { it.isNotEmpty() }
                         is MihonMangaSource -> source.language.takeIf { it.isNotEmpty() }
                         else -> null
@@ -517,6 +516,6 @@ class MangaSourcesRepository @Inject constructor(
                 if (startsWith("mihon:") || startsWith("MIHON_")) {
             return mihonExtensionManager.getMihonMangaSourceByName(this) ?: io.github.landwarderer.futon.core.model.MangaSource(this)
         }
-                return MangaParserSource.entries.find { it.name == this } ?: NovelParserSource.fromName(this)
+                return AppParsers.bundle.findSource(this) ?: NovelParserSource.fromName(this)
         }
 }

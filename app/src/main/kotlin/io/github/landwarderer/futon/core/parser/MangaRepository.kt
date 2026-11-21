@@ -34,7 +34,7 @@ import org.koitharu.kotatsu.parsers.model.MangaListFilter
 import org.koitharu.kotatsu.parsers.model.MangaListFilterCapabilities
 import org.koitharu.kotatsu.parsers.model.MangaListFilterOptions
 import org.koitharu.kotatsu.parsers.model.MangaPage
-import org.koitharu.kotatsu.parsers.model.MangaParserSource
+import org.koitharu.kotatsu.parsers.model.ParserMangaSource
 import org.koitharu.kotatsu.parsers.model.MangaSource
 import org.koitharu.kotatsu.parsers.model.SortOrder
 import java.lang.ref.WeakReference
@@ -127,7 +127,7 @@ interface MangaRepository {
 
                 private fun createRepository(source: MangaSource): MangaRepository? {
                 return when (source) {
-                        is MangaParserSource -> ParserMangaRepository(
+                        is ParserMangaSource -> ParserMangaRepository(
                                 parser = loaderContext.newParserInstance(source),
                                 cache = contentCache,
                                 mirrorSwitcher = mirrorSwitcher,
@@ -190,7 +190,7 @@ interface MangaRepository {
                                 if (source.source.type == CustomSourceType.KOTATSU_PARSER) {
                                         val parserName = source.source.parserSourceName
                                         val parserSource = parserName?.let { n ->
-                                                MangaParserSource.entries.find { it.name == n }
+                                                AppParsers.bundle.findSource(n)
                                         }
                                         if (parserSource != null) {
                                                 // When the user's URL is on a different domain than

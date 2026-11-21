@@ -28,7 +28,7 @@ import io.github.landwarderer.futon.list.ui.model.ListModel
 import io.github.landwarderer.futon.list.ui.model.LoadingFooter
 import io.github.landwarderer.futon.list.ui.model.LoadingState
 import org.koitharu.kotatsu.parsers.model.Manga
-import org.koitharu.kotatsu.parsers.model.MangaParserSource
+import org.koitharu.kotatsu.parsers.model.ParserMangaSource
 import org.koitharu.kotatsu.parsers.model.MangaSource
 import org.koitharu.kotatsu.parsers.util.runCatchingCancellable
 import io.github.landwarderer.futon.search.domain.SearchKind
@@ -218,7 +218,7 @@ class SearchViewModel @Inject constructor(
 		},
 		onFailure = { error ->
 			error.printStackTraceDebug("SearchViewModel::searchSource", source.toString())
-			if (source is MangaParserSource && source.isBroken) {
+			if (source is ParserMangaSource && source.isBroken) {
 				null
 			} else {
 				SearchResultsListModel(0, source, null, null, emptyList(), error)
@@ -334,7 +334,7 @@ class SearchViewModel @Inject constructor(
 
 	private fun MangaSource.priority(): Int {
 		var res = 0
-		if (this is MangaParserSource) {
+		if (this is ParserMangaSource) {
 			if (locale.toLocale() == Locale.getDefault()) res += 2
 		}
 		return res

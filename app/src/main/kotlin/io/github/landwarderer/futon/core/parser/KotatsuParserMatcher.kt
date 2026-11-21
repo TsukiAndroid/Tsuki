@@ -8,13 +8,13 @@ import org.json.JSONArray
 import org.json.JSONObject
 import org.koitharu.kotatsu.parsers.MangaLoaderContext
 import org.koitharu.kotatsu.parsers.config.ConfigKey
-import org.koitharu.kotatsu.parsers.model.MangaParserSource
+import org.koitharu.kotatsu.parsers.model.ParserMangaSource
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Matches a user-supplied URL to an existing [MangaParserSource] from the
+ * Matches a user-supplied URL to an existing [ParserMangaSource] from the
  * kotatsu-parsers-redo library using two strategies:
  *
  * **1. Exact domain match** (instant, no network):
@@ -66,17 +66,17 @@ class KotatsuParserMatcher @Inject constructor(
     // ── Domain cache (Step 1) ─────────────────────────────────────────────────
 
     /** domain (no www.) → source.  Built once, lazily. */
-    private val domainCache: Map<String, MangaParserSource> by lazy { buildDomainCache() }
+    private val domainCache: Map<String, ParserMangaSource> by lazy { buildDomainCache() }
 
     // ── Fingerprint template cache (Step 2) ──────────────────────────────────
 
     /**
-     * API-type key → best template [MangaParserSource] that exists in the
+     * API-type key → best template [ParserMangaSource] that exists in the
      * library and can be instantiated cleanly.
      *
      * Built once, lazily.
      */
-    private val fingerprintTemplates: Map<String, MangaParserSource> by lazy {
+    private val fingerprintTemplates: Map<String, ParserMangaSource> by lazy {
         buildFingerprintTemplates()
     }
 
@@ -156,12 +156,12 @@ class KotatsuParserMatcher @Inject constructor(
     // ── Public API ────────────────────────────────────────────────────────────
 
     /**
-     * Returns the best [MangaParserSource] match for [url], or `null` if none.
+     * Returns the best [ParserMangaSource] match for [url], or `null` if none.
      *
      * Called from [CustomSourceViewModel] on a background thread
      * ([Dispatchers.IO]); blocking network calls are fine here.
      */
-    fun findForUrl(url: String): MangaParserSource? {
+    fun findForUrl(url: String): ParserMangaSource? {
         val host = hostFromUrl(url) ?: return null
 
         // Bypass the domain cache for sites that have a dedicated custom parser
@@ -179,9 +179,9 @@ class KotatsuParserMatcher @Inject constructor(
 
     // ── Domain cache construction ─────────────────────────────────────────────
 
-    private fun buildDomainCache(): Map<String, MangaParserSource> {
-        val map = HashMap<String, MangaParserSource>()
-        for (source in MangaParserSource.entries) {
+    private fun buildDomainCache(): Map<String, ParserMangaSource> {
+        val map = HashMap<String, ParserMangaSource>()
+        for (source in AppParsers.bundle.sources) {
             if (source.isBroken) continue
             runCatching {
                 val parser = loaderContext.newParserInstance(source)
@@ -194,8 +194,8 @@ class KotatsuParserMatcher @Inject constructor(
 
     // ── Fingerprint template cache construction ───────────────────────────────
 
-    private fun buildFingerprintTemplates(): Map<String, MangaParserSource> {
-        val byName: Map<String, MangaParserSource> = MangaParserSource.entries
+    private fun buildFingerprintTemplates(): Map<String, ParserMangaSource> {
+        val byName: Map<String, ParserMangaSource> = AppParsers.bundle.sources
             .filter { !it.isBroken }
             .associateBy { it.name }
 
@@ -215,7 +215,7 @@ class KotatsuParserMatcher @Inject constructor(
 
     // ── Master fingerprint dispatcher ─────────────────────────────────────────
 
-    private fun probeFingerprint(baseUrl: String): MangaParserSource? {
+    private fun probeFingerprint(baseUrl: String): ParserMangaSource? {
         // ── WordPress-based (checked first — most common by far) ──────────────
         if (probeMadara(baseUrl))        return fingerprintTemplates["madara"]
         if (probeMangaThemesia(baseUrl)) return fingerprintTemplates["mangathemesia"]
@@ -550,7 +550,7 @@ class KotatsuParserMatcher @Inject constructor(
      * ready for display in the parser-browser UI.
      */
     data class KotatsuLibraryParser(
-        val source: MangaParserSource,
+        val source: ParserMangaSource,
         /** Human-readable name, e.g. "MangaDex" derived from "MANGADEX". */
         val displayName: String,
         /** The parser's default domain, e.g. "mangadex.org" (no www. prefix). */
@@ -573,7 +573,7 @@ class KotatsuParserMatcher @Inject constructor(
     fun getAllLibraryParsers(): List<KotatsuLibraryParser> = libraryParsers
 
     private fun buildLibraryParsersList(): List<KotatsuLibraryParser> {
-        return MangaParserSource.entries
+        return AppParsers.bundle.sources
             .filter { !it.isBroken }
             .mapNotNull { source ->
                 runCatching {

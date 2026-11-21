@@ -18,7 +18,7 @@ import org.koitharu.kotatsu.parsers.model.Demographic
 import org.koitharu.kotatsu.parsers.model.Manga
 import org.koitharu.kotatsu.parsers.model.MangaChapter
 import org.koitharu.kotatsu.parsers.model.MangaListFilter
-import org.koitharu.kotatsu.parsers.model.MangaParserSource
+import org.koitharu.kotatsu.parsers.model.ParserMangaSource
 import org.koitharu.kotatsu.parsers.model.MangaSource
 import org.koitharu.kotatsu.parsers.model.MangaState
 import org.koitharu.kotatsu.parsers.util.findById
@@ -131,7 +131,7 @@ val MangaSource.isNovelSource: Boolean
         get() = when (val unwrapped = unwrap()) {
                 LocalNovelSource -> true
                 is io.github.landwarderer.futon.novel.data.source.NovelParserSource -> true
-                is MangaParserSource -> unwrapped.contentType == org.koitharu.kotatsu.parsers.model.ContentType.NOVEL
+                is ParserMangaSource -> unwrapped.contentType == org.koitharu.kotatsu.parsers.model.ContentType.NOVEL
                 is io.github.landwarderer.futon.mihon.model.MihonMangaSource ->
                         unwrapped.contentType == io.github.landwarderer.futon.mihon.parsers.model.ContentType.NOVEL
                 else -> io.github.landwarderer.futon.novel.data.source.NovelParserSource.fromName(unwrapped.name) != null

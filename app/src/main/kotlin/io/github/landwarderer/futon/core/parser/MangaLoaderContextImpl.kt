@@ -24,6 +24,7 @@ import io.github.landwarderer.futon.core.util.ext.toMimeType
 import io.github.landwarderer.futon.core.util.ext.use
 import org.koitharu.kotatsu.parsers.MangaLoaderContext
 import org.koitharu.kotatsu.parsers.MangaParser
+import org.koitharu.kotatsu.parsers.ParsersBundle
 import org.koitharu.kotatsu.parsers.bitmap.Bitmap
 import org.koitharu.kotatsu.parsers.config.MangaSourceConfig
 import org.koitharu.kotatsu.parsers.model.MangaSource
@@ -49,6 +50,8 @@ class MangaLoaderContextImpl @Inject constructor(
 ) : MangaLoaderContext() {
 
     private val webViewUserAgent by lazy { obtainWebViewUserAgent() }
+
+    override val parsers: ParsersBundle get() = AppParsers.bundle
 
     @Deprecated("Provide a base url")
     @SuppressLint("SetJavaScriptEnabled")

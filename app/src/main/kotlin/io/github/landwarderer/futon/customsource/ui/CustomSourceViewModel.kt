@@ -13,7 +13,7 @@ import kotlinx.coroutines.withContext
 import io.github.landwarderer.futon.core.parser.KotatsuParserMatcher
 import io.github.landwarderer.futon.core.parser.KotatsuParserMatcher.KotatsuLibraryParser
 import io.github.landwarderer.futon.core.parser.MangaRepository
-import org.koitharu.kotatsu.parsers.model.MangaParserSource
+import org.koitharu.kotatsu.parsers.model.ParserMangaSource
 import io.github.landwarderer.futon.customsource.data.CmsTypeDetector
 import io.github.landwarderer.futon.customsource.data.CustomSourcesRepository
 import io.github.landwarderer.futon.customsource.data.ParserTemplateRepository
@@ -383,7 +383,7 @@ class CustomSourceViewModel @Inject constructor(
      * If [mirrorUrl] is blank / null, the parser's default domain is used.
      */
     fun addKotatsuLibrarySource(
-        source: MangaParserSource,
+        source: ParserMangaSource,
         mirrorUrl: String?,
         name: String = "",
         description: String = "",

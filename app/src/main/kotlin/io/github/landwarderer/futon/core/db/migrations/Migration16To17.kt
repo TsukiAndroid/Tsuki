@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.preference.PreferenceManager
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
-import org.koitharu.kotatsu.parsers.model.MangaParserSource
+import io.github.landwarderer.futon.core.parser.AppParsers
 
 class Migration16To17(context: Context) : Migration(16, 17) {
 
@@ -15,14 +15,14 @@ class Migration16To17(context: Context) : Migration(16, 17) {
 		db.execSQL("CREATE INDEX `index_sources_sort_key` ON `sources` (`sort_key`)")
 		val hiddenSources = prefs.getStringSet("sources_hidden", null).orEmpty()
 		val order = prefs.getString("sources_order_2", null)?.split('|').orEmpty()
-		val sources = MangaParserSource.entries
-		for (source in sources) {
+		val sources = AppParsers.bundle.sources
+		for ((index, source) in sources.withIndex()) {
 			val name = source.name
 			val isHidden = name in hiddenSources
 			var sortKey = order.indexOf(name)
 			if (sortKey == -1) {
 				if (isHidden) {
-					sortKey = order.size + source.ordinal
+					sortKey = order.size + index
 				} else {
 					continue
 				}

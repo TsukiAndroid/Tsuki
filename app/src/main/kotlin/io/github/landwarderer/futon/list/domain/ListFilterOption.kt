@@ -9,7 +9,7 @@ import io.github.landwarderer.futon.core.model.LocalMangaSource
 import io.github.landwarderer.futon.core.model.unwrap
 import io.github.landwarderer.futon.core.parser.external.ExternalMangaSource
 import io.github.landwarderer.futon.core.parser.favicon.faviconUri
-import org.koitharu.kotatsu.parsers.model.MangaParserSource
+import org.koitharu.kotatsu.parsers.model.ParserMangaSource
 import org.koitharu.kotatsu.parsers.model.MangaSource
 import org.koitharu.kotatsu.parsers.model.MangaTag
 
@@ -127,7 +127,7 @@ sealed interface ListFilterOption {
 
 		override val titleText: CharSequence?
 			get() = when (val source = mangaSource.unwrap()) {
-				is MangaParserSource -> source.title
+				is ParserMangaSource -> source.title
 				else -> null
 			}
 
