@@ -1,56 +1,183 @@
-name: Bump Kotatsu Parsers Version
+name: Apply parsers migration (one-time)
+
+# One-time helper. Runs automatically when this file is added to the devel branch
+# (or manually from the Actions tab). It applies the ParserMangaSource / ParsersBundle
+# migration to the source code, commits it to devel and starts an Alpha build.
+# After it has run you can delete this file.
 
 on:
-  schedule:
-    - cron: '0 3 * * *'   # Daily 03:00 UTC
-  workflow_dispatch:        # Manual trigger
+  push:
+    branches: [ devel ]
+    paths:
+      - '.github/workflows/apply-parsers-migration.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
 
 jobs:
-  bump-parsers:
-    name: Check and bump kotatsu-parsers-redo
+  apply:
+    name: Apply migration
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
+    if: github.ref == 'refs/heads/devel'
     steps:
       - name: Checkout devel
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
           ref: devel
+          fetch-depth: 0
 
-      - name: Get latest clquwu/kotatsu-parsers-redo commit
-        id: latest
+      - name: Apply migration script
         run: |
-          LATEST_FULL=$(curl -fsSL \
-            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-            -H "Accept: application/vnd.github.sha" \
-            https://api.github.com/repos/clquwu/kotatsu-parsers-redo/commits/master)
-          # JitPack resolves 10-char SHAs; truncate to match libs.versions.toml format
-          LATEST_SHORT=${LATEST_FULL:0:10}
-          echo "sha=${LATEST_SHORT}" >> "$GITHUB_OUTPUT"
-          echo "Latest kotatsu-parsers-redo: ${LATEST_SHORT}"
+          cat > /tmp/migrate.py << 'PYEOF'
+          import pathlib, sys
 
-      - name: Get current pinned version
-        id: current
-        run: |
-          CURRENT=$(grep '^parsers' gradle/libs.versions.toml | sed 's/parsers = "//;s/"//')
-          echo "sha=${CURRENT}" >> "$GITHUB_OUTPUT"
-          echo "Current version: ${CURRENT}"
+          B = pathlib.Path("app/src/main/kotlin/io/github/landwarderer/futon")
+          if (B / "core/parser/AppParsers.kt").exists():
+              sys.exit("Already applied: AppParsers.kt exists. Nothing to do.")
+          APP_FQN = "io.github.landwarderer.futon.core.parser.AppParsers"
 
-      - name: Bump if changed
-        if: steps.latest.outputs.sha != steps.current.outputs.sha
+          def read(rel):
+              return (B / rel).read_text(encoding="utf-8")
+
+          def write(rel, s):
+              (B / rel).write_text(s, encoding="utf-8")
+
+          def edit(rel, pairs):
+              s = read(rel)
+              for old, new in pairs:
+                  n = s.count(old)
+                  if n != 1:
+                      sys.exit("FAILED: " + rel + " expected 1 match, found " + str(n) + " for: " + old[:70])
+                  s = s.replace(old, new)
+              write(rel, s)
+
+          # ---- 0. new file ----
+          (B / "core/parser/AppParsers.kt").write_text(
+          "package io.github.landwarderer.futon.core.parser\n"
+          "\n"
+          "import org.koitharu.kotatsu.parsers.DirectParsersAccess\n"
+          "import org.koitharu.kotatsu.parsers.ParsersBundle\n"
+          "import org.koitharu.kotatsu.parsers.core.ParsersBundleImpl\n"
+          "\n"
+          "/**\n"
+          " * Single place where the app holds the parsers it is currently using.\n"
+          " * Everything else must go through [bundle] (or MangaLoaderContext.parsers),\n"
+          " * never through the copy the library was compiled with.\n"
+          " */\n"
+          "object AppParsers {\n"
+          "\n"
+          "    @Volatile\n"
+          "    @OptIn(DirectParsersAccess::class)\n"
+          "    var bundle: ParsersBundle = ParsersBundleImpl\n"
+          "}\n", encoding="utf-8")
+
+          # ---- 1. loader contexts and link resolver ----
+          edit("core/parser/MangaLoaderContextImpl.kt", [
+              ("import org.koitharu.kotatsu.parsers.MangaParser\n",
+               "import org.koitharu.kotatsu.parsers.MangaParser\nimport org.koitharu.kotatsu.parsers.ParsersBundle\n"),
+              ("    private val webViewUserAgent by lazy { obtainWebViewUserAgent() }\n",
+               "    private val webViewUserAgent by lazy { obtainWebViewUserAgent() }\n\n"
+               "    override val parsers: ParsersBundle get() = AppParsers.bundle\n"),
+          ])
+          edit("core/parser/DomainOverrideLoaderContext.kt", [
+              ("import org.koitharu.kotatsu.parsers.MangaParser\n",
+               "import org.koitharu.kotatsu.parsers.MangaParser\nimport org.koitharu.kotatsu.parsers.ParsersBundle\n"),
+              ("    override val cookieJar get() = delegate.cookieJar\n",
+               "    override val cookieJar get() = delegate.cookieJar\n    override val parsers: ParsersBundle get() = delegate.parsers\n"),
+          ])
+          edit("core/parser/MangaLinkResolver.kt", [
+              ("import io.github.landwarderer.futon.core.util.ext.isHttpUrl\n",
+               "import io.github.landwarderer.futon.core.util.ext.isHttpUrl\nimport okhttp3.HttpUrl.Companion.toHttpUrlOrNull\n"),
+              ("                return context.newLinkResolver(uri).getManga()\n",
+               "                val url = uri.toHttpUrlOrNull() ?: return null\n                return context.resolveLink(url)\n"),
+          ])
+
+          # ---- 2. core/model/MangaSource.kt special loop ----
+          edit("core/model/MangaSource.kt", [
+              ("        MangaParserSource.entries.forEach {\n                if (it.name == name) return it\n        }\n",
+               "        AppParsers.bundle.findSource(name)?.let { return it }\n"),
+              ("import io.github.landwarderer.futon.core.parser.external.ExternalMangaSource\n",
+               "import io.github.landwarderer.futon.core.parser.AppParsers\nimport io.github.landwarderer.futon.core.parser.external.ExternalMangaSource\n"),
+          ])
+
+          # ---- 3. mechanical rename in all other files ----
+          files = """core/model/MangaSource.kt
+          mihon/model/KotatsuParserSource.kt
+          customsource/ui/CustomSourceViewModel.kt
+          search/ui/multi/SearchViewModel.kt
+          remotelist/ui/RemoteListViewModel.kt
+          settings/sources/manage/SourcesManageFragment.kt
+          list/domain/ListFilterOption.kt
+          main/ui/welcome/WelcomeViewModel.kt
+          explore/ui/ExploreFragment.kt
+          explore/data/MangaSourcesRepository.kt
+          core/parser/ParserMangaRepository.kt
+          core/parser/DomainOverrideLoaderContext.kt
+          core/parser/MangaRepository.kt
+          core/parser/MirrorSwitcher.kt
+          core/parser/KotatsuParserMatcher.kt
+          core/model/Manga.kt
+          core/network/CommonHeadersInterceptor.kt
+          core/image/MangaSourceHeaderInterceptor.kt
+          core/db/migrations/Migration16To17.kt
+          alternatives/domain/AlternativesUseCase.kt
+          filter/ui/FilterCoordinator.kt
+          filter/ui/tags/TagsCatalogViewModel.kt""".split()
+
+          for rel in files:
+              s = read(rel)
+              s = s.replace("org.koitharu.kotatsu.parsers.model.MangaParserSource.entries", APP_FQN + ".bundle.sources")
+              s = s.replace("MangaParserSource.entries.find { it.name == n }", "AppParsers.bundle.findSource(n)")
+              s = s.replace("MangaParserSource.entries.find { it.name == this }", "AppParsers.bundle.findSource(this)")
+              s = s.replace("MangaParserSource.entries", "AppParsers.bundle.sources")
+              s = s.replace("MangaParserSource", "ParserMangaSource")
+              write(rel, s)
+
+          # ---- 4. special cases that are more than a rename ----
+          edit("explore/data/MangaSourcesRepository.kt", [
+              ("        val allMangaSources: Set<ParserMangaSource> = Collections.unmodifiableSet(\n"
+               "                EnumSet.noneOf<ParserMangaSource>(ParserMangaSource::class.java).also {\n"
+               "            AppParsers.bundle.sources.filterNotTo(it, ParserMangaSource::isBroken)\n"
+               "        }\n"
+               "        )",
+               "        val allMangaSources: Set<ParserMangaSource> = Collections.unmodifiableSet(\n"
+               "                AppParsers.bundle.sources.filterNotTo(LinkedHashSet<ParserMangaSource>()) { it.isBroken }\n"
+               "        )"),
+              ("import org.koitharu.kotatsu.parsers.model.ParserMangaSource",
+               "import io.github.landwarderer.futon.core.parser.AppParsers\nimport org.koitharu.kotatsu.parsers.model.ParserMangaSource"),
+          ])
+          edit("main/ui/welcome/WelcomeViewModel.kt", [
+              ("allSources.filterTo(EnumSet.noneOf(ParserMangaSource::class.java)) { x ->",
+               "allSources.filterTo(LinkedHashSet<ParserMangaSource>()) { x ->"),
+          ])
+          edit("core/parser/MirrorSwitcher.kt", [
+              ("private val blacklist = EnumSet.noneOf(ParserMangaSource::class.java)",
+               "private val blacklist: MutableSet<ParserMangaSource> = java.util.concurrent.ConcurrentHashMap.newKeySet()"),
+              ("import java.util.EnumSet\n", ""),
+          ])
+          edit("core/db/migrations/Migration16To17.kt", [
+              ("import org.koitharu.kotatsu.parsers.model.ParserMangaSource\n",
+               "import io.github.landwarderer.futon.core.parser.AppParsers\n"),
+              ("\t\tval sources = AppParsers.bundle.sources\n\t\tfor (source in sources) {",
+               "\t\tval sources = AppParsers.bundle.sources\n\t\tfor ((index, source) in sources.withIndex()) {"),
+              ("sortKey = order.size + source.ordinal", "sortKey = order.size + index"),
+          ])
+
+          print("Migration applied successfully.")
+          PYEOF
+          python3 /tmp/migrate.py
+
+      - name: Commit and push to devel
         run: |
-          OLD="${{ steps.current.outputs.sha }}"
-          NEW="${{ steps.latest.outputs.sha }}"
-          sed -i "s/parsers = \"${OLD}\"/parsers = \"${NEW}\"/" gradle/libs.versions.toml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add gradle/libs.versions.toml
-          git commit -m "chore(deps): bump kotatsu-parsers-redo ${OLD} → ${NEW} [auto]"
-          git push origin devel
-          echo "Pushed bump commit — build-alpha.yml will build the new APK automatically."
+          git add -A
+          git commit -m "refactor: migrate to ParserMangaSource and ParsersBundle API of kotatsu-parsers-redo"
+          git push origin HEAD:devel
 
-      - name: Already up-to-date
-        if: steps.latest.outputs.sha == steps.current.outputs.sha
-        run: echo "kotatsu-parsers-redo already at ${{ steps.latest.outputs.sha }}"
+      - name: Start Alpha build
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh workflow run build-alpha.yml --ref devel
