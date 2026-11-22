@@ -9,6 +9,7 @@
 **A free and open-source manga / manhwa / manhua and novel reader for Android.**
 
 [![Tsuki Project](https://img.shields.io/badge/%F0%9F%8C%99%20Tsuki%20Project-TsukiAndroid%2FTsuki-6a0dad?style=flat&logo=github)](https://github.com/TsukiAndroid/Tsuki)
+[![Official Website](https://img.shields.io/badge/Official%20Website-tsukiapp.vercel.app-c8b8ff?style=flat&logo=vercel&logoColor=white)](https://tsukiapp.vercel.app/)
 ![Android 6.0+](https://img.shields.io/badge/android-6.0+-brightgreen)
 ![Forked from Yukimi](https://img.shields.io/badge/forked%20from-Yukimi-orange)
 [![Discord](https://img.shields.io/badge/Discord-Join%20Us-5865F2?style=flat&logo=discord&logoColor=white)](https://discord.gg/gXsesG8G7H)
@@ -87,7 +88,7 @@ This is **Tsuki (月)** , the app that refused to die.
 
 ## 📦 Download
 
-Grab the latest APK from the [Releases](https://github.com/TsukiAndroid/Tsuki/releases) page.
+Visit the [official Tsuki website](https://tsukiapp.vercel.app/) for project information, features and downloads, or grab the latest APK directly from the [GitHub Releases](https://github.com/TsukiAndroid/Tsuki/releases) page.
 
 
 ---
