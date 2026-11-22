@@ -14,7 +14,7 @@
 ![Forked from Yukimi](https://img.shields.io/badge/forked%20from-Yukimi-orange)
 [![Discord](https://img.shields.io/badge/Discord-Join%20Us-5865F2?style=flat&logo=discord&logoColor=white)](https://discord.gg/gXsesG8G7H)
 <a href="https://hosted.weblate.org/engage/tsuki/"><img src="https://hosted.weblate.org/widget/tsuki/svg-badge.svg" alt="Translation status"></a>
-![Downloads](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/TsukiAndroid/Tsuki/devel/.github/badge-downloads.json&style=for-the-badge&color=c8b8ff&logo=android&label=Total%20Downloads)
+[![GitHub APK Downloads](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/TsukiAndroid/Tsuki/devel/.github/badge-downloads.json&style=for-the-badge&color=c8b8ff&logo=android&label=GitHub%20APK%20Downloads)](https://github.com/TsukiAndroid/Tsuki/releases)
 </div>
 
 ---
@@ -92,6 +92,12 @@ Visit the [official Tsuki website](https://tsukiapp.vercel.app/) for project inf
 
 
 ---
+
+## 🔐 Privacy Policy
+
+Tsuki stores core reading data locally, but optional features such as crash reporting, synchronization, backups and third-party integrations may transmit information when enabled. Requests to external manga and novel sources also go directly to those providers.
+
+For the complete explanation of data handling, optional features, third-party services and deletion, read the [Tsuki Privacy Policy](https://tsukiapp.vercel.app/privacy/#privacy-policy).
 
 ## 🛠️ Source Code
 
