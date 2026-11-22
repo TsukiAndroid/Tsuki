@@ -1,0 +1,72 @@
+name: Refresh GitHub APK Download Counter
+
+on:
+  schedule:
+    - cron: '23 */6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-download-counter
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    name: Recalculate release APK downloads
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out default branch
+        uses: actions/checkout@v4
+        with:
+          ref: devel
+          fetch-depth: 0
+
+      - name: Recalculate download count
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          HISTORY_FILE=".github/download-history.json"
+          BADGE_FILE=".github/badge-downloads.json"
+
+          HIST_STABLE=$(python3 -c "import json; print(json.load(open('$HISTORY_FILE')).get('stable', 0))")
+          HIST_ALPHA=$(python3 -c "import json; print(json.load(open('$HISTORY_FILE')).get('alpha', 0))")
+          HIST_BETA=$(python3 -c "import json; print(json.load(open('$HISTORY_FILE')).get('beta', 0))")
+
+          LIVE_TOTAL=0
+          while IFS= read -r tag; do
+            [ -z "$tag" ] && continue
+            COUNT=$(gh release view "$tag" --json assets --jq '[.assets[].downloadCount] | add // 0')
+            LIVE_TOTAL=$((LIVE_TOTAL + COUNT))
+          done < <(gh release list --limit 200 --json tagName --jq '.[].tagName')
+
+          GRAND_TOTAL=$((HIST_STABLE + HIST_ALPHA + HIST_BETA + LIVE_TOTAL))
+
+          python3 - "$GRAND_TOTAL" "$BADGE_FILE" <<'PY'
+          import json
+          import sys
+          total = int(sys.argv[1])
+          path = sys.argv[2]
+          badge = {
+              "schemaVersion": 1,
+              "label": "GitHub APK Downloads",
+              "message": f"{total:,}",
+              "color": "c8b8ff"
+          }
+          with open(path, "w", encoding="utf-8") as file:
+              json.dump(badge, file, indent=2)
+              file.write("\n")
+          PY
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$BADGE_FILE"
+          if git diff --cached --quiet; then
+            echo "Download count has not changed."
+            exit 0
+          fi
+          git commit -m "chore: refresh GitHub APK download counter [skip ci]"
+          git pull --rebase origin devel
+          git push origin HEAD:devel
