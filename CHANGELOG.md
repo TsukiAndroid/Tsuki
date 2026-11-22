@@ -1,3 +1,16 @@
+## Alpha 1.1025 (Build [#430](https://github.com/TsukiAndroid/Tsuki/actions/runs/45049559733))
+
+_2026-11-22 17:27 UTC_
+
+- Remove duplicate F-Droid smoke test step (ff669b8)
+- Fix stale stable version unit test (714c853)
+- ci: smoke-test unsigned F-Droid stable build (097a99c)
+- ci: smoke-test unsigned F-Droid stable build (5d76c7c)
+- fix: keep Gradle plugin block and F-Droid signing configuration valid (38b8432)
+- build: prepare Android release for F-Droid distribution (e55b348)
+- chore: update total downloads badge [skip ci] (247170b)
+
+
 ## Alpha 1.1002 (Build [#416](https://github.com/TsukiAndroid/Tsuki/actions/runs/45041631812))
 
 _2026-11-22 16:03 UTC_
