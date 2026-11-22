@@ -1,3 +1,14 @@
+## Alpha 1.969 (Build [#398](https://github.com/TsukiAndroid/Tsuki/actions/runs/44966013330))
+
+_2026-11-22 00:19 UTC_
+
+- Add robots.txt with sitemap reference (38445e1)
+- chore: update total downloads badge [skip ci] (7a51122)
+- chore: archive alpha-latest downloads (+4) [skip ci] (e584665)
+- Add Google Search Console verification meta tag (cef1852)
+- chore: update total downloads badge [skip ci] (c26271f)
+
+
 ## Alpha 1.965 (Build [#397](https://github.com/TsukiAndroid/Tsuki/actions/runs/44937329057))
 
 _2026-11-21 18:46 UTC_
