@@ -113,21 +113,23 @@ jobs:
             echo '__EOF__'
           } >> $GITHUB_OUTPUT
 
-      - name: Set up signing key
+      - name: Set up production signing key
+        env:
+          KEYSTORE_FILE_B64: ${{ secrets.KEYSTORE_FILE }}
+          KEYSTORE_PASSWORD_SECRET: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS_SECRET: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD_SECRET: ${{ secrets.KEY_PASSWORD }}
         run: |
-          if [ -n "${{ secrets.KEYSTORE_FILE }}" ]; then
-            echo "Using production keystore from secrets"
-            echo "${{ secrets.KEYSTORE_FILE }}" | base64 -d > app/keystore.jks
-            echo "KEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> $GITHUB_ENV
-            echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> $GITHUB_ENV
-            echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> $GITHUB_ENV
-          else
-            echo "::warning::No KEYSTORE_FILE secret set — signing with committed debug.keystore."
-            cp app/debug.keystore app/keystore.jks
-            echo "KEYSTORE_PASSWORD=android" >> $GITHUB_ENV
-            echo "KEY_ALIAS=debug" >> $GITHUB_ENV
-            echo "KEY_PASSWORD=android" >> $GITHUB_ENV
+          set -euo pipefail
+          if [[ -z "$KEYSTORE_FILE_B64" || -z "$KEYSTORE_PASSWORD_SECRET" || -z "$KEY_ALIAS_SECRET" || -z "$KEY_PASSWORD_SECRET" ]]; then
+            echo "::error::Production signing secrets are required for GitHub releases. No debug-key fallback is permitted."
+            exit 1
           fi
+          printf '%s' "$KEYSTORE_FILE_B64" | base64 --decode > app/keystore.jks
+          echo "KEYSTORE_PASSWORD=$KEYSTORE_PASSWORD_SECRET" >> "$GITHUB_ENV"
+          echo "KEY_ALIAS=$KEY_ALIAS_SECRET" >> "$GITHUB_ENV"
+          echo "KEY_PASSWORD=$KEY_PASSWORD_SECRET" >> "$GITHUB_ENV"
+          echo "Production signing key configured."
 
       - name: Build Beta Release APK
         run: ./gradlew assembleBetaRelease --stacktrace --no-configuration-cache
