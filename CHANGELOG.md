@@ -1,3 +1,11 @@
+## Alpha 1.974 (Build [#400](https://github.com/TsukiAndroid/Tsuki/actions/runs/44976372960))
+
+_2026-11-22 02:30 UTC_
+
+- Add SEO landing page: features (05ab455)
+- chore: update total downloads badge [skip ci] (3b8a32a)
+
+
 ## Alpha 1.969 (Build [#398](https://github.com/TsukiAndroid/Tsuki/actions/runs/44966013330))
 
 _2026-11-22 00:19 UTC_
