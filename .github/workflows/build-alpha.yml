@@ -269,7 +269,7 @@ jobs:
           import json
           badge = {
               'schemaVersion': 1,
-              'label': 'Total Downloads',
+              'label': 'GitHub APK Downloads',
               'message': f'{$GRAND_TOTAL:,}',
               'color': 'c8b8ff'
           }
