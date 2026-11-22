@@ -1,3 +1,13 @@
+## Alpha 1.988 (Build [#408](https://github.com/TsukiAndroid/Tsuki/actions/runs/45006149679))
+
+_2026-11-22 09:09 UTC_
+
+- Match SEO page design to Tsuki homepage (23678ae)
+- chore: update total downloads badge [skip ci] (f6ee51c)
+- chore: archive alpha-latest downloads (+10) [skip ci] (7a154e4)
+- Move SEO page links into site navigation (cf54db3)
+
+
 ## Alpha 1.984 (Build [#407](https://github.com/TsukiAndroid/Tsuki/actions/runs/44983123208))
 
 _2026-11-22 04:00 UTC_
