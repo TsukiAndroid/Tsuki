@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://tsukiapp.vercel.app/</loc>
-  </url>
+  <url><loc>https://tsukiapp.vercel.app/</loc></url>
+  <url><loc>https://tsukiapp.vercel.app/features/</loc></url>
+  <url><loc>https://tsukiapp.vercel.app/sources/</loc></url>
+  <url><loc>https://tsukiapp.vercel.app/novel-reader/</loc></url>
+  <url><loc>https://tsukiapp.vercel.app/android-6-support/</loc></url>
+  <url><loc>https://tsukiapp.vercel.app/faq/</loc></url>
 </urlset>
