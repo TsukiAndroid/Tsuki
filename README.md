@@ -140,3 +140,7 @@ Tsuki does **not** host, store, or distribute any manga content. All content is 
 If you are a content owner and believe your rights are being infringed, please open an issue or contact us directly.
 
 This project is a fork of [Yumemi](https://github.com/YumemiProject/Yumemi) and is distributed under the same open source license.
+
+## F-Droid
+
+F-Droid build preparation and maintainer notes are documented in [docs/FDROID.md](docs/FDROID.md). F-Droid builds are unsigned until F-Droid signs them; GitHub release builds continue to require the production signing key.

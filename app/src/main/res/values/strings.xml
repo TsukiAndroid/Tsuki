@@ -1561,4 +1561,7 @@
     <string name="novel_font_monospace">Monospace</string>
     <string name="novel_font_custom">Custom Font (.ttf/.otf)</string>
     <string name="previous_chapter">Previous chapter</string>
+    <string name="external_extension_warning_title">Install external extension?</string>
+    <string name="external_extension_warning_message">Extensions are executable code provided by third-party sources, not reviewed or verified by F-Droid. Installing one may allow code from that source to run with the permissions and access available to the extension. Continue only if you trust the source.</string>
+    <string name="external_extension_warning_continue">I understand, continue</string>
 </resources>

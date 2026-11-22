@@ -52,6 +52,7 @@ class AppUpdateRepository @Inject constructor(
         fun observeAvailableUpdate() = availableUpdate.asStateFlow()
 
         suspend fun fetchUpdate(): AppVersion? = withContext(Dispatchers.IO) {
+                if (BuildConfig.IS_FDROID) return@withContext null
                 runCatchingCancellable {
                         val request = Request.Builder().get().url(releasesUrl).build()
                         val releases = JSONArray(okHttp.newCall(request).await().body?.string() ?: "[]")
@@ -192,7 +193,7 @@ class AppUpdateRepository @Inject constructor(
                 }.getOrNull()
         }
 
-        suspend fun isUpdateSupported(): Boolean = true
+        suspend fun isUpdateSupported(): Boolean = !BuildConfig.IS_FDROID
 
         /**
          * Returns true if the currently installed VERSION_CODE is newer than the last

@@ -14,6 +14,15 @@ plugins {
     id 'io.sentry.android.gradle' version '6.1.0'
 }
 
+// F-Droid builds are deliberately unsigned; F-Droid signs the APK after building.
+def fdroidBuild = providers.gradleProperty('fdroidBuild').getOrElse('false').toBoolean()
+def appVersionProperties = new Properties()
+def appVersionFile = rootProject.file('app/version.properties')
+if (appVersionFile.exists()) appVersionFile.withInputStream { appVersionProperties.load(it) }
+def appVersionCode = System.getenv('VERSION_CODE') ?: appVersionProperties.getProperty('VERSION_CODE', '1')
+def appVersionName = System.getenv('VERSION_NAME') ?: appVersionProperties.getProperty('VERSION_NAME', 'Alpha-1.1')
+
+
 android {
         compileSdk = 36
         buildToolsVersion = '35.0.0'
@@ -30,8 +39,9 @@ android {
                 applicationId 'com.space4414.tsuki'
                 minSdk = 23
                 targetSdk = 36
-                versionCode System.getenv('VERSION_CODE') ? System.getenv('VERSION_CODE').toInteger() : 1
-                versionName System.getenv('VERSION_NAME') ?: 'Alpha-1.1'
+                versionCode appVersionCode.toInteger()
+                versionName appVersionName
+                buildConfigField 'boolean', 'IS_FDROID', fdroidBuild.toString()
                 generatedDensities = []
                 testInstrumentationRunner 'io.github.landwarderer.futon.HiltTestRunner'
                 ksp {
@@ -48,16 +58,17 @@ android {
                 }
                 resValue 'string', 'tg_backup_bot_token', localProperties.getProperty('tg_backup_bot_token', '')
         }
-        signingConfigs {
-                release {
-                        // When KEYSTORE_FILE env var is set (CI with real secrets), use that keystore.
-                        // Otherwise fall back to the stable debug.keystore committed to the repo.
-                        // Using the same key every build means users can install updates without
-                        // having to uninstall first (no signature mismatch / "package conflicts" error).
-                        storeFile     file(System.getenv('KEYSTORE_FILE') ?: 'debug.keystore')
-                        storePassword System.getenv('KEYSTORE_PASSWORD') ?: 'android'
-                        keyAlias      System.getenv('KEY_ALIAS')          ?: 'debug'
-                        keyPassword   System.getenv('KEY_PASSWORD')        ?: 'android'
+        if (!fdroidBuild) {
+                signingConfigs {
+                        release {
+                                // GitHub releases must use the existing production key.
+                                // There is intentionally no debug-keystore fallback.
+                                def keystorePath = System.getenv('KEYSTORE_FILE') ?: 'missing-production-keystore.jks'
+                                storeFile file(keystorePath)
+                                storePassword System.getenv('KEYSTORE_PASSWORD') ?: ''
+                                keyAlias System.getenv('KEY_ALIAS') ?: ''
+                                keyPassword System.getenv('KEY_PASSWORD') ?: ''
+                        }
                 }
         }
         flavorDimensions "release"
@@ -94,13 +105,13 @@ android {
                         minifyEnabled true
                         shrinkResources true
                         proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-                        signingConfig signingConfigs.release
+                        if (!fdroidBuild) signingConfig signingConfigs.release
                         buildConfigField "String", "SENTRY_DSN", "\"${System.getenv('SENTRY_DSN') ?: ''}\""
                 }
                 nightly {
                         initWith release
                         applicationIdSuffix = '.nightly'
-                        signingConfig signingConfigs.release
+                        if (!fdroidBuild) signingConfig signingConfigs.release
                         buildConfigField "String", "SENTRY_DSN", "\"${System.getenv('SENTRY_DSN') ?: ''}\""
                 }
         }

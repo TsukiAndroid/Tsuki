@@ -38,7 +38,7 @@ class ExtensionDownloaderActivity : BaseActivity<ActivityExtensionDownloaderBind
         val adapter = ExtensionDownloaderAdapter(
             onAddRepoClick = { url -> viewModel.addRepo(url) },
             onDeleteRepoClick = { repo -> showDeleteRepoDialog(repo) },
-            onInstallClick = { viewModel.installExtension(it.available) },
+            onInstallClick = { item -> showExternalExtensionWarning { viewModel.installExtension(item.available) } },
             onCancelClick = { viewModel.cancelDownload(it.available.pkgName) },
             onUninstallClick = { viewModel.uninstallExtension(it.available.pkgName) },
         )
@@ -85,6 +85,15 @@ class ExtensionDownloaderActivity : BaseActivity<ActivityExtensionDownloaderBind
         if (repoUrl.isNotBlank()) {
             viewModel.addRepo(repoUrl)
         }
+    }
+
+    private fun showExternalExtensionWarning(onContinue: () -> Unit) {
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.external_extension_warning_title)
+            .setMessage(R.string.external_extension_warning_message)
+            .setPositiveButton(R.string.external_extension_warning_continue) { _, _ -> onContinue() }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
     }
 
     private fun showDeleteRepoDialog(repo: ExternalExtensionRepo) {

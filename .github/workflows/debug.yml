@@ -33,6 +33,9 @@ jobs:
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
         run: ./gradlew assembleDebug testAlphaDebugUnitTest testBetaDebugUnitTest testStableDebugUnitTest --stacktrace --no-build-cache --no-configuration-cache
 
+      - name: Smoke-test unsigned F-Droid Stable build
+        run: ./gradlew -PfdroidBuild=true assembleStableRelease --stacktrace --no-build-cache --no-configuration-cache
+
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
         if: success()
@@ -47,7 +50,7 @@ jobs:
         with:
           script: |
             const runUrl = `https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}`;
-            const comment = `Debug APK built successfully!\n\nDownload artifact: [debug-apk](${runUrl})\n\n_Artifact will be available for 7 days_`;
+            const comment = `Debug APK built successfully!\\n\\nDownload artifact: [debug-apk](${runUrl})\\n\\n_Artifact will be available for 7 days_`;
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
