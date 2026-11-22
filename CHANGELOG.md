@@ -1,3 +1,11 @@
+## Alpha 1.984 (Build [#407](https://github.com/TsukiAndroid/Tsuki/actions/runs/44983123208))
+
+_2026-11-22 04:00 UTC_
+
+- Move SEO page links into site navigation (cf54db3)
+- chore: update total downloads badge [skip ci] (c7ff4ab)
+
+
 ## Alpha 1.974 (Build [#400](https://github.com/TsukiAndroid/Tsuki/actions/runs/44976372960))
 
 _2026-11-22 02:30 UTC_
