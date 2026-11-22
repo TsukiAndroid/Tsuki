@@ -1,5 +1,13 @@
 import java.time.LocalDateTime
 
+// F-Droid builds are deliberately unsigned; F-Droid signs the APK after building.
+def fdroidBuild = providers.gradleProperty('fdroidBuild').getOrElse('false').toBoolean()
+def appVersionProperties = new Properties()
+def appVersionFile = rootProject.file('app/version.properties')
+if (appVersionFile.exists()) appVersionFile.withInputStream { appVersionProperties.load(it) }
+def appVersionCode = System.getenv('VERSION_CODE') ?: appVersionProperties.getProperty('VERSION_CODE', '1')
+def appVersionName = System.getenv('VERSION_NAME') ?: appVersionProperties.getProperty('VERSION_NAME', 'Alpha-1.1')
+
 plugins {
         id 'com.android.application'
         id 'kotlin-android'
@@ -13,15 +21,6 @@ plugins {
 
     id 'io.sentry.android.gradle' version '6.1.0'
 }
-
-// F-Droid builds are deliberately unsigned; F-Droid signs the APK after building.
-def fdroidBuild = providers.gradleProperty('fdroidBuild').getOrElse('false').toBoolean()
-def appVersionProperties = new Properties()
-def appVersionFile = rootProject.file('app/version.properties')
-if (appVersionFile.exists()) appVersionFile.withInputStream { appVersionProperties.load(it) }
-def appVersionCode = System.getenv('VERSION_CODE') ?: appVersionProperties.getProperty('VERSION_CODE', '1')
-def appVersionName = System.getenv('VERSION_NAME') ?: appVersionProperties.getProperty('VERSION_NAME', 'Alpha-1.1')
-
 
 android {
         compileSdk = 36
@@ -63,7 +62,10 @@ android {
                         release {
                                 // GitHub releases must use the existing production key.
                                 // There is intentionally no debug-keystore fallback.
-                                def keystorePath = System.getenv('KEYSTORE_FILE') ?: 'missing-production-keystore.jks'
+                                def keystorePath = System.getenv('KEYSTORE_FILE')
+                                if (!keystorePath) {
+                                        throw new GradleException('KEYSTORE_FILE is required for signed release builds. Use -PfdroidBuild=true only for F-Droid builds.')
+                                }
                                 storeFile file(keystorePath)
                                 storePassword System.getenv('KEYSTORE_PASSWORD') ?: ''
                                 keyAlias System.getenv('KEY_ALIAS') ?: ''
@@ -111,7 +113,7 @@ android {
                 nightly {
                         initWith release
                         applicationIdSuffix = '.nightly'
-                        if (!fdroidBuild) signingConfig signingConfigs.release
+                        signingConfig signingConfigs.release
                         buildConfigField "String", "SENTRY_DSN", "\"${System.getenv('SENTRY_DSN') ?: ''}\""
                 }
         }
