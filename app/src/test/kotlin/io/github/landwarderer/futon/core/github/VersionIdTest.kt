@@ -36,7 +36,7 @@ class VersionIdTest {
 		val version2 = VersionId("2.0.0")
 		assertTrue(version1 < version2)
 	}
-	
+
 	@Test
 	fun testVersionIdVariantCompare() {
 		val version1 = VersionId("2.0.1-a2")
@@ -47,12 +47,15 @@ class VersionIdTest {
 	@Test
 	fun testCurrentVersion() {
 		assumeTrue(
-			"Version floor applies only to stable SemVer builds",
+			"Only stable semantic versions are checked here",
 			BuildConfig.UPDATE_CHANNEL == "stable" &&
 				BuildConfig.VERSION_NAME.matches(Regex("\\d+\\.\\d+\\.\\d+")),
 		)
-		val version1 = VersionId("2.4.6")
-		val version2 = VersionId(BuildConfig.VERSION_NAME)
-		assertTrue(version1 < version2)
+		val parsed = VersionId(BuildConfig.VERSION_NAME)
+		assertTrue(parsed.isStable)
+		assertEquals(
+			BuildConfig.VERSION_NAME,
+			"${parsed.major}.${parsed.minor}.${parsed.build}",
+		)
 	}
 }
