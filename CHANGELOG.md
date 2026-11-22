@@ -1,3 +1,13 @@
+## Alpha 1.1002 (Build [#416](https://github.com/TsukiAndroid/Tsuki/actions/runs/45041631812))
+
+_2026-11-22 16:03 UTC_
+
+- docs: publish Tsuki privacy policy (d08b759)
+- chore: update total downloads badge [skip ci] (5cd2577)
+- chore: archive alpha-latest downloads (+14) [skip ci] (46948d0)
+- docs: link official Tsuki website in README (e62631f)
+
+
 ## Alpha 1.998 (Build [#415](https://github.com/TsukiAndroid/Tsuki/actions/runs/45039274433))
 
 _2026-11-22 15:37 UTC_
