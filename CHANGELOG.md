@@ -1,3 +1,11 @@
+## Alpha 1.998 (Build [#415](https://github.com/TsukiAndroid/Tsuki/actions/runs/45039274433))
+
+_2026-11-22 15:37 UTC_
+
+- docs: link official Tsuki website in README (e62631f)
+- chore: update total downloads badge [skip ci] (3346fa6)
+
+
 ## Alpha 1.988 (Build [#408](https://github.com/TsukiAndroid/Tsuki/actions/runs/45006149679))
 
 _2026-11-22 09:09 UTC_
