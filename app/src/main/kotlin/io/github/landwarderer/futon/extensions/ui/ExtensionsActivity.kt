@@ -51,7 +51,11 @@ class ExtensionsActivity : BaseActivity<ActivityExtensionsBinding>() {
                     io.github.landwarderer.futon.extensions.domain.ExtensionType.MIHON_APK,
                 )
                 if (enabled && requiresConsent) {
-                    ExternalCodeDisclosure.showConsent(this) { viewModel.setEnabled(extension.id, true) }
+                    ExternalCodeDisclosure.showConsent(
+                        context = this,
+                        onContinue = { viewModel.setEnabled(extension.id, true) },
+                        onCancel = { viewModel.setEnabled(extension.id, false) },
+                    )
                 } else {
                     viewModel.setEnabled(extension.id, enabled)
                 }
