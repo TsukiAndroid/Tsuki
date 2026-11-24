@@ -12,6 +12,7 @@ import androidx.core.view.MenuProvider
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
 import androidx.core.view.updatePadding
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.landwarderer.futon.extensions.ui.CreateExtensionActivity
@@ -38,7 +39,7 @@ class ExtensionDownloaderActivity : BaseActivity<ActivityExtensionDownloaderBind
         val adapter = ExtensionDownloaderAdapter(
             onAddRepoClick = { url -> viewModel.addRepo(url) },
             onDeleteRepoClick = { repo -> showDeleteRepoDialog(repo) },
-            onInstallClick = { item -> ExternalCodeDisclosure.showConsent(this) { viewModel.installExtension(item.available) } },
+            onInstallClick = { item -> ExternalCodeDisclosure.showConsent(this, onContinue = { viewModel.installExtension(item.available) }) },
             onCancelClick = { viewModel.cancelDownload(it.available.pkgName) },
             onUninstallClick = { viewModel.uninstallExtension(it.available.pkgName) },
         )
