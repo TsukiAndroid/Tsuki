@@ -5,7 +5,6 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.net.URI
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Detects likely chapter pages and extracts candidate manga pages from the
