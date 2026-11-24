@@ -3328,3 +3328,47 @@ Added `plugin_sources` ("Plugin Sources") and `plugin_sources_empty` strings.
 - The second run (`40606998598`) passed the existing `NovelStorageManagerTest`; the three new tests still failed because Android's `Log` methods throw from their plain JVM stubs.
 - The test fixtures now use a real `AppSettings` with mocked Android preferences, avoid a null Mockito matcher for a Kotlin non-null parameter, and statically mock Android `Log` during calls that exercise production logging. A third CI run is pending.
 - The focused local Gradle task could not complete in this workspace because Gradle's TLS handshake to Maven Central failed while downloading a KSP dependency.
+
+
+---
+
+## Browser reader polish (November 2026) — in progress
+
+### Goal
+Make the in-app browser a resilient alternative reading route when built-in
+Kotatsu parsers or external extension sources are unavailable. Keep the browser
+usable as a browser; native-reader extraction is an optional enhancement.
+
+### First implementation slice
+- Improved `BrowserSourceChapterDetector` to collect image URLs in DOM order
+  from common lazy-load attributes, `srcset`, `picture` sources and background
+  images inside likely reader containers.
+- Rejects non-HTTP(S), `blob:` and `data:` candidates because the native
+  reader's OkHttp pipeline cannot fetch WebView-local blob/data resources.
+- Filters common site assets and tiny loaded images, deduplicates URLs, and
+  accepts modern formats including AVIF.
+- Resource-based chapter detection now counts distinct image requests instead
+  of counting repeated requests for the same URL.
+- `BrowserSourcePageStore` now keeps short-lived per-page request headers.
+- Browser-to-reader handoff captures the chapter Referer, WebView User-Agent,
+  and cookies scoped to each image URL. `PageLoader` applies these headers
+  when downloading extracted browser pages, improving compatibility with
+  hotlink-protected CDNs and authenticated sites.
+- Direct-URL browser sessions currently explain that the site must be saved as
+  a Browser Source before native-reader handoff; they no longer show a reader
+  action that silently fails because there is no persisted source ID.
+
+### Known follow-ups
+- Add integration tests and run the full Android CI build.
+- Improve asynchronous/lazy extraction for sites that only load pages while
+  scrolling, plus support site-specific extraction strategies for canvas and
+  script-backed readers where technically possible.
+- Review EasyList rule coverage and add cosmetic filtering carefully. Do not
+  break Cloudflare challenges, login flows, or manga image requests.
+- Consider a transient source model so direct-URL sessions can hand off to the
+  native reader without requiring users to save a Browser Source first.
+
+### Safety notes
+- Captured cookies are held only in process memory alongside temporary page
+  entries and are not persisted by the browser page bridge.
+- Request-context entries expire after ten minutes.
