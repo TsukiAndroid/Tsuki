@@ -28,7 +28,7 @@ object BrowserSourceChapterDetector {
                 'data-cfsrc', 'data-echo', 'data-image', 'data-img',
                 'data-srcset', 'srcset', 'src'
             ];
-            var excluded = /(^|[\/_-])(logo|favicon|icon|avatar|banner|sprite|button|emoji|ad)([\/_-.]|$)/i;
+            var excluded = /(^|[\/_-])(logo|favicon|icon|avatar|banner|sprite|button|emoji|ad)([\/_.-]|$)/i;
             var readerRoots = document.querySelectorAll(
                 '#reader, .reader, .reading-content, .chapter-content, .chapter-images, ' +
                 '.pages, .viewer, .comic, .wp-manga-chapter-img, [data-reader]'
