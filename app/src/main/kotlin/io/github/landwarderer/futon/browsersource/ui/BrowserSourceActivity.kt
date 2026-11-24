@@ -42,13 +42,16 @@ import io.github.landwarderer.futon.core.network.webview.adblock.AdBlock
 import io.github.landwarderer.futon.customsource.data.CustomSourcesRepository
 import io.github.landwarderer.futon.customsource.domain.CustomMangaSource
 import io.github.landwarderer.futon.databinding.ActivityBrowserSourceBinding
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import org.koitharu.kotatsu.parsers.model.ContentRating
 import org.koitharu.kotatsu.parsers.model.Manga
 import org.koitharu.kotatsu.parsers.model.MangaChapter
 import org.koitharu.kotatsu.parsers.model.MangaPage
 import org.koitharu.kotatsu.parsers.model.MangaState
 import javax.inject.Inject
+import kotlin.coroutines.resume
 
 /**
  * Full in-app browser for BROWSER_SOURCE custom sources.
@@ -542,11 +545,16 @@ class BrowserSourceActivity : AppCompatActivity() {
     // ── Reader integration ────────────────────────────────────────────────────
 
     private fun openInNativeReader() {
-        binding.webView.evaluateJavascript(BrowserSourceChapterDetector.COLLECT_IMAGES_JS) { jsonResult ->
-            val imageUrls = BrowserSourceChapterDetector.parseImageUrls(jsonResult)
+        lifecycleScope.launch {
+            binding.fabOpenReader.isEnabled = false
+            val imageUrls = try {
+                collectChapterImagesProgressively()
+            } finally {
+                binding.fabOpenReader.isEnabled = true
+            }
             if (imageUrls.isEmpty()) {
-                Toast.makeText(this, R.string.webview_no_images_found, Toast.LENGTH_SHORT).show()
-                return@evaluateJavascript
+                Toast.makeText(this@BrowserSourceActivity, R.string.webview_no_images_found, Toast.LENGTH_SHORT).show()
+                return@launch
             }
 
             val chapterUrl = binding.webView.url ?: return@evaluateJavascript
@@ -565,7 +573,7 @@ class BrowserSourceActivity : AppCompatActivity() {
                     "Save this website as a Browser Source to open chapters in Tsuki Reader.",
                     Toast.LENGTH_LONG,
                 ).show()
-                return@evaluateJavascript
+                return@launch
             }
 
             // Capture request context per image URL. Some CDNs require cookies
@@ -648,6 +656,79 @@ class BrowserSourceActivity : AppCompatActivity() {
                 .build()
             router.openReader(readerIntent)
         }
+    }
+
+    /**
+     * Scrolls through the rendered chapter in small increments so intersection-
+     * observer and scroll-triggered lazy loaders have a chance to populate images.
+     * The original position is restored even if extraction is cancelled or fails.
+     */
+    private suspend fun collectChapterImagesProgressively(): List<String> {
+        val webView = binding.webView
+        val originalY = evaluateJavascriptAwait("String(window.scrollY || 0)")
+            .jsNumber()
+            .toIntOrNull() ?: 0
+        val collected = LinkedHashSet<String>()
+
+        try {
+            repeat(MAX_EXTRACTION_STEPS) {
+                val imageResult = evaluateJavascriptAwait(
+                    BrowserSourceChapterDetector.COLLECT_IMAGES_JS
+                )
+                collected.addAll(BrowserSourceChapterDetector.parseImageUrls(imageResult))
+
+                val metrics = evaluateJavascriptAwait(
+                    "JSON.stringify({y:window.scrollY||0,h:Math.max(document.body.scrollHeight,document.documentElement.scrollHeight),v:window.innerHeight||0})"
+                )
+                val values = runCatching {
+                    org.json.JSONObject(metrics.jsString())
+                }.getOrNull() ?: return@repeat
+
+                val currentY = values.optDouble("y", 0.0)
+                val pageHeight = values.optDouble("h", 0.0)
+                val viewport = values.optDouble("v", 0.0)
+                if (viewport <= 0.0 || currentY + viewport >= pageHeight - 2.0) {
+                    return@repeat
+                }
+
+                val nextY = minOf(
+                    currentY + maxOf(400.0, viewport * EXTRACTION_SCROLL_FRACTION),
+                    pageHeight,
+                )
+                evaluateJavascriptAwait("window.scrollTo(0, $nextY)")
+                delay(EXTRACTION_SETTLE_DELAY_MS)
+            }
+
+            // Give the final viewport's lazy images one last chance to appear.
+            delay(EXTRACTION_SETTLE_DELAY_MS)
+            val finalResult = evaluateJavascriptAwait(BrowserSourceChapterDetector.COLLECT_IMAGES_JS)
+            collected.addAll(BrowserSourceChapterDetector.parseImageUrls(finalResult))
+        } finally {
+            evaluateJavascriptAwait("window.scrollTo(0, $originalY)")
+        }
+
+        return collected.toList()
+    }
+
+    private suspend fun evaluateJavascriptAwait(script: String): String? =
+        suspendCancellableCoroutine { continuation ->
+            binding.webView.evaluateJavascript(script) { result ->
+                if (continuation.isActive) continuation.resume(result)
+            }
+        }
+
+    private fun String?.jsString(): String =
+        this?.let { runCatching { org.json.JSONTokener(it).nextValue() as? String }.getOrNull() }
+            ?: ""
+
+    private fun String?.jsNumber(): String =
+        this?.let { runCatching { org.json.JSONTokener(it).nextValue().toString() }.getOrNull() }
+            ?: ""
+
+    private companion object {
+        const val MAX_EXTRACTION_STEPS = 40
+        const val EXTRACTION_SCROLL_FRACTION = 0.75
+        const val EXTRACTION_SETTLE_DELAY_MS = 300L
     }
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
