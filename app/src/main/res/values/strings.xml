@@ -1561,7 +1561,11 @@
     <string name="novel_font_monospace">Monospace</string>
     <string name="novel_font_custom">Custom Font (.ttf/.otf)</string>
     <string name="previous_chapter">Previous chapter</string>
-    <string name="external_extension_warning_title">Install external extension?</string>
-    <string name="external_extension_warning_message">Extensions are executable code provided by third-party sources, not reviewed or verified by F-Droid. Installing one may allow code from that source to run with the permissions and access available to the extension. Continue only if you trust the source.</string>
-    <string name="external_extension_warning_continue">I understand, continue</string>
+    <string name="external_code_consent_title">Install external code?</string>
+    <string name="external_code_consent_message">This add-on contains executable code supplied by a third party. It has not been reviewed by Tsuki. It may run with the access and permissions available to Tsuki, including access to data exposed through the extension interface. Continue only if you trust its source.</string>
+    <string name="external_code_consent_fdroid_message">This add-on contains executable code supplied outside the F-Droid build. F-Droid has not reviewed or verified it. If you continue, you are explicitly choosing to bypass F-Droid's checks for this add-on. It may run with the access and permissions available to Tsuki. Install only if you trust its source.</string>
+    <string name="external_code_consent_continue">I understand, continue</string>
+    <string name="tsuki_external_code_info_title">About Tsuki and external code</string>
+    <string name="tsuki_external_code_info_summary">What Tsuki does and how extensions and plugins work</string>
+    <string name="tsuki_external_code_info_message">Tsuki is an open-source reader for manga, manhwa, manhua and novels. It includes a large catalogue of built-in sources, online and offline reading, reader modes and library tools.\n\nOptional extensions and plugins can add sources or features. Some are executable code downloaded from independent third-party repositories or imported by you. They are not part of the Tsuki APK and are not reviewed by F-Droid. Script extensions run through Tsuki's extension runtime; JAR plugins are loaded into the app process. Depending on the integration, external code may use network access and the app capabilities exposed to it.\n\nBefore each external-code installation or activation, Tsuki asks for your consent. On the F-Droid build, continuing means you choose to bypass F-Droid's checks for that add-on. Declining keeps the add-on from being installed or activated. Built-in sources and bundled extensions do not require this extra approval.</string>
 </resources>
