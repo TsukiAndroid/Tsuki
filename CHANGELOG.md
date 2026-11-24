@@ -1,3 +1,28 @@
+## Alpha 1.1112 (Build [#434](https://github.com/TsukiAndroid/Tsuki/actions/runs/45433086679))
+
+_2026-11-24 16:06 UTC_
+
+- chore: update total downloads badge [skip ci] (3ee5ed8)
+- chore: archive alpha-latest downloads (+19) [skip ci] (0847dd3)
+- chore(deps): bump kotatsu-parsers-redo 36f6285e87 → 8e4b04f3df [auto] (2b73c80)
+- chore: refresh GitHub APK download counter [skip ci] (0b18158)
+- Fix browser image asset filter pattern (7944ee9)
+- Correct adblock domain rule Kotlin syntax (df7f59d)
+- Remove unused browser detector import (c96e94c)
+- Fix Kotlin formatting in adblock domain rule (63589fc)
+- Update adblock matcher documentation (c51c508)
+- Clean up domain rule matcher (b764377)
+- Document browser adblock improvements (2cb207a)
+- Fix subdomain matching in EasyList fast path (e8eab7d)
+- Match adblock domain rules on subdomains (3757085)
+- Document browser reader improvements (f5e4fd1)
+- Carry browser session into native reader (c8b9d41)
+- Apply browser session headers to extracted pages (bcd70de)
+- Preserve browser page request context (e34abae)
+- Improve browser chapter image extraction (b5a6ba1)
+- chore: update total downloads badge [skip ci] (5c94241)
+
+
 ## Alpha 1.1107 (Build [#433](https://github.com/TsukiAndroid/Tsuki/actions/runs/45413566541))
 
 _2026-11-24 14:23 UTC_
