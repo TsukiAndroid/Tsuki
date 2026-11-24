@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.os.Bundle
+import android.os.SystemClock
 import android.view.KeyEvent
 import android.view.Menu
 import android.view.MenuItem
@@ -669,6 +670,9 @@ class BrowserSourceActivity : AppCompatActivity() {
             .jsNumber()
             .toIntOrNull() ?: 0
         val collected = LinkedHashSet<String>()
+        val extractionStartedAt = SystemClock.elapsedRealtime()
+        var previousY: Double? = null
+        var stalledSteps = 0
 
         try {
             // Start at the beginning so content above the user's saved scroll
@@ -677,6 +681,10 @@ class BrowserSourceActivity : AppCompatActivity() {
             delay(EXTRACTION_SETTLE_DELAY_MS)
 
             for (step in 0 until MAX_EXTRACTION_STEPS) {
+                // A page that continuously grows or uses a non-window scroll
+                // container must never keep the browser scrolling indefinitely.
+                if (SystemClock.elapsedRealtime() - extractionStartedAt >= MAX_EXTRACTION_DURATION_MS) break
+
                 val imageResult = evaluateJavascriptAwait(
                     BrowserSourceChapterDetector.COLLECT_IMAGES_JS
                 )
@@ -694,9 +702,17 @@ class BrowserSourceActivity : AppCompatActivity() {
                 val viewport = values.optDouble("v", 0.0)
                 if (viewport <= 0.0 || currentY + viewport >= pageHeight - 2.0) break
 
+                if (previousY != null && currentY <= previousY + 2.0) {
+                    stalledSteps++
+                    if (stalledSteps >= MAX_STALLED_EXTRACTION_STEPS) break
+                } else {
+                    stalledSteps = 0
+                }
+                previousY = currentY
+
                 val nextY = minOf(
                     currentY + maxOf(400.0, viewport * EXTRACTION_SCROLL_FRACTION),
-                    pageHeight,
+                    maxOf(0.0, pageHeight - viewport),
                 )
                 evaluateJavascriptAwait("window.scrollTo(0, $nextY)")
                 delay(EXTRACTION_SETTLE_DELAY_MS)
@@ -770,9 +786,11 @@ class BrowserSourceActivity : AppCompatActivity() {
     // ── Companion ─────────────────────────────────────────────────────────────
 
     companion object {
-        private const val MAX_EXTRACTION_STEPS = 40
+        private const val MAX_EXTRACTION_STEPS = 30
+        private const val MAX_STALLED_EXTRACTION_STEPS = 2
+        private const val MAX_EXTRACTION_DURATION_MS = 15_000L
         private const val EXTRACTION_SCROLL_FRACTION = 0.75
-        private const val EXTRACTION_SETTLE_DELAY_MS = 350L
+        private const val EXTRACTION_SETTLE_DELAY_MS = 250L
 
         const val KEY_SOURCE_ID   = "browser_source_id"
         const val KEY_SOURCE_NAME = "browser_source_name"
