@@ -13,7 +13,11 @@ import io.github.landwarderer.futon.R
  */
 object ExternalCodeDisclosure {
 
-    fun showConsent(context: Context, onContinue: () -> Unit) {
+    fun showConsent(
+        context: Context,
+        onContinue: () -> Unit,
+        onCancel: () -> Unit = {},
+    ) {
         val message = if (BuildConfig.IS_FDROID) {
             R.string.external_code_consent_fdroid_message
         } else {
@@ -23,7 +27,7 @@ object ExternalCodeDisclosure {
             .setTitle(R.string.external_code_consent_title)
             .setMessage(message)
             .setPositiveButton(R.string.external_code_consent_continue) { _, _ -> onContinue() }
-            .setNegativeButton(android.R.string.cancel, null)
+            .setNegativeButton(android.R.string.cancel) { _, _ -> onCancel() }
             .show()
     }
 
