@@ -128,7 +128,7 @@ class ImportExtensionSheet : BottomSheetDialogFragment() {
             val typeIndex = typeLabels.indexOf(spinnerType?.text?.toString())
             val type = if (typeIndex == 1) ExtensionType.DART else ExtensionType.JS
 
-            ExternalCodeDisclosure.showConsent(requireContext()) {
+            ExternalCodeDisclosure.showConsent(requireContext(), onContinue = {
                 viewModel.installFromCode(
                     name = name,
                     version = editVersion?.text?.toString()?.trim()?.ifEmpty { "1.0.0" } ?: "1.0.0",
@@ -141,7 +141,7 @@ class ImportExtensionSheet : BottomSheetDialogFragment() {
                 )
                 Toast.makeText(requireContext(), getString(R.string.ext_install_success, name), Toast.LENGTH_SHORT).show()
                 dismiss()
-            }
+            })
         }
 
         btnCancel?.setOnClickListener { dismiss() }
