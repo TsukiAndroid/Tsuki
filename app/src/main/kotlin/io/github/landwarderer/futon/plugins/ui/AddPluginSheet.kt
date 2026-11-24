@@ -135,7 +135,7 @@ class AddPluginSheet : BottomSheetDialogFragment() {
                     }
                     ExternalCodeDisclosure.showConsent(requireContext(), onContinue = {
                         viewModel.previewFromGithub(repo)
-                    }))
+                    })
                 }
             }
         }
