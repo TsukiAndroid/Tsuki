@@ -133,9 +133,9 @@ class AddPluginSheet : BottomSheetDialogFragment() {
                         etRepo.error = getString(R.string.plugin_repo_required)
                         return@setOnClickListener
                     }
-                    ExternalCodeDisclosure.showConsent(requireContext()) {
+                    ExternalCodeDisclosure.showConsent(requireContext(), onContinue = {
                         viewModel.previewFromGithub(repo)
-                    })
+                    }))
                 }
             }
         }
