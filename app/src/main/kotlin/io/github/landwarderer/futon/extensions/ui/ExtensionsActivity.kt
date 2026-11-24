@@ -19,6 +19,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.landwarderer.futon.R
 import io.github.landwarderer.futon.core.ui.BaseActivity
+import io.github.landwarderer.futon.core.ui.ExternalCodeDisclosure
 import io.github.landwarderer.futon.databinding.ActivityExtensionsBinding
 import io.github.landwarderer.futon.extensions.ui.adapter.ExtensionsAdapter
 import kotlinx.coroutines.launch
@@ -43,9 +44,35 @@ class ExtensionsActivity : BaseActivity<ActivityExtensionsBinding>() {
         setDisplayHomeAsUp(isEnabled = true, showUpAsClose = false)
 
         adapter = ExtensionsAdapter(
-            onEnableToggle = { id, enabled -> viewModel.setEnabled(id, enabled) },
+            onEnableToggle = { extension, enabled ->
+                val requiresConsent = extension.author != "Built-in" && extension.type in setOf(
+                    io.github.landwarderer.futon.extensions.domain.ExtensionType.JS,
+                    io.github.landwarderer.futon.extensions.domain.ExtensionType.DART,
+                    io.github.landwarderer.futon.extensions.domain.ExtensionType.MIHON_APK,
+                )
+                if (enabled && requiresConsent) {
+                    ExternalCodeDisclosure.showConsent(
+                        context = this,
+                        onContinue = { viewModel.setEnabled(extension.id, true) },
+                        onCancel = { viewModel.setEnabled(extension.id, false) },
+                    )
+                } else {
+                    viewModel.setEnabled(extension.id, enabled)
+                }
+            },
             onDelete = { id -> viewModel.delete(id) },
-            onInstall = { available -> viewModel.installFromAvailable(available) },
+            onInstall = { available ->
+                val install = { viewModel.installFromAvailable(available) }
+                if (available.type in setOf(
+                    io.github.landwarderer.futon.extensions.domain.ExtensionType.JS,
+                    io.github.landwarderer.futon.extensions.domain.ExtensionType.DART,
+                    io.github.landwarderer.futon.extensions.domain.ExtensionType.MIHON_APK,
+                )) {
+                    ExternalCodeDisclosure.showConsent(this, install)
+                } else {
+                    install()
+                }
+            },
         )
 
         with(viewBinding.recyclerView) {

@@ -18,6 +18,7 @@ import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.landwarderer.futon.R
 import io.github.landwarderer.futon.core.ui.BaseFragment
+import io.github.landwarderer.futon.core.ui.ExternalCodeDisclosure
 import io.github.landwarderer.futon.core.util.ext.consumeAllSystemBarsInsets
 import io.github.landwarderer.futon.core.util.ext.systemBarsInsets
 import io.github.landwarderer.futon.core.util.ext.observeEvent
@@ -60,7 +61,17 @@ class ManagePluginsFragment : BaseFragment<FragmentManagePluginsBinding>() {
 
         // Adapter
         adapter = PluginsAdapter(
-            onToggle  = { plugin, enabled -> viewModel.setEnabled(plugin.id, enabled) },
+            onToggle  = { plugin, enabled ->
+                if (enabled) {
+                    ExternalCodeDisclosure.showConsent(
+                        context = requireContext(),
+                        onContinue = { viewModel.setEnabled(plugin.id, true) },
+                        onCancel = { viewModel.setEnabled(plugin.id, false) },
+                    )
+                } else {
+                    viewModel.setEnabled(plugin.id, false)
+                }
+            },
             onUpdate  = { plugin -> showGithubSheet(plugin.githubRepo ?: "") },
             onDelete  = { plugin -> confirmDelete(plugin) },
         )

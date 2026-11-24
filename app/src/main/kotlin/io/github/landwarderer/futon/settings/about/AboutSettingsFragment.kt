@@ -8,6 +8,7 @@ import androidx.fragment.app.viewModels
 import androidx.preference.Preference
 import androidx.preference.SwitchPreferenceCompat
 import com.google.android.material.snackbar.Snackbar
+import io.github.landwarderer.futon.core.ui.ExternalCodeDisclosure
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.combine
 import io.github.landwarderer.futon.BuildConfig
@@ -53,6 +54,11 @@ class AboutSettingsFragment : BasePreferenceFragment(R.string.about) {
                 return when (preference.key) {
                         AppSettings.KEY_APP_VERSION -> {
                                 viewModel.checkForUpdates()
+                                true
+                        }
+
+                        "about_external_code" -> {
+                                ExternalCodeDisclosure.showInfo(requireContext())
                                 true
                         }
 

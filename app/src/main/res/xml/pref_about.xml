@@ -5,6 +5,12 @@
         android:title="@string/about">
 
         <Preference
+                android:key="about_external_code"
+                android:persistent="false"
+                android:summary="@string/tsuki_external_code_info_summary"
+                android:title="@string/tsuki_external_code_info_title" />
+
+        <Preference
                 android:key="app_version"
                 android:persistent="false"
                 android:summary="@string/check_for_updates" />

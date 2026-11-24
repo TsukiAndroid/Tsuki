@@ -18,6 +18,7 @@ import com.google.android.material.textfield.TextInputEditText
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.landwarderer.futon.R
 import io.github.landwarderer.futon.extensions.domain.ExtensionType
+import io.github.landwarderer.futon.core.ui.ExternalCodeDisclosure
 
 /**
  * Bottom sheet for importing a local .js or .dart extension file.
@@ -127,18 +128,20 @@ class ImportExtensionSheet : BottomSheetDialogFragment() {
             val typeIndex = typeLabels.indexOf(spinnerType?.text?.toString())
             val type = if (typeIndex == 1) ExtensionType.DART else ExtensionType.JS
 
-            viewModel.installFromCode(
-                name = name,
-                version = editVersion?.text?.toString()?.trim()?.ifEmpty { "1.0.0" } ?: "1.0.0",
-                author = editAuthor?.text?.toString()?.trim() ?: "",
-                description = "",
-                baseUrl = baseUrl ?: "",
-                language = "en",
-                type = type,
-                sourceCode = content,
-            )
-            Toast.makeText(requireContext(), getString(R.string.ext_install_success, name), Toast.LENGTH_SHORT).show()
-            dismiss()
+            ExternalCodeDisclosure.showConsent(requireContext(), onContinue = {
+                viewModel.installFromCode(
+                    name = name,
+                    version = editVersion?.text?.toString()?.trim()?.ifEmpty { "1.0.0" } ?: "1.0.0",
+                    author = editAuthor?.text?.toString()?.trim() ?: "",
+                    description = "",
+                    baseUrl = baseUrl ?: "",
+                    language = "en",
+                    type = type,
+                    sourceCode = content,
+                )
+                Toast.makeText(requireContext(), getString(R.string.ext_install_success, name), Toast.LENGTH_SHORT).show()
+                dismiss()
+            })
         }
 
         btnCancel?.setOnClickListener { dismiss() }
