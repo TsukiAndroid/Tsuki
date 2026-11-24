@@ -671,6 +671,11 @@ class BrowserSourceActivity : AppCompatActivity() {
         val collected = LinkedHashSet<String>()
 
         try {
+            // Start at the beginning so content above the user's saved scroll
+            // position is not omitted from the native-reader page list.
+            evaluateJavascriptAwait("window.scrollTo(0, 0)")
+            delay(EXTRACTION_SETTLE_DELAY_MS)
+
             for (step in 0 until MAX_EXTRACTION_STEPS) {
                 val imageResult = evaluateJavascriptAwait(
                     BrowserSourceChapterDetector.COLLECT_IMAGES_JS
@@ -727,7 +732,7 @@ class BrowserSourceActivity : AppCompatActivity() {
     private companion object {
         const val MAX_EXTRACTION_STEPS = 40
         const val EXTRACTION_SCROLL_FRACTION = 0.75
-        const val EXTRACTION_SETTLE_DELAY_MS = 300L
+        const val EXTRACTION_SETTLE_DELAY_MS = 350L
     }
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
