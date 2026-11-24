@@ -61,10 +61,10 @@ class AddPluginSheet : BottomSheetDialogFragment() {
         // If a file URI was passed, go straight to preview
         val uriArg = arguments?.getString(ARG_URI)
         if (uriArg != null) {
-            ExternalCodeDisclosure.showConsent(requireContext()) {
+            ExternalCodeDisclosure.showConsent(requireContext(), onContinue = {
                 inputLayout.isVisible = false
                 viewModel.previewFromUri(Uri.parse(uriArg))
-            }
+            })
         }
 
         // Observe UI state
@@ -135,7 +135,7 @@ class AddPluginSheet : BottomSheetDialogFragment() {
                     }
                     ExternalCodeDisclosure.showConsent(requireContext()) {
                         viewModel.previewFromGithub(repo)
-                    }
+                    })
                 }
             }
         }
