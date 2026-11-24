@@ -14,9 +14,8 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
  * [allowDomains] `HashSet`s for O(1) lookup. Only the minority of rules that need
  * per-request evaluation (path rules, exact-url rules, or domain rules with
  * modifiers such as `$third-party`) fall back to the linear [blockRules] /
- * [allowRules] scan. [registrableDomain] memoizes `HttpUrl.topPrivateDomain()`
- * (a public-suffix-list walk) per host, since the same handful of hosts repeat
- * hundreds of times within a single page load.
+ * [allowRules] scan. Plain domain checks walk the host's suffixes, so rules
+ * targeting a subdomain are not lost by registrable-domain normalisation.
  */
 class RulesList {
 
