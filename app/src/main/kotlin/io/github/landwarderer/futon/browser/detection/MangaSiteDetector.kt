@@ -117,20 +117,30 @@ class MangaSiteDetector @Inject constructor(
         val domain = domainOf(url) ?: return
         if (isNeverListed(domain)) return
         val session = DetectionSessionStore.get(domain) ?: return
-        if (session.chapterReaderDetected) return
 
-        session.capturedPageUrls.add(imageUrl)
-        if (session.capturedPageUrls.size > 40) {
-            session.capturedPageUrls = session.capturedPageUrls.takeLast(40).toMutableList()
+        // WebView invokes shouldInterceptRequest on background threads and may
+        // deliver several image requests concurrently. Keep the mutable URL list
+        // protected and pass the detector an immutable snapshot, never the live list.
+        val capturedUrls = synchronized(session) {
+            if (session.chapterReaderDetected) return
+            session.capturedPageUrls.add(imageUrl)
+            if (session.capturedPageUrls.size > 40) {
+                session.capturedPageUrls = session.capturedPageUrls.takeLast(40).toMutableList()
+            }
+            session.capturedPageUrls.toList()
         }
 
-        UniversalPatternDetector.detectChapterReader(session.capturedPageUrls)?.let { match ->
+        val match = UniversalPatternDetector.detectChapterReader(capturedUrls) ?: return
+        synchronized(session) {
+            // Another request may have completed detection while this snapshot
+            // was being evaluated.
+            if (session.chapterReaderDetected) return
             session.chapterReaderDetected = true
             session.pageImageSelectors = match.selectors
             recomputeConfidence(session, url)
             session.lastUpdated = System.currentTimeMillis()
-            Log.d(TAG, "Reader pattern detected on $domain")
         }
+        Log.d(TAG, "Reader pattern detected on $domain")
     }
 
     fun sessionFor(domain: String): DetectionSession? = DetectionSessionStore.get(domain)
