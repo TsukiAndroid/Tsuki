@@ -3390,6 +3390,6 @@ The Browser Source native-reader handoff now performs a progressive DOM scan ins
 - Waits briefly after each movement before collecting the next viewport.
 - Deduplicates URLs while preserving the order in which they first appear.
 - Performs a final collection at the bottom and restores the original scroll position.
-- Caps the scan at 40 scroll steps to prevent an unexpectedly long or infinite page from keeping extraction busy indefinitely.
+- Caps the scan at 30 scroll steps and 15 seconds, and stops after two consecutive scroll attempts make no meaningful progress. This prevents dynamically growing pages or nested scroll layouts from trapping extraction in a long scan.
 
 This remains heuristic. Sites that require tapping a "load more" control, selecting a chapter variant, or executing custom canvas/script rendering may still need site-specific support. The scan also temporarily moves the WebView while extraction runs; the original position is restored afterward.
