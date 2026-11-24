@@ -52,6 +52,7 @@ import io.github.landwarderer.futon.download.ui.worker.DownloadSlowdownDispatche
 import io.github.landwarderer.futon.local.data.LocalStorageCache
 import io.github.landwarderer.futon.local.data.PageCache
 import io.github.landwarderer.futon.customsource.domain.CustomMangaSource
+import io.github.landwarderer.futon.browsersource.data.BrowserSourcePageStore
 import io.github.landwarderer.futon.core.image.MangaSourceHeaderInterceptor
 import org.koitharu.kotatsu.parsers.model.MangaPage
 import org.koitharu.kotatsu.parsers.model.MangaSource
@@ -305,7 +306,7 @@ class PageLoader @Inject constructor(
                                 if (isPrefetch) {
                                         downloadSlowdownDispatcher.delay(page.source)
                                 }
-                                val request = createPageRequest(pageUrl, page.source)
+                                val request = createPageRequest(pageUrl, page.source, page.id)
                                 imageProxyInterceptor.interceptPageRequest(request, okHttp).ensureSuccess().use { response ->
                                         response.requireBody().withProgress(progress).use {
                                                 cache.set(pageUrl, it.source(), it.contentType()?.toMimeType())
@@ -345,7 +346,7 @@ class PageLoader @Inject constructor(
                 private const val PREFETCH_LIMIT_DEFAULT = 6
                 private const val PREFETCH_MIN_RAM_MB = 80L
 
-                fun createPageRequest(pageUrl: String, mangaSource: MangaSource): Request {
+                fun createPageRequest(pageUrl: String, mangaSource: MangaSource, pageId: Long? = null): Request {
                         val builder = Request.Builder()
                                 .url(pageUrl)
                                 .get()
@@ -360,6 +361,18 @@ class PageLoader @Inject constructor(
                         if (mangaSource is CustomMangaSource) {
                                 builder.header(CommonHeaders.REFERER, mangaSource.source.cleanBaseUrl + "/")
                                 builder.header(CommonHeaders.USER_AGENT, MangaSourceHeaderInterceptor.BROWSER_UA)
+                        }
+                        // Browser-extracted pages may need the exact chapter Referer,
+                        // WebView User-Agent and CDN-scoped cookies used by the site.
+                        if (pageId != null) {
+                                BrowserSourcePageStore.getRequestHeaders(pageId).forEach { (name, value) ->
+                                        if (name.equals("Cookie", true) ||
+                                                name.equals("Referer", true) ||
+                                                name.equals("User-Agent", true)
+                                        ) {
+                                                builder.header(name, value)
+                                        }
+                                }
                         }
                         return builder.build()
                 }
