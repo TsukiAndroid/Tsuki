@@ -729,12 +729,6 @@ class BrowserSourceActivity : AppCompatActivity() {
         this?.let { runCatching { org.json.JSONTokener(it).nextValue().toString() }.getOrNull() }
             ?: ""
 
-    private companion object {
-        const val MAX_EXTRACTION_STEPS = 40
-        const val EXTRACTION_SCROLL_FRACTION = 0.75
-        const val EXTRACTION_SETTLE_DELAY_MS = 350L
-    }
-
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
     override fun onPause() {
@@ -776,6 +770,10 @@ class BrowserSourceActivity : AppCompatActivity() {
     // ── Companion ─────────────────────────────────────────────────────────────
 
     companion object {
+        private const val MAX_EXTRACTION_STEPS = 40
+        private const val EXTRACTION_SCROLL_FRACTION = 0.75
+        private const val EXTRACTION_SETTLE_DELAY_MS = 350L
+
         const val KEY_SOURCE_ID   = "browser_source_id"
         const val KEY_SOURCE_NAME = "browser_source_name"
         const val KEY_BASE_URL    = "browser_source_url"
