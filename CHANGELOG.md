@@ -1,3 +1,21 @@
+## Alpha 1.1033 (Build [#431](https://github.com/TsukiAndroid/Tsuki/actions/runs/45310681757))
+
+_2026-11-24 02:13 UTC_
+
+- chore: refresh GitHub APK download counter [skip ci] (3e7e767)
+- chore(deps): bump kotatsu-parsers-redo b049587f96 → 36f6285e87 [auto] (8d836b7)
+- chore: refresh GitHub APK download counter [skip ci] (c3d13e7)
+- chore: refresh GitHub APK download counter [skip ci] (0a5418c)
+- chore: update total downloads badge [skip ci] (4cf7e73)
+- chore: archive alpha-latest downloads (+10) [skip ci] (427c35e)
+- Remove duplicate F-Droid smoke test step (ff669b8)
+- Fix stale stable version unit test (714c853)
+- ci: smoke-test unsigned F-Droid stable build (097a99c)
+- ci: smoke-test unsigned F-Droid stable build (5d76c7c)
+- fix: keep Gradle plugin block and F-Droid signing configuration valid (38b8432)
+- build: prepare Android release for F-Droid distribution (e55b348)
+
+
 ## Alpha 1.1025 (Build [#430](https://github.com/TsukiAndroid/Tsuki/actions/runs/45049559733))
 
 _2026-11-22 17:27 UTC_
