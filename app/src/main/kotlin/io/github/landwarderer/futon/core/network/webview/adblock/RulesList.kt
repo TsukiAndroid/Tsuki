@@ -3,7 +3,6 @@ package io.github.landwarderer.futon.core.network.webview.adblock
 import androidx.annotation.CheckResult
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
-import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Very simple implementation of adblock list parser
@@ -26,13 +25,9 @@ private val allowDomains = HashSet<String>()
 private val blockRules = ArrayList<Rule>()
 private val allowRules = ArrayList<Rule>()
 
-// host -> registrable domain. Bounded by the number of distinct hosts seen
-// during this WebView session, never cleared for the lifetime of the rule set.
-private val domainCache = ConcurrentHashMap<String, String>()
-
 operator fun get(url: HttpUrl, baseUrl: HttpUrl?): Rule? {
 // Plain domain rules may target a subdomain (for example ||ads.site.com^),
- // so compare every host suffix rather than only the registrable domain.
+// so compare every host suffix rather than only the registrable domain.
  // The number of suffixes is bounded by the host's label count.
 val domainBlocked = matchesDomain(url.host, blockDomains)
 val rule: Rule = if (domainBlocked) {
@@ -54,10 +49,6 @@ fun trimToSize() {
 blockRules.trimToSize()
 allowRules.trimToSize()
 }
-
-/** Same domain string appears in hundreds of requests per page load — cache it. */
-private fun registrableDomain(url: HttpUrl): String =
-domainCache.getOrPut(url.host) { url.topPrivateDomain() ?: url.host }
 
 /** Match a rule against the host itself or any parent-domain suffix. */
 private fun matchesDomain(host: String, domains: Set<String>): Boolean {
