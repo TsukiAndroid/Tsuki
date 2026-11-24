@@ -3349,6 +3349,9 @@ usable as a browser; native-reader extraction is an optional enhancement.
   accepts modern formats including AVIF.
 - Resource-based chapter detection now counts distinct image requests instead
   of counting repeated requests for the same URL.
+- Fixed EasyList plain-domain matching so rules targeting a subdomain (for
+  example `||ads.example.com^`) match that host and its descendants;
+  exception rules use the same suffix-aware matching.
 - `BrowserSourcePageStore` now keeps short-lived per-page request headers.
 - Browser-to-reader handoff captures the chapter Referer, WebView User-Agent,
   and cookies scoped to each image URL. `PageLoader` applies these headers
