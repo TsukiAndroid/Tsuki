@@ -18,6 +18,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.textfield.TextInputEditText
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.landwarderer.futon.R
+import io.github.landwarderer.futon.core.ui.ExternalCodeDisclosure
 import kotlinx.coroutines.launch
 
 /**
@@ -60,8 +61,10 @@ class AddPluginSheet : BottomSheetDialogFragment() {
         // If a file URI was passed, go straight to preview
         val uriArg = arguments?.getString(ARG_URI)
         if (uriArg != null) {
-            inputLayout.isVisible = false
-            viewModel.previewFromUri(Uri.parse(uriArg))
+            ExternalCodeDisclosure.showConsent(requireContext()) {
+                inputLayout.isVisible = false
+                viewModel.previewFromUri(Uri.parse(uriArg))
+            }
         }
 
         // Observe UI state
@@ -130,7 +133,9 @@ class AddPluginSheet : BottomSheetDialogFragment() {
                         etRepo.error = getString(R.string.plugin_repo_required)
                         return@setOnClickListener
                     }
-                    viewModel.previewFromGithub(repo)
+                    ExternalCodeDisclosure.showConsent(requireContext()) {
+                        viewModel.previewFromGithub(repo)
+                    }
                 }
             }
         }
