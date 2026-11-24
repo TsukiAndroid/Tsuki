@@ -8,7 +8,7 @@ sealed interface Rule {
 
 	data class Domain(private val domain: String) : Rule {
 
-		override fun invoke(url: HttpUrl, baseUrl: HttpUrl?): Boolean = (url.topPrivateDomain() ?: url.host) == domain
+		override fun invoke(url: HttpUrl, baseUrl: HttpUrl?): Boolean =\n\t\t\turl.host == domain || url.host.endsWith(".$domain")
 	}
 
 	data class ExactUrl(private val url: HttpUrl) : Rule {
