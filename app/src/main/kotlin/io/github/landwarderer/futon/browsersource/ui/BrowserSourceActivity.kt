@@ -557,7 +557,7 @@ class BrowserSourceActivity : AppCompatActivity() {
                 return@launch
             }
 
-            val chapterUrl = binding.webView.url ?: return@evaluateJavascript
+            val chapterUrl = binding.webView.url ?: return@launch
             val pageTitle  = currentPageTitle.ifBlank { binding.webView.title ?: "Chapter" }
 
             // Stable ID derived from the chapter URL
@@ -569,7 +569,7 @@ class BrowserSourceActivity : AppCompatActivity() {
                 ?.let { CustomMangaSource(it) }
             if (customSource == null) {
                 Toast.makeText(
-                    this,
+                    this@BrowserSourceActivity,
                     "Save this website as a Browser Source to open chapters in Tsuki Reader.",
                     Toast.LENGTH_LONG,
                 ).show()
@@ -650,7 +650,7 @@ class BrowserSourceActivity : AppCompatActivity() {
             }
 
             // Open the native reader
-            val readerIntent = ReaderIntent.Builder(this)
+            val readerIntent = ReaderIntent.Builder(this@BrowserSourceActivity)
                 .manga(manga)
                 .incognito(false)
                 .build()
@@ -671,7 +671,7 @@ class BrowserSourceActivity : AppCompatActivity() {
         val collected = LinkedHashSet<String>()
 
         try {
-            repeat(MAX_EXTRACTION_STEPS) {
+            for (step in 0 until MAX_EXTRACTION_STEPS) {
                 val imageResult = evaluateJavascriptAwait(
                     BrowserSourceChapterDetector.COLLECT_IMAGES_JS
                 )
@@ -682,14 +682,12 @@ class BrowserSourceActivity : AppCompatActivity() {
                 )
                 val values = runCatching {
                     org.json.JSONObject(metrics.jsString())
-                }.getOrNull() ?: return@repeat
+                }.getOrNull() ?: break
 
                 val currentY = values.optDouble("y", 0.0)
                 val pageHeight = values.optDouble("h", 0.0)
                 val viewport = values.optDouble("v", 0.0)
-                if (viewport <= 0.0 || currentY + viewport >= pageHeight - 2.0) {
-                    return@repeat
-                }
+                if (viewport <= 0.0 || currentY + viewport >= pageHeight - 2.0) break
 
                 val nextY = minOf(
                     currentY + maxOf(400.0, viewport * EXTRACTION_SCROLL_FRACTION),
@@ -704,7 +702,8 @@ class BrowserSourceActivity : AppCompatActivity() {
             val finalResult = evaluateJavascriptAwait(BrowserSourceChapterDetector.COLLECT_IMAGES_JS)
             collected.addAll(BrowserSourceChapterDetector.parseImageUrls(finalResult))
         } finally {
-            evaluateJavascriptAwait("window.scrollTo(0, $originalY)")
+            // Do not suspend in finally: the Activity may be leaving while extraction is cancelled.
+            runCatching { webView.evaluateJavascript("window.scrollTo(0, $originalY)", null) }
         }
 
         return collected.toList()
