@@ -12,12 +12,12 @@ import androidx.core.view.MenuProvider
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
 import androidx.core.view.updatePadding
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.landwarderer.futon.extensions.ui.CreateExtensionActivity
 import io.github.landwarderer.futon.R
 import io.github.landwarderer.futon.core.ui.BaseActivity
+import io.github.landwarderer.futon.core.ui.ExternalCodeDisclosure
 import io.github.landwarderer.futon.core.util.ext.observe
 import io.github.landwarderer.futon.core.util.ext.observeEvent
 import io.github.landwarderer.futon.databinding.ActivityExtensionDownloaderBinding
@@ -38,7 +38,7 @@ class ExtensionDownloaderActivity : BaseActivity<ActivityExtensionDownloaderBind
         val adapter = ExtensionDownloaderAdapter(
             onAddRepoClick = { url -> viewModel.addRepo(url) },
             onDeleteRepoClick = { repo -> showDeleteRepoDialog(repo) },
-            onInstallClick = { item -> showExternalExtensionWarning { viewModel.installExtension(item.available) } },
+            onInstallClick = { item -> ExternalCodeDisclosure.showConsent(this) { viewModel.installExtension(item.available) } },
             onCancelClick = { viewModel.cancelDownload(it.available.pkgName) },
             onUninstallClick = { viewModel.uninstallExtension(it.available.pkgName) },
         )
@@ -85,15 +85,6 @@ class ExtensionDownloaderActivity : BaseActivity<ActivityExtensionDownloaderBind
         if (repoUrl.isNotBlank()) {
             viewModel.addRepo(repoUrl)
         }
-    }
-
-    private fun showExternalExtensionWarning(onContinue: () -> Unit) {
-        MaterialAlertDialogBuilder(this)
-            .setTitle(R.string.external_extension_warning_title)
-            .setMessage(R.string.external_extension_warning_message)
-            .setPositiveButton(R.string.external_extension_warning_continue) { _, _ -> onContinue() }
-            .setNegativeButton(android.R.string.cancel, null)
-            .show()
     }
 
     private fun showDeleteRepoDialog(repo: ExternalExtensionRepo) {
