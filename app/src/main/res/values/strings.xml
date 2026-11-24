@@ -612,7 +612,7 @@
     <string name="rating_adult">Adult</string>
     <string name="default_tab">Default tab</string>
     <string name="mark_as_completed">Mark as completed</string>
-    <string name="mark_as_completed_prompt">Mark selected manga as completely read?\n\nWarning: current reading progress will be lost.</string>
+    <string name="mark_as_completed_prompt">Mark selected manga as completely read? Warning: current reading progress will be lost.</string>
     <string name="category_hidden_done">This category was hidden from the main screen and is accessible through Menu → Manage categories</string>
     <string name="remaining_time_pattern" translatable="false">%1$s %2$s</string>
     <string name="volume_">Volume %d</string>
@@ -921,7 +921,7 @@
     <string name="collapse_long_description">Collapse long description</string>
     <string name="cover_background_transparency">Cover background transparency (%)</string>
     <string name="our_story_title">Our Story 🌙</string>
-    <string name="our_story_summary">Tsuki started as a personal mission — just wanting to read manga on an old Android 7 device that kept breaking every app we tried. What followed was a long road through SSL handshake errors, dead parser repos, and a graveyard of manga apps that kept getting taken down one by one. Eventually, teaming up with an AI named Claude (made by Anthropic), we started fixing, forking, and building something that would actually survive. No professional dev experience. No Android Studio knowledge. Just stubbornness, curiosity, and a lot of trial and error. This is Tsuki (月) — the app that refused to die.\n\nSpecial thanks to Arsveiled for new feature planning, design and coding contributions that brought this fork to life.</string>
+    <string name="our_story_summary">Tsuki started as a personal mission — just wanting to read manga on an old Android 7 device that kept breaking every app we tried. What followed was a long road through SSL handshake errors, dead parser repos, and a graveyard of manga apps that kept getting taken down one by one. Eventually, teaming up with an AI named Claude (made by Anthropic), we started fixing, forking, and building something that would actually survive. No professional dev experience. No Android Studio knowledge. Just stubbornness, curiosity, and a lot of trial and error. This is Tsuki (月) — the app that refused to die. Special thanks to Arsveiled for new feature planning, design and coding contributions that brought this fork to life.</string>
     <string name="creating_backup">Creating backup</string>
     <string name="share_backup">Share backup</string>
     <string name="reader_multitask">Open reader in a separate task</string>
@@ -1093,7 +1093,7 @@
     <string name="remove_parser_template_message">\"%1$s\" will be removed. You can re-import it later.</string>
     <string name="template_meta">v%1$s · %2$s</string>
     <string name="parser_template_what_title">What are parser templates?</string>
-    <string name="parser_template_what_body">Parser templates define the scraping rules for entire families of manga websites. One Madara template, for example, works on dozens of WordPress Madara-based sites.\n\nImport a .json template to add support for any compatible site without waiting for an app update.</string>
+    <string name="parser_template_what_body">Parser templates define the scraping rules for entire families of manga websites. One Madara template, for example, works on dozens of WordPress Madara-based sites. Import a .json template to add support for any compatible site without waiting for an app update.</string>
     <string name="parser_template_example_title">Valid template fields</string>
     <string name="parser_template_example">Required: name, version, type, mangaList, pageList\nOptional: mangaDetail, chapterList, genres</string>
 
@@ -1116,7 +1116,7 @@
     <string name="no_parsers_found">No parsers match your search</string>
     <string name="add_library_parser_title">Add "%s" parser</string>
     <string name="change_to_library_parser_title">Use "%s"?</string>
-    <string name="change_to_library_parser_body">This parser\'s default domain is %s.\n\nThe current source URL will stay the same — it will be used as an override domain if it differs from the parser\'s default.</string>
+    <string name="change_to_library_parser_body">This parser\'s default domain is %s. The current source URL will stay the same — it will be used as an override domain if it differs from the parser\'s default.</string>
     <string name="library_parser_default_domain">Default domain: %s</string>
     <string name="library_mirror_url_hint">URL (use default or enter mirror)</string>
     <string name="library_source_added">"%s" added as a source</string>
@@ -1354,7 +1354,7 @@
     <!-- Guide dialog -->
     <string name="ext_guide_title">JS Extension Guide</string>
     <string name="ext_guide_ok">Got it</string>
-    <string name="ext_guide_body">Your JavaScript parser runs inside QuickJS (not a browser). Kotlin fetches the HTML; your JS only needs to parse it. No DOM, no fetch — just strings, regex, and JSON.\n\nYou must export these 4 functions:\n\n1. getMangaListUrl(offset, query)\n   Returns a URL string for the browse or search page.\n   offset is 0, 20, 40… (page size * page index); query is a string or null.\n\n2. getMangaList(html, offset, query)\n   Receives the fetched HTML. Returns JSON:\n   {\"items\":[{\"title\":\"…\",\"url\":\"https://…\",\"cover\":\"https://…\"}]}\n\n3. getMangaDetails(html, url)\n   Receives the manga detail page HTML. Returns JSON:\n   {\"title\":\"…\",\"cover\":\"…\",\"status\":\"ongoing\",\"description\":\"…\",\"genres\":[\"Action\"],\"chapters\":[{\"url\":\"…\",\"title\":\"Ch.1\",\"number\":1,\"uploadDate\":0}]}\n\n4. getChapterPages(html, url)\n   Receives the chapter reader page HTML. Returns JSON:\n   {\"pages\":[{\"index\":0,\"url\":\"https://cdn.example.com/001.jpg\"}]}\n\nTips:\n- Use var/function, not const/let/arrow functions (QuickJS v2 compat).\n- Only ASCII in source code. No Unicode arrows or emoji.\n- Test each function from the Test Console toolbar button.\n- The Guide button shows the example_extension.js skeleton.\n- Common patterns: regex on HTML strings, JSON.parse for API responses.\n- atob() is available for base64 chapter image data.\n- encodeURIComponent() works for search queries.</string>
+    <string name="ext_guide_body">Your JavaScript parser runs inside QuickJS (not a browser). Kotlin fetches the HTML; your JS only needs to parse it. No DOM, no fetch — just strings, regex, and JSON. You must export these 4 functions: 1. getMangaListUrl(offset, query)\n   Returns a URL string for the browse or search page.\n   offset is 0, 20, 40… (page size * page index); query is a string or null. 2. getMangaList(html, offset, query)\n   Receives the fetched HTML. Returns JSON:\n   {\"items\":[{\"title\":\"…\",\"url\":\"https://…\",\"cover\":\"https://…\"}]} 3. getMangaDetails(html, url)\n   Receives the manga detail page HTML. Returns JSON:\n   {\"title\":\"…\",\"cover\":\"…\",\"status\":\"ongoing\",\"description\":\"…\",\"genres\":[\"Action\"],\"chapters\":[{\"url\":\"…\",\"title\":\"Ch.1\",\"number\":1,\"uploadDate\":0}]} 4. getChapterPages(html, url)\n   Receives the chapter reader page HTML. Returns JSON:\n   {\"pages\":[{\"index\":0,\"url\":\"https://cdn.example.com/001.jpg\"}]} Tips:\n- Use var/function, not const/let/arrow functions (QuickJS v2 compat).\n- Only ASCII in source code. No Unicode arrows or emoji.\n- Test each function from the Test Console toolbar button.\n- The Guide button shows the example_extension.js skeleton.\n- Common patterns: regex on HTML strings, JSON.parse for API responses.\n- atob() is available for base64 chapter image data.\n- encodeURIComponent() works for search queries.</string>
   
       <!-- Universal Source Wizard -->
       <string name="universal_source_title">Universal Source (Beta)</string>
@@ -1447,7 +1447,7 @@
 
     <!-- Crash reporting consent dialog (first-launch opt-in) -->
     <string name="crash_consent_title">Help Improve Tsuki</string>
-    <string name="crash_consent_message">Would you like to send anonymous crash reports? This helps us fix bugs faster. No personal data or reading history is ever collected.\n\nChanges take effect after restarting the app.</string>
+    <string name="crash_consent_message">Would you like to send anonymous crash reports? This helps us fix bugs faster. No personal data or reading history is ever collected. Changes take effect after restarting the app.</string>
     <string name="crash_consent_allow">Allow</string>
     <string name="crash_consent_decline">No Thanks</string>
     <!-- Privacy settings screen -->
@@ -1563,9 +1563,9 @@
     <string name="previous_chapter">Previous chapter</string>
     <string name="external_code_consent_title">Install external code?</string>
     <string name="external_code_consent_message">This add-on contains executable code supplied by a third party. It has not been reviewed by Tsuki. It may run with the access and permissions available to Tsuki, including access to data exposed through the extension interface. Continue only if you trust its source.</string>
-    <string name="external_code_consent_fdroid_message">This add-on contains executable code supplied outside the F-Droid build. F-Droid has not reviewed or verified it. If you continue, you are explicitly choosing to bypass F-Droid&apos;s checks for this add-on. It may run with the access and permissions available to Tsuki. Install only if you trust its source.</string>
+    <string name="external_code_consent_fdroid_message">This add-on contains executable code supplied outside the F-Droid build. F-Droid has not reviewed or verified it. If you continue, you are explicitly choosing to bypass F-Droid\'s checks for this add-on. It may run with the access and permissions available to Tsuki. Install only if you trust its source.</string>
     <string name="external_code_consent_continue">I understand, continue</string>
     <string name="tsuki_external_code_info_title">About Tsuki and external code</string>
     <string name="tsuki_external_code_info_summary">What Tsuki does and how extensions and plugins work</string>
-    <string name="tsuki_external_code_info_message">Tsuki is an open-source reader for manga, manhwa, manhua and novels. It includes a large catalogue of built-in sources, online and offline reading, reader modes and library tools.\n\nOptional add-ons can add sources or features. Mihon APK extensions, JavaScript/Dart extensions, and JAR plugins may be downloaded from independent third-party repositories or imported by you. They are separate from Tsuki&apos;s built-in sources and are not reviewed by F-Droid. Script extensions run through Tsuki&apos;s extension runtime; JAR plugins are loaded into the app process. Depending on the integration, external code may use network access and the app capabilities exposed to it.\n\nBefore each external-code installation or activation, Tsuki asks for your consent. On the F-Droid build, continuing means you choose to bypass F-Droid&apos;s checks for that add-on. Declining keeps the add-on from being installed or activated. Built-in sources and bundled extensions do not require this extra approval.</string>
+    <string name="tsuki_external_code_info_message">Tsuki is an open-source reader for manga, manhwa, manhua and novels. It includes a large catalogue of built-in sources, online and offline reading, reader modes and library tools. Optional add-ons can add sources or features. Mihon APK extensions, JavaScript/Dart extensions, and JAR plugins may be downloaded from independent third-party repositories or imported by you. They are separate from Tsuki\'s built-in sources and are not reviewed by F-Droid. Script extensions run through Tsuki\'s extension runtime; JAR plugins are loaded into the app process. Depending on the integration, external code may use network access and the app capabilities exposed to it. Before each external-code installation or activation, Tsuki asks for your consent. On the F-Droid build, continuing means you choose to bypass F-Droid\'s checks for that add-on. Declining keeps the add-on from being installed or activated. Built-in sources and bundled extensions do not require this extra approval.</string>
 </resources>
