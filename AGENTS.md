@@ -3375,3 +3375,21 @@ usable as a browser; native-reader extraction is an optional enhancement.
 - Captured cookies are held only in process memory alongside temporary page
   entries and are not persisted by the browser page bridge.
 - Request-context entries expire after ten minutes.
+
+---
+
+## Browser progressive extraction follow-up (November 2026)
+
+### Scroll-aware chapter collection
+
+The Browser Source native-reader handoff now performs a progressive DOM scan instead of a single snapshot:
+
+- Saves the user's current scroll position, then scans from the top so earlier pages are not skipped.
+- Collects candidate image URLs at each viewport.
+- Scrolls in overlapping increments (75% of viewport height) to trigger common scroll- and intersection-observer-based lazy loaders.
+- Waits briefly after each movement before collecting the next viewport.
+- Deduplicates URLs while preserving the order in which they first appear.
+- Performs a final collection at the bottom and restores the original scroll position.
+- Caps the scan at 40 scroll steps to prevent an unexpectedly long or infinite page from keeping extraction busy indefinitely.
+
+This remains heuristic. Sites that require tapping a "load more" control, selecting a chapter variant, or executing custom canvas/script rendering may still need site-specific support. The scan also temporarily moves the WebView while extraction runs; the original position is restored afterward.
