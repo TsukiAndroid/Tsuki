@@ -63,9 +63,11 @@ class ManagePluginsFragment : BaseFragment<FragmentManagePluginsBinding>() {
         adapter = PluginsAdapter(
             onToggle  = { plugin, enabled ->
                 if (enabled) {
-                    ExternalCodeDisclosure.showConsent(requireContext()) {
-                        viewModel.setEnabled(plugin.id, true)
-                    }
+                    ExternalCodeDisclosure.showConsent(
+                        context = requireContext(),
+                        onContinue = { viewModel.setEnabled(plugin.id, true) },
+                        onCancel = { viewModel.setEnabled(plugin.id, false) },
+                    )
                 } else {
                     viewModel.setEnabled(plugin.id, false)
                 }
