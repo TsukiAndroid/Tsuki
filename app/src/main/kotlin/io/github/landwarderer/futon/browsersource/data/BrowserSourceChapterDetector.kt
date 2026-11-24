@@ -1,84 +1,125 @@
 package io.github.landwarderer.futon.browsersource.data
 
 import android.webkit.WebResourceRequest
+import org.json.JSONArray
+import org.json.JSONObject
+import java.net.URI
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicInteger
 
 /**
- * Monitors resource requests from a WebView to detect when the user has
- * navigated to a chapter reader page, and extracts image URLs for the native
- * manga reader.
- *
- * Detection strategy (in priority order):
- *  1. URL pattern matching — URL path contains chapter keywords
- *  2. Image-count heuristic — 3+ large images loaded from the same domain
- *  3. DOM extraction via injected JavaScript
+ * Detects likely chapter pages and extracts candidate manga pages from the
+ * rendered DOM. This is deliberately heuristic: sites can opt into custom
+ * extraction later without making generic browser reading depend on parsers.
  */
 object BrowserSourceChapterDetector {
 
-    // ── JS that collects all candidate manga-page images from the DOM ─────────
-
+    /**
+     * Extracts image URLs in document order. It understands common lazy-load
+     * attributes, srcset/picture sources and reader-area CSS backgrounds.
+     * It intentionally ignores blob/data URLs because the native reader's
+     * HTTP loader cannot fetch those URLs outside the WebView process.
+     */
     const val COLLECT_IMAGES_JS = """
-        (function(){
-            var results = [];
-            var imgs = document.querySelectorAll('img');
-            imgs.forEach(function(img){
-                var src = img.getAttribute('data-src')
-                    || img.getAttribute('data-lazy-src')
-                    || img.getAttribute('data-original')
-                    || img.getAttribute('src')
-                    || '';
-                if (!src || !src.startsWith('http')) return;
-                if (!isMangaPage(src)) return;
-                if (isAdOrLogo(src, img)) return;
-                results.push(src);
+        (function() {
+            var found = [];
+            var seen = Object.create(null);
+            var imageAttrs = [
+                'data-src', 'data-lazy-src', 'data-original', 'data-url',
+                'data-cfsrc', 'data-echo', 'data-image', 'data-img',
+                'data-srcset', 'srcset', 'src'
+            ];
+            var excluded = /(^|[\/_-])(logo|favicon|icon|avatar|banner|sprite|button|emoji|ad)([\/_.-]|$)/i;
+            var readerRoots = document.querySelectorAll(
+                '#reader, .reader, .reading-content, .chapter-content, .chapter-images, ' +
+                '.pages, .viewer, .comic, .wp-manga-chapter-img, [data-reader]'
+            );
+
+            function absolute(value) {
+                if (!value) return '';
+                value = String(value).trim();
+                if (!value || value.indexOf('data:') === 0 || value.indexOf('blob:') === 0 ||
+                    value.indexOf('javascript:') === 0) return '';
+                try {
+                    var url = new URL(value, document.baseURI);
+                    return (url.protocol === 'http:' || url.protocol === 'https:') ? url.href : '';
+                } catch (_) { return ''; }
+            }
+
+            function add(value, element) {
+                var url = absolute(value);
+                if (!url || seen[url] || excluded.test(url.toLowerCase())) return;
+                if (element) {
+                    var w = element.naturalWidth || element.width || 0;
+                    var h = element.naturalHeight || element.height || 0;
+                    if (w > 0 && h > 0 && (w < 90 || h < 90)) return;
+                }
+                seen[url] = true;
+                found.push(url);
+            }
+
+            function addSrcset(value, element) {
+                if (!value) return;
+                value.split(',').forEach(function(candidate) {
+                    var url = candidate.trim().split(/\s+/)[0];
+                    add(url, element);
+                });
+            }
+
+            document.querySelectorAll('img').forEach(function(img) {
+                imageAttrs.forEach(function(attr) {
+                    var value = img.getAttribute(attr);
+                    if (!value) return;
+                    if (attr.indexOf('srcset') !== -1) addSrcset(value, img);
+                    else add(value, img);
+                });
+                if (img.currentSrc) add(img.currentSrc, img);
             });
-            function isMangaPage(url) {
-                return /\.(jpg|jpeg|png|webp|gif)(\?|${'$'})/i.test(url);
-            }
-            function isAdOrLogo(url, img) {
-                var lower = url.toLowerCase();
-                if (/logo|favicon|icon|banner|ad[_\-]|avatar|sprite|button/.test(lower)) return true;
-                var w = img.naturalWidth || img.width || 0;
-                var h = img.naturalHeight || img.height || 0;
-                if (w > 0 && h > 0 && (w < 100 || h < 100)) return true;
-                return false;
-            }
-            return JSON.stringify(results);
+
+            document.querySelectorAll('picture source').forEach(function(source) {
+                addSrcset(source.getAttribute('data-srcset') || source.getAttribute('srcset'), null);
+            });
+
+            // Background images are restricted to likely reader containers to
+            // avoid collecting site-wide decorative images and advertisements.
+            readerRoots.forEach(function(root) {
+                root.querySelectorAll('*').forEach(function(element) {
+                    var background = '';
+                    try { background = getComputedStyle(element).backgroundImage || ''; } catch (_) {}
+                    var matches = background.match(/url\((['"]?)(.*?)\1\)/g) || [];
+                    matches.forEach(function(match) {
+                        var value = match.replace(/^url\((['"]?)/, '').replace(/(['"]?)\)$/, '');
+                        add(value, element);
+                    });
+                });
+            });
+
+            return JSON.stringify(found);
         })();
     """
 
-    /** JS to get the page's og:title and og:image meta tags. */
     const val GET_PAGE_META_JS = """
         (function(){
             var og = {};
-            og.title = document.querySelector('meta[property="og:title"]')
-                        ?.getAttribute('content')
-                        || document.title
-                        || '';
-            og.image = document.querySelector('meta[property="og:image"]')
-                        ?.getAttribute('content')
-                        || '';
-            og.description = document.querySelector('meta[property="og:description"]')
-                        ?.getAttribute('content')
-                        || '';
+            og.title = document.querySelector('meta[property="og:title"]')?.getAttribute('content')
+                        || document.title || '';
+            og.image = document.querySelector('meta[property="og:image"]')?.getAttribute('content') || '';
+            og.description = document.querySelector('meta[property="og:description"]')?.getAttribute('content') || '';
             return JSON.stringify(og);
         })();
     """
 
-    /** JS to inject CSS that marks read chapter links with a visual indicator. */
     fun buildMarkReadJs(readUrls: Set<String>): String {
-        val urlsJson = readUrls.joinToString(",") { "\"${it.replace("\"", "\\\"")}\"" }
+        val urlsJson = JSONArray(readUrls.toList()).toString()
         return """
             (function(){
-                var readUrls = [$urlsJson];
+                var readUrls = $urlsJson;
                 var style = document.createElement('style');
                 style.textContent = 'a.tsuki-read { opacity: 0.5; } ' +
                     'a.tsuki-read::after { content: " ✓"; color: #4caf50; font-size: 0.8em; }';
-                document.head.appendChild(style);
+                (document.head || document.documentElement).appendChild(style);
                 document.querySelectorAll('a[href]').forEach(function(a){
                     var href = a.href;
-                    if(readUrls.some(function(u){ return href === u || href.endsWith(u); })){
+                    if(readUrls.some(function(u){ return href === u || href.endsWith(u); })) {
                         a.classList.add('tsuki-read');
                     }
                 });
@@ -86,36 +127,27 @@ object BrowserSourceChapterDetector {
         """.trimIndent()
     }
 
-    // ── Image-count heuristic state ───────────────────────────────────────────
-
-    /** Counts large image loads per URL session (reset on each page navigation). */
-    private val imageCountPerPage = ConcurrentHashMap<String, AtomicInteger>()
+    private val imageCountPerPage = ConcurrentHashMap<String, MutableSet<String>>()
 
     fun resetForPage(pageUrl: String) {
         imageCountPerPage.clear()
-        imageCountPerPage[pageUrl] = AtomicInteger(0)
+        imageCountPerPage[pageUrl] = ConcurrentHashMap.newKeySet()
     }
 
-    /**
-     * Call from [shouldInterceptRequest]. Returns true when the heuristic
-     * detects a chapter page based on image-count.
-     */
+    /** Counts distinct image requests, avoiding duplicate requests inflating detection. */
     fun onResourceRequest(pageUrl: String, request: WebResourceRequest): Boolean {
-        val url = request.url.toString().lowercase()
-        if (!url.matches(Regex(".*\\.(jpg|jpeg|png|webp|gif)(\\?.*)?$"))) return false
-        // Filter out icons/logos by URL pattern
-        if (url.contains("logo") || url.contains("icon") || url.contains("favicon") ||
-            url.contains("banner") || url.contains("avatar")
-        ) return false
+        val uri = request.url
+        val url = uri.toString().lowercase()
+        if (uri.scheme != "https" && uri.scheme != "http") return false
+        val path = uri.path.orEmpty().lowercase()
+        if (!looksLikeImagePath(path)) return false
+        if (excludedAssetPattern.containsMatchIn(path)) return false
 
-        val counter = imageCountPerPage.getOrPut(pageUrl) { AtomicInteger(0) }
-        val count = counter.incrementAndGet()
-        return count >= CHAPTER_IMAGE_THRESHOLD
+        val urls = imageCountPerPage.getOrPut(pageUrl) { ConcurrentHashMap.newKeySet() }
+        urls.add(url)
+        return urls.size >= CHAPTER_IMAGE_THRESHOLD
     }
 
-    // ── URL-pattern detection ─────────────────────────────────────────────────
-
-    /** Returns true if [url] looks like a manga chapter reader page. */
     fun isChapterUrl(url: String): Boolean {
         val lower = url.lowercase()
         return lower.contains("/chapter/") || lower.contains("/ch/") ||
@@ -125,7 +157,6 @@ object BrowserSourceChapterDetector {
             Regex("""/(c|ch|chapter|chap|episode|ep)[_\-]?\d+""").containsMatchIn(lower)
     }
 
-    /** Returns true if [url] looks like a manga detail page. */
     fun isDetailUrl(url: String): Boolean {
         val lower = url.lowercase()
         return (lower.contains("/manga/") || lower.contains("/comic/") ||
@@ -134,35 +165,46 @@ object BrowserSourceChapterDetector {
             !isChapterUrl(lower)
     }
 
-    // ── URL parsing ───────────────────────────────────────────────────────────
-
     fun parseImageUrls(jsonArray: String?): List<String> {
         if (jsonArray.isNullOrBlank() || jsonArray == "null") return emptyList()
-        return try {
-            val cleaned = jsonArray.trim().removePrefix("\"").removeSuffix("\"")
-                .replace("\\\"", "\"")
-            val arr = org.json.JSONArray(cleaned)
-            (0 until arr.length()).map { arr.getString(it) }.distinct()
-        } catch (_: Exception) {
-            emptyList()
-        }
+        return runCatching {
+            val value = org.json.JSONTokener(jsonArray).nextValue()
+            val array = when (value) {
+                is JSONArray -> value
+                is String -> JSONArray(value)
+                else -> return emptyList()
+            }
+            val seen = LinkedHashSet<String>()
+            for (i in 0 until array.length()) {
+                val raw = array.optString(i).trim()
+                val uri = runCatching { URI(raw) }.getOrNull() ?: continue
+                if ((uri.scheme == "http" || uri.scheme == "https") && !uri.host.isNullOrBlank()) {
+                    seen.add(uri.toASCIIString())
+                }
+            }
+            seen.toList()
+        }.getOrDefault(emptyList())
     }
 
     fun parseMetaJson(json: String?): Triple<String, String, String> {
         if (json.isNullOrBlank() || json == "null") return Triple("", "", "")
-        return try {
-            val cleaned = json.trim().removePrefix("\"").removeSuffix("\"")
-                .replace("\\\"", "\"")
-            val obj = org.json.JSONObject(cleaned)
+        return runCatching {
+            val value = org.json.JSONTokener(json).nextValue()
+            val obj = if (value is JSONObject) value else JSONObject(value as? String ?: "{}")
             Triple(
                 obj.optString("title", ""),
                 obj.optString("image", ""),
                 obj.optString("description", ""),
             )
-        } catch (_: Exception) {
-            Triple("", "", "")
-        }
+        }.getOrDefault(Triple("", "", ""))
     }
 
+    private fun looksLikeImagePath(path: String): Boolean =
+        imageExtensionPattern.containsMatchIn(path) ||
+            path.contains("/image/") || path.contains("/images/") ||
+            path.contains("/chapter-page/") || path.contains("/uploads/pages/")
+
+    private val imageExtensionPattern = Regex("""\.(jpg|jpeg|png|webp|gif|avif|bmp)$""", RegexOption.IGNORE_CASE)
+    private val excludedAssetPattern = Regex("""(logo|favicon|icon|banner|avatar|sprite|emoji|advert)""", RegexOption.IGNORE_CASE)
     private const val CHAPTER_IMAGE_THRESHOLD = 3
 }

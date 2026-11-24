@@ -3,7 +3,6 @@ package io.github.landwarderer.futon.core.network.webview.adblock
 import androidx.annotation.CheckResult
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
-import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Very simple implementation of adblock list parser
@@ -15,9 +14,8 @@ import java.util.concurrent.ConcurrentHashMap
  * [allowDomains] `HashSet`s for O(1) lookup. Only the minority of rules that need
  * per-request evaluation (path rules, exact-url rules, or domain rules with
  * modifiers such as `$third-party`) fall back to the linear [blockRules] /
- * [allowRules] scan. [registrableDomain] memoizes `HttpUrl.topPrivateDomain()`
- * (a public-suffix-list walk) per host, since the same handful of hosts repeat
- * hundreds of times within a single page load.
+ * [allowRules] scan. Plain domain checks walk the host's suffixes, so rules
+ * targeting a subdomain are not lost by registrable-domain normalisation.
  */
 class RulesList {
 
@@ -26,23 +24,18 @@ private val allowDomains = HashSet<String>()
 private val blockRules = ArrayList<Rule>()
 private val allowRules = ArrayList<Rule>()
 
-// host -> registrable domain. Bounded by the number of distinct hosts seen
-// during this WebView session, never cleared for the lifetime of the rule set.
-private val domainCache = ConcurrentHashMap<String, String>()
-
 operator fun get(url: HttpUrl, baseUrl: HttpUrl?): Rule? {
-val domain = registrableDomain(url)
-
-// Two-level check: exact registrable domain first (handles the vast
-// majority of blocklist entries in O(1)), then fall back to the slower
-// per-rule scan for path/exact-url/modifier rules.
-val rule: Rule = if (domain in blockDomains) {
-Rule.Domain(domain)
+// Plain domain rules may target a subdomain (for example ||ads.site.com^),
+// so compare every host suffix rather than only the registrable domain.
+ // The number of suffixes is bounded by the host's label count.
+val domainBlocked = matchesDomain(url.host, blockDomains)
+val rule: Rule = if (domainBlocked) {
+Rule.Domain(url.host)
 } else {
 blockRules.find { x -> x(url, baseUrl) } ?: return null
 }
 
-val isAllowed = domain in allowDomains || allowRules.any { x -> x(url, baseUrl) }
+val isAllowed = matchesDomain(url.host, allowDomains) || allowRules.any { x -> x(url, baseUrl) }
 return rule.takeUnless { isAllowed }
 }
 
@@ -56,9 +49,16 @@ blockRules.trimToSize()
 allowRules.trimToSize()
 }
 
-/** Same domain string appears in hundreds of requests per page load — cache it. */
-private fun registrableDomain(url: HttpUrl): String =
-domainCache.getOrPut(url.host) { url.topPrivateDomain() ?: url.host }
+/** Match a rule against the host itself or any parent-domain suffix. */
+private fun matchesDomain(host: String, domains: Set<String>): Boolean {
+var candidate = host
+while (true) {
+if (candidate in domains) return true
+val dot = candidate.indexOf('.')
+if (dot < 0) return false
+candidate = candidate.substring(dot + 1)
+}
+}
 
 private fun String.addImpl(isWhitelist: Boolean, modifiers: String?) {
 when {

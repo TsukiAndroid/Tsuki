@@ -532,7 +532,9 @@ class BrowserSourceActivity : AppCompatActivity() {
     }
 
     private fun maybeShowOpenReaderFab() {
-        if (webViewSettings.isOpenInReaderPromptEnabled) {
+        // Direct-URL sessions do not have a persisted CustomMangaSource ID,
+        // so the reader cannot reconstruct their source after navigation.
+        if (sourceId != -1L && webViewSettings.isOpenInReaderPromptEnabled) {
             binding.fabOpenReader.show()
         }
     }
@@ -557,20 +559,42 @@ class BrowserSourceActivity : AppCompatActivity() {
             // Look up the CustomSource so we can pass the correct MangaSource
             val customSource = customSourcesRepository.findById(sourceId)
                 ?.let { CustomMangaSource(it) }
-                ?: return@evaluateJavascript
+            if (customSource == null) {
+                Toast.makeText(
+                    this,
+                    "Save this website as a Browser Source to open chapters in Tsuki Reader.",
+                    Toast.LENGTH_LONG,
+                ).show()
+                return@evaluateJavascript
+            }
+
+            // Capture request context per image URL. Some CDNs require cookies
+            // scoped to their own host, not just the manga website's host.
+            val cookieManager = CookieManager.getInstance()
+            val userAgent = binding.webView.settings.userAgentString
+            val headersByPageId = LinkedHashMap<Long, Map<String, String>>()
 
             // Convert image URLs → MangaPage objects
             val pages: List<MangaPage> = imageUrls.mapIndexed { i, url ->
+                val pageId = chapterId * 1000L + i
+                val headers = linkedMapOf(
+                    "Referer" to chapterUrl,
+                    "User-Agent" to userAgent,
+                )
+                cookieManager.getCookie(url)?.takeIf { it.isNotBlank() }?.let {
+                    headers["Cookie"] = it
+                }
+                headersByPageId[pageId] = headers
                 MangaPage(
-                    id      = chapterId * 1000L + i,
+                    id      = pageId,
                     url     = url,
                     preview = null,
                     source  = customSource,
                 )
             }
 
-            // Stash pages so CustomMangaRepository.getPages() can serve them
-            BrowserSourcePageStore.put(chapterId, pages)
+            // Stash pages and their browser-session headers for PageLoader.
+            BrowserSourcePageStore.put(chapterId, pages, headersByPageId)
 
             // Build synthetic MangaChapter
             val chapter = MangaChapter(
