@@ -24,7 +24,7 @@ import io.github.landwarderer.futon.extensions.ui.ExtensionEditorActivity
  * separate from the existing Mihon extension downloader item_extension.xml.
  */
 class ExtensionsAdapter(
-    private val onEnableToggle: (id: String, enabled: Boolean) -> Unit,
+    private val onEnableToggle: (extension: Extension, enabled: Boolean) -> Unit,
     private val onDelete: (id: String) -> Unit,
     private val onInstall: (available: AvailableExtension) -> Unit,
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
@@ -111,7 +111,7 @@ class ExtensionsAdapter(
             toggle?.setOnCheckedChangeListener(null)
             toggle?.isChecked = ext.isEnabled
             toggle?.setOnCheckedChangeListener { _: CompoundButton, checked: Boolean ->
-                onEnableToggle(ext.id, checked)
+                onEnableToggle(ext, checked)
             }
 
             val isEditable = ext.type == ExtensionType.JS || ext.type == ExtensionType.DART
