@@ -673,11 +673,21 @@ class BrowserSourceActivity : AppCompatActivity() {
         // MangaFire already requests the full ordered page list through its API.
         // Reuse the tokenized request URL observed by this WebView instead of
         // scraping only the currently-rendered/lazy-loaded image elements.
-        val mangaFireResult = evaluateJavascriptAwait(
-            BrowserSourceChapterDetector.COLLECT_MANGAFIRE_API_PAGES_JS
-        )
-        val mangaFirePages = BrowserSourceChapterDetector.parseImageUrls(mangaFireResult)
-        if (mangaFirePages.isNotEmpty()) return mangaFirePages
+        evaluateJavascriptAwait(BrowserSourceChapterDetector.COLLECT_MANGAFIRE_API_PAGES_JS)
+        repeat(MANGAFIRE_API_POLL_ATTEMPTS) {
+            delay(MANGAFIRE_API_POLL_DELAY_MS)
+            val rawResult = evaluateJavascriptAwait(
+                "(function(){return window.__tsukiMangaFireApiPages || '__pending__';})()"
+            )
+            val result = unescapeJsString(rawResult)
+            if (result != "__pending__") {
+                val mangaFirePages = BrowserSourceChapterDetector.parseImageUrls(
+                    org.json.JSONArray(result).toString()
+                )
+                if (mangaFirePages.isNotEmpty()) return mangaFirePages
+                break
+            }
+        }
 
         val collected = LinkedHashSet<String>()
 
@@ -746,6 +756,8 @@ class BrowserSourceActivity : AppCompatActivity() {
 
     companion object {
         private const val EXTRACTION_SETTLE_DELAY_MS = 500L
+        private const val MANGAFIRE_API_POLL_ATTEMPTS = 20
+        private const val MANGAFIRE_API_POLL_DELAY_MS = 150L
 
         const val KEY_SOURCE_ID   = "browser_source_id"
         const val KEY_SOURCE_NAME = "browser_source_name"
