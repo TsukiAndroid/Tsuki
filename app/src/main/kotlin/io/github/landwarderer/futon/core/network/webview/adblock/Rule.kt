@@ -41,9 +41,13 @@ sealed interface Rule {
             } else if (includedTypes.isNotEmpty()) return false
 
             if (baseUrl != null) {
-                val isThirdParty =
-                    (url.topPrivateDomain() ?: url.host) != (baseUrl.topPrivateDomain() ?: baseUrl.host)
-                if (thirdParty != null && isThirdParty != thirdParty) return false
+                if (thirdParty != null) {
+                    // PublicSuffixDatabase may be unavailable in local JVM tests or a damaged
+                    // runtime. Fall back to host comparison instead of failing the request.
+                    val requestSite = runCatching { url.topPrivateDomain() }.getOrNull() ?: url.host
+                    val pageSite = runCatching { baseUrl.topPrivateDomain() }.getOrNull() ?: baseUrl.host
+                    if ((requestSite != pageSite) != thirdParty) return false
+                }
                 if (domains.isNotEmpty() && domains.none { baseUrl.host == it || baseUrl.host.endsWith(".$it") }) return false
                 if (domainsNot.any { baseUrl.host == it || baseUrl.host.endsWith(".$it") }) return false
             } else if (domains.isNotEmpty() || domainsNot.isNotEmpty()) return false
