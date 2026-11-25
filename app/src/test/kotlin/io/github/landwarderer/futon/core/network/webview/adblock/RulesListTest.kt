@@ -43,7 +43,7 @@ class RulesListTest {
 
     @Test
     fun unsupportedModifiersDoNotBecomeBroadBlockingRules() {
-        val rules = RulesList().apply { add("||ads.example.com^$redirect=noopjs") }
+        val rules = RulesList().apply { add("||ads.example.com^\$redirect=noopjs") }
         assertNull(
             rules[
                 "https://ads.example.com/creative.js".toHttpUrl(),
