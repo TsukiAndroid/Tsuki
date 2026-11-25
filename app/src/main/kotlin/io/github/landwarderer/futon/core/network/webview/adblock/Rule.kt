@@ -5,6 +5,10 @@ import okhttp3.HttpUrl
 sealed interface Rule {
     operator fun invoke(url: HttpUrl, baseUrl: HttpUrl?, resourceType: String? = null): Boolean
 
+    data object Never : Rule {
+        override fun invoke(url: HttpUrl, baseUrl: HttpUrl?, resourceType: String?): Boolean = false
+    }
+
     data class Domain(private val domain: String) : Rule {
         override fun invoke(url: HttpUrl, baseUrl: HttpUrl?, resourceType: String?): Boolean =
             url.host == domain || url.host.endsWith(".$domain")
