@@ -42,6 +42,20 @@ class RulesListTest {
     }
 
     @Test
+    fun cosmeticRulesRespectDomainAndExceptionScopes() {
+        val rules = RulesList().apply {
+            add("reader.example.org##.ad-banner")
+            add("reader.example.org##.sponsored")
+            add("reader.example.org#@#.ad-banner")
+            add("other.example.org##.other-ad")
+        }
+        val css = rules.cosmeticCss("reader.example.org")
+        org.junit.Assert.assertFalse(css.contains(".ad-banner"))
+        org.junit.Assert.assertTrue(css.contains(".sponsored"))
+        org.junit.Assert.assertFalse(css.contains(".other-ad"))
+    }
+
+    @Test
     fun respectsDomainScopeOnException() {
         val rules = RulesList().apply {
             add("||cdn.example.com^")
