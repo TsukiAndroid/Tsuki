@@ -26,7 +26,7 @@ class RulesListTest {
 
     @Test
     fun respectsResourceTypeModifier() {
-        val rules = RulesList().apply { add("||ads.example.com^$script") }
+        val rules = RulesList().apply { add("||ads.example.com^\$script") }
         val url = "https://ads.example.com/creative.js".toHttpUrl()
         val page = "https://reader.example.org".toHttpUrl()
         assertNotNull(rules[url, page, "script"])
@@ -35,7 +35,7 @@ class RulesListTest {
 
     @Test
     fun respectsThirdPartyModifier() {
-        val rules = RulesList().apply { add("||tracker.example.net^$third-party") }
+        val rules = RulesList().apply { add("||tracker.example.net^\$third-party") }
         val url = "https://tracker.example.net/pixel".toHttpUrl()
         assertNotNull(rules[url, "https://reader.example.org".toHttpUrl()])
         assertNull(rules[url, "https://tracker.example.net/article".toHttpUrl()])
@@ -45,7 +45,7 @@ class RulesListTest {
     fun respectsDomainScopeOnException() {
         val rules = RulesList().apply {
             add("||cdn.example.com^")
-            add("@@||cdn.example.com^$domain=reader.example.org")
+            add("@@||cdn.example.com^\$domain=reader.example.org")
         }
         val url = "https://cdn.example.com/image.jpg".toHttpUrl()
         assertNull(rules[url, "https://reader.example.org".toHttpUrl()])
