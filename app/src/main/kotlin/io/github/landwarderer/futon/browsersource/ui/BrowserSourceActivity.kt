@@ -227,6 +227,7 @@ class BrowserSourceActivity : AppCompatActivity() {
             val newState = !webViewSettings.isAdBlockEnabled
             webViewSettings.isAdBlockEnabled = newState
             updateAdblockIcon()
+            injectCosmeticFilters(binding.webView, binding.webView.url.orEmpty())
             val msgRes = if (newState) io.github.landwarderer.futon.R.string.webview_adblock_toggled_on
                          else io.github.landwarderer.futon.R.string.webview_adblock_toggled_off
             Snackbar.make(binding.webView, msgRes, Snackbar.LENGTH_SHORT).show()
@@ -281,6 +282,7 @@ class BrowserSourceActivity : AppCompatActivity() {
             val newState = !webViewSettings.isAdBlockEnabled
             webViewSettings.isAdBlockEnabled = newState
             updateAdblockIcon()
+            injectCosmeticFilters(binding.webView, binding.webView.url.orEmpty())
             val msgRes = if (newState) R.string.webview_adblock_toggled_on
                          else R.string.webview_adblock_toggled_off
             Snackbar.make(binding.webView, msgRes, Snackbar.LENGTH_SHORT).show()
@@ -480,7 +482,13 @@ class BrowserSourceActivity : AppCompatActivity() {
 
     /** Apply supported EasyList/EasyPrivacy cosmetic rules without blocking page scripts. */
     private fun injectCosmeticFilters(view: WebView, pageUrl: String) {
-        if (!webViewSettings.isAdBlockEnabled) return
+        if (!webViewSettings.isAdBlockEnabled) {
+            view.evaluateJavascript(
+                "document.getElementById('tsuki-adblock-cosmetic')?.remove();",
+                null,
+            )
+            return
+        }
         lifecycleScope.launch(Dispatchers.IO) {
             val css = adBlock.cosmeticCss(pageUrl)
             if (css.isBlank()) return@launch
