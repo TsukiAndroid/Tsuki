@@ -323,7 +323,7 @@ class BrowserSourceActivity : AppCompatActivity() {
         binding.btnAdblock.imageAlpha = if (enabled) 255 else 150
         val tint = MaterialColors.getColor(
             binding.btnAdblock,
-            if (enabled) com.google.android.material.R.attr.colorPrimary
+            if (enabled) com.google.android.material.R.attr.colorOnSurface
             else com.google.android.material.R.attr.colorOnSurfaceVariant,
         )
         binding.btnAdblock.imageTintList = android.content.res.ColorStateList.valueOf(tint)
