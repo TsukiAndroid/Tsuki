@@ -67,17 +67,15 @@ import javax.inject.Inject
 import kotlin.coroutines.resume
 
 /**
- * Full in-app browser for BROWSER_SOURCE custom sources.
+ * Website-first browser and reading surface for BROWSER_SOURCE custom sources.
  *
  * Features:
- *  - URL bar with back / forward / refresh navigation
- *  - Ad blocker integration (reuses [AdBlock] singleton)
- *  - Chapter detection → "📖 Open in Tsuki Reader" FAB
- *  - Pages extracted from WebView → stored in [BrowserSourcePageStore] →
- *    [CustomMangaRepository] serves them to [ReaderActivity] on demand
- *  - Reading history tracked via [BrowserSourceHistoryTracker]
- *  - Last-visited URL and scroll position persisted via [BrowserSourceRepository]
- *  - Cookie persistence is automatic via Android's [CookieManager]
+ *  - Compact site-identity/search field with back, forward, and refresh navigation
+ *  - Direct reading in the website's own WebView page
+ *  - EasyList/EasyPrivacy network filtering and supported cosmetic filters
+ *  - Optional AniList and MyAnimeList linking with chapter-progress synchronization
+ *  - Reading history and last-visited URL persistence
+ *  - Persistent website cookies through Android's CookieManager
  */
 @AndroidEntryPoint
 class BrowserSourceActivity : AppCompatActivity() {
