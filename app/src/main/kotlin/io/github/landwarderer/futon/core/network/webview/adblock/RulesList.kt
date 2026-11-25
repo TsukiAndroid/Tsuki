@@ -4,126 +4,181 @@ import androidx.annotation.CheckResult
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
-/**
- * Very simple implementation of adblock list parser
- * Not all features are supported
- *
- * Performance notes (see AGENTS.md "WebView performance" session):
- * EasyList is ~90k+ lines, and the overwhelming majority are plain
- * `||domain^` rules with no modifiers. Those are bucketed into [blockDomains] /
- * [allowDomains] `HashSet`s for O(1) lookup. Only the minority of rules that need
- * per-request evaluation (path rules, exact-url rules, or domain rules with
- * modifiers such as `$third-party`) fall back to the linear [blockRules] /
- * [allowRules] scan. Plain domain checks walk the host's suffixes, so rules
- * targeting a subdomain are not lost by registrable-domain normalisation.
- */
+/** Fast-path matcher for common EasyList/EasyPrivacy network and cosmetic rules. */
 class RulesList {
+    private val blockDomains = HashSet<String>()
+    private val allowDomains = HashSet<String>()
+    private val blockRules = ArrayList<Rule>()
+    private val allowRules = ArrayList<Rule>()
+    private val cosmeticRules = ArrayList<CosmeticRule>()
 
-private val blockDomains = HashSet<String>()
-private val allowDomains = HashSet<String>()
-private val blockRules = ArrayList<Rule>()
-private val allowRules = ArrayList<Rule>()
+    private data class CosmeticRule(
+        val domains: Set<String>,
+        val excludedDomains: Set<String>,
+        val selector: String,
+        val exception: Boolean,
+    )
 
-operator fun get(url: HttpUrl, baseUrl: HttpUrl?): Rule? {
-// Plain domain rules may target a subdomain (for example ||ads.site.com^),
-// so compare every host suffix rather than only the registrable domain.
- // The number of suffixes is bounded by the host's label count.
-val domainBlocked = matchesDomain(url.host, blockDomains)
-val rule: Rule = if (domainBlocked) {
-Rule.Domain(url.host)
-} else {
-blockRules.find { x -> x(url, baseUrl) } ?: return null
-}
+    operator fun get(url: HttpUrl, baseUrl: HttpUrl?, resourceType: String? = null): Rule? {
+        if (matchesDomain(url.host, allowDomains) || allowRules.any { it(url, baseUrl, resourceType) }) {
+            return null
+        }
+        if (matchesDomain(url.host, blockDomains)) return Rule.Domain(url.host)
+        return blockRules.firstOrNull { it(url, baseUrl, resourceType) }
+    }
 
-val isAllowed = matchesDomain(url.host, allowDomains) || allowRules.any { x -> x(url, baseUrl) }
-return rule.takeUnless { isAllowed }
-}
+    fun add(line: String) {
+        val normalized = line.trim().lowercase()
+        if (normalized.isEmpty() || normalized.startsWith("!") || normalized.startsWith("[")) return
+        if (addCosmeticRule(normalized)) return
 
-fun add(line: String) {
-val parts = line.lowercase().trim().split('$')
-parts.first().addImpl(isWhitelist = false, modifiers = parts.getOrNull(1))
-}
+        val isWhitelist = normalized.startsWith("@@")
+        val ruleText = if (isWhitelist) normalized.removePrefix("@@") else normalized
+        val pieces = ruleText.split(36.toChar(), limit = 2)
+        pieces[0].addImpl(isWhitelist, pieces.getOrNull(1))
+    }
 
-fun trimToSize() {
-blockRules.trimToSize()
-allowRules.trimToSize()
-}
+    /** Returns domain-scoped cosmetic selectors for injection into the current page. */
+    fun cosmeticCss(host: String): String {
+        val matching = cosmeticRules.filter { rule ->
+            (rule.domains.isEmpty() || rule.domains.any { matchesDomain(host, setOf(it)) }) &&
+                rule.excludedDomains.none { matchesDomain(host, setOf(it)) }
+        }
+        val exceptions = matching.asSequence().filter { it.exception }.map { it.selector }.toSet()
+        return matching.asSequence()
+            .filter { !it.exception && it.selector !in exceptions }
+            .map { it.selector }
+            .distinct()
+            .joinToString(separator = "\n") { selector ->
+                selector + " { display: none !important; }"
+            }
+    }
 
-/** Match a rule against the host itself or any parent-domain suffix. */
-private fun matchesDomain(host: String, domains: Set<String>): Boolean {
-var candidate = host
-while (true) {
-if (candidate in domains) return true
-val dot = candidate.indexOf('.')
-if (dot < 0) return false
-candidate = candidate.substring(dot + 1)
-}
-}
+    private fun addCosmeticRule(line: String): Boolean {
+        val exceptionIndex = line.indexOf("#@#")
+        val normalIndex = line.indexOf("##")
+        val markerIndex = when {
+            exceptionIndex >= 0 -> exceptionIndex
+            normalIndex >= 0 -> normalIndex
+            else -> return false
+        }
+        // Extended CSS operators need procedural evaluation and are intentionally skipped.
+        if (line.contains("#?#") || line.contains("#" + 36.toChar() + "#")) return true
 
-private fun String.addImpl(isWhitelist: Boolean, modifiers: String?) {
-when {
-startsWith('!') || startsWith('[') -> {
-// Comment, do nothing
-}
+        val isException = exceptionIndex >= 0
+        val markerLength = if (isException) 3 else 2
+        val domainPart = line.substring(0, markerIndex)
+        val selector = line.substring(markerIndex + markerLength).trim()
+        if (selector.isBlank() || selector.length > 500 ||
+            selector.contains('{') || selector.contains('}') ||
+            selector.contains('<') || selector.contains('>')
+        ) return true
 
-startsWith("||") -> {
-val domain = substring(2).substringBefore('^').trim()
-if (modifiers.isNullOrEmpty()) {
-// Fast path: plain domain rule, no modifiers to evaluate.
-(if (isWhitelist) allowDomains else blockDomains) += domain
-} else {
-val list = if (isWhitelist) allowRules else blockRules
-list += Rule.Domain(domain).withModifiers(modifiers)
-}
-}
+        val included = linkedSetOf<String>()
+        val excluded = linkedSetOf<String>()
+        domainPart.split(',').forEach { raw ->
+            val domain = raw.trim()
+            if (domain.isBlank()) return@forEach
+            if (domain.startsWith("~")) excluded += domain.removePrefix("~")
+            else included += domain
+        }
+        cosmeticRules += CosmeticRule(included, excluded, selector, isException)
+        return true
+    }
 
-startsWith('|') -> {
-val url = substring(1).substringBefore('^').trim().toHttpUrlOrNull()
-if (url != null) {
-val list = if (isWhitelist) allowRules else blockRules
-list += Rule.ExactUrl(url).withModifiers(modifiers)
-}
-}
+    fun trimToSize() {
+        blockRules.trimToSize()
+        allowRules.trimToSize()
+        cosmeticRules.trimToSize()
+    }
 
-startsWith("@@") -> {
-substring(2).substringBefore('^').trim().addImpl(!isWhitelist, modifiers)
-}
+    private fun matchesDomain(host: String, domains: Set<String>): Boolean {
+        var candidate = host
+        while (true) {
+            if (candidate in domains) return true
+            val dot = candidate.indexOf('.')
+            if (dot < 0) return false
+            candidate = candidate.substring(dot + 1)
+        }
+    }
 
-startsWith("##") -> {
-// TODO css rules
-}
+    private fun String.addImpl(isWhitelist: Boolean, modifiers: String?) {
+        val targetDomains = if (isWhitelist) allowDomains else blockDomains
+        val targetRules = if (isWhitelist) allowRules else blockRules
+        when {
+            startsWith("||") -> {
+                val domain = substring(2).takeWhile {
+                    it != '^' && it != '/' && it != '*' && it != '?' && it != '|'
+                }
+                if (domain.isNotBlank() && domain.matches(Regex("[a-z0-9.-]+"))) {
+                    if (modifiers.isNullOrBlank()) targetDomains += domain
+                    else targetRules += Rule.Domain(domain).withModifiers(modifiers)
+                }
+            }
+            startsWith("|") -> {
+                val exact = removePrefix("|").removeSuffix("|").substringBefore('^')
+                val url = exact.toHttpUrlOrNull()
+                if (url != null) targetRules += Rule.ExactUrl(url).withModifiers(modifiers)
+            }
+            else -> {
+                // Complex regular expressions and interior wildcards are skipped safely.
+                if (contains("*") && !endsWith("*")) return
+                if (contains("*")) {
+                    val prefix = removeSuffix("*")
+                    if (prefix.isNotBlank()) {
+                        targetRules += Rule.Path(prefix, contains = true).withModifiers(modifiers)
+                    }
+                } else if (isNotBlank()) {
+                    targetRules += Rule.Path(this, contains = false).withModifiers(modifiers)
+                }
+            }
+        }
+    }
 
-else -> {
-val list = if (isWhitelist) allowRules else blockRules
-if (endsWith('*')) {
-list += Rule.Path(this.dropLast(1), contains = true).withModifiers(modifiers)
-} else if (!contains('*')) { // wildcards is not supported yet
-list += Rule.Path(this, contains = false).withModifiers(modifiers)
-}
-}
-}
-}
+    @CheckResult
+    private fun Rule.withModifiers(options: String?): Rule {
+        if (options.isNullOrBlank()) return this
+        var thirdParty: Boolean? = null
+        val includedTypes = linkedSetOf<String>()
+        val excludedTypes = linkedSetOf<String>()
+        val domains = linkedSetOf<String>()
+        val domainsNot = linkedSetOf<String>()
+        val supportedTypes = setOf(
+            "document", "subdocument", "script", "image", "stylesheet",
+            "font", "media", "xmlhttprequest", "websocket", "other",
+        )
+        val optionsList = options.split(',').map { it.trim() }
+        val supportedNoOpOptions = setOf("important", "match-case")
+        val hasUnsupportedOption = optionsList.any { raw ->
+            val value = raw.removePrefix("~")
+            value !in supportedTypes &&
+                value != "third-party" &&
+                !value.startsWith("domain=") &&
+                value !in supportedNoOpOptions
+        }
+        // Never broaden a rule when it relies on a modifier this matcher cannot implement.
+        if (hasUnsupportedOption) return Rule.Never
 
-@CheckResult
-private fun Rule.withModifiers(options: String?): Rule {
-if (options.isNullOrEmpty()) {
-return this
-}
-var script: Boolean? = null
-var thirdParty: Boolean? = null
-options.split(',').forEach {
-val isNot = it.startsWith('~')
-when (it.removePrefix("~")) {
-"script" -> script = !isNot
-"third-party" -> thirdParty = !isNot
-}
-}
-return Rule.WithModifiers(
-baseRule = this,
-script = script,
-thirdParty = thirdParty,
-domains = null, //TODO
-domainsNot = null, //TODO
-)
-}
+        optionsList.forEach { raw ->
+            val option = raw.trim()
+            if (option.isEmpty()) return@forEach
+            val negated = option.startsWith("~")
+            val value = option.removePrefix("~")
+            when {
+                value == "third-party" -> thirdParty = !negated
+                value.startsWith("domain=") -> {
+                    value.removePrefix("domain=").split('|').forEach { domain ->
+                        if (domain.isNotBlank()) {
+                            if (domain.startsWith("~")) domainsNot += domain.removePrefix("~")
+                            else domains += domain
+                        }
+                    }
+                }
+                value in supportedTypes -> {
+                    if (negated) excludedTypes += value else includedTypes += value
+                }
+            }
+        }
+        return Rule.WithModifiers(this, thirdParty, includedTypes, excludedTypes, domains, domainsNot)
+    }
 }

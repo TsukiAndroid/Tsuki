@@ -69,6 +69,8 @@
                     android:layout_marginHorizontal="4dp"
                     android:layout_weight="1"
                     android:background="@drawable/bg_url_bar"
+                    android:drawableStart="@drawable/ic_search"
+                    android:drawablePadding="8dp"
                     android:imeOptions="actionGo|flagNoExtractUi"
                     android:inputType="textUri|textNoSuggestions"
                     android:maxLines="1"

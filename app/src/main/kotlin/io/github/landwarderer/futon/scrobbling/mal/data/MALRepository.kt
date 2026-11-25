@@ -113,6 +113,18 @@ class MALRepository @Inject constructor(
                 return ScrobblerMangaInfo(response)
         }
 
+        /** Returns the user's current chapter progress for a linked MAL manga. */
+        suspend fun getReadChapterCount(malMangaId: Int): Int? {
+                val url = BASE_API_URL.toHttpUrl().newBuilder()
+                        .addPathSegment("manga")
+                        .addPathSegment(malMangaId.toString())
+                        .addQueryParameter("fields", "my_list_status")
+                        .build()
+                val request = Request.Builder().url(url).get().build()
+                val response = okHttp.newCall(request).await().parseJson()
+                return response.optJSONObject("my_list_status")?.optInt("num_chapters_read")
+        }
+
         override suspend fun createRate(mangaId: Long, scrobblerMangaId: Long) {
                 val body = FormBody.Builder()
                         .add("status", "reading")

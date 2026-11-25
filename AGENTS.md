@@ -3375,3 +3375,49 @@ usable as a browser; native-reader extraction is an optional enhancement.
 - Captured cookies are held only in process memory alongside temporary page
   entries and are not persisted by the browser page bridge.
 - Request-context entries expire after ten minutes.
+
+---
+
+## Browser reader handoff follow-up (November 2026)
+
+### Non-scrolling chapter collection
+
+- Collects image candidates from the current DOM, including common lazy-load attributes, srcset/picture sources, and reader-area CSS backgrounds.
+- Requests eager loading for existing native lazy-loaded image elements, then takes a second DOM snapshot after a short settle delay.
+- Does not programmatically scroll the WebView during the reader handoff, so the user's browser position remains undisturbed.
+- This generic approach may miss images that a site only inserts after a scroll event or an explicit "load more" action. Those sites may need a dedicated extraction strategy.
+
+### Preserving the synthetic chapter
+
+- `ParcelableManga` intentionally omits its chapter list when crossing the activity boundary.
+- Browser Source therefore stores the synthetic chapter by manga ID in `BrowserSourcePageStore`.
+- `CustomMangaRepository.getDetails()` restores that chapter for `BROWSER_SOURCE` manga, and the reader intent explicitly selects its chapter ID.
+- The chapter and page-request context are temporary in-memory entries with a ten-minute TTL.
+
+
+### MangaFire chapter extraction
+
+- For MangaFire reader pages, Browser Source first checks the WebView Resource Timing entries for the chapter API request that the site itself made.
+- It reuses the observed URL, including the site's current VRF query token, and fetches the ordered `data.pages` list inside the same WebView origin with same-origin credentials.
+- This avoids duplicating MangaFire's obfuscated VRF algorithm and keeps the request inside the user's active browser session.
+- If the tokenized API request is not visible or the API rejects it, extraction falls back to the generic DOM collector. The browser handoff does not scroll the page.
+
+---
+
+## Browser Source integrated reading and tracking (November 2026)
+
+- Browser Source is the primary website-reading surface. Do not prompt users to hand chapters off to the native reader as the default flow; legacy extraction remains transitional fallback code.
+- The address field displays the current host when unfocused and accepts either a URL or a search query.
+- Saved Browser Sources get a companion `WebViewSourceEntity` record so the existing AniList linking UI and OAuth stack can be reused.
+- MyAnimeList linking uses the existing `MALRepository`; chapter progress is synced only when a chapter number can be extracted from a URL pattern and must never reduce a higher remote progress value.
+- Title matching remains user-confirmed. Chapter extraction is heuristic and must not be treated as reliable when a URL does not contain a recognizable chapter token.
+
+## Browser Source ad blocking
+
+- The WebView blocker consumes EasyList and EasyPrivacy network and cosmetic filters.
+- Supported network syntax includes plain domain rules, exact URL rules, simple path rules, allow exceptions, common resource-type modifiers, third-party modifiers, and domain include/exclude scopes.
+- Supported cosmetic syntax includes domain-scoped `##` selectors and `#@#` selector exceptions. Extended CSS/scriptlet rules are not evaluated.
+- Unknown network modifiers fail open rather than being interpreted as broad block rules.
+- WebView request filtering is not equivalent to Chromium's extension APIs; do not claim full uBlock Origin or Brave Shields parity.
+- Preserve manga image requests, chapter APIs, login sessions, and Cloudflare challenge traffic. Test changes against real reader pages before broadening block behavior.
+

@@ -27,114 +27,112 @@ import javax.inject.Inject
 
 @Reusable
 class AdBlock @Inject constructor(
-	@ApplicationContext private val context: Context,
-	private val settings: AppSettings,
+    @ApplicationContext private val context: Context,
+    private val settings: AppSettings,
 ) {
+    @Volatile private var rules: RulesList? = null
+    @Volatile private var loadedListsVersion: Long = Long.MIN_VALUE
 
-	private var rules: RulesList? = null
+    @WorkerThread
+    fun warmUp() {
+        if (!settings.isAdBlockEnabled) return
+        activeRules()
+    }
 
-	/**
-	 * Eagerly parses the blocklist on a background thread. Call this once at app
-	 * startup (see BaseApp.onCreate) so the HashSet-backed [RulesList] is already
-	 * built before the first WebView is opened -- otherwise the first page load
-	 * pays the parse cost inline on [shouldLoadUrl]'s caller thread.
-	 */
-	@WorkerThread
-	fun warmUp() {
-		if (!settings.isAdBlockEnabled) {
-			return
-		}
-		synchronized(this) {
-			if (rules == null) {
-				rules = parseRules()
-			}
-		}
-	}
+    /** Reloads parsed rules automatically after the updater replaces either list file. */
+    @WorkerThread
+    private fun activeRules(): RulesList? = synchronized(this) {
+        val version = listFilesVersion()
+        if (rules == null || version != loadedListsVersion) {
+            val parsed = parseRules()
+            if (parsed != null) {
+                rules = parsed
+                loadedListsVersion = version
+            }
+        }
+        rules
+    }
 
-	@WorkerThread
-	fun shouldLoadUrl(url: String, baseUrl: String?): Boolean {
-		return shouldLoadUrl(
-			url.lowercase().toHttpUrlOrNull() ?: return true,
-			baseUrl?.lowercase()?.toHttpUrlOrNull(),
-		)
-	}
+    private fun listFilesVersion(): Long =
+        listOf(EASYLIST_FILENAME, EASYPRIVACY_FILENAME).sumOf { filename ->
+            val file = listFile(context, filename)
+            if (file.exists()) file.lastModified() * 31L + file.length() else 0L
+        }
 
-	@WorkerThread
-	fun shouldLoadUrl(url: HttpUrl, baseUrl: HttpUrl?): Boolean {
-		if (!settings.isAdBlockEnabled) {
-			return true
-		}
-		return synchronized(this) {
-			rules ?: parseRules().also { rules = it }
-		}?.let {
-			val rule = it[url, baseUrl]
-			if (rule != null) {
-				Log.i(TAG, "Blocked $url by $rule")
-			}
-			rule == null
-		} ?: true
-	}
+    @WorkerThread
+    fun shouldLoadUrl(url: String, baseUrl: String?, resourceType: String? = null): Boolean {
+        val parsedUrl = url.lowercase().toHttpUrlOrNull() ?: return true
+        return shouldLoadUrl(parsedUrl, baseUrl?.lowercase()?.toHttpUrlOrNull(), resourceType)
+    }
 
-	@WorkerThread
-	private fun parseRules() = runCatchingCancellable {
-		listFile(context).useLines { lines ->
-			val rules = RulesList()
-			lines.forEach { line -> rules.add(line) }
-			rules.trimToSize()
-			rules
-		}
-	}.onFailure { e ->
-		e.printStackTraceDebug("AdBlock::parseRules")
-	}.getOrNull()
+    @WorkerThread
+    fun shouldLoadUrl(url: HttpUrl, baseUrl: HttpUrl?, resourceType: String? = null): Boolean {
+        if (!settings.isAdBlockEnabled) return true
+        val activeRules = activeRules() ?: return true
+        val rule = activeRules[url, baseUrl, resourceType]
+        if (rule != null) Log.d(TAG, "Blocked " + url.host + url.encodedPath + " by " + rule)
+        return rule == null
+    }
 
-	class Updater @Inject constructor(
-		@ApplicationContext private val context: Context,
-		@BaseHttpClient private val okHttpClient: OkHttpClient,
-	) {
+    /** CSS cosmetic rules for a page, respecting the user's global ad-block toggle. */
+    @WorkerThread
+    fun cosmeticCss(pageUrl: String): String {
+        if (!settings.isAdBlockEnabled) return ""
+        val host = pageUrl.toHttpUrlOrNull()?.host ?: return ""
+        val activeRules = activeRules() ?: return ""
+        return activeRules.cosmeticCss(host)
+    }
 
-		suspend fun updateList() {
-			val file = listFile(context)
-			val dateFormat = SimpleDateFormat(CommonHeaders.DATE_FORMAT, Locale.ENGLISH)
-			val requestBuilder = Request.Builder()
-				.url(EASYLIST_URL)
-				.get()
-			if (file.exists() && file.isNotEmpty()) {
-				val lastModified = file.lastModified()
-				requestBuilder.header(CommonHeaders.IF_MODIFIED_SINCE, dateFormat.format(Date(lastModified)))
-			}
-			okHttpClient.newCall(
-				requestBuilder.build(),
-			).await().use { response ->
-				if (response.code == HttpURLConnection.HTTP_NOT_MODIFIED) {
-					return
-				}
-				val lastModified = response.header(CommonHeaders.LAST_MODIFIED)?.let {
-					runCatching {
-						dateFormat.parse(it)
-					}.getOrNull()
-				}?.time ?: System.currentTimeMillis()
-				response.requireBody().source().use { source ->
-					file.sink().use { sink ->
-						source.readAll(sink)
-					}
-					file.setLastModified(lastModified)
-				}
-			}
-		}
+    @WorkerThread
+    private fun parseRules(): RulesList? = runCatchingCancellable {
+        val parsed = RulesList()
+        listOf(EASYLIST_FILENAME, EASYPRIVACY_FILENAME).forEach { filename ->
+            val file = listFile(context, filename)
+            if (file.exists()) file.useLines { lines -> lines.forEach(parsed::add) }
+        }
+        parsed.trimToSize()
+        parsed
+    }.onFailure { it.printStackTraceDebug("AdBlock::parseRules") }.getOrNull()
 
-	}
+    class Updater @Inject constructor(
+        @ApplicationContext private val context: Context,
+        @BaseHttpClient private val okHttpClient: OkHttpClient,
+    ) {
+        suspend fun updateList() {
+            updateFilterList(EASYLIST_URL, EASYLIST_FILENAME)
+            updateFilterList(EASYPRIVACY_URL, EASYPRIVACY_FILENAME)
+        }
 
-	private companion object {
+        private suspend fun updateFilterList(url: String, filename: String) {
+            val file = listFile(context, filename)
+            val dateFormat = SimpleDateFormat(CommonHeaders.DATE_FORMAT, Locale.ENGLISH)
+            val requestBuilder = Request.Builder().url(url).get()
+            if (file.exists() && file.isNotEmpty()) {
+                requestBuilder.header(CommonHeaders.IF_MODIFIED_SINCE, dateFormat.format(Date(file.lastModified())))
+            }
+            okHttpClient.newCall(requestBuilder.build()).await().use { response ->
+                if (response.code == HttpURLConnection.HTTP_NOT_MODIFIED) return
+                val lastModified = response.header(CommonHeaders.LAST_MODIFIED)?.let {
+                    runCatching { dateFormat.parse(it) }.getOrNull()
+                }?.time ?: System.currentTimeMillis()
+                response.requireBody().source().use { source -> file.sink().use { sink -> source.readAll(sink) } }
+                file.setLastModified(lastModified)
+            }
+        }
+    }
 
-		fun listFile(context: Context): File {
-			val root = File(context.externalCacheDir ?: context.cacheDir, LIST_DIR)
-			root.mkdir()
-			return File(root, LIST_FILENAME)
-		}
+    private companion object {
+        private const val LIST_DIR = "adblock"
+        private const val EASYLIST_FILENAME = "easylist.txt"
+        private const val EASYPRIVACY_FILENAME = "easyprivacy.txt"
+        private const val EASYLIST_URL = "https://easylist.to/easylist/easylist.txt"
+        private const val EASYPRIVACY_URL = "https://easylist.to/easylist/easyprivacy.txt"
+        private const val TAG = "AdBlock"
 
-		private const val LIST_FILENAME = "easylist.txt"
-		private const val LIST_DIR = "adblock"
-		private const val EASYLIST_URL = "https://easylist.to/easylist/easylist.txt"
-		private const val TAG = "AdBlock"
-	}
+        fun listFile(context: Context, filename: String): File {
+            val root = File(context.externalCacheDir ?: context.cacheDir, LIST_DIR)
+            root.mkdirs()
+            return File(root, filename)
+        }
+    }
 }
