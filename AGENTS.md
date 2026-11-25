@@ -3378,18 +3378,18 @@ usable as a browser; native-reader extraction is an optional enhancement.
 
 ---
 
-## Browser progressive extraction follow-up (November 2026)
+## Browser reader handoff follow-up (November 2026)
 
-### Scroll-aware chapter collection
+### Non-scrolling chapter collection
 
-The Browser Source native-reader handoff now performs a progressive DOM scan instead of a single snapshot:
+- Collects image candidates from the current DOM, including common lazy-load attributes, srcset/picture sources, and reader-area CSS backgrounds.
+- Requests eager loading for existing native lazy-loaded image elements, then takes a second DOM snapshot after a short settle delay.
+- Does not programmatically scroll the WebView during the reader handoff, so the user's browser position remains undisturbed.
+- This generic approach may miss images that a site only inserts after a scroll event or an explicit "load more" action. Those sites may need a dedicated extraction strategy.
 
-- Saves the user's current scroll position, then scans from the top so earlier pages are not skipped.
-- Collects candidate image URLs at each viewport.
-- Scrolls in overlapping increments (75% of viewport height) to trigger common scroll- and intersection-observer-based lazy loaders.
-- Waits briefly after each movement before collecting the next viewport.
-- Deduplicates URLs while preserving the order in which they first appear.
-- Performs a final collection at the bottom and restores the original scroll position.
-- Caps the scan at 30 scroll steps and 15 seconds, and stops after two consecutive scroll attempts make no meaningful progress. This prevents dynamically growing pages or nested scroll layouts from trapping extraction in a long scan.
+### Preserving the synthetic chapter
 
-This remains heuristic. Sites that require tapping a "load more" control, selecting a chapter variant, or executing custom canvas/script rendering may still need site-specific support. The scan also temporarily moves the WebView while extraction runs; the original position is restored afterward.
+- `ParcelableManga` intentionally omits its chapter list when crossing the activity boundary.
+- Browser Source therefore stores the synthetic chapter by manga ID in `BrowserSourcePageStore`.
+- `CustomMangaRepository.getDetails()` restores that chapter for `BROWSER_SOURCE` manga, and the reader intent explicitly selects its chapter ID.
+- The chapter and page-request context are temporary in-memory entries with a ten-minute TTL.
