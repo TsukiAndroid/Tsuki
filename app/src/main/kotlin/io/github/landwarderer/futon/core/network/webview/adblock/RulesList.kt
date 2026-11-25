@@ -147,8 +147,19 @@ class RulesList {
             "document", "subdocument", "script", "image", "stylesheet",
             "font", "media", "xmlhttprequest", "websocket", "other",
         )
+        val optionsList = options.split(',').map { it.trim() }
+        val supportedNoOpOptions = setOf("important", "match-case")
+        val hasUnsupportedOption = optionsList.any { raw ->
+            val value = raw.removePrefix("~")
+            value !in supportedTypes &&
+                value != "third-party" &&
+                !value.startsWith("domain=") &&
+                value !in supportedNoOpOptions
+        }
+        // Never broaden a rule when it relies on a modifier this matcher cannot implement.
+        if (hasUnsupportedOption) return Rule.Never
 
-        options.split(',').forEach { raw ->
+        optionsList.forEach { raw ->
             val option = raw.trim()
             if (option.isEmpty()) return@forEach
             val negated = option.startsWith("~")
