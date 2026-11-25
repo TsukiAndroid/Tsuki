@@ -41,8 +41,10 @@ class AdBlock @Inject constructor(
     }
 
     @WorkerThread
-    fun shouldLoadUrl(url: String, baseUrl: String?, resourceType: String? = null): Boolean =
-        shouldLoadUrl(url.lowercase().toHttpUrlOrNull() ?: return true, baseUrl?.lowercase()?.toHttpUrlOrNull(), resourceType)
+    fun shouldLoadUrl(url: String, baseUrl: String?, resourceType: String? = null): Boolean {
+        val parsedUrl = url.lowercase().toHttpUrlOrNull() ?: return true
+        return shouldLoadUrl(parsedUrl, baseUrl?.lowercase()?.toHttpUrlOrNull(), resourceType)
+    }
 
     @WorkerThread
     fun shouldLoadUrl(url: HttpUrl, baseUrl: HttpUrl?, resourceType: String? = null): Boolean {
