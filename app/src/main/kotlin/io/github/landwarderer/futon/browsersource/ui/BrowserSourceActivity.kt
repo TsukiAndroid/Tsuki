@@ -202,6 +202,16 @@ class BrowserSourceActivity : AppCompatActivity() {
 
         // Step 6 of the README: let users open the current page in Chrome if they
         // specifically want to, while the default always uses Tsuki's WebView.
+        io.github.landwarderer.futon.R.id.action_browser_source_refresh -> {
+            binding.webView.reload()
+            true
+        }
+
+        io.github.landwarderer.futon.R.id.action_browser_source_forward -> {
+            if (binding.webView.canGoForward()) binding.webView.goForward()
+            true
+        }
+
         io.github.landwarderer.futon.R.id.action_browser_source_link_mal -> {
             showMalLinkDialog()
             true
@@ -333,11 +343,6 @@ class BrowserSourceActivity : AppCompatActivity() {
         )
     }
 
-    private fun updateSiteIdentity(url: String) {
-        val host = Uri.parse(url).host?.removePrefix("www.").orEmpty()
-        binding.browserSiteLabel.text = host.ifBlank { getString(R.string.browser_source_site_unknown) }
-    }
-
     private fun setBrowserToolbarCollapsed(collapsed: Boolean) {
         if (browserToolbarCollapsed == collapsed) return
         browserToolbarCollapsed = collapsed
@@ -427,7 +432,6 @@ class BrowserSourceActivity : AppCompatActivity() {
                 CloudflareWebView.injectAntiDetectionJs(view)
                 url?.let {
                     binding.urlBar.setText(formatAddress(it))
-                    updateSiteIdentity(it)
                     BrowserSourceChapterDetector.resetForPage(it)
                 }
                 binding.progressBar.isVisible = true
@@ -458,7 +462,6 @@ class BrowserSourceActivity : AppCompatActivity() {
                 binding.progressBar.isVisible = false
                 url?.let { pageUrl ->
                     binding.urlBar.setText(formatAddress(pageUrl))
-                    updateSiteIdentity(pageUrl)
                     updateNavButtons()
 
                     if (sourceId != -1L) {
