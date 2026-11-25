@@ -42,6 +42,17 @@ class RulesListTest {
     }
 
     @Test
+    fun unsupportedModifiersDoNotBecomeBroadBlockingRules() {
+        val rules = RulesList().apply { add("||ads.example.com^$redirect=noopjs") }
+        assertNull(
+            rules[
+                "https://ads.example.com/creative.js".toHttpUrl(),
+                "https://reader.example.org".toHttpUrl(),
+            ]
+        )
+    }
+
+    @Test
     fun cosmeticRulesRespectDomainAndExceptionScopes() {
         val rules = RulesList().apply {
             add("reader.example.org##.ad-banner")
