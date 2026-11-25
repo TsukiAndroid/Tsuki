@@ -2,6 +2,10 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item
+        android:id="@+id/action_browser_source_link_anilist"
+        android:title="@string/action_link_anilist" />
+
+    <item
         android:id="@+id/action_browser_source_adblock"
         android:title="@string/browser_source_adblock_toggle" />
 
