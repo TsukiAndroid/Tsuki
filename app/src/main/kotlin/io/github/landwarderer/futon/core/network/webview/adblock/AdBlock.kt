@@ -55,6 +55,15 @@ class AdBlock @Inject constructor(
         return rule == null
     }
 
+    /** CSS cosmetic rules for a page, respecting the user's global ad-block toggle. */
+    @WorkerThread
+    fun cosmeticCss(pageUrl: String): String {
+        if (!settings.isAdBlockEnabled) return ""
+        val host = pageUrl.toHttpUrlOrNull()?.host ?: return ""
+        val activeRules = synchronized(this) { rules ?: parseRules().also { rules = it } } ?: return ""
+        return activeRules.cosmeticCss(host)
+    }
+
     @WorkerThread
     private fun parseRules(): RulesList? = runCatchingCancellable {
         val parsed = RulesList()
