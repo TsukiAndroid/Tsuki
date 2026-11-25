@@ -25,6 +25,7 @@ import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.color.MaterialColors
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.landwarderer.futon.R
 import io.github.landwarderer.futon.browser.detection.DetectionPromptLevel
@@ -118,6 +119,7 @@ class BrowserSourceActivity : AppCompatActivity() {
     private var currentPageCover: String? = null
     private var lastSyncedAniListChapter: Int = -1
     private var lastSyncedMalChapter: Int = -1
+    private var browserToolbarCollapsed = false
 
     private val webViewBackCallback = object : OnBackPressedCallback(true) {
         override fun handleOnBackPressed() {
@@ -200,6 +202,16 @@ class BrowserSourceActivity : AppCompatActivity() {
 
         // Step 6 of the README: let users open the current page in Chrome if they
         // specifically want to, while the default always uses Tsuki's WebView.
+        io.github.landwarderer.futon.R.id.action_browser_source_refresh -> {
+            binding.webView.reload()
+            true
+        }
+
+        io.github.landwarderer.futon.R.id.action_browser_source_forward -> {
+            if (binding.webView.canGoForward()) binding.webView.goForward()
+            true
+        }
+
         io.github.landwarderer.futon.R.id.action_browser_source_link_mal -> {
             showMalLinkDialog()
             true
@@ -317,7 +329,24 @@ class BrowserSourceActivity : AppCompatActivity() {
     }
 
     private fun updateAdblockIcon() {
-        binding.btnAdblock.imageAlpha = if (webViewSettings.isAdBlockEnabled) 255 else 100
+        val enabled = webViewSettings.isAdBlockEnabled
+        binding.btnAdblock.imageAlpha = if (enabled) 255 else 150
+        val tint = MaterialColors.getColor(
+            binding.btnAdblock,
+            if (enabled) com.google.android.material.R.attr.colorOnSurface
+            else com.google.android.material.R.attr.colorOnSurfaceVariant,
+        )
+        binding.btnAdblock.imageTintList = android.content.res.ColorStateList.valueOf(tint)
+        binding.btnAdblock.contentDescription = getString(
+            if (enabled) R.string.browser_source_adblock_enabled
+            else R.string.browser_source_adblock_disabled,
+        )
+    }
+
+    private fun setBrowserToolbarCollapsed(collapsed: Boolean) {
+        if (browserToolbarCollapsed == collapsed) return
+        browserToolbarCollapsed = collapsed
+        binding.appbar.setExpanded(!collapsed, true)
     }
 
     private fun updateNavButtons() {
@@ -344,6 +373,17 @@ class BrowserSourceActivity : AppCompatActivity() {
         WebViewPerformanceConfigurator.applyPerformanceSettings(binding.webView)
 
         binding.webView.webChromeClient = ProgressChromeClient(binding.progressBar)
+
+        // Keep the reading viewport clean while scrolling, but bring the controls
+        // back as soon as the reader scrolls upward. The top of the page always
+        // restores the full toolbar.
+        binding.webView.setOnScrollChangeListener { _, _, scrollY, _, oldScrollY ->
+            when {
+                scrollY <= 0 -> setBrowserToolbarCollapsed(false)
+                scrollY > oldScrollY + 8 -> setBrowserToolbarCollapsed(true)
+                scrollY < oldScrollY - 8 -> setBrowserToolbarCollapsed(false)
+            }
+        }
 
         binding.webView.webViewClient = object : WebViewClient() {
 
