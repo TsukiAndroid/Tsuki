@@ -107,18 +107,18 @@ object BrowserSourceChapterDetector {
     const val COLLECT_MANGAFIRE_API_PAGES_JS = """
         (async function() {
             try {
-                if (!/^(www\\.)?mangafire\\.(to|cc)$/i.test(location.hostname)) return '[]';
+                if (!/^(www\.)?mangafire\.(to|cc)$/i.test(location.hostname)) return '[]';
                 var entries = performance.getEntriesByType('resource');
                 var candidates = entries.map(function(entry) { return entry.name; })
                     .filter(function(name) {
                         try {
                             var url = new URL(name, location.href);
                             return url.origin === location.origin &&
-                                /\\/api\\/chapters\\/[^/?]+/i.test(url.pathname) &&
+                                /\/api\/chapters\/[^/?]+/i.test(url.pathname) &&
                                 url.searchParams.has('vrf');
                         } catch (_) { return false; }
                     });
-                var chapterId = location.pathname.match(/\\/chapter\\/(\\d+)/i);
+                var chapterId = location.pathname.match(/\/chapter\/(\d+)/i);
                 if (candidates.length === 0 && chapterId) {
                     // A tokenized URL is required; do not invent or guess a VRF value.
                     return '[]';
