@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.os.Bundle
-import android.os.SystemClock
 import android.view.KeyEvent
 import android.view.Menu
 import android.view.MenuItem
@@ -37,6 +36,7 @@ import io.github.landwarderer.futon.browsersource.data.BrowserSourcePageStore
 import io.github.landwarderer.futon.browsersource.data.BrowserSourceRepository
 import io.github.landwarderer.futon.core.model.parcelable.ParcelableManga
 import io.github.landwarderer.futon.core.nav.ReaderIntent
+import io.github.landwarderer.futon.reader.ui.ReaderState
 import io.github.landwarderer.futon.core.nav.router
 import io.github.landwarderer.futon.core.network.webview.WebViewPerformanceConfigurator
 import io.github.landwarderer.futon.core.network.webview.adblock.AdBlock
@@ -549,7 +549,7 @@ class BrowserSourceActivity : AppCompatActivity() {
         lifecycleScope.launch {
             binding.fabOpenReader.isEnabled = false
             val imageUrls = try {
-                collectChapterImagesProgressively()
+                collectChapterImagesWithoutScrolling()
             } finally {
                 binding.fabOpenReader.isEnabled = true
             }
@@ -618,6 +618,10 @@ class BrowserSourceActivity : AppCompatActivity() {
                 source      = customSource,
             )
 
+            // Keep the chapter outside ParcelableManga too: its parceler intentionally
+            // omits chapters, and ReaderActivity reloads details through the source repo.
+            BrowserSourcePageStore.putChapter(mangaId, chapter)
+
             // Build synthetic Manga carrying the chapter list
             val manga = Manga(
                 id            = mangaId,
@@ -653,6 +657,7 @@ class BrowserSourceActivity : AppCompatActivity() {
             // Open the native reader
             val readerIntent = ReaderIntent.Builder(this@BrowserSourceActivity)
                 .manga(manga)
+                .state(ReaderState(chapterId, 0, 0))
                 .incognito(false)
                 .build()
             router.openReader(readerIntent)
@@ -664,68 +669,26 @@ class BrowserSourceActivity : AppCompatActivity() {
      * observer and scroll-triggered lazy loaders have a chance to populate images.
      * The original position is restored even if extraction is cancelled or fails.
      */
-    private suspend fun collectChapterImagesProgressively(): List<String> {
-        val webView = binding.webView
-        val originalY = evaluateJavascriptAwait("String(window.scrollY || 0)")
-            .jsNumber()
-            .toIntOrNull() ?: 0
+    /**
+     * Collects rendered and lazy-load image URLs without moving the user's page.
+     * Lazy-load attributes are included by the DOM collector; setting existing
+     * lazy images to eager also helps sites using native loading="lazy".
+     */
+    private suspend fun collectChapterImagesWithoutScrolling(): List<String> {
         val collected = LinkedHashSet<String>()
-        val extractionStartedAt = SystemClock.elapsedRealtime()
-        var previousY: Double? = null
-        var stalledSteps = 0
 
-        try {
-            // Start at the beginning so content above the user's saved scroll
-            // position is not omitted from the native-reader page list.
-            evaluateJavascriptAwait("window.scrollTo(0, 0)")
-            delay(EXTRACTION_SETTLE_DELAY_MS)
+        evaluateJavascriptAwait(
+            "document.querySelectorAll('img[loading=lazy]').forEach(function(img){img.loading='eager';});"
+        )
+        delay(EXTRACTION_SETTLE_DELAY_MS)
 
-            for (step in 0 until MAX_EXTRACTION_STEPS) {
-                // A page that continuously grows or uses a non-window scroll
-                // container must never keep the browser scrolling indefinitely.
-                if (SystemClock.elapsedRealtime() - extractionStartedAt >= MAX_EXTRACTION_DURATION_MS) break
+        val firstPass = evaluateJavascriptAwait(BrowserSourceChapterDetector.COLLECT_IMAGES_JS)
+        collected.addAll(BrowserSourceChapterDetector.parseImageUrls(firstPass))
 
-                val imageResult = evaluateJavascriptAwait(
-                    BrowserSourceChapterDetector.COLLECT_IMAGES_JS
-                )
-                collected.addAll(BrowserSourceChapterDetector.parseImageUrls(imageResult))
-
-                val metrics = evaluateJavascriptAwait(
-                    "JSON.stringify({y:window.scrollY||0,h:Math.max(document.body.scrollHeight,document.documentElement.scrollHeight),v:window.innerHeight||0})"
-                )
-                val values = runCatching {
-                    org.json.JSONObject(metrics.jsString())
-                }.getOrNull() ?: break
-
-                val currentY = values.optDouble("y", 0.0)
-                val pageHeight = values.optDouble("h", 0.0)
-                val viewport = values.optDouble("v", 0.0)
-                if (viewport <= 0.0 || currentY + viewport >= pageHeight - 2.0) break
-
-                if (previousY != null && currentY <= previousY + 2.0) {
-                    stalledSteps++
-                    if (stalledSteps >= MAX_STALLED_EXTRACTION_STEPS) break
-                } else {
-                    stalledSteps = 0
-                }
-                previousY = currentY
-
-                val nextY = minOf(
-                    currentY + maxOf(400.0, viewport * EXTRACTION_SCROLL_FRACTION),
-                    maxOf(0.0, pageHeight - viewport),
-                )
-                evaluateJavascriptAwait("window.scrollTo(0, $nextY)")
-                delay(EXTRACTION_SETTLE_DELAY_MS)
-            }
-
-            // Give the final viewport's lazy images one last chance to appear.
-            delay(EXTRACTION_SETTLE_DELAY_MS)
-            val finalResult = evaluateJavascriptAwait(BrowserSourceChapterDetector.COLLECT_IMAGES_JS)
-            collected.addAll(BrowserSourceChapterDetector.parseImageUrls(finalResult))
-        } finally {
-            // Do not suspend in finally: the Activity may be leaving while extraction is cancelled.
-            runCatching { webView.evaluateJavascript("window.scrollTo(0, $originalY)", null) }
-        }
+        // Catch URLs populated asynchronously, without triggering page scrolling.
+        delay(EXTRACTION_SETTLE_DELAY_MS)
+        val secondPass = evaluateJavascriptAwait(BrowserSourceChapterDetector.COLLECT_IMAGES_JS)
+        collected.addAll(BrowserSourceChapterDetector.parseImageUrls(secondPass))
 
         return collected.toList()
     }
@@ -786,11 +749,7 @@ class BrowserSourceActivity : AppCompatActivity() {
     // ── Companion ─────────────────────────────────────────────────────────────
 
     companion object {
-        private const val MAX_EXTRACTION_STEPS = 30
-        private const val MAX_STALLED_EXTRACTION_STEPS = 2
-        private const val MAX_EXTRACTION_DURATION_MS = 15_000L
-        private const val EXTRACTION_SCROLL_FRACTION = 0.75
-        private const val EXTRACTION_SETTLE_DELAY_MS = 250L
+        private const val EXTRACTION_SETTLE_DELAY_MS = 500L
 
         const val KEY_SOURCE_ID   = "browser_source_id"
         const val KEY_SOURCE_NAME = "browser_source_name"
