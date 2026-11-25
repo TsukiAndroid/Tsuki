@@ -3393,3 +3393,11 @@ usable as a browser; native-reader extraction is an optional enhancement.
 - Browser Source therefore stores the synthetic chapter by manga ID in `BrowserSourcePageStore`.
 - `CustomMangaRepository.getDetails()` restores that chapter for `BROWSER_SOURCE` manga, and the reader intent explicitly selects its chapter ID.
 - The chapter and page-request context are temporary in-memory entries with a ten-minute TTL.
+
+
+### MangaFire chapter extraction
+
+- For MangaFire reader pages, Browser Source first checks the WebView Resource Timing entries for the chapter API request that the site itself made.
+- It reuses the observed URL, including the site's current VRF query token, and fetches the ordered `data.pages` list inside the same WebView origin with same-origin credentials.
+- This avoids duplicating MangaFire's obfuscated VRF algorithm and keeps the request inside the user's active browser session.
+- If the tokenized API request is not visible or the API rejects it, extraction falls back to the generic DOM collector. The browser handoff does not scroll the page.
