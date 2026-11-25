@@ -315,7 +315,7 @@ class BrowserSourceActivity : AppCompatActivity() {
                 // silently. Let everything through while the challenge is active.
                 if (isCloudflareChallenge) return null
                 if (webViewSettings.isAdBlockEnabled) {
-                    if (!adBlock.shouldLoadUrl(request.url.toString(), currentUrl)) {
+                    if (!adBlock.shouldLoadUrl(request.url.toString(), currentUrl, requestResourceType(request))) {
                         return WebResourceResponse("text/plain", "utf-8", null)
                     }
                 }
@@ -433,6 +433,37 @@ class BrowserSourceActivity : AppCompatActivity() {
     private fun unescapeJsString(raw: String?): String {
         if (raw.isNullOrEmpty() || raw == "null") return ""
         return runCatching { org.json.JSONTokener(raw).nextValue() as? String }.getOrNull().orEmpty()
+    }
+
+    /** Maps WebView Fetch Metadata to the resource types used by EasyList modifiers. */
+    private fun requestResourceType(request: WebResourceRequest): String? {
+        val destination = request.requestHeaders.entries
+            .firstOrNull { it.key.equals("Sec-Fetch-Dest", ignoreCase = true) }
+            ?.value
+            ?.lowercase()
+        return when (destination) {
+            "document" -> "document"
+            "iframe" -> "subdocument"
+            "script" -> "script"
+            "image" -> "image"
+            "style" -> "stylesheet"
+            "font" -> "font"
+            "audio", "video", "track" -> "media"
+            "empty" -> "xmlhttprequest"
+            else -> {
+                val accept = request.requestHeaders.entries
+                    .firstOrNull { it.key.equals("Accept", ignoreCase = true) }
+                    ?.value
+                    ?.lowercase()
+                    .orEmpty()
+                when {
+                    "image/" in accept -> "image"
+                    "text/css" in accept -> "stylesheet"
+                    "javascript" in accept -> "script"
+                    else -> null
+                }
+            }
+        }
     }
 
     private fun looksLikeImageRequest(url: String): Boolean {
