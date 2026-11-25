@@ -31,14 +31,33 @@ class AdBlock @Inject constructor(
     private val settings: AppSettings,
 ) {
     @Volatile private var rules: RulesList? = null
+    @Volatile private var loadedListsVersion: Long = Long.MIN_VALUE
 
     @WorkerThread
     fun warmUp() {
         if (!settings.isAdBlockEnabled) return
-        synchronized(this) {
-            if (rules == null) rules = parseRules()
-        }
+        activeRules()
     }
+
+    /** Reloads parsed rules automatically after the updater replaces either list file. */
+    @WorkerThread
+    private fun activeRules(): RulesList? = synchronized(this) {
+        val version = listFilesVersion()
+        if (rules == null || version != loadedListsVersion) {
+            val parsed = parseRules()
+            if (parsed != null) {
+                rules = parsed
+                loadedListsVersion = version
+            }
+        }
+        rules
+    }
+
+    private fun listFilesVersion(): Long =
+        listOf(EASYLIST_FILENAME, EASYPRIVACY_FILENAME).sumOf { filename ->
+            val file = listFile(context, filename)
+            if (file.exists()) file.lastModified() * 31L + file.length() else 0L
+        }
 
     @WorkerThread
     fun shouldLoadUrl(url: String, baseUrl: String?, resourceType: String? = null): Boolean {
@@ -49,7 +68,7 @@ class AdBlock @Inject constructor(
     @WorkerThread
     fun shouldLoadUrl(url: HttpUrl, baseUrl: HttpUrl?, resourceType: String? = null): Boolean {
         if (!settings.isAdBlockEnabled) return true
-        val activeRules = synchronized(this) { rules ?: parseRules().also { rules = it } } ?: return true
+        val activeRules = activeRules() ?: return true
         val rule = activeRules[url, baseUrl, resourceType]
         if (rule != null) Log.d(TAG, "Blocked " + url.host + url.encodedPath + " by " + rule)
         return rule == null
@@ -60,7 +79,7 @@ class AdBlock @Inject constructor(
     fun cosmeticCss(pageUrl: String): String {
         if (!settings.isAdBlockEnabled) return ""
         val host = pageUrl.toHttpUrlOrNull()?.host ?: return ""
-        val activeRules = synchronized(this) { rules ?: parseRules().also { rules = it } } ?: return ""
+        val activeRules = activeRules() ?: return ""
         return activeRules.cosmeticCss(host)
     }
 
