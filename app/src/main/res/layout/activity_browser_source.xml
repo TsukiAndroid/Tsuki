@@ -17,105 +17,127 @@
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:minHeight="56dp"
-            android:paddingHorizontal="4dp">
+            android:background="?attr/colorSurface"
+            android:minHeight="96dp"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="4dp"
+            app:layout_scrollFlags="scroll|enterAlways|snap">
 
-            <!-- Navigation row: close | back | forward | URL bar | refresh | adblock -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
+                android:orientation="vertical">
 
-                <!-- Close button -->
-                <ImageButton
-                    android:id="@+id/btn_close"
-                    android:layout_width="40dp"
+                <!-- Primary row: exit, address/search, protection and overflow actions. -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <ImageButton
+                        android:id="@+id/btn_close"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="@string/close"
+                        android:src="@drawable/ic_close"
+                        android:tint="?attr/colorOnSurface" />
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/url_bar"
+                        android:layout_width="0dp"
+                        android:layout_height="40dp"
+                        android:layout_marginHorizontal="6dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_url_bar"
+                        android:drawableStart="@drawable/ic_search"
+                        android:drawablePadding="8dp"
+                        android:imeOptions="actionGo|flagNoExtractUi"
+                        android:inputType="textUri|textNoSuggestions"
+                        android:maxLines="1"
+                        android:paddingHorizontal="12dp"
+                        android:singleLine="true"
+                        android:textSize="14sp"
+                        tools:text="mangafire.to" />
+
+                    <ImageButton
+                        android:id="@+id/btn_adblock"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="@string/browser_source_adblock_toggle"
+                        android:src="@drawable/ic_shield"
+                        android:tint="?attr/colorPrimary" />
+                </LinearLayout>
+
+                <!-- Navigation row stays visually separate from the address field. -->
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="40dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="@string/close"
-                    android:src="@drawable/ic_close"
-                    android:tint="?attr/colorOnSurface" />
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingStart="2dp"
+                    android:paddingEnd="2dp">
 
-                <!-- Back button -->
-                <ImageButton
-                    android:id="@+id/btn_back"
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:alpha="0.4"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="@string/browser_source_back"
-                    android:enabled="false"
-                    android:src="@drawable/ic_arrow_back"
-                    android:tint="?attr/colorOnSurface" />
+                    <ImageButton
+                        android:id="@+id/btn_back"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:alpha="0.4"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="@string/browser_source_back"
+                        android:enabled="false"
+                        android:src="@drawable/ic_arrow_back"
+                        android:tint="?attr/colorOnSurface" />
 
-                <!-- Forward button -->
-                <ImageButton
-                    android:id="@+id/btn_forward"
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:alpha="0.4"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="@string/browser_source_forward"
-                    android:enabled="false"
-                    android:src="@drawable/ic_arrow_forward"
-                    android:tint="?attr/colorOnSurface" />
+                    <ImageButton
+                        android:id="@+id/btn_forward"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:alpha="0.4"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="@string/browser_source_forward"
+                        android:enabled="false"
+                        android:src="@drawable/ic_arrow_forward"
+                        android:tint="?attr/colorOnSurface" />
 
-                <!-- URL bar -->
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/url_bar"
-                    android:layout_width="0dp"
-                    android:layout_height="36dp"
-                    android:layout_marginHorizontal="4dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/bg_url_bar"
-                    android:drawableStart="@drawable/ic_search"
-                    android:drawablePadding="8dp"
-                    android:imeOptions="actionGo|flagNoExtractUi"
-                    android:inputType="textUri|textNoSuggestions"
-                    android:maxLines="1"
-                    android:paddingHorizontal="12dp"
-                    android:singleLine="true"
-                    android:textSize="13sp"
-                    tools:text="https://mangadex.org" />
+                    <ImageButton
+                        android:id="@+id/btn_refresh"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="@string/browser_source_refresh"
+                        android:src="@drawable/ic_refresh"
+                        android:tint="?attr/colorOnSurface" />
 
-                <!-- Refresh button -->
-                <ImageButton
-                    android:id="@+id/btn_refresh"
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="@string/browser_source_refresh"
-                    android:src="@drawable/ic_refresh"
-                    android:tint="?attr/colorOnSurface" />
+                    <TextView
+                        android:id="@+id/browser_site_label"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_marginStart="8dp"
+                        android:layout_weight="1"
+                        android:ellipsize="middle"
+                        android:gravity="center_vertical"
+                        android:maxLines="1"
+                        android:textColor="?attr/colorOnSurfaceVariant"
+                        android:textSize="12sp"
+                        tools:text="mangafire.to" />
 
-                <!-- Ad blocker toggle -->
-                <ImageButton
-                    android:id="@+id/btn_adblock"
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="@string/browser_source_adblock_toggle"
-                    android:src="@drawable/ic_shield"
-                    android:tint="?attr/colorPrimary" />
-
-                <!-- Universal manga-site detection indicator (Level 1: silent monitoring) -->
-                <TextView
-                    android:id="@+id/manga_site_detect_icon"
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:layout_gravity="center_vertical"
-                    android:contentDescription="@string/manga_site_detect_icon_desc"
-                    android:gravity="center"
-                    android:text="@string/manga_site_detect_moon_emoji"
-                    android:textSize="18sp"
-                    android:visibility="gone"
-                    tools:visibility="visible" />
-
+                    <TextView
+                        android:id="@+id/manga_site_detect_icon"
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:contentDescription="@string/manga_site_detect_icon_desc"
+                        android:gravity="center"
+                        android:text="@string/manga_site_detect_moon_emoji"
+                        android:textSize="18sp"
+                        android:visibility="gone"
+                        tools:visibility="visible" />
+                </LinearLayout>
             </LinearLayout>
         </androidx.appcompat.widget.Toolbar>
 
-        <!-- Universal manga-site detection banner (Level 2: dismissible hint) -->
         <LinearLayout
             android:id="@+id/manga_site_hint_banner"
             android:layout_width="match_parent"
@@ -126,6 +148,7 @@
             android:paddingHorizontal="16dp"
             android:paddingVertical="10dp"
             android:visibility="gone"
+            app:layout_scrollFlags="scroll|enterAlways"
             tools:visibility="visible">
 
             <TextView
@@ -144,9 +167,7 @@
                 android:contentDescription="@string/close"
                 android:src="@drawable/ic_close"
                 android:tint="?attr/colorOnSurface" />
-
         </LinearLayout>
-
     </com.google.android.material.appbar.AppBarLayout>
 
     <WebView
@@ -168,7 +189,7 @@
         app:trackCornerRadius="0dp"
         tools:visibility="visible" />
 
-    <!-- FAB: Open in Tsuki Reader (shown on chapter pages) -->
+    <!-- Retained for compatibility with the existing detection flow; hidden in website-first mode. -->
     <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
         android:id="@+id/fab_open_reader"
         android:layout_width="wrap_content"
@@ -181,7 +202,6 @@
         app:icon="@drawable/ic_book_open"
         tools:visibility="visible" />
 
-    <!-- FAB: Add to Library / Already in library hint (shown on manga detail pages) -->
     <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
         android:id="@+id/fab_add_to_library"
         android:layout_width="wrap_content"
