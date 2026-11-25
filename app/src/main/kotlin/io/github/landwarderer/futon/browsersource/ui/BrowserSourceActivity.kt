@@ -434,10 +434,10 @@ class BrowserSourceActivity : AppCompatActivity() {
                         view.evaluateJavascript("window.scrollTo(0, $savedScroll);", null)
                     }
 
-                    when {
-                        BrowserSourceChapterDetector.isChapterUrl(pageUrl) -> maybeShowOpenReaderFab()
-                        BrowserSourceChapterDetector.isDetailUrl(pageUrl)  -> binding.fabAddToLibrary.show()
-                    }
+                    // Browser Source now reads directly in the website's own page.
+                    // Do not surface the old native-reader handoff or placeholder library FAB.
+                    binding.fabOpenReader.hide()
+                    binding.fabAddToLibrary.hide()
 
                     injectCosmeticFilters(view, pageUrl)
 
@@ -805,23 +805,16 @@ class BrowserSourceActivity : AppCompatActivity() {
     // ── FABs ──────────────────────────────────────────────────────────────────
 
     private fun setupFabs() {
-        binding.fabOpenReader.setOnClickListener { openInNativeReader() }
-        binding.fabAddToLibrary.setOnClickListener {
-            binding.fabAddToLibrary.hide()
-            Snackbar.make(
-                binding.webView,
-                getString(R.string.browser_source_already_added_hint),
-                Snackbar.LENGTH_SHORT
-            ).show()
-        }
+        // The website is the reader in Browser Source. Keep the legacy handoff
+        // controls hidden rather than prompting users to leave the web reading flow.
+        binding.fabOpenReader.hide()
+        binding.fabAddToLibrary.hide()
     }
 
     private fun maybeShowOpenReaderFab() {
-        // Direct-URL sessions do not have a persisted CustomMangaSource ID,
-        // so the reader cannot reconstruct their source after navigation.
-        if (sourceId != -1L && webViewSettings.isOpenInReaderPromptEnabled) {
-            binding.fabOpenReader.show()
-        }
+        // Kept as a no-op for the legacy request detector; Browser Source no
+        // longer asks users to hand the chapter off to the native reader.
+        binding.fabOpenReader.hide()
     }
 
     // ── Reader integration ────────────────────────────────────────────────────
