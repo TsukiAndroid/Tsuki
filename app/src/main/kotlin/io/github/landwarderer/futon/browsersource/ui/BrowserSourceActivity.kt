@@ -701,8 +701,15 @@ class BrowserSourceActivity : AppCompatActivity() {
 
             entry.malId?.let { malId ->
                 if (chapterNumber > lastSyncedMalChapter && malRepository.isAuthorized) {
-                    runCatching { malRepository.updateRate(malId, sourceId, chapterNumber) }
-                        .onSuccess { lastSyncedMalChapter = chapterNumber }
+                    runCatching {
+                        val current = malRepository.getReadChapterCount(malId) ?: 0
+                        if (chapterNumber > current) {
+                            malRepository.updateRate(malId, sourceId, chapterNumber)
+                            chapterNumber
+                        } else {
+                            current
+                        }
+                    }.onSuccess { lastSyncedMalChapter = maxOf(lastSyncedMalChapter, it) }
                 }
             }
         }
