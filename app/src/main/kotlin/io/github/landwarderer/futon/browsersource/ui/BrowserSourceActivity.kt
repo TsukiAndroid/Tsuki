@@ -24,6 +24,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.snackbar.Snackbar
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.landwarderer.futon.R
 import io.github.landwarderer.futon.browser.detection.DetectionPromptLevel
@@ -40,6 +41,8 @@ import io.github.landwarderer.futon.webviewsource.data.WebViewSourceRepository
 import io.github.landwarderer.futon.webviewsource.data.ChapterPatternDetector
 import io.github.landwarderer.futon.webviewsource.data.anilist.WebViewAniListRepository
 import io.github.landwarderer.futon.webviewsource.ui.anilist.LinkAniListSheet
+import io.github.landwarderer.futon.scrobbling.mal.data.MALRepository
+import io.github.landwarderer.futon.scrobbling.common.domain.model.ScrobblerManga
 import io.github.landwarderer.futon.core.model.parcelable.ParcelableManga
 import io.github.landwarderer.futon.core.nav.ReaderIntent
 import io.github.landwarderer.futon.reader.ui.ReaderState
@@ -84,6 +87,7 @@ class BrowserSourceActivity : AppCompatActivity() {
     @Inject lateinit var mangaSiteDetector: MangaSiteDetector
     @Inject lateinit var webViewSourceRepository: WebViewSourceRepository
     @Inject lateinit var webViewAniListRepository: WebViewAniListRepository
+    @Inject lateinit var malRepository: MALRepository
 
     private lateinit var binding: ActivityBrowserSourceBinding
     private lateinit var mangaSitePrompt: MangaSitePrompt
@@ -111,7 +115,8 @@ class BrowserSourceActivity : AppCompatActivity() {
     // Metadata extracted from the current page (og: tags)
     private var currentPageTitle: String = ""
     private var currentPageCover: String? = null
-    private var lastSyncedAniListChapter: String? = null
+    private var lastSyncedAniListChapter: Int = -1
+    private var lastSyncedMalChapter: Int = -1
 
     private val webViewBackCallback = object : OnBackPressedCallback(true) {
         override fun handleOnBackPressed() {
@@ -194,6 +199,11 @@ class BrowserSourceActivity : AppCompatActivity() {
 
         // Step 6 of the README: let users open the current page in Chrome if they
         // specifically want to, while the default always uses Tsuki's WebView.
+        io.github.landwarderer.futon.R.id.action_browser_source_link_mal -> {
+            showMalLinkDialog()
+            true
+        }
+
         io.github.landwarderer.futon.R.id.action_browser_source_link_anilist -> {
             if (sourceId != -1L) {
                 LinkAniListSheet.newInstance(sourceId, sourceName)
@@ -616,7 +626,7 @@ class BrowserSourceActivity : AppCompatActivity() {
     /** Save chapter progress and sync AniList only when a chapter number is identifiable. */
     private fun syncTrackingProgress(url: String) {
         lifecycleScope.launch {
-            val entry = webViewSourceRepository.getById(sourceId) ?: return@launch
+            val entry = webViewSourceRepository.getById(sourceId) ?: createTrackingEntry()
             val pattern = entry.chapterUrlPattern ?: ChapterPatternDetector.detect(url)
             val chapter = ChapterPatternDetector.extractChapter(url, pattern)
             if (pattern != null && entry.chapterUrlPattern == null) {
@@ -634,14 +644,109 @@ class BrowserSourceActivity : AppCompatActivity() {
                 )
             )
 
-            val anilistId = entry.anilistId ?: return@launch
             val chapterNumber = chapter.toInt()
             if (chapterNumber <= 0) return@launch
-            val syncKey = "$anilistId:$chapterNumber"
-            if (syncKey == lastSyncedAniListChapter) return@launch
-            lastSyncedAniListChapter = syncKey
-            webViewAniListRepository.syncProgress(anilistId, chapterNumber)
+
+            entry.anilistId?.let { anilistId ->
+                if (chapterNumber > lastSyncedAniListChapter) {
+                    val current = webViewAniListRepository.getListEntry(anilistId)?.progress ?: 0
+                    if (chapterNumber > current && webViewAniListRepository.syncProgress(anilistId, chapterNumber)) {
+                        lastSyncedAniListChapter = chapterNumber
+                    } else {
+                        lastSyncedAniListChapter = maxOf(lastSyncedAniListChapter, current)
+                    }
+                }
+            }
+
+            entry.malId?.let { malId ->
+                if (chapterNumber > lastSyncedMalChapter && malRepository.isAuthorized) {
+                    runCatching { malRepository.updateRate(malId, sourceId, chapterNumber) }
+                        .onSuccess { lastSyncedMalChapter = chapterNumber }
+                }
+            }
         }
+    }
+
+    private suspend fun createTrackingEntry(): WebViewSourceEntity {
+        val now = System.currentTimeMillis()
+        return WebViewSourceEntity(
+            id = sourceId,
+            title = sourceName.ifBlank { "Browser Source" },
+            baseUrl = baseUrl,
+            chapterUrlPattern = null,
+            coverUrl = null,
+            lastReadUrl = null,
+            lastReadScrollPercent = 0f,
+            lastReadChapter = null,
+            latestKnownChapter = null,
+            anilistId = null,
+            malId = null,
+            readingStatus = null,
+            addedAt = now,
+            lastReadAt = null,
+        ).also { webViewSourceRepository.save(it) }
+    }
+
+    /** Search and link a MyAnimeList entry to this Browser Source. */
+    private fun showMalLinkDialog() {
+        if (sourceId == -1L) {
+            Snackbar.make(binding.webView, "Save this website as a Browser Source before linking tracking.", Snackbar.LENGTH_LONG).show()
+            return
+        }
+        if (!malRepository.isAuthorized) {
+            MaterialAlertDialogBuilder(this)
+                .setTitle("Connect MyAnimeList")
+                .setMessage("Connect your MyAnimeList account in Tsuki's Scrobbling settings, then return here to link this manga.")
+                .setPositiveButton(android.R.string.ok, null)
+                .show()
+            return
+        }
+        val queryInput = android.widget.EditText(this).apply {
+            hint = "Manga title"
+            inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
+        }
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Link MyAnimeList")
+            .setView(queryInput)
+            .setNegativeButton(android.R.string.cancel, null)
+            .setPositiveButton("Search", null)
+            .show()
+            .also { dialog ->
+                dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                    val query = queryInput.text?.toString().orEmpty().trim()
+                    if (query.isBlank()) return@setOnClickListener
+                    dialog.dismiss()
+                    lifecycleScope.launch {
+                        val results = runCatching { malRepository.findManga(query, 0) }.getOrDefault(emptyList())
+                        if (results.isEmpty()) {
+                            Snackbar.make(binding.webView, "No MyAnimeList matches found.", Snackbar.LENGTH_LONG).show()
+                        } else {
+                            showMalSearchResults(results)
+                        }
+                    }
+                }
+            }
+    }
+
+    private fun showMalSearchResults(results: List<ScrobblerManga>) {
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Choose the matching manga")
+            .setItems(results.map { it.name }.toTypedArray()) { _, index ->
+                val selected = results[index]
+                lifecycleScope.launch {
+                    val entry = webViewSourceRepository.getById(sourceId) ?: createTrackingEntry()
+                    runCatching {
+                        malRepository.createRate(sourceId, selected.id)
+                        webViewSourceRepository.save(entry.copy(malId = selected.id.toInt()))
+                    }.onSuccess {
+                        Snackbar.make(binding.webView, "Linked to MyAnimeList: " + selected.name, Snackbar.LENGTH_LONG).show()
+                    }.onFailure {
+                        Snackbar.make(binding.webView, "Could not link MyAnimeList: " + (it.message ?: "unknown error"), Snackbar.LENGTH_LONG).show()
+                    }
+                }
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
     }
 
     /** Shows only the site identity until the user focuses the address/search field. */
