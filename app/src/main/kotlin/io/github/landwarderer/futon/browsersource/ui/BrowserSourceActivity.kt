@@ -491,7 +491,17 @@ class BrowserSourceActivity : AppCompatActivity() {
                     if (previous) previous.remove();
                     var style = document.createElement('style');
                     style.id = styleId;
-                    style.textContent = ${'
+                    style.textContent = CSS_PLACEHOLDER;
+                    (document.head || document.documentElement).appendChild(style);
+                })();
+            """.trimIndent().replace("CSS_PLACEHOLDER", JSONObject.quote(css))
+            withContext(Dispatchers.Main) {
+                if (!isFinishing && view.url?.substringBefore('#') == pageUrl.substringBefore('#')) {
+                    view.evaluateJavascript(script, null)
+                }
+            }
+        }
+    }
 
     private fun unescapeJsString(raw: String?): String {
         if (raw.isNullOrEmpty() || raw == "null") return ""
