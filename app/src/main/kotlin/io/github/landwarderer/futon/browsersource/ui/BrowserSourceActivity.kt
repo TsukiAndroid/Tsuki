@@ -35,6 +35,11 @@ import io.github.landwarderer.futon.browsersource.data.BrowserSourceChapterDetec
 import io.github.landwarderer.futon.browsersource.data.BrowserSourceHistoryTracker
 import io.github.landwarderer.futon.browsersource.data.BrowserSourcePageStore
 import io.github.landwarderer.futon.browsersource.data.BrowserSourceRepository
+import io.github.landwarderer.futon.core.db.entity.WebViewSourceEntity
+import io.github.landwarderer.futon.webviewsource.data.WebViewSourceRepository
+import io.github.landwarderer.futon.webviewsource.data.ChapterPatternDetector
+import io.github.landwarderer.futon.webviewsource.data.anilist.WebViewAniListRepository
+import io.github.landwarderer.futon.webviewsource.ui.anilist.LinkAniListSheet
 import io.github.landwarderer.futon.core.model.parcelable.ParcelableManga
 import io.github.landwarderer.futon.core.nav.ReaderIntent
 import io.github.landwarderer.futon.reader.ui.ReaderState
@@ -77,6 +82,8 @@ class BrowserSourceActivity : AppCompatActivity() {
     @Inject lateinit var historyTracker: BrowserSourceHistoryTracker
     @Inject lateinit var customSourcesRepository: CustomSourcesRepository
     @Inject lateinit var mangaSiteDetector: MangaSiteDetector
+    @Inject lateinit var webViewSourceRepository: WebViewSourceRepository
+    @Inject lateinit var webViewAniListRepository: WebViewAniListRepository
 
     private lateinit var binding: ActivityBrowserSourceBinding
     private lateinit var mangaSitePrompt: MangaSitePrompt
@@ -104,6 +111,7 @@ class BrowserSourceActivity : AppCompatActivity() {
     // Metadata extracted from the current page (og: tags)
     private var currentPageTitle: String = ""
     private var currentPageCover: String? = null
+    private var lastSyncedAniListChapter: String? = null
 
     private val webViewBackCallback = object : OnBackPressedCallback(true) {
         override fun handleOnBackPressed() {
@@ -124,6 +132,7 @@ class BrowserSourceActivity : AppCompatActivity() {
         sourceId = intent.getLongExtra(KEY_SOURCE_ID, -1L)
         sourceName = intent.getStringExtra(KEY_SOURCE_NAME) ?: ""
         baseUrl = intent.getStringExtra(KEY_BASE_URL) ?: ""
+        ensureTrackingEntry()
 
         // Direct-URL mode: opened via TsukiBrowser.open() / AppRouter.openBrowser()
         // instead of via a BROWSER_SOURCE custom source.  No source ID is involved.
@@ -185,6 +194,16 @@ class BrowserSourceActivity : AppCompatActivity() {
 
         // Step 6 of the README: let users open the current page in Chrome if they
         // specifically want to, while the default always uses Tsuki's WebView.
+        io.github.landwarderer.futon.R.id.action_browser_source_link_anilist -> {
+            if (sourceId != -1L) {
+                LinkAniListSheet.newInstance(sourceId, sourceName)
+                    .show(supportFragmentManager, LinkAniListSheet.TAG)
+            } else {
+                Snackbar.make(binding.webView, "Save this website as a Browser Source before linking tracking.", Snackbar.LENGTH_LONG).show()
+            }
+            true
+        }
+
         io.github.landwarderer.futon.R.id.action_browser_source_open_external -> {
             val url = binding.webView.url
             if (url != null) router.openExternalBrowser(url)
@@ -394,6 +413,7 @@ class BrowserSourceActivity : AppCompatActivity() {
 
                     if (sourceId != -1L) {
                         browserSourceRepository.saveLastUrl(sourceId, pageUrl)
+                        syncTrackingProgress(pageUrl)
                     }
 
                     val savedScroll = browserSourceRepository.getScrollPosition(sourceId, pageUrl)
@@ -560,6 +580,68 @@ class BrowserSourceActivity : AppCompatActivity() {
             onNotNow = { mangaSiteDetector.dismissForSession(domain) },
             onNeverForSite = { mangaSiteDetector.markNeverForSite(domain) },
         )
+    }
+
+    /**
+     * Reuses the existing WebView-source tracking record so Browser Source can
+     * share Tsuki's established AniList linking and OAuth implementation.
+     */
+    private fun ensureTrackingEntry() {
+        if (sourceId == -1L) return
+        lifecycleScope.launch {
+            if (webViewSourceRepository.getById(sourceId) == null) {
+                val now = System.currentTimeMillis()
+                webViewSourceRepository.save(
+                    WebViewSourceEntity(
+                        id = sourceId,
+                        title = sourceName.ifBlank { "Browser Source" },
+                        baseUrl = baseUrl,
+                        chapterUrlPattern = null,
+                        coverUrl = null,
+                        lastReadUrl = null,
+                        lastReadScrollPercent = 0f,
+                        lastReadChapter = null,
+                        latestKnownChapter = null,
+                        anilistId = null,
+                        malId = null,
+                        readingStatus = null,
+                        addedAt = now,
+                        lastReadAt = null,
+                    )
+                )
+            }
+        }
+    }
+
+    /** Save chapter progress and sync AniList only when a chapter number is identifiable. */
+    private fun syncTrackingProgress(url: String) {
+        lifecycleScope.launch {
+            val entry = webViewSourceRepository.getById(sourceId) ?: return@launch
+            val pattern = entry.chapterUrlPattern ?: ChapterPatternDetector.detect(url)
+            val chapter = ChapterPatternDetector.extractChapter(url, pattern)
+            if (pattern != null && entry.chapterUrlPattern == null) {
+                webViewSourceRepository.save(entry.copy(chapterUrlPattern = pattern))
+            }
+            if (chapter == null || chapter <= 0f) return@launch
+
+            val now = System.currentTimeMillis()
+            webViewSourceRepository.save(
+                entry.copy(
+                    chapterUrlPattern = pattern,
+                    lastReadUrl = url,
+                    lastReadChapter = chapter,
+                    lastReadAt = now,
+                )
+            )
+
+            val anilistId = entry.anilistId ?: return@launch
+            val chapterNumber = chapter.toInt()
+            if (chapterNumber <= 0) return@launch
+            val syncKey = "$anilistId:$chapterNumber"
+            if (syncKey == lastSyncedAniListChapter) return@launch
+            lastSyncedAniListChapter = syncKey
+            webViewAniListRepository.syncProgress(anilistId, chapterNumber)
+        }
     }
 
     /** Shows only the site identity until the user focuses the address/search field. */
