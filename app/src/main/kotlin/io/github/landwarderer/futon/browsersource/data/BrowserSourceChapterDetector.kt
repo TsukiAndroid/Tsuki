@@ -97,6 +97,60 @@ object BrowserSourceChapterDetector {
         })();
     """
 
+    /**
+     * MangaFire exposes the complete ordered page list through its chapter API.
+     * The browser has already requested that endpoint with a valid, session-bound
+     * VRF token. Reuse that exact request URL from the Resource Timing buffer and
+     * fetch it in the page's own origin so cookies and WAF state remain available.
+     * This avoids reimplementing MangaFire's frequently changing VRF algorithm.
+     */
+    const val COLLECT_MANGAFIRE_API_PAGES_JS = """
+        (async function() {
+            try {
+                if (!/^(www\\.)?mangafire\\.(to|cc)$/i.test(location.hostname)) return '[]';
+                var entries = performance.getEntriesByType('resource');
+                var candidates = entries.map(function(entry) { return entry.name; })
+                    .filter(function(name) {
+                        try {
+                            var url = new URL(name, location.href);
+                            return url.origin === location.origin &&
+                                /\\/api\\/chapters\\/[^/?]+/i.test(url.pathname) &&
+                                url.searchParams.has('vrf');
+                        } catch (_) { return false; }
+                    });
+                var chapterId = location.pathname.match(/\\/chapter\\/(\\d+)/i);
+                if (candidates.length === 0 && chapterId) {
+                    // A tokenized URL is required; do not invent or guess a VRF value.
+                    return '[]';
+                }
+                for (var i = candidates.length - 1; i >= 0; i--) {
+                    try {
+                        var response = await fetch(candidates[i], {
+                            credentials: 'same-origin',
+                            cache: 'no-store'
+                        });
+                        if (!response.ok) continue;
+                        var payload = await response.json();
+                        var pages = payload && payload.data && payload.data.pages;
+                        if (!Array.isArray(pages)) continue;
+                        var result = [];
+                        pages.forEach(function(page) {
+                            if (!page || typeof page.url !== 'string') return;
+                            try {
+                                var absolute = new URL(page.url, location.origin);
+                                if (absolute.protocol === 'http:' || absolute.protocol === 'https:') {
+                                    result.push(absolute.href);
+                                }
+                            } catch (_) {}
+                        });
+                        if (result.length > 0) return JSON.stringify(result);
+                    } catch (_) {}
+                }
+            } catch (_) {}
+            return '[]';
+        })();
+    """
+
     const val GET_PAGE_META_JS = """
         (function(){
             var og = {};
