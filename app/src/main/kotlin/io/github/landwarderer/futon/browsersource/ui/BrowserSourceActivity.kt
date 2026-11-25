@@ -670,6 +670,15 @@ class BrowserSourceActivity : AppCompatActivity() {
      * lazy images to eager also helps sites using native loading="lazy".
      */
     private suspend fun collectChapterImagesWithoutScrolling(): List<String> {
+        // MangaFire already requests the full ordered page list through its API.
+        // Reuse the tokenized request URL observed by this WebView instead of
+        // scraping only the currently-rendered/lazy-loaded image elements.
+        val mangaFireResult = evaluateJavascriptAwait(
+            BrowserSourceChapterDetector.COLLECT_MANGAFIRE_API_PAGES_JS
+        )
+        val mangaFirePages = BrowserSourceChapterDetector.parseImageUrls(mangaFireResult)
+        if (mangaFirePages.isNotEmpty()) return mangaFirePages
+
         val collected = LinkedHashSet<String>()
 
         evaluateJavascriptAwait(
