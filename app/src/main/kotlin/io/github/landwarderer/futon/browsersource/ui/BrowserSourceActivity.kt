@@ -25,6 +25,7 @@ import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.color.MaterialColors
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.landwarderer.futon.R
 import io.github.landwarderer.futon.browser.detection.DetectionPromptLevel
@@ -118,6 +119,7 @@ class BrowserSourceActivity : AppCompatActivity() {
     private var currentPageCover: String? = null
     private var lastSyncedAniListChapter: Int = -1
     private var lastSyncedMalChapter: Int = -1
+    private var browserToolbarCollapsed = false
 
     private val webViewBackCallback = object : OnBackPressedCallback(true) {
         override fun handleOnBackPressed() {
@@ -317,7 +319,29 @@ class BrowserSourceActivity : AppCompatActivity() {
     }
 
     private fun updateAdblockIcon() {
-        binding.btnAdblock.imageAlpha = if (webViewSettings.isAdBlockEnabled) 255 else 100
+        val enabled = webViewSettings.isAdBlockEnabled
+        binding.btnAdblock.imageAlpha = if (enabled) 255 else 150
+        val tint = MaterialColors.getColor(
+            binding.btnAdblock,
+            if (enabled) com.google.android.material.R.attr.colorPrimary
+            else com.google.android.material.R.attr.colorOnSurfaceVariant,
+        )
+        binding.btnAdblock.imageTintList = android.content.res.ColorStateList.valueOf(tint)
+        binding.btnAdblock.contentDescription = getString(
+            if (enabled) R.string.browser_source_adblock_enabled
+            else R.string.browser_source_adblock_disabled,
+        )
+    }
+
+    private fun updateSiteIdentity(url: String) {
+        val host = Uri.parse(url).host?.removePrefix("www.").orEmpty()
+        binding.browserSiteLabel.text = host.ifBlank { getString(R.string.browser_source_site_unknown) }
+    }
+
+    private fun setBrowserToolbarCollapsed(collapsed: Boolean) {
+        if (browserToolbarCollapsed == collapsed) return
+        browserToolbarCollapsed = collapsed
+        binding.appbar.setExpanded(!collapsed, true)
     }
 
     private fun updateNavButtons() {
@@ -344,6 +368,17 @@ class BrowserSourceActivity : AppCompatActivity() {
         WebViewPerformanceConfigurator.applyPerformanceSettings(binding.webView)
 
         binding.webView.webChromeClient = ProgressChromeClient(binding.progressBar)
+
+        // Keep the reading viewport clean while scrolling, but bring the controls
+        // back as soon as the reader scrolls upward. The top of the page always
+        // restores the full toolbar.
+        binding.webView.setOnScrollChangeListener { _, _, scrollY, _, oldScrollY ->
+            when {
+                scrollY <= 0 -> setBrowserToolbarCollapsed(false)
+                scrollY > oldScrollY + 8 -> setBrowserToolbarCollapsed(true)
+                scrollY < oldScrollY - 8 -> setBrowserToolbarCollapsed(false)
+            }
+        }
 
         binding.webView.webViewClient = object : WebViewClient() {
 
@@ -392,6 +427,7 @@ class BrowserSourceActivity : AppCompatActivity() {
                 CloudflareWebView.injectAntiDetectionJs(view)
                 url?.let {
                     binding.urlBar.setText(formatAddress(it))
+                    updateSiteIdentity(it)
                     BrowserSourceChapterDetector.resetForPage(it)
                 }
                 binding.progressBar.isVisible = true
@@ -422,6 +458,7 @@ class BrowserSourceActivity : AppCompatActivity() {
                 binding.progressBar.isVisible = false
                 url?.let { pageUrl ->
                     binding.urlBar.setText(formatAddress(pageUrl))
+                    updateSiteIdentity(pageUrl)
                     updateNavButtons()
 
                     if (sourceId != -1L) {
