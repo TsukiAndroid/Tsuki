@@ -955,7 +955,7 @@ class BrowserSourceActivity : AppCompatActivity() {
         // Reuse the tokenized request URL observed by this WebView instead of
         // scraping only the currently-rendered/lazy-loaded image elements.
         evaluateJavascriptAwait(BrowserSourceChapterDetector.COLLECT_MANGAFIRE_API_PAGES_JS)
-        repeat(MANGAFIRE_API_POLL_ATTEMPTS) {
+        for (attempt in 0 until MANGAFIRE_API_POLL_ATTEMPTS) {
             delay(MANGAFIRE_API_POLL_DELAY_MS)
             val rawResult = evaluateJavascriptAwait(
                 "(function(){return window.__tsukiMangaFireApiPages || '__pending__';})()"
