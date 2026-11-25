@@ -1039,60 +1039,6 @@ class BrowserSourceActivity : AppCompatActivity() {
         binding.urlBar.clearFocus()
     }
 
-    // ── Companion ─────────────────────────────────────────────────────────────
-
-    companion object {
-        private const val EXTRACTION_SETTLE_DELAY_MS = 500L
-        private const val MANGAFIRE_API_POLL_ATTEMPTS = 20
-        private const val MANGAFIRE_API_POLL_DELAY_MS = 150L
-
-        const val KEY_SOURCE_ID   = "browser_source_id"
-        const val KEY_SOURCE_NAME = "browser_source_name"
-        const val KEY_BASE_URL    = "browser_source_url"
-
-        /** Extras used when opening a URL directly (not tied to a saved custom source). */
-        const val KEY_DIRECT_URL   = "browser_direct_url"
-        const val KEY_DIRECT_TITLE = "browser_direct_title"
-
-        fun createIntent(
-            context: Context,
-            sourceId: Long,
-            sourceName: String,
-            baseUrl: String,
-        ): Intent = Intent(context, BrowserSourceActivity::class.java).apply {
-            putExtra(KEY_SOURCE_ID, sourceId)
-            putExtra(KEY_SOURCE_NAME, sourceName)
-            putExtra(KEY_BASE_URL, baseUrl)
-        }
-
-        /**
-         * Create an Intent that opens [url] directly in Tsuki's WebView browser
-         * without requiring a saved custom source entry.
-         *
-         * Used by [TsukiBrowser.open] and [AppRouter.browserIntent].
-         */
-        fun createDirectIntent(
-            context: Context,
-            url: String,
-            title: String?,
-        ): Intent = Intent(context, BrowserSourceActivity::class.java).apply {
-            putExtra(KEY_DIRECT_URL, url)
-            putExtra(KEY_DIRECT_TITLE, title ?: url)
-        }
-    }
-}
-}{JSONObject.quote(css)};
-                    (document.head || document.documentElement).appendChild(style);
-                })();
-            """.trimIndent()
-            withContext(Dispatchers.Main) {
-                if (!isFinishing && view.url?.substringBefore('#') == pageUrl.substringBefore('#')) {
-                    view.evaluateJavascript(script, null)
-                }
-            }
-        }
-    }
-
     /** WebView returns evaluateJavascript results as a JSON string literal; unwrap it. */
 
     private fun unescapeJsString(raw: String?): String {
