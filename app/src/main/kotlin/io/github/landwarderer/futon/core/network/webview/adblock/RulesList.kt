@@ -34,7 +34,7 @@ class RulesList {
 
         val isWhitelist = normalized.startsWith("@@")
         val ruleText = if (isWhitelist) normalized.removePrefix("@@") else normalized
-        val pieces = ruleText.split(Char(36), limit = 2)
+        val pieces = ruleText.split(36.toChar(), limit = 2)
         pieces[0].addImpl(isWhitelist, pieces.getOrNull(1))
     }
 
@@ -63,7 +63,7 @@ class RulesList {
             else -> return false
         }
         // Extended CSS operators need procedural evaluation and are intentionally skipped.
-        if (line.contains("#?#") || line.contains("#" + Char(36) + "#")) return true
+        if (line.contains("#?#") || line.contains("#" + 36.toChar() + "#")) return true
 
         val isException = exceptionIndex >= 0
         val markerLength = if (isException) 3 else 2
