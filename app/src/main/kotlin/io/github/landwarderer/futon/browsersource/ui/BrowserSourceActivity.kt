@@ -510,6 +510,7 @@ class BrowserSourceActivity : AppCompatActivity() {
 
     /** Maps WebView Fetch Metadata to the resource types used by EasyList modifiers. */
     private fun requestResourceType(request: WebResourceRequest): String? {
+        if (request.isForMainFrame) return "document"
         val destination = request.requestHeaders.entries
             .firstOrNull { it.key.equals("Sec-Fetch-Dest", ignoreCase = true) }
             ?.value
@@ -533,6 +534,18 @@ class BrowserSourceActivity : AppCompatActivity() {
                     "image/" in accept -> "image"
                     "text/css" in accept -> "stylesheet"
                     "javascript" in accept -> "script"
+                    request.url.encodedPath.lowercase().endsWith(".js") ||
+                        request.url.encodedPath.lowercase().endsWith(".mjs") -> "script"
+                    request.url.encodedPath.lowercase().endsWith(".css") -> "stylesheet"
+                    listOf(".jpg", ".jpeg", ".png", ".gif", ".webp", ".avif").any {
+                        request.url.encodedPath.lowercase().endsWith(it)
+                    } -> "image"
+                    listOf(".woff", ".woff2", ".ttf", ".otf").any {
+                        request.url.encodedPath.lowercase().endsWith(it)
+                    } -> "font"
+                    listOf(".mp4", ".webm", ".mp3", ".m4a").any {
+                        request.url.encodedPath.lowercase().endsWith(it)
+                    } -> "media"
                     else -> null
                 }
             }
