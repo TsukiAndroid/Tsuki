@@ -241,6 +241,9 @@ import org.json.JSONObject
 
       override suspend fun getDetails(manga: Manga): Manga {
           return when (customSource.source.type) {
+              CustomSourceType.BROWSER_SOURCE        -> BrowserSourcePageStore.getChapter(manga.id)?.let { chapter ->
+                  manga.copy(chapters = listOf(chapter))
+              } ?: manga
               CustomSourceType.MANGADEX_COMPATIBLE   -> manga
               CustomSourceType.MADARA                -> runCatching { madaraParser.getDetails(manga) }.getOrElse { manga }
               CustomSourceType.MANGATHEMESIA         -> runCatching { mangaThemesiaParser.getDetails(manga) }.getOrElse { manga }
