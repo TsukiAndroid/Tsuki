@@ -3,6 +3,7 @@ package io.github.landwarderer.futon.browsersource.ui
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
+import android.net.Uri
 import android.os.Bundle
 import android.view.KeyEvent
 import android.view.Menu
@@ -253,20 +254,34 @@ class BrowserSourceActivity : AppCompatActivity() {
             Snackbar.make(binding.webView, msgRes, Snackbar.LENGTH_SHORT).show()
         }
 
+        binding.urlBar.hint = "Search or enter website"
         binding.urlBar.setOnEditorActionListener { _, actionId, event ->
             if (actionId == EditorInfo.IME_ACTION_GO ||
                 (event?.keyCode == KeyEvent.KEYCODE_ENTER && event.action == KeyEvent.ACTION_DOWN)
             ) {
                 val typed = binding.urlBar.text?.toString().orEmpty().trim()
-                val url = if (typed.startsWith("http://") || typed.startsWith("https://")) typed
-                          else "https://$typed"
+                if (typed.isBlank()) return@setOnEditorActionListener true
+                val url = when {
+                    typed.startsWith("http://", ignoreCase = true) ||
+                        typed.startsWith("https://", ignoreCase = true) -> typed
+                    typed.substringBefore('/').contains('.') ||
+                        typed.substringBefore('/').equals("localhost", ignoreCase = true) -> "https://$typed"
+                    else -> "https://www.google.com/search?q=" + Uri.encode(typed)
+                }
                 loadUrl(url)
                 hideKeyboard()
                 true
             } else false
         }
 
-        binding.urlBar.setOnFocusChangeListener { _, hasFocus -> if (hasFocus) binding.urlBar.selectAll() }
+        binding.urlBar.setOnFocusChangeListener { _, hasFocus ->
+            if (hasFocus) {
+                binding.urlBar.setText(binding.webView.url.orEmpty())
+                binding.urlBar.selectAll()
+            } else {
+                binding.urlBar.setText(formatAddress(binding.webView.url.orEmpty()))
+            }
+        }
     }
 
     private fun updateAdblockIcon() {
@@ -344,7 +359,7 @@ class BrowserSourceActivity : AppCompatActivity() {
                 // (and similar bot-management scripts) cannot fingerprint the WebView.
                 CloudflareWebView.injectAntiDetectionJs(view)
                 url?.let {
-                    binding.urlBar.setText(it)
+                    binding.urlBar.setText(formatAddress(it))
                     BrowserSourceChapterDetector.resetForPage(it)
                 }
                 binding.progressBar.isVisible = true
@@ -374,7 +389,7 @@ class BrowserSourceActivity : AppCompatActivity() {
                 super.onPageFinished(view, url)
                 binding.progressBar.isVisible = false
                 url?.let { pageUrl ->
-                    binding.urlBar.setText(pageUrl)
+                    binding.urlBar.setText(formatAddress(pageUrl))
                     updateNavButtons()
 
                     if (sourceId != -1L) {
@@ -545,6 +560,13 @@ class BrowserSourceActivity : AppCompatActivity() {
             onNotNow = { mangaSiteDetector.dismissForSession(domain) },
             onNeverForSite = { mangaSiteDetector.markNeverForSite(domain) },
         )
+    }
+
+    /** Shows only the site identity until the user focuses the address/search field. */
+    private fun formatAddress(url: String): String {
+        if (url.isBlank()) return ""
+        val uri = Uri.parse(url)
+        return uri.host ?: url
     }
 
     private fun loadUrl(url: String) {
