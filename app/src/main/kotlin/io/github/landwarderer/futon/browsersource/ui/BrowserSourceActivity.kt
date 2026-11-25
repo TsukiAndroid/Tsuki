@@ -484,7 +484,7 @@ class BrowserSourceActivity : AppCompatActivity() {
     private fun injectCosmeticFilters(view: WebView, pageUrl: String) {
         if (!webViewSettings.isAdBlockEnabled) {
             view.evaluateJavascript(
-                "document.getElementById('tsuki-adblock-cosmetic')?.remove();",
+                "(function(){var style=document.getElementById('tsuki-adblock-cosmetic');if(style)style.remove();})();",
                 null,
             )
             return
