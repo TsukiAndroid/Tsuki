@@ -665,11 +665,6 @@ class BrowserSourceActivity : AppCompatActivity() {
     }
 
     /**
-     * Scrolls through the rendered chapter in small increments so intersection-
-     * observer and scroll-triggered lazy loaders have a chance to populate images.
-     * The original position is restored even if extraction is cancelled or fails.
-     */
-    /**
      * Collects rendered and lazy-load image URLs without moving the user's page.
      * Lazy-load attributes are included by the DOM collector; setting existing
      * lazy images to eager also helps sites using native loading="lazy".
@@ -699,14 +694,6 @@ class BrowserSourceActivity : AppCompatActivity() {
                 if (continuation.isActive) continuation.resume(result)
             }
         }
-
-    private fun String?.jsString(): String =
-        this?.let { runCatching { org.json.JSONTokener(it).nextValue() as? String }.getOrNull() }
-            ?: ""
-
-    private fun String?.jsNumber(): String =
-        this?.let { runCatching { org.json.JSONTokener(it).nextValue().toString() }.getOrNull() }
-            ?: ""
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
