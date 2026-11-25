@@ -1,5 +1,6 @@
 package io.github.landwarderer.futon.browsersource.data
 
+import org.koitharu.kotatsu.parsers.model.MangaChapter
 import org.koitharu.kotatsu.parsers.model.MangaPage
 import java.util.concurrent.ConcurrentHashMap
 
@@ -17,12 +18,18 @@ object BrowserSourcePageStore {
         val createdAt: Long = System.currentTimeMillis(),
     )
 
+    private data class ChapterEntry(
+        val chapter: MangaChapter,
+        val createdAt: Long = System.currentTimeMillis(),
+    )
+
     private data class RequestContext(
         val headers: Map<String, String>,
         val createdAt: Long = System.currentTimeMillis(),
     )
 
     private val store = ConcurrentHashMap<Long, Entry>()
+    private val chaptersByMangaId = ConcurrentHashMap<Long, ChapterEntry>()
     private val requestContexts = ConcurrentHashMap<Long, RequestContext>()
 
     /** Store pages and their optional per-image request headers. */
@@ -39,6 +46,22 @@ object BrowserSourcePageStore {
                 requestContexts[page.id] = RequestContext(headers.toMap())
             }
         }
+    }
+
+    /** Keep the synthetic chapter available while ReaderActivity reloads Manga details. */
+    fun putChapter(mangaId: Long, chapter: MangaChapter) {
+        evictStale()
+        chaptersByMangaId[mangaId] = ChapterEntry(chapter)
+    }
+
+    /** Restore the chapter lost by ParcelableManga when the reader reloads details. */
+    fun getChapter(mangaId: Long): MangaChapter? {
+        val entry = chaptersByMangaId[mangaId] ?: return null
+        if (System.currentTimeMillis() - entry.createdAt > TTL_MS) {
+            chaptersByMangaId.remove(mangaId, entry)
+            return null
+        }
+        return entry.chapter
     }
 
     /** Retrieve and remove the pages for [chapterId]. */
@@ -63,6 +86,7 @@ object BrowserSourcePageStore {
     private fun evictStale() {
         val now = System.currentTimeMillis()
         store.entries.removeAll { (_, entry) -> now - entry.createdAt > TTL_MS }
+        chaptersByMangaId.entries.removeAll { (_, entry) -> now - entry.createdAt > TTL_MS }
         requestContexts.entries.removeAll { (_, entry) -> now - entry.createdAt > TTL_MS }
     }
 }
