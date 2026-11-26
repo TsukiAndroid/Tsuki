@@ -121,6 +121,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/reader_transparent_controls"
+                android:textAppearance="?attr/textAppearanceBodyLarge"
+                android:drawableStart="@drawable/ic_visibility"
+                android:drawablePadding="16dp"
                 android:textAppearance="?textAppearanceListItem" />
             <com.google.android.material.slider.Slider
                 android:id="@+id/slider_controls_opacity"
