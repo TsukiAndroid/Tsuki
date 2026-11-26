@@ -1572,4 +1572,5 @@
     <string name="browser_source_adblock_enabled">Ad blocker is on</string>
     <string name="browser_source_adblock_disabled">Ad blocker is off</string>
     <string name="browser_source_site_unknown">Website</string>
+<string name="reader_transparent_controls">Transparent reader controls</string>
 </resources>
