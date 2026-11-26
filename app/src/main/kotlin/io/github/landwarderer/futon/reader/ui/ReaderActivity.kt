@@ -426,13 +426,13 @@ class ReaderActivity :
         gestureInsets = insets.getInsets(WindowInsetsCompat.Type.systemGestures())
         val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
         viewBinding.toolbar.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-            topMargin = if (settings.isReaderTransparentControls) systemBars.top else systemBars.top + viewBinding.appbarTop.height
+            topMargin = if (settings.isReaderTransparentControls) systemBars.top else systemBars.top
             rightMargin = systemBars.right
             leftMargin = systemBars.left
         }
         if (viewBinding.toolbarDocked != null) {
             viewBinding.actionsView.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-                bottomMargin = if (settings.isReaderTransparentControls) systemBars.bottom else systemBars.bottom + (viewBinding.toolbarDocked?.height ?: 0)
+                bottomMargin = if (settings.isReaderTransparentControls) systemBars.bottom else systemBars.bottom
                 rightMargin = systemBars.right
                 leftMargin = systemBars.left
             }
