@@ -270,6 +270,10 @@ class AppSettings internal constructor(
         val isReaderNavigationInverted: Boolean
                 get() = prefs.getBoolean(KEY_READER_NAVIGATION_INVERTED, false)
 
+        var readerControlsOpacity: Int
+            get() = prefs.getInt(KEY_READER_CONTROLS_OPACITY, 50)
+            set(value) = prefs.edit { putInt(KEY_READER_CONTROLS_OPACITY, value) }
+
         var isReaderTransparentControls: Boolean
                 get() = prefs.getBoolean(KEY_READER_TRANSPARENT, false)
                 set(value) = prefs.edit { putBoolean(KEY_READER_TRANSPARENT, value) }
@@ -839,6 +843,7 @@ class AppSettings internal constructor(
                 const val KEY_READER_ZOOM_BUTTONS = "reader_zoom_buttons"
                 const val KEY_READER_CONTROL_LTR = "reader_taps_ltr"
                 const val KEY_READER_NAVIGATION_INVERTED = "reader_navigation_inverted"
+                const val KEY_READER_CONTROLS_OPACITY = "reader_controls_opacity"
                 const val KEY_READER_TRANSPARENT = "reader_transparent_controls"
                 const val KEY_READER_FULLSCREEN = "reader_fullscreen"
                 const val KEY_READER_VOLUME_BUTTONS = "reader_volume_buttons"
