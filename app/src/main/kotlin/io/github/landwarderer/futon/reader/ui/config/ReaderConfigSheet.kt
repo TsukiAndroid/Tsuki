@@ -89,6 +89,8 @@ class ReaderConfigSheet :
         binding.buttonReversed.isChecked = mode == ReaderMode.REVERSED
         binding.buttonWebtoon.isChecked = mode == ReaderMode.WEBTOON
         binding.buttonVertical.isChecked = mode == ReaderMode.VERTICAL
+        binding.switchTransparentControls.isChecked = settings.isReaderTransparentControls
+        binding.switchTransparentControls.setOnCheckedChangeListener(this)
         binding.switchDoubleReader.isChecked = settings.isReaderDoubleOnLandscape
         binding.switchDoubleReader.isEnabled = mode == ReaderMode.STANDARD || mode == ReaderMode.REVERSED
         binding.switchDoubleFoldable.isChecked = settings.isReaderDoubleOnFoldable
@@ -176,6 +178,7 @@ class ReaderConfigSheet :
 
     override fun onCheckedChanged(buttonView: CompoundButton, isChecked: Boolean) {
         when (buttonView.id) {
+            R.id.switch_transparent_controls -> settings.isReaderTransparentControls = isChecked
             R.id.switch_screen_lock_rotation -> {
                 orientationHelper.isLocked = isChecked
             }
