@@ -418,7 +418,7 @@ class ReaderActivity :
             color
         }
         viewBinding.appbarTop.setBackgroundColor(controlsColor)
-        viewBinding.toolbarDocked?.setCardBackgroundColor(ColorStateList.valueOf(controlsColor))
+        viewBinding.toolbarDocked?.setBackgroundColor(controlsColor)
         ViewCompat.requestApplyInsets(viewBinding.root)
     }
 
