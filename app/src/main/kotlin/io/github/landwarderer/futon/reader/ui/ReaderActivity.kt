@@ -14,6 +14,10 @@ import android.view.WindowManager
 import androidx.activity.viewModels
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.graphics.Insets
+import android.content.res.ColorStateList
+import androidx.core.graphics.ColorUtils
+import com.google.android.material.color.MaterialColors
+import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
@@ -403,6 +407,19 @@ class ReaderActivity :
             systemUiController.setSystemUiVisible(isUiVisible || !isFullscreen)
             viewBinding.root.requestApplyInsets()
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        val color = MaterialColors.getColor(viewBinding.appbarTop, com.google.android.material.R.attr.colorSurface)
+        val controlsColor = if (settings.isReaderTransparentControls) {
+            ColorUtils.setAlphaComponent(color, 204)
+        } else {
+            color
+        }
+        viewBinding.appbarTop.setBackgroundColor(controlsColor)
+        viewBinding.toolbarDocked?.setCardBackgroundColor(ColorStateList.valueOf(controlsColor))
+        ViewCompat.requestApplyInsets(viewBinding.root)
     }
 
     override fun onApplyWindowInsets(v: View, insets: WindowInsetsCompat): WindowInsetsCompat {
