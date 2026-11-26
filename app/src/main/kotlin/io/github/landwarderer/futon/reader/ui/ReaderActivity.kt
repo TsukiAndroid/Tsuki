@@ -413,7 +413,7 @@ class ReaderActivity :
         super.onResume()
         val color = MaterialColors.getColor(viewBinding.appbarTop, com.google.android.material.R.attr.colorSurface)
         val controlsColor = if (settings.isReaderTransparentControls) {
-            ColorUtils.setAlphaComponent(color, 204)
+            ColorUtils.setAlphaComponent(color, 128)
         } else {
             color
         }
