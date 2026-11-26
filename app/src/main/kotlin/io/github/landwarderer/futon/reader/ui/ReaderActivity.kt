@@ -425,9 +425,9 @@ class ReaderActivity :
         )
         val innerInsets = Insets.of(
             systemBars.left,
-            if (viewBinding.appbarTop.isVisible) viewBinding.appbarTop.height else systemBars.top,
+            systemBars.top,
             systemBars.right,
-            viewBinding.toolbarDocked?.takeIf { it.isVisible }?.height ?: systemBars.bottom,
+            systemBars.bottom,
         )
         return WindowInsetsCompat.Builder(insets)
             .setInsets(WindowInsetsCompat.Type.systemBars(), innerInsets)
