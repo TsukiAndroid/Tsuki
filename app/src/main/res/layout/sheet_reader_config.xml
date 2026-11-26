@@ -122,6 +122,16 @@
                 android:layout_height="wrap_content"
                 android:text="@string/reader_transparent_controls"
                 android:textAppearance="?textAppearanceListItem" />
+            <com.google.android.material.slider.Slider
+                android:id="@+id/slider_controls_opacity"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="@dimen/margin_small"
+                android:valueFrom="50"
+                android:valueTo="100"
+                android:stepSize="5"
+                app:labelBehavior="floating" />
+
 
             <com.google.android.material.materialswitch.MaterialSwitch
                 android:id="@+id/switch_double_reader"
