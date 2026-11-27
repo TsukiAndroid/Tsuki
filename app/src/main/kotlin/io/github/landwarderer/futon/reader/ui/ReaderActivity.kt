@@ -14,6 +14,10 @@ import android.view.WindowManager
 import androidx.activity.viewModels
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.graphics.Insets
+import android.content.res.ColorStateList
+import androidx.core.graphics.ColorUtils
+import com.google.android.material.color.MaterialColors
+import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
@@ -405,17 +409,30 @@ class ReaderActivity :
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        val color = MaterialColors.getColor(viewBinding.appbarTop, com.google.android.material.R.attr.colorSurface)
+        val controlsColor = if (settings.isReaderTransparentControls) {
+            ColorUtils.setAlphaComponent(color, settings.readerControlsOpacity * 255 / 100)
+        } else {
+            color
+        }
+        viewBinding.appbarTop.setBackgroundColor(controlsColor)
+        viewBinding.toolbarDocked?.setBackgroundColor(controlsColor)
+        ViewCompat.requestApplyInsets(viewBinding.root)
+    }
+
     override fun onApplyWindowInsets(v: View, insets: WindowInsetsCompat): WindowInsetsCompat {
         gestureInsets = insets.getInsets(WindowInsetsCompat.Type.systemGestures())
         val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
         viewBinding.toolbar.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-            topMargin = systemBars.top
+            topMargin = if (settings.isReaderTransparentControls) systemBars.top else systemBars.top
             rightMargin = systemBars.right
             leftMargin = systemBars.left
         }
         if (viewBinding.toolbarDocked != null) {
             viewBinding.actionsView.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-                bottomMargin = systemBars.bottom
+                bottomMargin = if (settings.isReaderTransparentControls) systemBars.bottom else systemBars.bottom
                 rightMargin = systemBars.right
                 leftMargin = systemBars.left
             }
@@ -425,9 +442,9 @@ class ReaderActivity :
         )
         val innerInsets = Insets.of(
             systemBars.left,
-            if (viewBinding.appbarTop.isVisible) viewBinding.appbarTop.height else systemBars.top,
+            systemBars.top,
             systemBars.right,
-            viewBinding.toolbarDocked?.takeIf { it.isVisible }?.height ?: systemBars.bottom,
+            systemBars.bottom,
         )
         return WindowInsetsCompat.Builder(insets)
             .setInsets(WindowInsetsCompat.Type.systemBars(), innerInsets)
