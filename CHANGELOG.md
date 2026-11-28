@@ -1,3 +1,22 @@
+## Alpha 1.1237 (Build [#439](https://github.com/TsukiAndroid/Tsuki/actions/runs/46139254646))
+
+_2026-11-28 11:18 UTC_
+
+- Remove temporary lockfile generation workflow (a79ba81)
+- Update Ruby security dependencies (a1c9d1c)
+- Generate security lockfile with Bundler (65d7bb9)
+- chore: update total downloads badge [skip ci] (74b1995)
+- chore: archive alpha-latest downloads (+15) [skip ci] (19df125)
+- Add ylat claim meta tag to index.html (e40794d)
+- chore: refresh GitHub APK download counter [skip ci] (0996e4c)
+- chore: update total downloads badge [skip ci] (53e71f8)
+- chore: archive stable-latest downloads (+194) [skip ci] (2e2a8e1)
+- chore: refresh GitHub APK download counter [skip ci] (54b28b4)
+- chore: refresh GitHub APK download counter [skip ci] (7b89fb6)
+- chore: archive beta-latest downloads (+11) [skip ci] (1bc7f30)
+- chore: update total downloads badge [skip ci] (d9b82d3)
+
+
 ## Alpha 1.1230 (Build [#438](https://github.com/TsukiAndroid/Tsuki/actions/runs/46132669674))
 
 _2026-11-28 09:55 UTC_
