@@ -1,0 +1,25 @@
+name: Regenerate Ruby security lockfile
+on:
+  pull_request:
+    branches: [devel]
+permissions:
+  contents: write
+jobs:
+  lock:
+    if: github.head_ref == 'security/ruby-dependencies'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+      - run: |
+          bundle update fastlane rubyzip mini_magick json addressable jwt excon --conservative
+          bundle exec fastlane --version
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add Gemfile.lock
+          git diff --cached --quiet || git commit -m "Update Ruby security dependencies"
+          git push origin HEAD:security/ruby-dependencies
